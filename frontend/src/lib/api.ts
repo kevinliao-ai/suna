@@ -1688,12 +1688,12 @@ export const getSubscription = async (): Promise<SubscriptionStatus> => {
     } = await supabase.auth.getSession();
 
     if (!session?.access_token) {
-      throw new Error('No access token available');
+      // throw new Error('No access token available');
     }
 
     const response = await fetch(`${API_URL}/billing/subscription`, {
       headers: {
-        Authorization: `Bearer ${session.access_token}`,
+        Authorization: `Bearer ${session?.access_token}`,
       },
     });
 
