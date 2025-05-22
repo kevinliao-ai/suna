@@ -99,8 +99,7 @@ export const siteConfig = {
     badge: '100% OPEN SOURCE',
     githubUrl: 'https://github.com/bilibili/Index-anisora',
     title: 'AniSora, the AI Employee.',
-    description:
-      'AniSora by Bilibili is a generalist AI Agent that acts on your behalf.',
+    description:'the most powerful open-source animated video generation model.',
     inputPlaceholder: 'Ask AniSora to...',
   },
   cloudPricingItems: [
@@ -1155,7 +1154,7 @@ export const siteConfig = {
       id: 'competitor-analysis',
       title: 'Competitor Analysis',
       description:
-        'Analyze the market for my next company in the healthcare industry, located in the UK. Give me the major players, their market size, strengths, and weaknesses, and add their website URLs. Once done, generate a PDF report.',
+        'The figures in the picture are sitting in a forward moving car waving to the rear, their hair swaying from side to side in the wind',
       category: 'research',
       featured: true,
       icon: (
