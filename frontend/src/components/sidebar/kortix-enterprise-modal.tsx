@@ -42,13 +42,14 @@ export function KortixProcessModal() {
               <div className="mb-8 mt-0 flex-shrink-0">
                 <Image
                   src={
-                    isDarkMode ? '/kortix-logo-white.svg' : '/kortix-logo.svg'
+                    isDarkMode ? '/anisora-logo.png' : '/anisora-logo.png'
                   }
-                  alt="Kortix Logo"
+                  alt="AniSora Logo"
                   width={60}
                   height={21}
                   className="h-6 w-auto"
                 />
+                <span className="font-medium text-primary text-sm">AniSora</span>
               </div>
 
               <h2 className="text-2xl md:text-3xl font-semibold tracking-tight mb-4 text-foreground flex-shrink-0">

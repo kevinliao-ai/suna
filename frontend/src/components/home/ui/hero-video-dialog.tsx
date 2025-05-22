@@ -79,12 +79,12 @@ export function HeroVideoDialog({
   const selectedAnimation = animationVariants[animationStyle];
 
   // Add autoplay parameter to YouTube URL when opened
-  const getVideoSrcWithAutoplay = () => {
-    const url = new URL(videoSrc);
-    // Preserve existing query parameters and add autoplay=1
-    url.searchParams.set('autoplay', '1');
-    return url.toString();
-  };
+  // const getVideoSrcWithAutoplay = () => {
+  //   const url = new URL(videoSrc);
+  //   // Preserve existing query parameters and add autoplay=1
+  //   url.searchParams.set('autoplay', '1');
+  //   return url.toString();
+  // };
 
   return (
     <div className={cn('relative', className)}>
@@ -140,12 +140,21 @@ export function HeroVideoDialog({
                 <XIcon className="size-5" />
               </motion.button>
               <div className="relative isolate z-[1] size-full overflow-hidden rounded-2xl border-2 border-white">
-                <iframe
+                {/* <iframe
                   src={getVideoSrcWithAutoplay()}
                   className="size-full"
                   allowFullScreen
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                ></iframe>
+                ></iframe> */}
+                 <video
+                  src={videoSrc}
+                  className="h-full w-full object-cover"
+                  controls
+                  autoPlay
+                  playsInline
+                  muted
+                >
+                </video>
               </div>
             </motion.div>
           </motion.div>

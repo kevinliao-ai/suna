@@ -1,4 +1,4 @@
-# Suna frontend
+# AniSora frontend
 
 ## Getting Started
 
