@@ -278,7 +278,7 @@ export function HeroSection() {
             {hero.badge}
           </p> */}
 
-          <Link
+          {/* <Link
             href={hero.githubUrl}
             target="_blank"
             rel="noopener noreferrer"
@@ -306,7 +306,7 @@ export function HeroSection() {
                 />
               </svg>
             </span>
-          </Link>
+          </Link> */}
           <div className="flex flex-col items-center justify-center gap-5">
             <h1 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-medium tracking-tighter text-balance text-center">
               {/* <span className="text-secondary">AniSora: </span> */}
@@ -316,9 +316,8 @@ export function HeroSection() {
               {hero.description}
             </p>
           </div>
-          <div className="flex items-center w-full max-w-xl gap-2 flex-wrap justify-center">
+          {/* <div className="flex items-center w-full max-w-xl gap-2 flex-wrap justify-center">
             <form className="w-full relative" onSubmit={handleSubmit}>
-              {/* ChatGPT-like input with glow effect */}
               <div className="relative z-10">
                 <div className="flex items-center rounded-full border border-border bg-background/80 backdrop-blur px-4 shadow-lg transition-all duration-200 hover:border-secondary/50 focus-within:border-secondary/50 focus-within:shadow-[0_0_15px_rgba(var(--secondary),0.3)]">
                   <input
@@ -348,10 +347,9 @@ export function HeroSection() {
                   </button>
                 </div>
               </div>
-              {/* Subtle glow effect */}
               <div className="absolute -bottom-4 inset-x-0 h-6 bg-secondary/20 blur-xl rounded-full -z-10 opacity-70"></div>
             </form>
-          </div>
+          </div> */}
         </div>
       </div>
       <div className="mb-10 max-w-4xl mx-auto">

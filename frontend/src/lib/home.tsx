@@ -64,9 +64,10 @@ export const siteConfig = {
   nav: {
     links: [
       { id: 1, name: 'Home', href: '#hero' },
-      { id: 2, name: 'Use Cases', href: '#use-cases' },
+      { id: 2, name: 'Use Cases', href: '#showcase' },
       { id: 3, name: 'Open Source', href: '#open-source' },
-      // { id: 4, name: 'Pricing', href: '#pricing' },
+      { id: 4, name: 'FAQ', href: '#faq' },
+      // { id: 5, name: 'Pricing', href: '#pricing' },
     ],
   },
   hero: {
@@ -1057,43 +1058,49 @@ export const siteConfig = {
   faqSection: {
     title: 'Frequently Asked Questions',
     description:
-      "Answers to common questions about Bilibili AniSora and its capabilities. If you have any other questions, please don't hesitate to contact us.",
+      'Find answers to common questions about AniSora, our open-source anime video generation model. If you have any other questions, feel free to reach out to our community!',
     faQitems: [
       {
         id: 1,
-        question: 'What is an AI Agent?',
+        question: 'What is AniSora?',
         answer:
-          'An AI Agent is an intelligent software program that can perform tasks autonomously, learn from interactions, and make decisions to help achieve specific goals. It combines artificial intelligence and machine learning to provide personalized assistance and automation.',
+          'AniSora is an advanced open-source anime video generation model developed by Bilibili. It enables users to create high-quality anime-style videos with various styles including series episodes, Chinese original animations, manga adaptations, VTuber content, and more!',
       },
       {
         id: 2,
-        question: 'How does Bilibili AniSora work?',
+        question: 'What are the system requirements for running AniSora?',
         answer:
-          'Bilibili AniSora works by analyzing your requirements, leveraging advanced AI algorithms to understand context, and executing tasks based on your instructions. It can integrate with your workflow, learn from feedback, and continuously improve its performance.',
+          'AniSora V1 can run on RTX 4090 GPUs, while V2 supports both GPUs and Huawei Ascend 910B NPUs. The specific requirements depend on the model version and your use case. For local deployment, we recommend at least 24GB of GPU memory for optimal performance.',
       },
       {
         id: 3,
-        question: 'Is Bilibili AniSora really free?',
+        question: 'What video styles does AniSora support?',
         answer:
-          'Yes, Bilibili AniSora is completely free and open source. We believe in democratizing AI technology and making it accessible to everyone. You can use it, modify it, and contribute to its development without any cost.',
+          'AniSora supports a wide range of anime styles including but not limited to: series episodes, Chinese original animations, manga adaptations, VTuber content, anime PVs, and mad-style parodies (鬼畜动画). The model has been trained on diverse datasets to handle various artistic styles.',
       },
       {
         id: 4,
-        question: 'Can I integrate AniSora with my existing tools?',
+        question: 'Can I use AniSora for commercial projects?',
         answer:
-          'Yes, Bilibili AniSora is designed to be highly compatible with popular tools and platforms. We offer APIs and pre-built integrations for seamless connection with your existing workflow tools and systems.',
+          'Yes, AniSora is open-source and available for both personal and commercial use. However, please review the specific license terms included with the model for any usage restrictions or attribution requirements.',
       },
       {
         id: 5,
-        question: 'How can I contribute to Bilibili AniSora?',
+        question: 'How can I contribute to the AniSora project?',
         answer:
-          'You can contribute to Bilibili AniSora by submitting pull requests on GitHub, reporting bugs, suggesting new features, or helping with documentation. Join our Discord community to connect with other contributors and Hire AniSora.',
+          'You can contribute to AniSora by submitting pull requests on GitHub, reporting issues, suggesting new features, or helping with documentation. We welcome contributions from the community to help improve the model and its capabilities.',
       },
       {
         id: 6,
-        question: 'How does Bilibili AniSora save me time?',
+        question: 'What makes AniSora different from other video generation models?',
         answer:
-          'Bilibili AniSora automates repetitive tasks, streamlines workflows, and provides quick solutions to common challenges. This automation and efficiency can save hours of manual work, allowing you to focus on more strategic activities.',
+          'AniSora is specifically designed for anime-style content generation, with specialized training on anime datasets. It offers features like localized region guidance, temporal control (first/last frame guidance, keyframe interpolation), and supports both GPU and NPU acceleration. The model has demonstrated state-of-the-art results in anime video generation benchmarks.',
+      },
+      {
+        id: 7,
+        question: 'How can I get started with AniSora?',
+        answer:
+          'You can get started by cloning our GitHub repository and following the setup instructions in the README. The project includes pre-trained models and example scripts to help you generate your first anime videos. Make sure your system meets the hardware requirements before proceeding.',
       },
     ],
   },

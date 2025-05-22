@@ -1,145 +1,205 @@
 <div align="center">
-
-# AniSora - Open Source Generalist AI Agent
-
-(that acts on your behalf)
-
-![AniSora Screenshot](frontend/public/banner.png)
-
-AniSora is a fully open source AI assistant that helps you accomplish real-world tasks with ease. Through natural conversation, AniSora becomes your digital companion for research, data analysis, and everyday challenges—combining powerful capabilities with an intuitive interface that understands what you need and delivers results.
-
-AniSora's powerful toolkit includes seamless browser automation to navigate the web and extract data, file management for document creation and editing, web crawling and extended search capabilities, command-line execution for system tasks, website deployment, and integration with various APIs and services. These capabilities work together harmoniously, allowing AniSora to solve your complex problems and automate workflows through simple conversations!
-
-[![License](https://img.shields.io/badge/License-Apache--2.0-blue)](./license)
-[![Discord Follow](https://dcbadge.limes.pink/api/server/Py6pCBUUPw?style=flat)](https://discord.gg/Py6pCBUUPw)
-[![Twitter Follow](https://img.shields.io/twitter/follow/kortixai)](https://x.com/kortixai)
-[![GitHub Repo stars](https://img.shields.io/github/stars/kortix-ai/suna)](https://github.com/kortix-ai/suna)
-[![Issues](https://img.shields.io/github/issues/kortix-ai/suna)](https://github.com/kortix-ai/suna/labels/bug)
+<img src="assets/index_icon.png" width="250"/>
 
 </div>
+<p align="center">
+       🖥️  <a href="https://github.com/bilibili/Index-anisora/tree/main">GitHub</a> &nbsp&nbsp  |  &nbsp&nbsp🤗 <a href=https://huggingface.co/IndexTeam/Index-anisora>Hugging Face</a>&nbsp&nbsp |  &nbsp&nbsp🤖 <a href=https://www.modelscope.cn/organization/bilibili-index>Model Scope</a>&nbsp&nbsp | 📑 <a href='http://arxiv.org/abs/2412.10255'><img src='https://img.shields.io/badge/ArXiv-2412.10255-red'></a> &nbsp&nbsp ｜  📑 <a href='http://arxiv.org/abs/2504.10044'><img src='https://img.shields.io/badge/ArXiv-2504.10044-red'></a> &nbsp&nbsp
 
-## Table of Contents
+**English** | [**中文简体**](./README_CN.md)
 
-- [AniSora Architecture](#project-architecture)
-  - [Backend API](#backend-api)
-  - [Frontend](#frontend)
-  - [Agent Docker](#agent-docker)
-  - [Supabase Database](#supabase-database)
-- [Use Cases](#use-cases)
-- [Self-Hosting](#self-hosting)
-- [Acknowledgements](#acknowledgements)
-- [License](#license)
+<br>
 
-## Project Architecture
+----
 
-![Architecture Diagram](docs/images/diagram.png)
+[**Index-AniSora:The Ultimate Open-Source Anime Video Generation Model**](http://arxiv.org/abs/2412.10255) <be> 
 
-AniSora consists of four main components:
+This Project presenting Bilibili's gift to the anime world - Index-AniSora, the most powerful open-source animated video generation model.
+It enables one-click creation of video shots across diverse anime styles including series episodes, Chinese original animations, manga adaptations, VTuber content, anime PVs, mad-style parodies(鬼畜动画), and more!
+Powered by our IJCAI'25-accepted work  <a href='http://arxiv.org/abs/2412.10255'>AniSora: Exploring the Frontiers of Animation Video Generation in the Sora Era </a>
 
-### Backend API
+## Video Demos
+<div align="center">
+    <video src="https://github.com/user-attachments/assets/4351fc5e-f7fd-456b-807e-82fdcb321de2" controls width="60%" poster=""></video>
+</div>
 
-Python/FastAPI service that handles REST endpoints, thread management, and LLM integration with Anthropic, and others via LiteLLM.
 
-### Frontend
+## 📣 Updates
 
-Next.js/React application providing a responsive UI with chat interface, dashboard, etc.
+- `2025/05/12` 🔥🔥Everything we build is open-source. Check Out Now!!!
+- `2025/05/10` 🔥Our paper is accepted by IJCAI25. Camera Ready Version is updated. 
+- `2024/12/19` We submitted our paper on arXiv and released our project with evaluation benchmark.
 
-### Agent Docker
+## Project Guide
 
-Isolated execution environment for every agent - with browser automation, code interpreter, file system access, tool integration, and security features.
+### AniSoraV1.0
+Find in 📁 `anisoraV1_infer`
 
-### Supabase Database
+Trained on the CogVideoX-5B foundation model, with full training and inference code released. 
+- Localized region guidance for video control
+- Temporal guidance (first/last frame guidance, keyframe interpolation, multi-frame guidance)
+- Full training and inference code release. Find in 📁 `anisoraV1_train_npu`
+- Cost-effective deployment on RTX 4090
+- Covers 80% of application scenarios
 
-Handles data persistence with authentication, user management, conversation history, file storage, agent state, analytics, and real-time subscriptions.
+### AniSoraV2.0
+Find in 📁 `anisoraV2_gpu`, `anisoraV2_npu` 
 
-## Use Cases
+Powered by the enhanced Wan2.1-14B foundation model for superior stability.
+- Distillation-accelerated inference without quality compromise, faster and cheaper
+- Full training/inference code release
+- Native support Huawei Ascend 910B NPUs (entirely trained on domestic chips) 📁 `anisoraV2_npu`.
+- High quality video shots generation, covers 90% of application scenarios
 
-1. **Competitor Analysis** ([Watch](https://www.suna.so/share/5ee791ac-e19c-4986-a61c-6d0659d0e5bc)) - _"Analyze the market for my next company in the healthcare industry, located in the UK. Give me the major players, their market size, strengths, and weaknesses, and add their website URLs. Once done, generate a PDF report."_
+### Ecosystem Tools
+Find in 📁 `data_pipeline`
 
-2. **VC List** ([Watch](https://www.suna.so/share/804d20a3-cf1c-4adb-83bb-0e77cc6adeac)) - _"Give me the list of the most important VC Funds in the United States based on Assets Under Management. Give me website URLs, and if possible an email to reach them out."_
+End-to-end dataset pipeline for rapid training data expansion.
+- Animate data cleaning pipeline.
 
-3. **Looking for Candidates** ([Watch](https://www.suna.so/share/3ae581b0-2db8-4c63-b324-3b8d29762e74)) - _"Go on LinkedIn, and find me 10 profiles available - they are not working right now - for a junior software engineer position, who are located in Munich, Germany. They should have at least one bachelor's degree in Computer Science or anything related to it, and 1-year of experience in any field/role."_
+### Anime-optimized Benchmark System
+Find in 📁 `reward`
 
-4. **Planning Company Trip** ([Watch](https://www.suna.so/share/725e64a0-f1e2-4bb6-8a1f-703c2833fd72)) - _"Generate me a route plan for my company. We should go to California. We'll be in 8 people. Compose the trip from the departure (Paris, France) to the activities we can do considering that the trip will be 7 days long - departure on the 21st of Apr 2025. Check the weather forecast and temperature for the upcoming days, and based on that, you can plan our activities (outdoor vs indoor)."_
+Specialized evaluation models and scoring algorithms for anime video generation, includes reward models suitable for reinforcement learning and benchmarking. 
+- Tailored evaluation framework for animation generation
+- Standard test dataset aligned with ACG aesthetics
+- Human Preference Alignment
 
-5. **Working on Excel** ([Watch](https://www.suna.so/share/128f23a4-51cd-42a6-97a0-0b458b32010e)) - _"My company asked me to set up an Excel spreadsheet with all the information about Italian lottery games (Lotto, 10eLotto, and Million Day). Based on that, generate and send me a spreadsheet with all the basic information (public ones)."_
+The benchmark dataset contains 948 animation video clips are collected and labeled with different actions. Each label contains 10-30 video clips. The corresponding text prompt is generated by Qwen-VL2 at first, then is corrected manually to guarantee the text-video alignment.
+Fill the form and send PDF format to yangsiqian@bilibili.com or xubaohan@bilibili.com (links provided after agreeing with Bilibili)
 
-6. **Automate Event Speaker Prospecting** ([Watch](https://www.suna.so/share/7a7592ea-ed44-4c69-bcb5-5f9bb88c188c)) - _"Find 20 AI ethics speakers from Europe who've spoken at conferences in the past year. Scrapes conference sites, cross-references LinkedIn and YouTube, and outputs contact info + talk summaries."_
 
-7. **Summarize and Cross-Reference Scientific Papers** ([Watch](https://www.suna.so/share/c2081b3c-786e-4e7c-9bf4-46e9b23bb662)) - _"Research and compare scientific papers talking about Alcohol effects on our bodies during the last 5 years. Generate a report about the most important scientific papers talking about the topic I wrote before."_
+### AniSoraV1.0_RL
+Find in 📁 `anisora_rl`
 
-8. **Research + First Contact Draft** ([Watch](https://www.suna.so/share/6b6296a6-8683-49e5-9ad0-a32952d12c44)) - _"Research my potential customers (B2B) on LinkedIn. They should be in the clean tech industry. Find their websites and their email addresses. After that, based on the company profile, generate a personalized first contact email where I present my company which is offering consulting services to cleantech companies to maximize their profits and reduce their costs."_
+The first RLHF framework for anime video generation. 
+- RL-optimized AniSoraV1.0 for enhanced anime-style output
+- Methodology detailed in our preprint: <a href='http://arxiv.org/abs/2504.10044'> Aligning Anime Video Generation with Human Feedback </a>
 
-9. **SEO Analysis** ([Watch](https://www.suna.so/share/43491cb0-cd6c-45f0-880c-66ddc8c4b842)) - _"Based on my website suna.so, generate an SEO report analysis, find top-ranking pages by keyword clusters, and identify topics I'm missing."_
+## 📑 Todo List
+- AniSoraV2.0
+    - [ ] Support 14B version, is excepted before the end of May.
+- AniSora Dataset
+    - [ ] **High quality training set open apply**
+- Anisora Benchmark
+    - [ ] Update latest SOTA models performance
+    - [ ] Provide more video demos on AniSora benchmark. 
 
-10. **Generate a Personal Trip** ([Watch](https://www.suna.so/share/37b31907-8349-4f63-b0e5-27ca597ed02a)) - _"Generate a personal trip to London, with departure from Bangkok on the 1st of May. The trip will last 10 days. Find an accommodation in the center of London, with a rating on Google reviews of at least 4.5. Find me interesting outdoor activities to do during the journey. Generate a detailed itinerary plan."_
+---
+## 💡 Abstract
+Animation has gained significant interest in the recent film and TV industry. Despite the success of advanced video generation models like Sora, Kling, and CogVideoX in generating natural videos, they lack the same effectiveness in handling animation videos. Evaluating animation video generation is also a great challenge due to its unique artist styles, violating the laws of physics and exaggerated motions. In this paper, we present a comprehensive system, **AniSora**, designed for animation video generation, which includes a data processing pipeline, a controllable generation model, and an evaluation dataset. Supported by the data processing pipeline with over 10M high-quality data, the generation model incorporates a spatiotemporal mask module to facilitate key animation production functions such as image-to-video generation, frame interpolation, and localized image-guided animation. We also collect an evaluation benchmark of 948 various animation videos, the evaluation on VBench and human double-blind test demonstrates consistency in character and motion, achieving state-of-the-art results in animation video generation.
 
-11. **Recently Funded Startups** ([Watch](https://www.suna.so/share/8b2a897e-985a-4d5e-867b-15239274f764)) - _"Go on Crunchbase, Dealroom, and TechCrunch, filter by Series A funding rounds in the SaaS Finance Space, and build a report with company data, founders, and contact info for outbound sales."_
+## 🖥️ Method
 
-12. **Scrape Forum Discussions** ([Watch](https://www.suna.so/share/7d7a5d93-a20d-48b0-82cc-e9a876e9fd04)) - _"I need to find the best beauty centers in Rome, but I want to find them by using open forums that speak about this topic. Go on Google, and scrape the forums by looking for beauty center discussions located in Rome. Then generate a list of 5 beauty centers with the best comments about them."_
+The overview of Index-anisora is shown as follows.
 
-## Self-Hosting
+<picture>
+  <img src="assets/framework.png"  width="800"/>
+</picture>
 
-AniSora can be self-hosted on your own infrastructure using our setup wizard. For a comprehensive guide to self-hosting AniSora, please refer to our [Self-Hosting Guide](./docs/SELF-HOSTING.md).
+Features:
 
-The setup process includes:
+1. We develop a comprehensive video processing system that significantly enhances preprocessing for video generation.
 
-- Setting up a Supabase project for database and authentication
-- Configuring Redis for caching and session management
-- Setting up Daytona for secure agent execution
-- Integrating with LLM providers (Anthropic, OpenAI, Groq, etc.)
-- Configuring web search and scraping capabilities
+2. We propose a unified framework designed for animation video generation with a spatiotemporal mask module, enabling tasks such as image-to-video generation, frame interpolation, and localized image-guided animation.
 
-### Quick Start
+3. We release a benchmark dataset specifically for evaluating animation video generation.
 
-1. **Clone the repository**:
 
-```bash
-git clone https://github.com/kortix-ai/suna.git
-cd suna
+## 🎞️ Showcases
+
+
+**Image-generated videos in different artistic styles:**
+
+| prmopt | image  | Video  |
+| --- | --- | --- |
+|The figures in the picture are sitting in a forward moving car waving to the rear, their hair swaying from side to side in the wind| <img src="assets/000000(225).png" width="800"/> |![Demo](assets/000000(225).gif)|
+|The scene shows two figures in red wedding clothes holding a red rope as they walk off into the distance|  <img src="assets/000000(223).png" width="800"/> |![Demo](assets/000000(223).gif)|
+|The yellow-haired figure reaches out to touch the head of the kneeling figure, and the kneeling figure's body rises and falls as he gasps for breath.|  <img src="assets/000000(232).png" width="800"/> |![Demo](assets/000000(232).gif)|
+|In the frame, a person sprints forward at high speed, their motion appearing slightly blurred from the velocity. | <img src="assets/image_1.jpg"  width="800"/> | ![Demo](assets/image_1_vid.gif)|
+|In the frame, the character raises their arm, with gaseous currents visibly flowing along its surface. | <img src="assets/image_2.jpg"  width="800"/> | ![Demo](assets/image_2_vid.gif)|
+|The old man's gaze locks onto the gemstone, his right hand subtly adjusting the magnifying glass as his lips move—as if it holds the key to unraveling some ancient knowledge or secret. | <img src="assets/image_3.jpg"  width="800"/> | ![Demo](assets/image_3_vid.gif)|
+|The man on the left presses his lips tightly together, his face etched with fury and resolve. Every line of his expression radiates both profound frustration and unshakable conviction. Meanwhile, the other man's jaw hangs open—poised as if to erupt into a shout or impassioned declaration. | <img src="assets/image_4.jpg"  width="800"/> | ![Demo](assets/image_4_vid.gif)|
+|The scene depicts an exploding rock, erupting in blinding light as shattered fragments blast outward in all directions. | <img src="assets/image_5.jpg"  width="800"/> | ![Demo](assets/image_5_vid.gif)|
+
+
+**Temporal Control:**
+
+| prmopt | first frame | mid frame| last frame  | Video  |
+| --- | --- | --- | --- | --- |
+|In this video we see a scene from the animated film Beauty and the Beast with Belle and the Beast. Belle, with long blonde hair, is standing in a room with large windows, looking out the window and talking to it. She is wearing a purple dress with a purple top...| <img src="assets/cartoon_films_ren_wu_shuo_hua_34_firstmidlast_first.png" width="800"/> |<img src="assets/cartoon_films_ren_wu_shuo_hua_34_firstmidlast_mid.png" width="800"/> |<img src="assets/cartoon_films_ren_wu_shuo_hua_34_firstmidlast_last.png" width="800"/> |![Demo](assets/cartoon_films_ren_wu_shuo_hua_34_firstmidlast.gif)|
+|In this video, a young woman with long blonde hair can be seen looking out from behind a car door at night. The car is parked under a starry sky with a full moon illuminating the scene. The woman appears to be in a state of worry, as evidenced by her facial expression and the way she grips the car door. |  <img src="assets/motion_comics_tui_la_5_firstlast_first.png" width="800"/> | None | <img src="assets/motion_comics_tui_la_5_firstlast_last.jpeg" width="800"/>|![Demo](assets/motion_comics_tui_la_5_firstlast.gif)|
+|A cartoon cat is the central figure in this video, which appears to be in a state of mischief or curiosity. The cat's eyes are closed and its mouth is open, suggesting a moment of surprise or anticipation...|None | None |<img src="assets/motion_comics_zhi_dong_xi_2_last.jpeg" width="800"/>|![Demo](assets/motion_comics_zhi_dong_xi_2_last.gif)|
+
+**Spatial Control:**
+
+| prmopt | first frame | motion mask |  Video(with motion mask visualization)  |
+| --- | --- | --- | --- | 
+|In this vibrant underwater scene from the animated film Finding Nemo, Marlin and Nemo, two clownfish, talk near a large purple piece of coral...| <img src="assets/132.png" width="800"/> |<img src="assets/132_mask.png" width="800"/> |![Demo](assets/132.gif)|
+|Same as above|  Same as above | <img src="assets/133_mask.png" width="800"/>|![Demo](assets/133.gif)|
+
+
+**<span style="font-size:18px;"> More videos are available in: [Video Gallery AniSoraV1.0](https://pwz4yo5eenw.feishu.cn/docx/XN9YdiOwCoqJuexLdCpcakSlnkg) </span>**
+
+## 📑 Evaluation
+
+Evaluation results on Vbench:
+
+| Method                   | Motion Smoothness | Motion Score | Aesthetic Quality | Imaging Quality | I2V Subject | I2V Background | Overall Consistency | Subject Consistency |
+|--------------------------|-------------------|--------------|-------------------|-----------------|-------------|----------------|---------------------|---------------------|
+| Opensora-Plan(V1.3)  | 99.13            | 76.45        | 53.21            | 65.11           | 93.53       | 94.71          | 21.67              | 88.86              |
+| Opensora(V1.2)       | 98.78            | 73.62        | 54.30            | 68.44           | 93.15       | 91.09          | 22.68              | 87.71              |
+| Vidu                 | 97.71            | **77.51**        | 53.68            | 69.23           | 92.25       | 93.06          | 20.87              | 88.27              |
+| Covideo(5B-V1)       | 97.67            | 71.47        | **54.87**            | 68.16           | 90.68       | 91.79          | 21.87              | 90.29              |
+| MiniMax              | 99.20            | 66.53        | 54.56            | **71.67**           | 95.95       | **95.42**          | 21.82              | 93.62              |
+| **AniSora**              | **99.34**        | 45.59        | 54.31            | 70.58           | **97.52**       | 95.04          | 21.15              | **96.99**              |
+| AniSora-K            | 99.12            | 59.49        | 53.76            | 68.68           | 95.13       | 93.36          | 21.13              | 94.61              |
+| AniSora-I            | 99.31            | 54.96        | 54.67            | 68.98           | 94.16       | 92.38          | 20.47              | 95.75              |
+| GT                   | 98.72            | 56.05        | 52.70            | 70.50           | 96.02       | 95.03          | 21.29              | 94.37              |
+
+
+Evaluation results on AniSora-Benchmark:
+
+| Method                   | Human Evaluation | Visual Smooth | Visual Motion | Visual Appeal | Text-Video Consistency | Image-Video Consistency | Character Consistency |
+|--------------------------|------------------|---------------|---------------|---------------|------------------------|-------------------------|-----------------------|
+| Vidu-1.5                 | 60.98            | 55.37         | **78.95**     | 50.68         | 60.71                  | 66.85                   | 82.57                 |
+| Opensora-V1.2            | 41.10            | 22.28         | 74.90         | 22.62         | 52.19                  | 55.67                   | 74.76                 |
+| Opensora-Plan-V1.3       | 46.14            | 35.08         | 77.47         | 36.14         | 56.19                  | 59.42                   | 81.19                 |
+| CogVideoX-5B-V1          | 53.29            | 39.91         | 73.07         | 39.59         | 67.98                  | 65.49                   | 83.07                 |
+| MiniMax-I2V01            | 69.63            | 69.38         | 68.05         | **70.34**     | **76.14**              | 78.74                   | 89.47                 |
+| **AniSora (Ours)**       | **70.13**        | **71.47**     | 47.94         | 64.44         | 72.92                  | **81.54**               | **94.54**             |
+| AniSora (Interpolated Avg) | -             | 70.78         | 53.02         | 64.41         | 73.56                  | 80.62                   | 91.59                 |
+| AniSora (KeyFrame Interp) | -             | 70.03         | 58.10         | 64.57         | 74.57                  | 80.78                   | 91.98                 |
+| AniSora (KeyFrame Interp) | -             | 70.03         | 58.10         | 64.57         | 74.57                  | 80.78                   | 91.98                 |
+| GT                       | -                | 92.20         | 58.27         | 89.72         | 92.51                  | 94.69                   | 95.08                 |
+
+
+
+AniSora for our I2V results.
+
+AniSora-K for the key frame interpolation results.
+
+AniSora-I for the average results of frame interpolation conditions, including key frame, last frame, mid frame results.
+
+## 🐳 Benchmark Dataset
+
+The benchmark dataset contains 948 animation video clips are collected and labeled
+with different actions. Each label contains 10-30 video clips. The corresponding text prompt is generated by Qwen-VL2 at first, then is corrected manually to guarantee the text-video alignment.
+
+Fill the  <a href="assets/anisora_benchmark_agreement_form.doc">form</a> and send PDF format to yangsiqian@bilibili.com or xubaohan@bilibili.com (links provided after agreeing with Bilibili)
+
+## 🤗 Acknowledgments
+We would like to express our sincere thanks to the [CogVideoX](https://github.com/THUDM/CogVideo)、[Wan2.1](https://github.com/Wan-Video/Wan2.1)、[FasterCache](https://github.com/Vchitect/FasterCache) and [OSS](https://github.com/bebebe666/OptimalSteps) for their valuable work.
+
+## 📚 Citation
+
+🌟 If you find our work helpful, please leave us a star and cite our paper.
+
+```
+@article{jiang2024anisora,
+  title={AniSora: Exploring the Frontiers of Animation Video Generation in the Sora Era},
+  author={Yudong Jiang, Baohan Xu, Siqian Yang, Mingyu Yin, Jing Liu, Chao Xu, Siqi Wang, Yidi Wu, Bingwen Zhu, Xinwen Zhang, Xingyu Zheng,Jixuan Xu, Yue Zhang, Jinlong Hou and Huyang Sun},
+  journal={arXiv preprint arXiv:2412.10255},
+  year={2024}
+}
 ```
 
-2. **Run the setup wizard**:
-
-```bash
-python setup.py
-```
-
-3. **Start or stop the containers**:
-
-```bash
-python start.py
-```
-
-### Manual Setup
-
-See the [Self-Hosting Guide](./docs/SELF-HOSTING.md) for detailed manual setup instructions.
-
-The wizard will guide you through all necessary steps to get your AniSora instance up and running. For detailed instructions, troubleshooting tips, and advanced configuration options, see the [Self-Hosting Guide](./SELF-HOSTING.md).
-
-## Contributing
-
-We welcome contributions from the community! Please see our [Contributing Guide](./CONTRIBUTING.md) for more details.
-
-## Acknowledgements
-
-### Main Contributors
-
-- [Adam Cohen Hillel](https://x.com/adamcohenhillel)
-- [Dat-lequoc](https://x.com/datlqqq)
-- [Marko Kraemer](https://twitter.com/markokraemer)
-
-### Technologies
-
-- [Daytona](https://daytona.io/) - Secure agent execution environment
-- [Supabase](https://supabase.com/) - Database and authentication
-- [Playwright](https://playwright.dev/) - Browser automation
-- [OpenAI](https://openai.com/) - LLM provider
-- [Anthropic](https://www.anthropic.com/) - LLM provider
-- [Tavily](https://tavily.com/) - Search capabilities
-- [Firecrawl](https://firecrawl.dev/) - Web scraping capabilities
-- [RapidAPI](https://rapidapi.com/) - API services
-
-## License
-
-Kortix AniSora is licensed under the Apache License, Version 2.0. See [LICENSE](./LICENSE) for the full license text.
