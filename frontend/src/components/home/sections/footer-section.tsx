@@ -43,7 +43,7 @@ export function FooterSection() {
             {siteConfig.hero.description}
           </p>
 
-          <div className="flex items-center gap-4">
+          {/* <div className="flex items-center gap-4">
             <a
               href="https://github.com/bilibili/Index-anisora"
               target="_blank"
@@ -95,7 +95,7 @@ export function FooterSection() {
                 />
               </svg>
             </a>
-          </div>
+          </div> */}
           {/* <div className="flex items-center gap-2 dark:hidden">
             <Icons.soc2 className="size-12" />
             <Icons.hipaa className="size-12" />

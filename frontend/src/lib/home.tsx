@@ -1116,11 +1116,11 @@ export const siteConfig = {
   },
   footerLinks: [
     {
-      title: 'Bilibili',
+      title: 'AniSora',
       links: [
         { id: 1, title: 'Documentation', url: 'https://github.com/bilibili/Index-anisora' },
         { id: 3, title: 'Contact', url: 'https://github.com/bilibili/Index-anisora/issues' },
-        // { id: 4, title: 'Careers', url: 'https://kortix.ai/careers' },
+        { id: 4, title: 'Start Using', url: '/auth' },
       ],
     },
     {
@@ -1128,8 +1128,7 @@ export const siteConfig = {
       links: [
         { id: 1, title: 'Home', url: '#hero' },
         { id: 2, title: 'Use Cases', url: '#showcase' },
-        { id: 3, title: 'Open Source', url: '#open-source' },
-        { id: 4, title: 'FAQ', url: '#faq' },
+        { id: 3, title: 'FAQ', url: '#faq' },
       ],
     },
     {
