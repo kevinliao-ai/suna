@@ -1118,21 +1118,18 @@ export const siteConfig = {
     {
       title: 'Bilibili',
       links: [
-        { id: 1, title: 'About', url: 'https://kortix.ai' },
-        { id: 3, title: 'Contact', url: 'mailto:hey@kortix.ai' },
-        { id: 4, title: 'Careers', url: 'https://kortix.ai/careers' },
+        { id: 1, title: 'Documentation', url: 'https://github.com/bilibili/Index-anisora' },
+        { id: 3, title: 'Contact', url: 'https://github.com/bilibili/Index-anisora/issues' },
+        // { id: 4, title: 'Careers', url: 'https://kortix.ai/careers' },
       ],
     },
     {
-      title: 'Resources',
+      title: 'Quick Links',
       links: [
-        {
-          id: 5,
-          title: 'Documentation',
-          url: 'https://github.com/bilibili/Index-anisora',
-        },
-        { id: 7, title: 'Discord', url: 'https://discord.gg/Py6pCBUUPw' },
-        { id: 8, title: 'GitHub', url: 'https://github.com/bilibili/Index-anisora' },
+        { id: 1, title: 'Home', url: '#hero' },
+        { id: 2, title: 'Use Cases', url: '#showcase' },
+        { id: 3, title: 'Open Source', url: '#open-source' },
+        { id: 4, title: 'FAQ', url: '#faq' },
       ],
     },
     {

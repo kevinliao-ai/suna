@@ -130,7 +130,7 @@ export function Navbar() {
               <Image
                 src={logoSrc}
                 alt="AniSora Logo"
-                width={140}
+                width={120}
                 height={22}
                 priority
               />

@@ -9,14 +9,14 @@ export function HeroVideoSection() {
           className="block dark:hidden"
           animationStyle="from-center"
           videoSrc={AniSoraHeroVideo}
-          // thumbnailSrc="/thumbnail-light.png"
+          thumbnailSrc="/examples/000000(225).gif"
           thumbnailAlt="Video Demos"
         />
         <HeroVideoDialog
           className="hidden dark:block"
           animationStyle="from-center"
           videoSrc={AniSoraHeroVideo}
-          // thumbnailSrc="/thumbnail-dark.png"
+          thumbnailSrc="/examples/000000(225).gif"
           thumbnailAlt="Video Demos"
         />
       </div>

@@ -86,20 +86,41 @@ export function UseCasesSection() {
           </p>
         </div>
 
-        <Tabs defaultValue="image-to-video" className="w-full">
-          <div className="flex justify-center mb-8">
-            <TabsList className="grid w-full max-w-md grid-cols-3">
-              <TabsTrigger value="image-to-video" className="flex items-center gap-2">
-                <ImageIcon className="h-4 w-4" />
-                <span>Image to Video</span>
+        <Tabs defaultValue="image-to-video" className="w-full overflow-hidden">
+          <div className="flex justify-center mb-6 px-4 sm:px-0">
+            <TabsList className="h-full grid w-full max-w-2xl grid-cols-3 p-1 bg-gray-100 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <TabsTrigger 
+                value="image-to-video" 
+                className="flex items-center justify-center sm:justify-start gap-1 sm:gap-2 px-2 sm:px-4 py-2 sm:py-3 text-sm sm:text-base rounded-lg transition-all duration-200 
+                  data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-primary 
+                  data-[state=active]:border data-[state=active]:border-gray-200 
+                  dark:data-[state=active]:border-gray-700 dark:data-[state=active]:bg-gray-900 
+                  dark:data-[state=active]:text-white whitespace-nowrap"
+              >
+                <ImageIcon className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+                <span className="font-medium truncate">Image to Video</span>
               </TabsTrigger>
-              <TabsTrigger value="temporal" className="flex items-center gap-2">
-                <Film className="h-4 w-4" />
-                <span>Temporal Control</span>
+              <TabsTrigger 
+                value="temporal" 
+                className="flex items-center justify-center sm:justify-start gap-1 sm:gap-2 px-2 sm:px-4 py-2 sm:py-3 text-sm sm:text-base rounded-lg transition-all duration-200 
+                  data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-primary 
+                  data-[state=active]:border data-[state=active]:border-gray-200 
+                  dark:data-[state=active]:border-gray-700 dark:data-[state=active]:bg-gray-900 
+                  dark:data-[state=active]:text-white whitespace-nowrap"
+              >
+                <Film className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+                <span className="font-medium truncate">Temporal</span>
               </TabsTrigger>
-              <TabsTrigger value="spatial" className="flex items-center gap-2">
-                <Move3D className="h-4 w-4" />
-                <span>Spatial Control</span>
+              <TabsTrigger 
+                value="spatial" 
+                className="flex items-center justify-center sm:justify-start gap-1 sm:gap-2 px-2 sm:px-4 py-2 sm:py-3 text-sm sm:text-base rounded-lg transition-all duration-200 
+                  data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-primary 
+                  data-[state=active]:border data-[state=active]:border-gray-200 
+                  dark:data-[state=active]:border-gray-700 dark:data-[state=active]:bg-gray-900 
+                  dark:data-[state=active]:text-white whitespace-nowrap"
+              >
+                <Move3D className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+                <span className="font-medium truncate">Spatial</span>
               </TabsTrigger>
             </TabsList>
           </div>
@@ -124,7 +145,7 @@ export function UseCasesSection() {
 
           {/* Spatial Control Tab */}
           <TabsContent value="spatial">
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="flex justify-center">
               {spatialControlExamples.map((example) => (
                 <VideoExampleCard key={example.id} example={example} type="spatial" />
               ))}

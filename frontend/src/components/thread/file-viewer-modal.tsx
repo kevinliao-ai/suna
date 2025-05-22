@@ -873,7 +873,7 @@ export function FileViewerModal({
             .markdown-content pre { background-color: #f8f8f8; }
           </style>
         </head>
-        <body>
+        <body suppressHydrationWarning={true}>
           <div class="markdown-content">
             ${markdownContent}
           </div>
