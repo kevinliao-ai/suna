@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useCallback } from 'react';
 import Link from 'next/link';
 import { FlickeringGrid } from '@/components/home/ui/flickering-grid';
 import { useMediaQuery } from '@/hooks/use-media-query';
@@ -23,11 +23,11 @@ function LegalContent() {
   const [isScrolling, setIsScrolling] = useState(false);
 
   // Function to update URL without refreshing the page
-  const updateUrl = (tab: string) => {
+  const updateUrl = useCallback((tab: string) => {
     const params = new URLSearchParams(searchParams);
     params.set('tab', tab);
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-  };
+  }, [searchParams, router, pathname]);
 
   useEffect(() => {
     setMounted(true);
@@ -114,16 +114,6 @@ function LegalContent() {
             <div className="flex justify-center mb-8">
               <div className="flex space-x-4 border-b border-border">
                 <button
-                  onClick={() => handleTabChange('terms')}
-                  className={`pb-2 px-4 ${
-                    activeTab === 'terms'
-                      ? 'border-b-2 border-secondary font-medium text-secondary'
-                      : 'text-muted-foreground hover:text-primary/80 transition-colors'
-                  }`}
-                >
-                  Terms of Service
-                </button>
-                <button
                   onClick={() => handleTabChange('privacy')}
                   className={`pb-2 px-4 ${
                     activeTab === 'privacy'
@@ -132,6 +122,16 @@ function LegalContent() {
                   }`}
                 >
                   Privacy Policy
+                </button>
+                <button
+                  onClick={() => handleTabChange('terms')}
+                  className={`pb-2 px-4 ${
+                    activeTab === 'terms'
+                      ? 'border-b-2 border-secondary font-medium text-secondary'
+                      : 'text-muted-foreground hover:text-primary/80 transition-colors'
+                  }`}
+                >
+                  Terms of Service
                 </button>
               </div>
             </div>
@@ -157,11 +157,10 @@ function LegalContent() {
                     <p className="text-muted-foreground text-balance mb-6">
                       PLEASE READ THESE TERMS OF USE ("AGREEMENT" OR "TERMS OF
                       USE" or "TERMS OF SERVICE" or "TERMS AND CONDITIONS")
-                      CAREFULLY BEFORE USING THE SERVICES OFFERED BY AniSora AI
-                      Corp (701 Tillery Street Unit 12-2521 Austin, Texas 78702,
-                      United States). THIS AGREEMENT SETS FORTH THE LEGALLY
-                      BINDING TERMS AND CONDITIONS FOR YOUR USE OF THE SUNA
-                      WEBSITE AND ALL RELATED SERVICES.
+                      CAREFULLY BEFORE USING THE SERVICES OFFERED BY Bilibili.
+                      THIS AGREEMENT SETS FORTH THE LEGALLY BINDING TERMS AND
+                      CONDITIONS FOR YOUR USE OF THE ANISORA ANIME VIDEO GENERATION
+                      PLATFORM AND ALL RELATED SERVICES.
                     </p>
 
                     <h3 className="text-lg font-medium tracking-tight">
@@ -169,33 +168,33 @@ function LegalContent() {
                     </h3>
                     <ul className="text-muted-foreground space-y-1 mb-6">
                       <li>
-                        "Company" refers to AniSora AI Corp (701 Tillery Street
-                        Unit 12-2521 Austin, Texas 78702, United States).
+                        "Company" refers to Bilibili, the provider of the AniSora
+                        anime video generation platform.
                       </li>
                       <li>
-                        "Site" refers to the AniSora website, including any related
-                        features, content, or applications offered from time to
-                        time by the Company.
+                        "Site" refers to the AniSora platform, including any related
+                        features, content, or applications for anime video generation
+                        offered from time to time by the Company.
                       </li>
                       <li>
-                        "Service" refers to the AniSora website and all related
-                        services provided by the Company, including the
-                        AI-powered agent that helps you accomplish real-world
-                        tasks.
+                        "Service" refers to the AniSora platform and all related
+                        services provided by the Company, including AI-powered
+                        anime video generation, frame interpolation, and other
+                        animation-related features.
                       </li>
                       <li>
                         "User" refers to any individual or entity using the Site
                         or Service.
                       </li>
                       <li>
-                        "Content" refers to any text, images, code, or other
+                        "Content" refers to any text, images, videos, or other
                         material uploaded to or generated by the Site or Service
                         by Users.
                       </li>
                       <li>
-                        "Assets" refers to the results and outputs generated by
-                        the AI models provided by the Service, including any
-                        code, applications, or reports.
+                        "Assets" refers to the video and animation outputs
+                        generated by the AI models provided by the Service,
+                        including any intermediate frames or results.
                       </li>
                       <li>
                         "Terms of Use" refers to these terms and conditions
@@ -376,12 +375,12 @@ function LegalContent() {
                       Accuracy Disclaimer
                     </h3>
                     <p className="text-muted-foreground text-balance mb-6">
-                      The Service is provided for general assistance purposes.
-                      The analysis and results generated by the AI are not
-                      guaranteed to be error-free and should be thoroughly
-                      verified before relying on them. Users assume full
-                      responsibility for any content created or actions
-                      performed using the Service.
+                      The Service is provided for anime video generation purposes.
+                      The videos and animations generated by the AI are not
+                      guaranteed to be error-free and should be reviewed before
+                      use. Users assume full responsibility for any content
+                      created using the Service, including ensuring it complies
+                      with all applicable laws and respects intellectual property rights.
                     </p>
 
                     <h3 className="text-lg font-medium tracking-tight">
@@ -389,16 +388,14 @@ function LegalContent() {
                     </h3>
                     <p className="text-muted-foreground text-balance mb-6">
                       The Company utilizes artificial intelligence systems to
-                      generate content and perform actions. Such generation may
+                      generate anime-style videos. Such generation may
                       unintentionally involve copyrighted material or trademarks
                       held by others. We respect rights holders internationally,
                       and we ask our users to do the same. If you believe your
                       copyright or trademark is being infringed by the Service,
-                      please write to legal@kortixai.com and we will process and
-                      investigate your request and take appropriate actions
-                      under the Digital Millennium Copyright Act and other
-                      applicable intellectual property laws with respect to any
-                      alleged or actual infringement.
+                      please contact us through the appropriate channels and we will
+                      process and investigate your request in accordance with
+                      applicable intellectual property laws.
                     </p>
 
                     <h3 className="text-lg font-medium tracking-tight">
@@ -406,16 +403,11 @@ function LegalContent() {
                     </h3>
                     <p className="text-muted-foreground text-balance mb-4">
                       The Company may offer paid Services. You can learn more
-                      about our pricing after signing up. You may sign up for a
-                      subscription, payable in U.S. dollars, that will
-                      automatically renew. You can stop using the Service and
-                      cancel your subscription at any time through the website
-                      or by emailing us at legal@kortixai.com. If you cancel
-                      your subscription, you may not receive a refund or credit
-                      for any amounts that have already been billed or paid. The
-                      Company reserves the right to change its prices at any
-                      time. If you are on a subscription plan, changes to
-                      pricing will not apply until your next renewal.
+                      about our pricing through our official channels. The Company
+                      reserves the right to change its service offerings and
+                      pricing at any time. For the most up-to-date information
+                      about our services and pricing, please refer to our official
+                      website or contact our support team.
                     </p>
 
                     <p className="text-muted-foreground text-balance mb-6">
@@ -681,7 +673,7 @@ function LegalContent() {
                       made as to the suitability of the Assets for you.
                     </p>
 
-                    <h3 className="text-lg font-medium tracking-tight">
+                    {/* <h3 className="text-lg font-medium tracking-tight">
                       Contact Us
                     </h3>
                     <p className="text-muted-foreground text-balance mb-6">
@@ -694,7 +686,7 @@ function LegalContent() {
                         legal@kortixai.com
                       </a>
                       .
-                    </p>
+                    </p> */}
                   </div>
                 ) : (
                   <div>
@@ -712,10 +704,12 @@ function LegalContent() {
                       Our commitment to privacy and data protection is reflected
                       in this Privacy Statement which describes how we collect
                       and process "personal information" that identifies you,
-                      like your name or email address. Any other information
-                      besides this is "non-personal information." If we store
-                      personal information with non-personal information, we'll
-                      consider that combination to be personal information.
+                      like your name or email address. For the AniSora service,
+                      we process video and image data you provide for the purpose
+                      of generating anime-style videos. We do not store your
+                      input data longer than necessary to provide the service.
+                      Any other information besides personal information is
+                      considered "non-personal information."
                     </p>
 
                     <p className="text-muted-foreground text-balance mb-6">
@@ -728,9 +722,11 @@ function LegalContent() {
                     </p>
 
                     <p className="text-muted-foreground text-balance mb-6">
-                      AniSora does not collect biometric or identifying
-                      information. All data is processed securely and any data
-                      is deleted upon account removal.
+                      AniSora processes video and image data you provide
+                      to generate anime-style videos. We implement appropriate
+                      security measures to protect your data. Input data is
+                      processed temporarily and not stored longer than necessary
+                      to provide the service.
                     </p>
 
                     <h3 className="text-lg font-medium tracking-tight">
@@ -906,7 +902,7 @@ function LegalContent() {
                       required by law.
                     </p>
 
-                    <h3 className="text-lg font-medium tracking-tight">
+                    {/* <h3 className="text-lg font-medium tracking-tight">
                       Contact Us
                     </h3>
                     <p className="text-muted-foreground text-balance">
@@ -918,7 +914,7 @@ function LegalContent() {
                         legal@kortixai.com
                       </a>
                       .
-                    </p>
+                    </p> */}
                   </div>
                 )}
               </div>
