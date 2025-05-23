@@ -2071,6 +2071,7 @@ async def test_browser_api_2():
 if __name__ == '__main__':
     import uvicorn
     import sys
+    import os
     
     # Check command line arguments for test mode
     test_mode_1 = "--test" in sys.argv
@@ -2084,4 +2085,5 @@ if __name__ == '__main__':
         asyncio.run(test_browser_api_2())
     else:
         print("Starting API server")
-        uvicorn.run("browser_api:api_app", host="0.0.0.0", port=8003)
+        port = int(os.environ.get("PORT", 8003))  # 使用环境变量PORT，如果没有则默认8003
+        uvicorn.run("browser_api:api_app", host="0.0.0.0", port=port)
