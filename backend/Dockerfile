@@ -1,55 +1,52 @@
 FROM python:3.11-slim
 
-# Set environment variables
+# 设置环境变量
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     ENV_MODE="production" \
-    PYTHONPATH=/app
+    PYTHONPATH=/app \
+    WORKERS=33 \
+    THREADS=2 \
+    WORKER_CONNECTIONS=2000
 
 WORKDIR /app
 
-# Install system dependencies
+# 安装系统依赖
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Create non-root user and set up directories
+# 创建非 root 用户并设置目录
 RUN useradd -m -u 1000 appuser && \
     mkdir -p /app/logs && \
     chown -R appuser:appuser /app
 
-# Install Python dependencies
+# 安装 Python 依赖
 COPY --chown=appuser:appuser requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt gunicorn
 
-# Switch to non-root user
+# 切换到非 root 用户
 USER appuser
 
-# Copy application code
+# 复制应用代码
 COPY --chown=appuser:appuser . .
 
-# Expose the port the app runs on
+# 暴露应用运行的端口
 EXPOSE 8000
 
-# Calculate optimal worker count based on 16 vCPUs
-# Using (2*CPU)+1 formula for CPU-bound applications
-ENV WORKERS=33
-ENV THREADS=2
-ENV WORKER_CONNECTIONS=2000
-
-# Gunicorn configuration
-CMD ["sh", "-c", "gunicorn api:app \
-     --workers $WORKERS \
+# 使用 shell 形式的 CMD 指令，确保环境变量被正确解析
+CMD sh -c "gunicorn api:app \
+     --workers ${WORKERS} \
      --worker-class uvicorn.workers.UvicornWorker \
-     --bind 0.0.0.0:8000 \
+     --bind 0.0.0.0:${PORT:-8000} \
      --timeout 1800 \
      --graceful-timeout 600 \
      --keep-alive 1800 \
      --max-requests 0 \
      --max-requests-jitter 0 \
      --forwarded-allow-ips '*' \
-     --worker-connections $WORKER_CONNECTIONS \
+     --worker-connections ${WORKER_CONNECTIONS} \
      --worker-tmp-dir /dev/shm \
      --preload \
      --log-level info \
@@ -57,4 +54,4 @@ CMD ["sh", "-c", "gunicorn api:app \
      --error-logfile - \
      --capture-output \
      --enable-stdio-inheritance \
-     --threads $THREADS"]
+     --threads ${THREADS}"
