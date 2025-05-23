@@ -150,15 +150,14 @@ if __name__ == "__main__":
     import uvicorn
     import os
     
-    # 从环境变量获取端口，默认为8000
-    port = int(os.environ.get("PORT", 8000))
-    workers = int(os.environ.get("WORKERS", 2))
+    # Get port from environment variable with fallback
+    port = int(os.environ.get("PORT", "8000"))
+    workers = int(os.environ.get("WORKERS", "2"))
     
     logger.info(f"Starting server on 0.0.0.0:{port} with {workers} workers")
     uvicorn.run(
         "api:app", 
         host="0.0.0.0", 
         port=port,
-        workers=workers,
-        # reload=True
+        workers=workers
     )
