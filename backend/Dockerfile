@@ -1,5 +1,4 @@
-# 使用最新的 Python 3.11 版本，并基于 Debian bookworm 以获得更好的安全更新
-FROM python:3.11-slim-bookworm
+FROM python:3.11-slim
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
@@ -9,13 +8,11 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /app
 
-# 更新系统包并安装依赖
-RUN apt-get update && apt-get upgrade -y --no-install-recommends && \
-    apt-get install -y --no-install-recommends \
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     curl \
-    && apt-get clean && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+    && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user and set up directories
 RUN useradd -m -u 1000 appuser && \
@@ -41,17 +38,14 @@ ENV WORKERS=33
 ENV THREADS=2
 ENV WORKER_CONNECTIONS=2000
 
-# Set default port if not provided
-ENV PORT=8000
-
 # Gunicorn configuration
-CMD exec gunicorn api:app \
-    --workers $WORKERS \
-    --worker-class uvicorn.workers.UvicornWorker \
-    --bind 0.0.0.0:${PORT:-8000} \
-    --timeout 1800 \
-    --graceful-timeout 600 \
-    --keep-alive 1800 \
+CMD ["sh", "-c", "gunicorn api:app \
+     --workers $WORKERS \
+     --worker-class uvicorn.workers.UvicornWorker \
+     --bind 0.0.0.0:8000 \
+     --timeout 1800 \
+     --graceful-timeout 600 \
+     --keep-alive 1800 \
      --max-requests 0 \
      --max-requests-jitter 0 \
      --forwarded-allow-ips '*' \

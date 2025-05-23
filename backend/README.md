@@ -1,4 +1,4 @@
-# AniSora Backend
+# Suna Backend
 
 ## Running the backend
 

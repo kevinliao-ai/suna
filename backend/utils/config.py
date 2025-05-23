@@ -115,7 +115,7 @@ class Configuration:
     OPENROUTER_API_KEY: Optional[str] = None
     OPENROUTER_API_BASE: Optional[str] = "https://openrouter.ai/api/v1"
     OR_SITE_URL: Optional[str] = "https://kortix.ai"
-    OR_APP_NAME: Optional[str] = "AniSora AI"    
+    OR_APP_NAME: Optional[str] = "Kortix AI"    
     
     # AWS Bedrock credentials
     AWS_ACCESS_KEY_ID: Optional[str] = None
@@ -137,9 +137,9 @@ class Configuration:
     REDIS_SSL: bool = True
     
     # Daytona sandbox configuration
-    DAYTONA_API_KEY: Optional[str] = None
-    DAYTONA_SERVER_URL: Optional[str] = None
-    DAYTONA_TARGET: Optional[str] = None
+    DAYTONA_API_KEY: str
+    DAYTONA_SERVER_URL: str
+    DAYTONA_TARGET: str
     
     # Search and other API keys
     TAVILY_API_KEY: str
