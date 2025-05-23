@@ -148,16 +148,14 @@ async def health_check():
 
 if __name__ == "__main__":
     import uvicorn
-    import os
     
-    # Get port from environment variable with fallback
-    port = int(os.environ.get("PORT", "8000"))
-    workers = int(os.environ.get("WORKERS", "2"))
+    workers = 2
     
-    logger.info(f"Starting server on 0.0.0.0:{port} with {workers} workers")
+    logger.info(f"Starting server on 0.0.0.0:8000 with {workers} workers")
     uvicorn.run(
         "api:app", 
         host="0.0.0.0", 
-        port=port,
-        workers=workers
+        port=8000,
+        workers=workers,
+        # reload=True
     )
