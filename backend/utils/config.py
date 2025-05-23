@@ -1,7 +1,12 @@
+import logging
+from typing import Optional
+
+logger = logging.getLogger(__name__)
+
 # 在 Configuration 类中，只保留最基本的配置项
 class Configuration:
     # 基础配置
-    ENV_MODE: EnvMode = EnvMode.LOCAL
+    ENV_MODE: str = "local"  # 使用字符串代替枚举
     
     # 必需的服务配置
     SUPABASE_URL: str = ""
@@ -17,6 +22,10 @@ class Configuration:
     OPENAI_API_KEY: Optional[str] = None
     ANTHROPIC_API_KEY: Optional[str] = None
 
+    def __init__(self):
+        """Initialize configuration"""
+        self._validate()
+
     def _validate(self):
         """只验证最基础的配置"""
         required_fields = [
@@ -27,3 +36,6 @@ class Configuration:
         missing = [f for f in required_fields if not getattr(self, f, None)]
         if missing:
             logger.warning(f"Missing recommended configuration: {', '.join(missing)}")
+
+# 创建配置实例
+config = Configuration()

@@ -1,0 +1,40 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.env
+.venv
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+logs/
+*.log
+
+# Local development
+*.local
+
+# Build files
+build/
+dist/
+*.egg-info/
+
+# Test files
+tests/
+
+# Development files
+Dockerfile.dev
+docker-compose*.yml
