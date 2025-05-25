@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 
 export function KortixLogo() {
   const { theme } = useTheme();
@@ -14,14 +15,16 @@ export function KortixLogo() {
   }, []);
 
   return (
-    <div className="flex h-6 w-6 items-center justify-center flex-shrink-0">
+    <div className="flex h-14 items-center justify-center flex-shrink-0">
+      <Link href="/">
       <Image
-        src="/kortix-symbol.svg"
-        alt="Kortix"
-        width={24}
-        height={24}
+        src="/anisora-logo.png"
+        alt="AniSora"
+        width={52}
+        height={52}
         className={`${mounted && theme === 'dark' ? 'invert' : ''}`}
       />
+      </Link>
     </div>
   );
 }
