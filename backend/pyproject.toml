@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "suna"
+name = "AniSora"
 version = "1.0"
-description = "open source generalist AI Agent"
+description = "The Ultimate Open-Source Anime Video Generation Model"
 authors = ["marko-kraemer <mail@markokraemer.com>"]
 readme = "README.md"
 license = "MIT"

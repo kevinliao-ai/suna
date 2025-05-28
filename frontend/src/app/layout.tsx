@@ -28,32 +28,44 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
   title: {
     default: siteConfig.name,
-    template: `%s - ${siteConfig.name}`,
+    template: `%s | ${siteConfig.name}`,
   },
-  description:
-    'AniSora is a fully open source AI assistant that helps you accomplish real-world tasks with ease. Through natural conversation, AniSora becomes your digital companion for research, data analysis, and everyday challenges.',
-  keywords: [
-    'AI',
-    'artificial intelligence',
-    'browser automation',
-    'web scraping',
-    'file management',
-    'AI assistant',
-    'open source',
-    'research',
-    'data analysis',
-  ],
-  authors: [{ name: 'Kortix Team', url: 'https://suna.so' }],
-  creator:
-    'Kortix Team - Adam Cohen Hillel, Marko Kraemer, Domenico Gagliardi, and Quoc Dat Le',
-  publisher:
-    'Kortix Team - Adam Cohen Hillel, Marko Kraemer, Domenico Gagliardi, and Quoc Dat Le',
-  category: 'Technology',
+  description: siteConfig.description,
+  keywords: siteConfig.keywords,
+  authors: [{ name: 'AniSora Team', url: 'https://github.com/bilibili/Index-anisora' }],
+  creator: 'AniSora Team',
+  publisher: 'Bilibili',
   applicationName: 'AniSora',
+  category: 'Technology',
   formatDetection: {
-    telephone: false,
     email: false,
     address: false,
+    telephone: false,
+  },
+  openGraph: {
+    title: siteConfig.title,
+    description: siteConfig.description,
+    url: siteConfig.url,
+    siteName: siteConfig.siteName,
+    locale: siteConfig.locale,
+    type: 'website',
+    images: [
+      {
+        url: '/banner.png',
+        width: 1200,
+        height: 630,
+        alt: 'AniSora - Open Source Anime Video Generation Model',
+        type: 'image/png',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: siteConfig.title,
+    description: siteConfig.description,
+    images: ['/banner.png'],
+    creator: '@bilibili',
+    site: '@bilibili',
   },
   robots: {
     index: true,
@@ -61,50 +73,28 @@ export const metadata: Metadata = {
     googleBot: {
       index: true,
       follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
     },
   },
-  openGraph: {
-    title: 'AniSora - Open Source Generalist AI Agent',
-    description:
-      'AniSora is a fully open source AI assistant that helps you accomplish real-world tasks with ease through natural conversation.',
-    url: siteConfig.url,
-    siteName: 'AniSora',
-    // images: [
-    //   {
-    //     url: '/banner.png',
-    //     width: 1200,
-    //     height: 630,
-    //     alt: 'AniSora - Open Source Generalist AI Agent',
-    //     type: 'image/png',
-    //   },
-    // ],
-    locale: 'en_US',
-    type: 'website',
+  verification: {
+    // Add Google Search Console verification if available
+    // google: 'your-google-verification-code',
   },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'AniSora - Open Source Generalist AI Agent',
-    description:
-      'AniSora is a fully open source AI assistant that helps you accomplish real-world tasks with ease through natural conversation.',
-    creator: '@kortixai',
-    site: '@kortixai',
-    images: [
-      // {
-      //   url: '/banner.png',
-      //   width: 1200,
-      //   height: 630,
-      //   alt: 'AniSora - Open Source Generalist AI Agent',
-      // },
-    ],
+  alternates: {
+    canonical: siteConfig.url,
+    types: {
+      'application/rss+xml': [
+        { url: '/rss.xml', title: 'AniSora RSS Feed' },
+      ],
+    },
   },
   icons: {
     icon: [{ url: '/faviconHerd.ico', sizes: 'any' }],
     shortcut: '/faviconHerd.ico',
   },
-  // manifest: "/manifest.json",
-  alternates: {
-    canonical: siteConfig.url,
-  },
+  // manifest: "/manifest.json"
 };
 
 export default function RootLayout({
