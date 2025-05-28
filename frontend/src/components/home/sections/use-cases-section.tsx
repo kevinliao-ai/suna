@@ -144,8 +144,8 @@ export function UseCasesSection() {
           </TabsContent>
 
           {/* Spatial Control Tab */}
-          <TabsContent value="spatial">
-            <div className="flex justify-center">
+          <TabsContent value="spatial" className="mt-8">
+            <div className="max-w-3xl mx-auto px-4">
               {spatialControlExamples.map((example) => (
                 <VideoExampleCard key={example.id} example={example} type="spatial" />
               ))}
