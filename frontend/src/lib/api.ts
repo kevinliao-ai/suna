@@ -82,11 +82,6 @@ export interface InitiateAgentResponse {
   agent_run_id: string;
 }
 
-export interface HealthCheckResponse {
-  status: string;
-  timestamp: string;
-  instance_id: string;
-}
 
 export interface FileInfo {
   name: string;
@@ -1472,23 +1467,6 @@ export const initiateAgent = async (
       );
     }
 
-    throw error;
-  }
-};
-
-export const checkApiHealth = async (): Promise<HealthCheckResponse> => {
-  try {
-    const response = await fetch(`${API_URL}/health`, {
-      cache: 'no-store',
-    });
-
-    if (!response.ok) {
-      throw new Error(`API health check failed: ${response.statusText}`);
-    }
-
-    return response.json();
-  } catch (error) {
-    console.error('API health check failed:', error);
     throw error;
   }
 };
