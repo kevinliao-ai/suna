@@ -1,10 +1,77 @@
+# robots.txt for AniSora AI
+# Last updated: 2024-05-28
+
+# Global rules for all crawlers
 User-agent: *
 Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /_next/
+Disallow: /*/private/
+Disallow: /*?*
 
+# Allow all CSS and JS files for proper rendering
+Allow: /*.css$
+Allow: /*.js$
+Allow: /*.svg$
+Allow: /*.png$
+Allow: /*.jpg$
+Allow: /*.jpeg$
+Allow: /*.gif$
+Allow: /*.webp$
+
+# Sitemap location
 Sitemap: https://www.anisora.ai/sitemap.xml
 
-# Disallow admin and API routes
+# Crawl-delay: 10  # Uncomment if needed to limit crawl rate
+
+# Specific rules for search engines
+User-agent: Googlebot
+Allow: /
 Disallow: /admin/
 Disallow: /api/
 
-# Allow all other pages
+# Image crawlers
+User-agent: Googlebot-Image
+Allow: /images/
+
+# Media partners
+User-agent: Mediapartners-Google
+Allow: /
+
+# Ad bots
+User-agent: AdsBot-Google
+Allow: /
+
+# Bing crawler
+User-agent: bingbot
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Crawl-delay: 10
+
+# Chinese search engines
+User-agent: Baiduspider
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+
+User-agent: 360Spider
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+
+User-agent: Sogou web spider
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+
+# Prevent scraping by bad bots
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
