@@ -1,22 +1,20 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, UploadFile, File, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi import APIRouter
 import uvicorn
 import logging
 from pathlib import Path
 import os
+import sys
+import uuid
+from typing import Optional
 
-from services.video import router as video_router
-from services.upload import router as upload_router
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
+# 配置日志
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# Create FastAPI app
+# 创建 FastAPI 应用
 app = FastAPI(
     title="AniSora API",
     description="API for AniSora video generation service",
@@ -25,19 +23,41 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
-# CORS middleware
+# 创建上传路由
+upload_router = APIRouter(prefix="/api/upload", tags=["upload"])
+
+# 添加上传测试路由
+@upload_router.get("/test")
+async def test_upload():
+    return {"message": "Upload router is working!"}
+
+# 添加上传文件路由
+@upload_router.post("")
+async def upload_file(file: UploadFile = File(...)):
+    try:
+        # 这里添加文件上传逻辑
+        return {"filename": file.filename, "message": "File uploaded successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# 注册路由
+app.include_router(upload_router)
+print("Registered upload router at /api/upload")
+
+# 添加 CORS 中间件
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Update with your frontend URL
+    allow_origins=["*"],  # 允许所有来源
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["Content-Disposition"],
 )
 
-# Include routers
-app.include_router(video_router, prefix="/api/v1")
-app.include_router(upload_router)  # Prefix is already set in the router
+# 添加健康检查端点
+@app.get("/health")
+async def health_check():
+    return {"status": "ok"}
 
 # Health check endpoint
 @app.get("/health")

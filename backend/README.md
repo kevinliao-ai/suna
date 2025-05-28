@@ -24,6 +24,7 @@ docker compose up redis rabbitmq
 docker compose up api worker
 ```
 
+"""
 ## Development Setup
 
 For local development, you might only need to run Redis and RabbitMQ, while working on the API locally. This is useful when:
@@ -41,6 +42,8 @@ Then you can run your API service locally with the following commands
 # On one terminal
 cd backend
 poetry run python3.11 api.py
+poetry install
+poetry run uvicorn api:app --reload --host 0.0.0.0 --port 8000
 
 # On another terminal
 cd frontend

@@ -27,7 +27,7 @@ os.makedirs(GENERATED_VIDEOS_DIR, exist_ok=True)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/video", tags=["video"])
+router = APIRouter(prefix="/api/v1/video", tags=["video"])
 
 # In-memory storage for video generations (replace with database in production)
 video_generations: Dict[str, Dict[str, Any]] = {}
@@ -42,17 +42,16 @@ class VideoGenerationRequest(BaseModel):
     prompt: str = Field(..., min_length=1, max_length=1000, description="Text prompt for video generation")
     image_url: Optional[str] = Field(None, description="URL of the input image for image-to-video generation (optional)")
     seed: int = Field(233, ge=-1, description="Random seed, -1 for random")
-    nf: float = Field(4.0, ge=1.0, le=10.0, description="Duration of the video in seconds")
+    duration: float = Field(4.0, ge=1.0, le=10.0, description="Duration of the video in seconds")
     speed: Literal["原版", "加速版", "fast", "normal"] = Field("normal", description="Generation speed")
-    motion: float = Field(1.3, ge=0.1, le=2.0, description="Motion intensity")
+    motion: float = Field(1.0, ge=0.1, le=2.0, description="Motion intensity")
+    model_id: str = Field("anime-video", description="ID of the model to use for generation")
     is_public: bool = Field(False, description="Whether the generation is public")
     
     @validator('speed')
     def validate_speed(cls, v):
         if v not in ["原版", "加速版", "fast", "normal"]:
             raise ValueError("Speed must be one of: '原版', '加速版', 'fast', 'normal'")
-        if v not in ["鍘熺増", "鍔犻€熺増", "fast", "normal"]:
-            raise ValueError("Speed must be one of: '鍘熺増', '鍔犻€熺増', 'fast', 'normal'")
         return v
         
     @validator('prompt')
@@ -122,27 +121,22 @@ def process_video_generation(generation_id: str, request: VideoGenerationRequest
             # Initialize AniSora client
             client = Client(ANISORA_API_URL)
             
-            # Prepare base parameters
-            base_params = {
+            # Prepare parameters
+            params = {
                 "prompt": request.prompt,
                 "seed": request.seed if request.seed != -1 else int(datetime.now().timestamp()) % 1000000,
-                "nf": request.nf,
+                "duration": request.duration,
                 "speed": request.speed,
                 "motion": request.motion,
-                **({'model_id': request.model_id} if hasattr(request, 'model_id') and request.model_id != 'default_model' else {})
+                "is_public": request.is_public
             }
             
-            # Call the appropriate API based on whether we have an image or not
+            # Add image if available
             if temp_img_path:
-                # For image-to-video
-                params = {
-                    **base_params,
-                    "img": handle_file(temp_img_path)
-                }
-                result = client.predict(**params, api_name="/generate_i2v")
-            else:
-                # For text-to-video
-                result = client.predict(**base_params, api_name="/generate_t2v")
+                params["image"] = handle_file(temp_img_path)
+            
+            # Call AniSora API
+            result = client.predict(**params, api_name="/generate_i2v")
             
             # Update progress
             video_generations[generation_id].update({
@@ -209,15 +203,12 @@ async def generate_video(
         "status": GenerationStatus.PENDING,
         "created_at": datetime.utcnow(),
         "prompt": request.prompt,
-        "duration": request.nf,  # Add duration from nf parameter
+        "duration": request.duration,
         "motion": request.motion,
         "speed": request.speed,
-        "model_id": getattr(request, 'model_id', 'default_model'),  # Add default model_id if not provided
+        "model_id": request.model_id,
         "is_public": request.is_public,
-        "progress": 0.0,
-        "result_url": None,
-        "seed_used": None,
-        "error": None
+        "progress": 0.0
     }
     
     # Start the background task
@@ -282,7 +273,3 @@ async def list_models():
             "supports_image_input": False
         }
     ]
-
-
-
-

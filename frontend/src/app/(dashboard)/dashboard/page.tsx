@@ -1,125 +1,70 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { VideoGenerationCard } from "@/components/video/generation-card";
-import { Icons } from "@/components/icons";
+import dynamic from 'next/dynamic';
+import { Suspense, useEffect, useState } from 'react';
+import { useTheme } from 'next-themes';
+import Image from 'next/image';
+import Link from 'next/link';
+
+// Dynamically import the BilibiliEmbed component with no SSR
+const BilibiliEmbed = dynamic(
+  () => import('@/components/bilibili-embed').then(mod => mod.BilibiliEmbed),
+  { 
+    ssr: false,
+    loading: () => (
+      <div className="flex items-center justify-center h-full">
+        <div className="animate-pulse text-muted-foreground">
+          Loading Bilibili content...
+        </div>
+      </div>
+    )
+  }
+);
 
 export default function DashboardPage() {
-  const [activeTab, setActiveTab] = useState("video");
+  const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const logoSrc = !mounted
+    ? '/anisora-logo.png'
+    : resolvedTheme === 'dark'
+      ? '/anisora-logo.png'
+      : '/anisora-logo.png';
 
   return (
-    <div className="container mx-auto px-4 py-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">AniSora Studio</h1>
-          <p className="text-muted-foreground">
-            Create amazing AI-generated videos with AniSora
-          </p>
+    <div className="flex flex-col h-full w-full">
+      {/* Simple Header with Logo */}
+      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container flex h-14 items-center px-4">
+          <Link href="/" className="flex items-center -ml-1.5">
+            <Image
+              src={logoSrc}
+              alt="AniSora Logo"
+              width={120}
+              height={24}
+              className="h-6 w-auto"
+              priority
+            />
+          </Link>
         </div>
-        <Button>
-          <Icons.plus className="mr-2 h-4 w-4" />
-          New Project
-        </Button>
+      </header>
+      
+      {/* Content */}
+      <div className="flex-1 w-full overflow-hidden">
+        <Suspense fallback={
+          <div className="flex-1 flex items-center justify-center h-full">
+            <div className="animate-pulse">Loading Bilibili content...</div>
+          </div>
+        }>
+          <div className="h-[calc(100vh-4rem)] w-full">
+            <BilibiliEmbed url="https://bilibili-index-anisora.ms.show/" />
+          </div>
+        </Suspense>
       </div>
-
-      <Tabs 
-        value={activeTab} 
-        onValueChange={setActiveTab}
-        className="space-y-4"
-      >
-        <TabsList>
-          <TabsTrigger value="video">Video Generation</TabsTrigger>
-          <TabsTrigger value="projects">My Projects</TabsTrigger>
-          <TabsTrigger value="community">Community</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="video" className="space-y-6">
-          <div className="grid gap-6 grid-cols-1 lg:grid-cols-3">
-            {/* Left: Generation Form */}
-            <div className="lg:col-span-2 space-y-6">
-              <VideoGenerationCard />
-              
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base">Generation History</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Icons.history className="mx-auto h-8 w-8 mb-2" />
-                    <p>Your generation history will appear here</p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-            
-            {/* Right: Preview Section */}
-            <div className="space-y-6">
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base">Preview</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="aspect-video bg-muted rounded-md flex items-center justify-center">
-                    <p className="text-sm text-muted-foreground">
-                      Generated video will appear here
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base">Tips</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3 text-sm">
-                  <div className="flex items-start gap-3">
-                    <Icons.lightbulb className="h-4 w-4 mt-0.5 text-yellow-500" />
-                    <p>Be specific with your prompts for better results</p>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Icons.lightbulb className="h-4 w-4 mt-0.5 text-yellow-500" />
-                    <p>Use negative prompts to exclude unwanted elements</p>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Icons.lightbulb className="h-4 w-4 mt-0.5 text-yellow-500" />
-                    <p>Longer videos may take more time to generate</p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="projects">
-          <div className="text-center py-12">
-            <Icons.folder className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium">No projects yet</h3>
-            <p className="text-muted-foreground mt-2">
-              Create your first project to get started
-            </p>
-            <Button className="mt-4">
-              <Icons.plus className="mr-2 h-4 w-4" />
-              New Project
-            </Button>
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="community">
-          <div className="text-center py-12">
-            <Icons.users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium">Community Feed</h3>
-            <p className="text-muted-foreground mt-2">
-              Explore videos created by the community
-            </p>
-            <Button variant="outline" className="mt-4">
-              Browse Community
-            </Button>
-          </div>
-        </TabsContent>
-      </Tabs>
     </div>
   );
 }

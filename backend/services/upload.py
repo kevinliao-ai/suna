@@ -1,15 +1,39 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException, status
 import os
+import sys
 import uuid
 from datetime import datetime
 from typing import Optional
 import logging
+from fastapi import APIRouter, UploadFile, File, HTTPException, status
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
+# 打印当前文件路径
+print(f"Loading upload.py from: {os.path.abspath(__file__)}")
+
+# 配置日志
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/upload", tags=["upload"])
+try:
+    # 创建路由
+    router = APIRouter(prefix="/api/upload", tags=["upload"])
+    print(f"Successfully created router with prefix: {router.prefix}")
+    
+    # 打印路由信息
+    print(f"Router tags: {router.tags}")
+    print(f"Router prefix: {router.prefix}")
+    print(f"Router routes: {getattr(router, 'routes', [])}")
+    
+except Exception as e:
+    print(f"Error creating router: {e}")
+    import traceback
+    traceback.print_exc()
+    raise
+
+# 添加一个测试路由
+@router.get("/test", summary="测试上传路由是否工作")
+async def test_upload():
+    """测试上传路由是否正常工作"""
+    return {"message": "Upload router is working!"}
 
 # Configuration
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp"}
@@ -18,6 +42,7 @@ UPLOAD_DIR = "uploads"
 
 # Ensure upload directory exists with proper permissions
 os.makedirs(UPLOAD_DIR, exist_ok=True, mode=0o755)
+print(f"Created upload directory at: {os.path.abspath(UPLOAD_DIR)}")
 
 def allowed_file(filename: str) -> bool:
     """Check if the file extension is allowed"""
