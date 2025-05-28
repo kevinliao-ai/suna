@@ -10,6 +10,15 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
+
+// 添加 useIsClient 钩子
+function useIsClient() {
+  const [isClient, setIsClient] = React.useState(false);
+  React.useEffect(() => {
+    setIsClient(true);
+  }, []);
+  return isClient;
+}
 import {
   Sheet,
   SheetContent,
@@ -66,8 +75,10 @@ function SidebarProvider({
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }) {
+  const isClient = useIsClient();
   const isMobile = useIsMobile();
   const [openMobile, setOpenMobile] = React.useState(false);
+  const [mounted, setMounted] = React.useState(false);
 
   // This is the internal state of the sidebar.
   // We use openProp and setOpenProp for control from outside the component.
@@ -75,6 +86,8 @@ function SidebarProvider({
   const open = openProp ?? _open;
   const setOpen = React.useCallback(
     (value: boolean | ((value: boolean) => boolean)) => {
+      if (!isClient) return;
+      
       const openState = typeof value === 'function' ? value(open) : value;
       if (setOpenProp) {
         setOpenProp(openState);
@@ -84,9 +97,21 @@ function SidebarProvider({
 
       // This sets the cookie to keep the sidebar state.
       document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
+      
+      // Update body attribute for styling
+      document.body.setAttribute('data-sidebar-state', openState ? 'open' : 'closed');
     },
-    [setOpenProp, open],
+    [setOpenProp, open, isClient],
   );
+  
+  // Initialize sidebar state after mount
+  React.useEffect(() => {
+    if (!isClient) return;
+    
+    setMounted(true);
+    // Set initial body attribute
+    document.body.setAttribute('data-sidebar-state', open ? 'open' : 'closed');
+  }, [open, isClient]);
 
   // Helper to toggle the sidebar.
   const toggleSidebar = React.useCallback(() => {
@@ -95,6 +120,8 @@ function SidebarProvider({
 
   // Adds a keyboard shortcut to toggle the sidebar.
   React.useEffect(() => {
+    if (!isClient) return;
+    
     const handleKeyDown = (event: KeyboardEvent) => {
       if (
         event.key === SIDEBAR_KEYBOARD_SHORTCUT &&
@@ -107,11 +134,12 @@ function SidebarProvider({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [toggleSidebar]);
+  }, [toggleSidebar, isClient]);
 
   // We add a state so that we can do data-state="expanded" or "collapsed".
   // This makes it easier to style the sidebar with Tailwind classes.
-  const state = open ? 'expanded' : 'collapsed';
+  // Only set state after component is mounted to avoid hydration mismatch
+  const state = !mounted ? 'expanded' : open ? 'expanded' : 'collapsed';
 
   const contextValue = React.useMemo<SidebarContextProps>(
     () => ({
