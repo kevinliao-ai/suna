@@ -65,7 +65,15 @@ export function NavAgents() {
   const [isMultiSelectActive, setIsMultiSelectActive] = useState(false);
   const [selectedThreads, setSelectedThreads] = useState<Set<string>>(new Set());
   const [deleteProgress, setDeleteProgress] = useState(0);
-  const [totalToDelete, setTotalToDelete] = useState(0);
+  const { 
+    mutate: deleteThreadMutation, 
+    isPending: isDeletingSingle 
+  } = useDeleteThread();
+  
+  const { 
+    mutate: deleteMultipleThreadsMutation, 
+    isPending: isDeletingMultiple 
+  } = useDeleteMultipleThreads();
 
   const { 
     data: projects = [], 
@@ -76,15 +84,20 @@ export function NavAgents() {
   const { 
     data: threads = [], 
     isLoading: isThreadsLoading,
-    error: threadsError 
+    error: threadsError,
+    isError: isThreadsError
   } = useThreads();
 
-  const { mutate: deleteThreadMutation, isPending: isDeletingSingle } = useDeleteThread();
-  const { 
-    mutate: deleteMultipleThreadsMutation, 
-    isPending: isDeletingMultiple 
-  } = useDeleteMultipleThreads();
-
+  // Log the error for debugging
+  useEffect(() => {
+    if (isThreadsError && threadsError) {
+      console.error('Threads error:', threadsError);
+      toast.error('Failed to load conversations');
+    }
+  }, [isThreadsError, threadsError]);
+  
+  const [totalToDelete, setTotalToDelete] = useState(0);
+  
   const combinedThreads: ThreadWithProject[] = 
     !isProjectsLoading && !isThreadsLoading ? 
     processThreadsWithProjects(threads, projects) : [];

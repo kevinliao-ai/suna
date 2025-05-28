@@ -5,16 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VideoGenerationCard } from "@/components/video/generation-card";
-import { ModelSelector } from "@/components/model/model-selector";
 import { Icons } from "@/components/icons";
 
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState("video");
-  const [selectedModel, setSelectedModel] = useState<string>("");
-  
-  const handleModelChange = (modelId: string) => {
-    setSelectedModel(modelId);
-  };
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -61,13 +55,8 @@ export default function DashboardPage() {
               </Card>
             </div>
             
-            {/* Right: Model Selection and Preview */}
+            {/* Right: Preview Section */}
             <div className="space-y-6">
-              <ModelSelector 
-                selectedModel={selectedModel} 
-                onModelChange={handleModelChange} 
-              />
-              
               <Card>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base">Preview</CardTitle>
