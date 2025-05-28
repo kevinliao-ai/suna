@@ -9,7 +9,8 @@ import {
   ChevronDown,
   ChevronUp,
   Minus,
-  Plus
+  Plus,
+  Check
 } from 'lucide-react';
 import { ToolViewProps } from './types';
 import {
@@ -26,8 +27,8 @@ import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { LoadingState } from './shared/LoadingState';
 
-// Define types for diffing
 type DiffType = 'unchanged' | 'added' | 'removed';
 
 interface LineDiff {
@@ -47,9 +48,8 @@ interface DiffStats {
   deletions: number;
 }
 
-// Component to display unified diff view
 const UnifiedDiffView: React.FC<{ lineDiff: LineDiff[] }> = ({ lineDiff }) => (
-  <div className="bg-white dark:bg-zinc-950 font-mono text-sm overflow-x-auto">
+  <div className="bg-white dark:bg-zinc-950 font-mono text-sm overflow-x-auto -mt-2">
     <table className="w-full border-collapse">
       <tbody>
         {lineDiff.map((line, i) => (
@@ -69,7 +69,7 @@ const UnifiedDiffView: React.FC<{ lineDiff: LineDiff[] }> = ({ lineDiff }) => (
               {line.type === 'added' && <Plus className="h-3.5 w-3.5 text-emerald-500" />}
             </td>
             <td className="w-full px-3 py-0.5">
-              <div className="overflow-x-auto max-w-full">
+              <div className="overflow-x-auto max-w-full text-xs">
                 {line.type === 'removed' && <span className="text-red-700 dark:text-red-400">{line.oldLine}</span>}
                 {line.type === 'added' && <span className="text-emerald-700 dark:text-emerald-400">{line.newLine}</span>}
                 {line.type === 'unchanged' && <span className="text-zinc-700 dark:text-zinc-300">{line.oldLine}</span>}
@@ -82,9 +82,8 @@ const UnifiedDiffView: React.FC<{ lineDiff: LineDiff[] }> = ({ lineDiff }) => (
   </div>
 );
 
-// Component to display split diff view
 const SplitDiffView: React.FC<{ lineDiff: LineDiff[] }> = ({ lineDiff }) => (
-  <div className="bg-white dark:bg-zinc-950 font-mono text-sm overflow-x-auto">
+  <div className="bg-white dark:bg-zinc-950 font-mono text-sm overflow-x-auto -my-2">
     <table className="w-full border-collapse">
       <thead>
         <tr className="border-b border-zinc-200 dark:border-zinc-800 text-xs">
@@ -144,26 +143,8 @@ const SplitDiffView: React.FC<{ lineDiff: LineDiff[] }> = ({ lineDiff }) => (
   </div>
 );
 
-// Loading state component
-const LoadingState: React.FC<{ filePath: string | null; progress: number }> = ({ filePath, progress }) => (
-  <div className="flex flex-col items-center justify-center h-full py-12 px-6 bg-gradient-to-b from-white to-zinc-50 dark:from-zinc-950 dark:to-zinc-900">
-    <div className="text-center w-full max-w-xs">
-      <div className="w-16 h-16 rounded-full mx-auto mb-6 flex items-center justify-center bg-gradient-to-b from-purple-100 to-purple-50 shadow-inner dark:from-purple-800/40 dark:to-purple-900/60 dark:shadow-purple-950/20">
-        <Loader2 className="h-8 w-8 animate-spin text-purple-500 dark:text-purple-400" />
-      </div>
-      <h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-100 mb-2">
-        Processing replacement
-      </h3>
-      <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6">
-        <span className="font-mono text-xs break-all">Replacing text in {filePath || 'file'}</span>
-      </p>
-      <Progress value={progress} className="w-full h-2" />
-      <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-2">{progress}%</p>
-    </div>
-  </div>
-);
 
-// Error state component
+
 const ErrorState: React.FC = () => (
   <div className="flex flex-col items-center justify-center h-full py-12 px-6 bg-gradient-to-b from-white to-zinc-50 dark:from-zinc-950 dark:to-zinc-900">
     <div className="text-center w-full max-w-xs">
@@ -188,31 +169,12 @@ export function StrReplaceToolView({
   isSuccess = true,
   isStreaming = false,
 }: ToolViewProps): JSX.Element {
-  const [progress, setProgress] = useState<number>(0);
   const [expanded, setExpanded] = useState<boolean>(true);
   const [viewMode, setViewMode] = useState<'unified' | 'split'>('unified');
   
   const filePath = extractFilePath(assistantContent);
   const { oldStr, newStr } = extractStrReplaceContent(assistantContent);
   const toolTitle = getToolTitle(name);
-
-  // Simulate progress when streaming
-  useEffect(() => {
-    if (isStreaming) {
-      const timer = setInterval(() => {
-        setProgress((prevProgress) => {
-          if (prevProgress >= 95) {
-            clearInterval(timer);
-            return prevProgress;
-          }
-          return prevProgress + 5;
-        });
-      }, 300);
-      return () => clearInterval(timer);
-    } else {
-      setProgress(100);
-    }
-  }, [isStreaming]);
 
   // Parse text for newlines
   const parseNewlines = (text: string): string => {
@@ -307,11 +269,11 @@ export function StrReplaceToolView({
     return parts;
   };
 
-  // If we don't have valid strings to compare
-  if (!oldStr || !newStr) {
+  // If we don't have valid strings to compare and we're not streaming
+  if (!isStreaming && (!oldStr || !newStr)) {
     return (
       <Card className="gap-0 flex border shadow-none border-t border-b-0 border-x-0 p-0 rounded-none flex-col h-full overflow-hidden bg-white dark:bg-zinc-950">
-        <CardHeader className="h-13 bg-zinc-50/80 dark:bg-zinc-900/80 backdrop-blur-sm border-b p-2 px-4 space-y-2">
+        <CardHeader className="h-14 bg-zinc-50/80 dark:bg-zinc-900/80 backdrop-blur-sm border-b p-2 px-4 space-y-2">
           <div className="flex flex-row items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="p-2 rounded-lg bg-gradient-to-b from-purple-100 to-purple-50 shadow-inner dark:from-purple-800/40 dark:to-purple-900/60 dark:shadow-purple-950/20">
@@ -331,9 +293,9 @@ export function StrReplaceToolView({
     );
   }
 
-  // Generate diff data
-  const lineDiff = generateLineDiff(oldStr, newStr);
-  const charDiff = generateCharDiff(oldStr, newStr);
+  // Generate diff data (only if we have both strings)
+  const lineDiff = oldStr && newStr ? generateLineDiff(oldStr, newStr) : [];
+  const charDiff = oldStr && newStr ? generateCharDiff(oldStr, newStr) : [];
   
   // Calculate stats on changes
   const stats: DiffStats = {
@@ -343,11 +305,11 @@ export function StrReplaceToolView({
 
   return (
     <Card className="gap-0 flex border shadow-none border-t border-b-0 border-x-0 p-0 rounded-none flex-col h-full overflow-hidden bg-white dark:bg-zinc-950">
-      <CardHeader className="h-13 bg-zinc-50/80 dark:bg-zinc-900/80 backdrop-blur-sm border-b p-2 px-4 space-y-2">
+      <CardHeader className="h-14 bg-zinc-50/80 dark:bg-zinc-900/80 backdrop-blur-sm border-b p-2 px-4 space-y-2">
         <div className="flex flex-row items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-gradient-to-b from-purple-100 to-purple-50 shadow-inner dark:from-purple-800/40 dark:to-purple-900/60 dark:shadow-purple-950/20">
-              <FileDiff className="h-5 w-5 text-purple-500 dark:text-purple-400" />
+          <div className="relative p-2 rounded-lg bg-gradient-to-br from-purple-500/20 to-purple-600/10 border border-purple-500/20">
+              <FileDiff className="w-5 h-5 text-purple-500 dark:text-purple-400" />
             </div>
             <CardTitle className="text-base font-medium text-zinc-900 dark:text-zinc-100">
               {toolTitle}
@@ -371,16 +333,31 @@ export function StrReplaceToolView({
               {isSuccess ? 'Replacement completed' : 'Replacement failed'}
             </Badge>
           )}
+
+          {isStreaming && (
+            <Badge className="bg-gradient-to-b from-blue-200 to-blue-100 text-blue-700 dark:from-blue-800/50 dark:to-blue-900/60 dark:text-blue-300">
+              <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
+              Processing replacement
+            </Badge>
+          )}
         </div>
       </CardHeader>
 
       <CardContent className="p-0 h-full flex-1 overflow-hidden relative">
         {isStreaming ? (
-          <LoadingState filePath={filePath} progress={progress} />
+          <LoadingState 
+            icon={FileDiff}
+            iconColor="text-purple-500 dark:text-purple-400"
+            bgColor="bg-gradient-to-b from-purple-100 to-purple-50 shadow-inner dark:from-purple-800/40 dark:to-purple-900/60 dark:shadow-purple-950/20"
+            title="Processing String Replacement"
+            filePath={filePath || 'Processing file...'}
+            progressText="Analyzing text patterns"
+            subtitle="Please wait while the replacement is being processed"
+          />
         ) : (
           <ScrollArea className="h-full w-full">
             <div className="p-4">
-              <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-sm overflow-hidden mb-4">
+              <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-hidden mb-4">
                 <div className="p-3 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 flex items-center justify-between">
                   <div className="flex items-center">
                     <File className="h-4 w-4 mr-2 text-zinc-500 dark:text-zinc-400" />
@@ -461,12 +438,6 @@ export function StrReplaceToolView({
                   ? 'String replacement successful'
                   : 'String replacement failed'}
               </span>
-              <Badge variant="outline" className="ml-2 h-5 py-0">
-                <Plus className="h-3 w-3 text-emerald-500 mr-1" />
-                {stats.additions}
-                <Minus className="h-3 w-3 text-red-500 mx-1" />
-                {stats.deletions}
-              </Badge>
             </div>
           )}
 

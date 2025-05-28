@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Image as ImageIcon, ImageOff, CheckCircle, AlertTriangle, Loader2, Download, ZoomIn, ZoomOut, ExternalLink } from 'lucide-react';
+import { Image as ImageIcon, ImageOff, CheckCircle, AlertTriangle, Loader2, Download, ZoomIn, ZoomOut, ExternalLink, Check } from 'lucide-react';
 import { ToolViewProps } from './types';
-import { formatTimestamp, getToolTitle } from './utils';
+import { formatTimestamp, getToolTitle, normalizeContentToString } from './utils';
 import {
   Card,
   CardContent,
@@ -12,7 +12,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { cn } from '@/lib/utils';
+import { cn, truncateString } from '@/lib/utils';
 import { GenericToolView } from './GenericToolView';
 import { useAuth } from '@/components/AuthProvider';
 import { Button } from '@/components/ui/button';
@@ -23,31 +23,47 @@ interface ImageInfo {
   description: string;
 }
 
-function extractImageFilePath(content: string | undefined): string | null {
-  if (!content) return null;
-  console.log('Extracting file path from content:', content);
+function extractImageFilePath(content: string | object | undefined | null): string | null {
+  const contentStr = normalizeContentToString(content);
+  if (!contentStr) return null;
+  
+  console.log('Extracting file path from content:', contentStr);
+  
+  // Try to parse the content one more time to check for nested content field
   try {
-    const parsedContent = JSON.parse(content);
+    const parsedContent = JSON.parse(contentStr);
     if (parsedContent.content && typeof parsedContent.content === 'string') {
-      content = parsedContent.content;
+      const nestedContentStr = parsedContent.content;
+      // Look for the see-image tag in the nested content
+      let filePathMatch = nestedContentStr.match(/<see-image\s+file_path=["']([^"']+)["'][^>]*><\/see-image>/i);
+      if (filePathMatch) {
+        return cleanImagePath(filePathMatch[1]);
+      }
+      filePathMatch = nestedContentStr.match(/<see-image[^>]*>([^<]+)<\/see-image>/i);
+      if (filePathMatch) {
+        return cleanImagePath(filePathMatch[1]);
+      }
     }
   } catch (e) {
+    // Continue with contentStr if parsing fails
   }
-  let filePathMatch = content.match(/<see-image\s+file_path=["']([^"']+)["'][^>]*><\/see-image>/i);
+  
+  // Now check the main contentStr
+  let filePathMatch = contentStr.match(/<see-image\s+file_path=["']([^"']+)["'][^>]*><\/see-image>/i);
   if (filePathMatch) {
     return cleanImagePath(filePathMatch[1]);
   }
-  filePathMatch = content.match(/<see-image[^>]*>([^<]+)<\/see-image>/i);
+  filePathMatch = contentStr.match(/<see-image[^>]*>([^<]+)<\/see-image>/i);
   if (filePathMatch) {
     return cleanImagePath(filePathMatch[1]);
   }
 
-  const embeddedFileMatch = content.match(/image\s*:\s*["']?([^,"'\s]+\.(jpg|jpeg|png|gif|svg|webp))["']?/i);
+  const embeddedFileMatch = contentStr.match(/image\s*:\s*["']?([^,"'\s]+\.(jpg|jpeg|png|gif|svg|webp))["']?/i);
   if (embeddedFileMatch) {
     return cleanImagePath(embeddedFileMatch[1]);
   }
 
-  const extensionMatch = content.match(/["']?([^,"'\s]+\.(jpg|jpeg|png|gif|svg|webp))["']?/i);
+  const extensionMatch = contentStr.match(/["']?([^,"'\s]+\.(jpg|jpeg|png|gif|svg|webp))["']?/i);
   if (extensionMatch) {
     return cleanImagePath(extensionMatch[1]);
   }
@@ -56,17 +72,23 @@ function extractImageFilePath(content: string | undefined): string | null {
   return null;
 }
 
-function extractImageDescription(content: string | undefined): string | null {
-  if (!content) return null;
+function extractImageDescription(content: string | object | undefined | null): string | null {
+  const contentStr = normalizeContentToString(content);
+  if (!contentStr) return null;
+  
   try {
-    const parsedContent = JSON.parse(content);
+    const parsedContent = JSON.parse(contentStr);
     if (parsedContent.content && typeof parsedContent.content === 'string') {
-      content = parsedContent.content;
+      const parts = parsedContent.content.split(/<see-image/i);
+      if (parts.length > 1) {
+        return parts[0].trim();
+      }
     }
   } catch (e) {
+    // Continue with contentStr if parsing fails
   }
 
-  const parts = content.split(/<see-image/i);
+  const parts = contentStr.split(/<see-image/i);
   if (parts.length > 1) {
     return parts[0].trim();
   }
@@ -88,23 +110,26 @@ function cleanImagePath(path: string): string {
     .trim();
 }
 
-function parseToolResult(content: string | undefined): { success: boolean; message: string; filePath?: string } {
-  if (!content) return { success: false, message: 'No tool result available' };
+function parseToolResult(content: string | object | undefined | null): { success: boolean; message: string; filePath?: string } {
+  const contentStr = normalizeContentToString(content);
+  if (!contentStr) return { success: false, message: 'No tool result available' };
   
-  console.log('Parsing tool result content:', content);
+  console.log('Parsing tool result content:', contentStr);
 
   try {
-    let parsedContent;
+    let contentToProcess = contentStr;
+    
     try {
-      parsedContent = JSON.parse(content);
-      if (parsedContent.content) {
-        content = parsedContent.content;
+      const parsedContent = JSON.parse(contentStr);
+      if (parsedContent.content && typeof parsedContent.content === 'string') {
+        contentToProcess = parsedContent.content;
       }
     } catch (e) {
+      // Continue with contentStr if parsing fails
     }
 
     const toolResultPattern = /<tool_result>\s*<see-image>\s*ToolResult\(([^)]+)\)\s*<\/see-image>\s*<\/tool_result>/;
-    const toolResultMatch = content.match(toolResultPattern);
+    const toolResultMatch = contentToProcess.match(toolResultPattern);
     
     if (toolResultMatch) {
       const resultStr = toolResultMatch[1];
@@ -125,7 +150,7 @@ function parseToolResult(content: string | undefined): { success: boolean; messa
       return { success, message, filePath };
     }
     
-    const directToolResultMatch = content.match(/<tool_result>\s*<see-image>\s*([^<]+)<\/see-image>\s*<\/tool_result>/);
+    const directToolResultMatch = contentToProcess.match(/<tool_result>\s*<see-image>\s*([^<]+)<\/see-image>\s*<\/tool_result>/);
     if (directToolResultMatch) {
       const resultContent = directToolResultMatch[1];
       const success = resultContent.includes('success=True') || resultContent.includes('Successfully');
@@ -143,14 +168,14 @@ function parseToolResult(content: string | undefined): { success: boolean; messa
       };
     }
     
-    if (content.includes('success=True') || content.includes('Successfully')) {
-      const filePathMatch = content.match(/Successfully loaded the image ['"]([^'"]+)['"]/i);
+    if (contentToProcess.includes('success=True') || contentToProcess.includes('Successfully')) {
+      const filePathMatch = contentToProcess.match(/Successfully loaded the image ['"]([^'"]+)['"]/i);
       const filePath = filePathMatch ? filePathMatch[1] : undefined;
       
       return { success: true, message: 'Image loaded successfully', filePath };
     }
     
-    if (content.includes('success=False') || content.includes('Failed')) {
+    if (contentToProcess.includes('success=False') || contentToProcess.includes('Failed')) {
       return { success: false, message: 'Failed to load image' };
     }
   } catch (e) {
@@ -334,8 +359,8 @@ function SafeImage({ src, alt, filePath, className }: { src: string; alt: string
   return (
     <div className="flex flex-col items-center">
       <div className={cn(
-        "overflow-hidden transition-all duration-300 rounded-lg border border-zinc-200 dark:border-zinc-700 shadow-md bg-white dark:bg-zinc-900 mb-3",
-        isZoomed ? "cursor-zoom-out" : "cursor-zoom-in hover:shadow-lg"
+        "overflow-hidden transition-all duration-300 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 mb-3",
+        isZoomed ? "cursor-zoom-out" : "cursor-zoom-in"
       )}>
         <div className="relative flex items-center justify-center">
           <img
@@ -459,7 +484,7 @@ export function SeeImageToolView({
   const config = {
     color: 'text-blue-500 dark:text-blue-400',
     bgColor: 'bg-gradient-to-b from-blue-100 to-blue-50 shadow-inner dark:from-blue-800/40 dark:to-blue-900/60 dark:shadow-blue-950/20',
-    badgeColor: 'bg-gradient-to-b from-blue-200 to-blue-100 text-blue-700 shadow-sm dark:from-blue-800/50 dark:to-blue-900/60 dark:text-blue-300',
+    badgeColor: 'bg-gradient-to-b from-blue-200 to-blue-100 text-blue-700 dark:from-blue-800/50 dark:to-blue-900/60 dark:text-blue-300',
     hoverColor: 'hover:bg-gradient-to-b hover:from-blue-200 hover:to-blue-100 dark:hover:from-blue-800/60 dark:hover:to-blue-900/40'
   };
 
@@ -470,16 +495,16 @@ export function SeeImageToolView({
 
   return (
     <Card className="flex border shadow-none border-t border-b-0 border-x-0 p-0 rounded-none flex-col h-full overflow-hidden bg-white dark:bg-zinc-950">
-      <CardHeader className="h-13 bg-gradient-to-r from-zinc-50/90 to-zinc-100/90 dark:from-zinc-900/90 dark:to-zinc-800/90 backdrop-blur-sm border-b p-2 px-4 space-y-0">
+      <CardHeader className="h-14 bg-gradient-to-r from-zinc-50/90 to-zinc-100/90 dark:from-zinc-900/90 dark:to-zinc-800/90 backdrop-blur-sm border-b p-2 px-4 space-y-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className={cn("p-2 rounded-lg transition-colors", config.bgColor)}>
-              <ImageIcon className={cn("h-5 w-5", config.color)} />
+          <div className={cn("relative p-2 rounded-lg bg-gradient-to-br from-blue-500/20 to-blue-600/10 border border-blue-500/20 transition-colors", config.bgColor)}>
+              <ImageIcon className={cn("w-5 h-5", config.color)} />
             </div>
             <div>
               <div className="flex items-center">
                 <CardTitle className="text-base font-medium text-zinc-900 dark:text-zinc-100">
-                  {filename}
+                  {truncateString(filename, 25)}
                 </CardTitle>
                 {isAnimated && (
                   <Badge variant="outline" className="ml-2 text-[10px] py-0 px-1.5 h-4 border-amber-300 text-amber-700 dark:border-amber-700 dark:text-amber-400">
@@ -498,11 +523,16 @@ export function SeeImageToolView({
                   : "bg-gradient-to-b from-rose-200 to-rose-100 text-rose-700 dark:from-rose-800/50 dark:to-rose-900/60 dark:text-rose-300"
             )}>
               {toolResult.success ? (
-                <CheckCircle className="h-3.5 w-3.5" />
+                <>
+                  <CheckCircle className="h-3.5 w-3.5" />
+                  Success
+                </>
               ) : (
-                <AlertTriangle className="h-3.5 w-3.5" />
+                <>
+                  <AlertTriangle className="h-3.5 w-3.5" />
+                  Failed
+                </>
               )}
-              {toolResult.message}
             </Badge>
           ) : (
             <Badge variant="secondary" className="bg-gradient-to-b from-blue-50 to-blue-100 text-blue-700 border border-blue-200/50 dark:from-blue-900/30 dark:to-blue-800/20 dark:text-blue-400 dark:border-blue-800/30 px-2.5 py-1 flex items-center gap-1.5">
