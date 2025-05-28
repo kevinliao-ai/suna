@@ -1,230 +1,79 @@
-from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from typing import List, Optional, Dict, Any, Literal
-from datetime import datetime, timedelta
+from typing import List, Optional
+from datetime import datetime
 import uuid
 import logging
-import time
-import os
-import json
-import shutil
-import tempfile
-from enum import Enum
-from urllib.parse import urlparse
-import requests
-from gradio_client import Client, handle_file
 
-from pydantic import BaseModel, Field, validator
-
-# Configure AniSora API
-ANISORA_API_URL = "https://bilibili-index-anisora.ms.show/"
-
-# Configure generated videos directory
-GENERATED_VIDEOS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'generated_videos')
-os.makedirs(GENERATED_VIDEOS_DIR, exist_ok=True)
+from pydantic import BaseModel, Field
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/video", tags=["video"])
+router = APIRouter(prefix="/api/v1/video", tags=["video"])
 
 # In-memory storage for video generations (replace with database in production)
-video_generations: Dict[str, Dict[str, Any]] = {}
-
-class GenerationStatus(str, Enum):
-    PENDING = "pending"
-    PROCESSING = "processing"
-    COMPLETED = "completed"
-    FAILED = "failed"
+video_generations = {}
 
 class VideoGenerationRequest(BaseModel):
-    prompt: str = Field(..., min_length=1, max_length=1000, description="Text prompt for video generation")
-    image_url: Optional[str] = Field(None, description="URL of the input image for image-to-video generation (optional)")
-    seed: int = Field(233, ge=-1, description="Random seed, -1 for random")
-    nf: float = Field(4.0, ge=1.0, le=10.0, description="Duration of the video in seconds")
-    speed: Literal["原版", "加速版", "fast", "normal"] = Field("normal", description="Generation speed")
-    motion: float = Field(1.3, ge=0.1, le=2.0, description="Motion intensity")
+    prompt: str = Field(..., description="Text prompt for video generation")
+    negative_prompt: Optional[str] = Field(None, description="Negative prompt for video generation")
+    duration: int = Field(4, ge=2, le=10, description="Duration of the video in seconds")
+    model_id: str = Field(..., description="ID of the model to use for generation")
     is_public: bool = Field(False, description="Whether the generation is public")
-    
-    @validator('speed')
-    def validate_speed(cls, v):
-        if v not in ["原版", "加速版", "fast", "normal"]:
-            raise ValueError("Speed must be one of: '原版', '加速版', 'fast', 'normal'")
-        if v not in ["鍘熺増", "鍔犻€熺増", "fast", "normal"]:
-            raise ValueError("Speed must be one of: '鍘熺増', '鍔犻€熺増', 'fast', 'normal'")
-        return v
-        
-    @validator('prompt')
-    def validate_prompt_length(cls, v):
-        if len(v) > 200:
-            raise ValueError("Prompt must be 200 characters or less")
-        return v
 
 class VideoGenerationResponse(BaseModel):
     id: str
-    status: GenerationStatus
+    status: str
     created_at: datetime
     prompt: str
-    duration: float
-    motion: float
-    speed: str
+    negative_prompt: Optional[str]
+    duration: int
     model_id: str
     is_public: bool
-    progress: float = 0.0
+    progress: Optional[float] = None
     result_url: Optional[str] = None
-    seed_used: Optional[int] = None
     error: Optional[str] = None
-    
-    class Config:
-        use_enum_values = True
 
-def download_file(url: str, save_path: str) -> None:
-    """Download a file from URL to the specified path"""
-    try:
-        response = requests.get(url, stream=True)
-        response.raise_for_status()
-        
-        with open(save_path, 'wb') as f:
-            for chunk in response.iter_content(chunk_size=8192):
-                f.write(chunk)
-                
-    except Exception as e:
-        logger.error(f"Error downloading file from {url}: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to download file from URL: {str(e)}"
-        )
-
-def process_video_generation(generation_id: str, request: VideoGenerationRequest):
-    """Background task to process video generation using AniSora API"""
-    try:
-        # Update status to processing
-        video_generations[generation_id].update({
-            "status": GenerationStatus.PROCESSING,
-            "progress": 10.0,
-            "started_at": datetime.utcnow()
-        })
-        
-        # Download image if URL is provided
-        temp_img_path = None
-        if request.image_url:
-            temp_img_path = os.path.join(tempfile.gettempdir(), f"temp_{generation_id}.png")
-            download_file(request.image_url, temp_img_path)
-            
-            # Update progress
-            video_generations[generation_id].update({
-                "progress": 30.0,
-                "status": GenerationStatus.PROCESSING
-            })
-        
-        try:
-            # Initialize AniSora client
-            client = Client(ANISORA_API_URL)
-            
-            # Prepare base parameters
-            base_params = {
-                "prompt": request.prompt,
-                "seed": request.seed if request.seed != -1 else int(datetime.now().timestamp()) % 1000000,
-                "nf": request.nf,
-                "speed": request.speed,
-                "motion": request.motion,
-                **({'model_id': request.model_id} if hasattr(request, 'model_id') and request.model_id != 'default_model' else {})
-            }
-            
-            # Call the appropriate API based on whether we have an image or not
-            if temp_img_path:
-                # For image-to-video
-                params = {
-                    **base_params,
-                    "img": handle_file(temp_img_path)
-                }
-                result = client.predict(**params, api_name="/generate_i2v")
-            else:
-                # For text-to-video
-                result = client.predict(**base_params, api_name="/generate_t2v")
-            
-            # Update progress
-            video_generations[generation_id].update({
-                "progress": 90.0,
-                "status": GenerationStatus.PROCESSING
-            })
-            
-            # Save the generated video
-            if isinstance(result, (list, tuple)) and len(result) > 0 and hasattr(result[0], 'name'):
-                video_path = result[0].name
-                video_filename = f"{generation_id}.mp4"
-                output_path = os.path.join(GENERATED_VIDEOS_DIR, video_filename)
-                shutil.move(video_path, output_path)
-                
-                # Update with completion status
-                video_generations[generation_id].update({
-                    "status": GenerationStatus.COMPLETED,
-                    "progress": 100.0,
-                    "completed_at": datetime.utcnow(),
-                    "result_url": f"/generated_videos/{video_filename}",
-                    "seed_used": request.seed
-                })
-            else:
-                raise ValueError("Invalid response from AniSora API")
-                
-        except Exception as e:
-            logger.error(f"Error calling AniSora API: {str(e)}")
-            video_generations[generation_id].update({
-                "status": GenerationStatus.FAILED,
-                "error": str(e),
-                "completed_at": datetime.utcnow()
-            })
-            
-        finally:
-            # Clean up temporary files
-            if temp_img_path and os.path.exists(temp_img_path):
-                try:
-                    os.remove(temp_img_path)
-                except Exception as e:
-                    logger.warning(f"Failed to remove temporary file {temp_img_path}: {str(e)}")
-        
-    except Exception as e:
-        logger.error(f"Error in video generation task: {str(e)}")
-        video_generations[generation_id].update({
-            "status": GenerationStatus.FAILED,
-            "error": str(e),
-            "completed_at": datetime.utcnow()
-        })
-
-@router.post("/generate", response_model=VideoGenerationResponse, status_code=status.HTTP_202_ACCEPTED)
-async def generate_video(
-    request: VideoGenerationRequest,
-    background_tasks: BackgroundTasks
-):
+@router.post("/generate", response_model=VideoGenerationResponse)
+async def generate_video(request: VideoGenerationRequest):
     """
     Generate a new video based on the provided prompt and parameters
     """
-    # Generate a unique ID for this generation
-    generation_id = str(uuid.uuid4())
-    
-    # Create initial generation record
-    video_generations[generation_id] = {
-        "id": generation_id,
-        "status": GenerationStatus.PENDING,
-        "created_at": datetime.utcnow(),
-        "prompt": request.prompt,
-        "duration": request.nf,  # Add duration from nf parameter
-        "motion": request.motion,
-        "speed": request.speed,
-        "model_id": getattr(request, 'model_id', 'default_model'),  # Add default model_id if not provided
-        "is_public": request.is_public,
-        "progress": 0.0,
-        "result_url": None,
-        "seed_used": None,
-        "error": None
-    }
-    
-    # Start the background task
-    background_tasks.add_task(process_video_generation, generation_id, request)
-    
-    # Return the initial response
-    return VideoGenerationResponse(**video_generations[generation_id])
+    try:
+        # Generate a unique ID for this generation
+        generation_id = str(uuid.uuid4())
+        
+        # Create the generation record
+        generation = {
+            "id": generation_id,
+            "status": "pending",
+            "created_at": datetime.utcnow(),
+            "prompt": request.prompt,
+            "negative_prompt": request.negative_prompt,
+            "duration": request.duration,
+            "model_id": request.model_id,
+            "is_public": request.is_public,
+            "progress": 0.0,
+            "result_url": None,
+            "error": None
+        }
+        
+        # Store the generation (in-memory for now)
+        video_generations[generation_id] = generation
+        
+        # In a real implementation, you would start an async task here to process the generation
+        # For now, we'll simulate a successful generation after a delay
+        
+        return generation
+        
+    except Exception as e:
+        logger.error(f"Error generating video: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to start video generation"
+        )
 
 @router.get("/status/{generation_id}", response_model=VideoGenerationResponse)
 async def get_generation_status(generation_id: str):
@@ -237,31 +86,18 @@ async def get_generation_status(generation_id: str):
             detail="Generation not found"
         )
     
-    # Clean up old completed/failed generations (after 1 hour)
+    # In a real implementation, you would check the actual status from your task queue
     generation = video_generations[generation_id]
-    if generation["status"] in [GenerationStatus.COMPLETED, GenerationStatus.FAILED]:
-        completed_time = generation.get("completed_at", datetime.utcnow())
-        if datetime.utcnow() - completed_time > timedelta(hours=1):
-            video_generations.pop(generation_id, None)
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Generation result has expired"
-            )
     
-    return VideoGenerationResponse(**generation)
-
-@router.get("/recent", response_model=List[VideoGenerationResponse])
-async def get_recent_generations(limit: int = 10):
-    """
-    Get recent video generations
-    """
-    generations = sorted(
-        video_generations.values(),
-        key=lambda x: x["created_at"],
-        reverse=True
-    )[:limit]
+    # Simulate progress updates
+    if generation["status"] == "pending":
+        # After 2 seconds, mark as completed with a dummy URL
+        if (datetime.utcnow() - generation["created_at"]).total_seconds() > 2:
+            generation["status"] = "completed"
+            generation["progress"] = 100.0
+            generation["result_url"] = f"https://example.com/generated/{generation_id}.mp4"
     
-    return [VideoGenerationResponse(**gen) for gen in generations]
+    return generation
 
 @router.get("/models", response_model=List[dict])
 async def list_models():
@@ -270,19 +106,21 @@ async def list_models():
     """
     return [
         {
-            "id": "anime-video",
-            "name": "Anime Video",
-            "description": "Anime-style video generation model",
-            "supports_image_input": True
+            "id": "animesora-v1",
+            "name": "AnimeSora V1",
+            "description": "Anime style video generation",
+            "is_recommended": True
         },
         {
-            "id": "realistic-video",
-            "name": "Realistic Video",
-            "description": "Realistic video generation model",
-            "supports_image_input": False
+            "id": "realsora-v1",
+            "name": "RealSora V1",
+            "description": "Realistic style video generation",
+            "is_recommended": False
+        },
+        {
+            "id": "pixsora-v1",
+            "name": "PixSora V1",
+            "description": "Pixar style animation generation",
+            "is_recommended": False
         }
     ]
-
-
-
-
