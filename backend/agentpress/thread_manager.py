@@ -37,21 +37,43 @@ class ThreadManager:
     XML-based tool execution patterns.
     """
 
-    def __init__(self, trace: Optional[StatefulTraceClient] = None):
+    def __init__(self, trace: Optional[StatefulTraceClient] = None, is_agent_builder: bool = False, target_agent_id: Optional[str] = None):
         """Initialize ThreadManager.
 
+        Args:
+            trace: Optional trace client for logging
+            is_agent_builder: Whether this is an agent builder session
+            target_agent_id: ID of the agent being built (if in agent builder mode)
         """
         self.db = DBConnection()
         self.tool_registry = ToolRegistry()
         self.trace = trace
+        self.is_agent_builder = is_agent_builder
+        self.target_agent_id = target_agent_id
         if not self.trace:
             self.trace = langfuse.trace(name="anonymous:thread_manager")
         self.response_processor = ResponseProcessor(
             tool_registry=self.tool_registry,
             add_message_callback=self.add_message,
-            trace=self.trace
+            trace=self.trace,
+            is_agent_builder=self.is_agent_builder,
+            target_agent_id=self.target_agent_id
         )
         self.context_manager = ContextManager()
+
+    def _is_tool_result_message(self, msg: Dict[str, Any]) -> bool:
+        if not ("content" in msg and msg['content']):
+            return False
+        content = msg['content']
+        if isinstance(content, str) and "ToolResult" in content: return True
+        if isinstance(content, dict) and "tool_execution" in content: return True
+        if isinstance(content, str):
+            try:
+                parsed_content = json.loads(content)
+                if isinstance(parsed_content, dict) and "tool_execution" in parsed_content: return True
+            except (json.JSONDecodeError, TypeError):
+                pass
+        return False
 
     def add_tool(self, tool_class: Type[Tool], function_names: Optional[List[str]] = None, **kwargs):
         """Add a tool to the ThreadManager."""
@@ -119,7 +141,8 @@ class ThreadManager:
         client = await self.db.client
 
         try:
-            result = await client.rpc('get_llm_formatted_messages', {'p_thread_id': thread_id}).execute()
+            # result = await client.rpc('get_llm_formatted_messages', {'p_thread_id': thread_id}).execute()
+            result = await client.table('messages').select('message_id, content').eq('thread_id', thread_id).eq('is_llm_message', True).order('created_at').execute()
 
             # Parse the returned data which might be stringified JSON
             if not result.data:
@@ -128,23 +151,17 @@ class ThreadManager:
             # Return properly parsed JSON objects
             messages = []
             for item in result.data:
-                if isinstance(item, str):
+                if isinstance(item['content'], str):
                     try:
-                        parsed_item = json.loads(item)
+                        parsed_item = json.loads(item['content'])
+                        parsed_item['message_id'] = item['message_id']
                         messages.append(parsed_item)
                     except json.JSONDecodeError:
-                        logger.error(f"Failed to parse message: {item}")
+                        logger.error(f"Failed to parse message: {item['content']}")
                 else:
-                    messages.append(item)
-
-            # Ensure tool_calls have properly formatted function arguments
-            for message in messages:
-                if message.get('tool_calls'):
-                    for tool_call in message['tool_calls']:
-                        if isinstance(tool_call, dict) and 'function' in tool_call:
-                            # Ensure function.arguments is a string
-                            if 'arguments' in tool_call['function'] and not isinstance(tool_call['function']['arguments'], str):
-                                tool_call['function']['arguments'] = json.dumps(tool_call['function']['arguments'])
+                    content = item['content']
+                    content['message_id'] = item['message_id']
+                    messages.append(content)
 
             return messages
 
@@ -327,6 +344,26 @@ Here are the XML tools available with examples:
                     openapi_tool_schemas = self.tool_registry.get_openapi_schemas()
                     logger.debug(f"Retrieved {len(openapi_tool_schemas) if openapi_tool_schemas else 0} OpenAPI tool schemas")
 
+
+                uncompressed_total_token_count = token_counter(model=llm_model, messages=prepared_messages)
+
+                if uncompressed_total_token_count > (llm_max_tokens or (100 * 1000)):
+                    _i = 0 # Count the number of ToolResult messages
+                    for msg in reversed(prepared_messages): # Start from the end and work backwards
+                        if self._is_tool_result_message(msg): # Only compress ToolResult messages
+                            _i += 1 # Count the number of ToolResult messages
+                            msg_token_count = token_counter(messages=[msg]) # Count the number of tokens in the message
+                            if msg_token_count > 5000: # If the message is too long
+                                if _i > 1: # If this is not the most recent ToolResult message
+                                    message_id = msg.get('message_id') # Get the message_id
+                                    if message_id:
+                                        msg["content"] = msg["content"][:10000] + "... (truncated)" + f"\n\nThis message is too long, use the expand-message tool with message_id \"{message_id}\" to see the full message" # Truncate the message
+                                else:
+                                    msg["content"] = msg["content"][:200000] + f"\n\nThis message is too long, repeat relevant information in your response to remember it" # Truncate to 300k characters to avoid overloading the context at once, but don't truncate otherwise
+
+                compressed_total_token_count = token_counter(model=llm_model, messages=prepared_messages)
+                logger.info(f"token_compression: {uncompressed_total_token_count} -> {compressed_total_token_count}") # Log the token compression for debugging later
+
                 # 5. Make LLM API call
                 logger.debug("Making LLM API call")
                 try:
@@ -389,6 +426,7 @@ Here are the XML tools available with examples:
                 logger.error(f"Error in run_thread: {str(e)}", exc_info=True)
                 # Return the error as a dict to be handled by the caller
                 return {
+                    "type": "status",
                     "status": "error",
                     "message": str(e)
                 }

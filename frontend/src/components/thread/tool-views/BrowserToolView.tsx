@@ -13,12 +13,12 @@ import {
   extractBrowserOperation,
   formatTimestamp,
   getToolTitle,
+  extractToolData,
 } from './utils';
 import { safeJsonParse } from '@/components/thread/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
 import { ImageLoader } from './shared/ImageLoader';
 
 export function BrowserToolView({
@@ -35,7 +35,24 @@ export function BrowserToolView({
   currentIndex = 0,
   totalCalls = 1,
 }: ToolViewProps) {
-  const url = extractBrowserUrl(assistantContent);
+  // Try to extract data using the new parser first
+  const assistantToolData = extractToolData(assistantContent);
+  const toolToolData = extractToolData(toolContent);
+
+  let url: string | null = null;
+
+  // Use data from the new format if available
+  if (assistantToolData.toolResult) {
+    url = assistantToolData.url;
+  } else if (toolToolData.toolResult) {
+    url = toolToolData.url;
+  }
+
+  // If not found in new format, fall back to legacy extraction
+  if (!url) {
+    url = extractBrowserUrl(assistantContent);
+  }
+
   const operation = extractBrowserOperation(name);
   const toolTitle = getToolTitle(name);
 
@@ -48,7 +65,7 @@ export function BrowserToolView({
   const [imageError, setImageError] = React.useState(false);
 
   try {
-    const topLevelParsed = safeJsonParse<{ content?: string }>(toolContent, {});
+    const topLevelParsed = safeJsonParse<{ content?: any }>(toolContent, {});
     const innerContentString = topLevelParsed?.content || toolContent;
     if (innerContentString && typeof innerContentString === 'string') {
       const toolResultMatch = innerContentString.match(/ToolResult\([^)]*output='([\s\S]*?)'(?:\s*,|\s*\))/);
@@ -99,7 +116,18 @@ export function BrowserToolView({
           screenshotUrl = finalParsedOutput?.image_url || null;
         }
       }
-    }
+    } else if (innerContentString && typeof innerContentString === "object") {
+        screenshotUrl = (() => {
+          if (!innerContentString) return null;
+          if (!("tool_execution" in innerContentString)) return null;
+          if (!("result" in innerContentString.tool_execution)) return null;
+          if (!("output" in innerContentString.tool_execution.result)) return null;
+          if (!("image_url" in innerContentString.tool_execution.result.output)) return null;
+          if (typeof innerContentString.tool_execution.result.output.image_url !== "string") return null;
+          return innerContentString.tool_execution.result.output.image_url;
+        })()
+      }
+    
   } catch (error) {
   }
 
