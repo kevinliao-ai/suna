@@ -111,7 +111,7 @@ export default function RootLayout({
           new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
           j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
           'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-          })(window,document,'script','dataLayer','GTM-PCHSN4M2');`}
+          })(window,document,'script','dataLayer','GTM-MPT74VX8');`}
         </Script>
         {/* End Google Tag Manager */}
       </head>
@@ -121,10 +121,10 @@ export default function RootLayout({
       >
         {/* Google Tag Manager (noscript) */}
         <noscript>
-          <iframe
-            src="https://www.googletagmanager.com/ns.html?id=GTM-PCHSN4M2"
-            height="0"
-            width="0"
+          <iframe 
+            src="https://www.googletagmanager.com/ns.html?id=GTM-MPT74VX8"
+            height="0" 
+            width="0" 
             style={{ display: 'none', visibility: 'hidden' }}
           />
         </noscript>
