@@ -55,11 +55,11 @@ export const siteConfig = {
   url: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
   keywords: ['AI Agent', 'Generalist AI', 'Open Source AI', 'Autonomous Agent'],
   links: {
-    email: 'support@kortix.ai',
-    twitter: 'https://x.com/kortixai',
-    discord: 'https://discord.gg/kortixai',
-    github: 'https://github.com/Bilibili-ai/AniSora',
-    instagram: 'https://instagram.com/kortixai',
+    email: 'liaokuanya0907@gmail.com',
+    // twitter: 'https://x.com/kortixai',
+    // discord: 'https://discord.gg/kortixai',
+    github: 'https://github.com/bilibili/Index-anisora',
+    // instagram: 'https://instagram.com/kortixai',
   },
   nav: {
     links: [

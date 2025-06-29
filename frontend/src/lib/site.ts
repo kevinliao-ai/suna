@@ -5,7 +5,7 @@ export const siteConfig = {
   description: 'AniSora 是一个强大的开源AI模型，用于创建高质量的动漫风格视频。利用最先进的AI技术生成惊艳的动画、角色动作和动态场景。免费、开源、可自托管。',
   
   // 多语言支持
-  locales: ['en', 'zh', 'ja'],
+  locales: ['en'],
   defaultLocale: 'en',
   
   // 关键词优化
@@ -23,7 +23,7 @@ export const siteConfig = {
   // 网站基础信息
   url: 'https://www.anisora.ai',
   siteName: 'AniSora AI - 开源动漫视频生成工具',
-  locale: 'zh_CN',
+  locale: 'en',
   themeColor: '#FF4D4F',
   backgroundColor: '#1A1A1A',
   
@@ -37,7 +37,7 @@ export const siteConfig = {
     },
     openGraph: {
       type: 'website',
-      locale: 'zh_CN',
+      locale: 'en',
       url: 'https://www.anisora.ai/',
       title: 'AniSora: 开源的动漫视频生成模型',
       description: '免费开源的AI动漫视频生成工具，支持文本生成动画、角色动作生成等功能',
@@ -84,9 +84,9 @@ export const siteConfig = {
     alternates: {
       canonical: '/',
       languages: {
-        'en-US': 'https://www.anisora.ai/en',
-        'zh-CN': 'https://www.anisora.ai/zh',
-        'ja-JP': 'https://www.anisora.ai/ja',
+        'en-US': 'https://www.anisora.ai',
+        // 'zh-CN': 'https://www.anisora.ai/zh',
+        // 'ja-JP': 'https://www.anisora.ai/ja',
       },
     },
     

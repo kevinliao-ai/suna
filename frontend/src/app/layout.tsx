@@ -114,6 +114,15 @@ export default function RootLayout({
           })(window,document,'script','dataLayer','GTM-MPT74VX8');`}
         </Script>
         {/* End Google Tag Manager */}
+        
+        {/* Google AdSense */}
+        <Script 
+          id="google-adsense" 
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4146045147843356"
+          strategy="afterInteractive"
+          crossOrigin="anonymous"
+          async
+        />
       </head>
 
       <body
@@ -141,7 +150,6 @@ export default function RootLayout({
             <Toaster />
           </Providers>
           <Analytics />
-          <GoogleAnalytics gaId="G-6ETJFB3PT3" />
           <SpeedInsights />
         </ThemeProvider>
       </body>
