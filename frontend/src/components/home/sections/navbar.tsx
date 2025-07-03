@@ -125,7 +125,7 @@ export function Navbar() {
               : 'shadow-none px-7',
           )}
         >
-          <div className="flex h-[56px] items-center justify-between">
+          <div className="flex h-[56px] items-center justify-between p-4">
             <Link href="/" className="flex items-center gap-3">
               <Image
                 src={logoSrc}

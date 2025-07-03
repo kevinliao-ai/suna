@@ -137,7 +137,7 @@ export const siteConfig = {
       price: '0',
       priceCurrency: 'USD',
     },
-    description: '开源的AI动漫视频生成工具',
+    description: 'Free and open-source AI anime video generation tool',
     aggregateRating: {
       '@type': 'AggregateRating',
       ratingValue: '4.8',
