@@ -112,8 +112,8 @@ export const siteConfig = {
     // 社交媒体卡片
     twitter: {
       card: 'summary_large_image',
-      title: 'AniSora: 开源的动漫视频生成模型',
-      description: '免费开源的AI动漫视频生成工具',
+      title: 'AniSora: Open Source Anime Video Generation Model',
+      description: 'Free and open-source AI anime video generation tool',
       images: ['/images/og-image.jpg'],
     },
     
