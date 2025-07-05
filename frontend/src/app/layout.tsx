@@ -123,6 +123,14 @@ export default function RootLayout({
           crossOrigin="anonymous"
           async
         />
+        {/* End Google AdSense */}
+        {/* Google AdSense */}
+        <Script 
+          src="https://cdn.ampproject.org/v0/amp-auto-ads-0.1.js"
+          async
+          custom-element="amp-auto-ads"
+        />
+        {/* End Google AdSense */}
       </head>
 
       <body
@@ -138,6 +146,9 @@ export default function RootLayout({
           />
         </noscript>
         {/* End Google Tag Manager (noscript) */}
+        <noscript>
+          <amp-auto-ads type="adsense" data-ad-client="ca-pub-4146045147843356"></amp-auto-ads>
+        </noscript>
 
         <ThemeProvider
           attribute="class"
