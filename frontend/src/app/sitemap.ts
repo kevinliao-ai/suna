@@ -12,23 +12,29 @@ const locales = siteConfig.locales || ['en'];
 // 网站主要路由
 const routes = [
   { path: '', priority: 1.0, changefreq: 'daily' },
-  { path: 'features', priority: 0.9, changefreq: 'weekly' },
-  { path: 'pricing', priority: 0.8, changefreq: 'monthly' },
-  { path: 'blog', priority: 0.7, changefreq: 'daily' },
-  { path: 'docs', priority: 0.9, changefreq: 'weekly' },
-  { path: 'tutorials', priority: 0.8, changefreq: 'weekly' },
-  { path: 'community', priority: 0.7, changefreq: 'weekly' },
-  { path: 'download', priority: 0.9, changefreq: 'monthly' },
-  { path: 'changelog', priority: 0.6, changefreq: 'weekly' },
-  { path: 'privacy', priority: 0.3, changefreq: 'yearly' },
-  { path: 'terms', priority: 0.3, changefreq: 'yearly' },
+  { path: 'dashboard', priority: 1.0, changefreq: 'daily' },
+  { path: '#showcase', priority: 1.0, changefreq: 'daily' },
+  { path: '#faq', priority: 1.0, changefreq: 'daily' },
+  { path: 'legal?tab=privacy', priority: 0.5, changefreq: 'daily' },
+  { path: 'legal?tab=terms', priority: 0.5, changefreq: 'daily' },
+  { path: 'auth', priority: 0.5, changefreq: 'daily' },
+  // { path: 'features', priority: 0.9, changefreq: 'weekly' },
+  // { path: 'pricing', priority: 0.8, changefreq: 'monthly' },
+  // { path: 'blog', priority: 0.7, changefreq: 'daily' },
+  // { path: 'docs', priority: 0.9, changefreq: 'weekly' },
+  // { path: 'tutorials', priority: 0.8, changefreq: 'weekly' },
+  // { path: 'community', priority: 0.7, changefreq: 'weekly' },
+  // { path: 'download', priority: 0.9, changefreq: 'monthly' },
+  // { path: 'changelog', priority: 0.6, changefreq: 'weekly' },
+  // { path: 'privacy', priority: 0.3, changefreq: 'yearly' },
+  // { path: 'terms', priority: 0.3, changefreq: 'yearly' },
 ];
 
 // 博客文章示例 (实际应从CMS或API获取)
 const blogPosts = [
-  { slug: 'getting-started', date: '2024-05-01' },
-  { slug: 'advanced-features', date: '2024-05-15' },
-  { slug: 'case-studies', date: '2024-06-01' },
+  // { slug: 'getting-started', date: '2024-05-01' },
+  // { slug: 'advanced-features', date: '2024-05-15' },
+  // { slug: 'case-studies', date: '2024-06-01' },
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {

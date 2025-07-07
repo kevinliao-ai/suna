@@ -5,7 +5,7 @@ export const siteConfig = {
   description: 'AniSora 是一个强大的开源AI模型，用于创建高质量的动漫风格视频。利用最先进的AI技术生成惊艳的动画、角色动作和动态场景。免费、开源、可自托管。',
   
   // 多语言支持
-  locales: ['en', 'zh'],
+  locales: ['en'],
   defaultLocale: 'en',
   
   // 关键词优化
