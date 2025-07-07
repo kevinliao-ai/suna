@@ -4,11 +4,11 @@ import { siteConfig } from '@/lib/site';
 export const metadata: Metadata = {
   title: siteConfig.name,
   description: siteConfig.description,
-  keywords: ['Kortix AniSora', 'AI', 'Agent'],
+  keywords: ['AniSora', 'AI', 'Agent'],
   authors: [
     {
       name: 'AniSora AI Corp',
-      url: 'https://kortix.ai',
+      url: 'https://www.anisora.ai',
     },
   ],
   creator: 'AniSora AI Corp',
