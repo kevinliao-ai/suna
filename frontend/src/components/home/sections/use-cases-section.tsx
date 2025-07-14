@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Play, Image as ImageIcon, Film, Move3D } from "lucide-react";
 import Image from "next/image";
+import Link from 'next/link';
 import { useState } from "react";
 
 interface VideoExample {
@@ -152,7 +153,14 @@ export function UseCasesSection() {
             </div>
           </TabsContent>
         </Tabs>
+        <div className="flex justify-center mt-6">
+        <Link href="/examples" className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary/90 transition-colors">
+          <ImageIcon className="w-4 h-4" />
+          See More Examples
+        </Link>
       </div>
+      </div>
+      
     </section>
   );
 }
