@@ -18,6 +18,10 @@ export function KortixLogo({ href }: KortixLogoProps) {
     setMounted(true);
   }, []);
 
+  const shouldInvert = mounted && (
+    theme === 'dark' || (theme === 'system' && systemTheme === 'dark')
+  );
+
   const logo = (
     <Image
       src="/anisora-logo.png"

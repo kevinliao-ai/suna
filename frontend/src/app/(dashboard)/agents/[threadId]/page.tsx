@@ -52,35 +52,7 @@ import {
   ParsedMetadata,
   ThreadParams,
 } from '@/components/thread/types';
-import {
-  safeJsonParse,
-} from '@/components/thread/utils';
-import { useThreadQuery } from '@/hooks/react-query/threads/use-threads';
-import { useAddUserMessageMutation, useMessagesQuery } from '@/hooks/react-query/threads/use-messages';
-import { useProjectQuery } from '@/hooks/react-query/threads/use-project';
-import { useAgentRunsQuery, useStartAgentMutation, useStopAgentMutation } from '@/hooks/react-query/threads/use-agent-run';
-import { useBillingStatusQuery } from '@/hooks/react-query/threads/use-billing-status';
-import { useSubscription, isPlan } from '@/hooks/react-query/subscriptions/use-subscriptions';
-import { SubscriptionStatus } from '@/components/thread/chat-input/_use-model-selection';
-
-// Extend the base Message type with the expected database fields
-interface ApiMessageType extends BaseApiMessageType {
-  message_id?: string;
-  thread_id?: string;
-  is_llm_message?: boolean;
-  metadata?: string;
-  created_at?: string;
-  updated_at?: string;
-}
-
-// Add a simple interface for streaming tool calls
-interface StreamingToolCall {
-  id?: string;
-  name?: string;
-  arguments?: string;
-  index?: number;
-  xml_tag_name?: string;
-}
+import { RedirectPage } from './redirect-page';
 
 export default function ThreadPage({
   params,

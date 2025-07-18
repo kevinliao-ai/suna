@@ -1,36 +1,44 @@
-FROM python:3.11-slim
+FROM ghcr.io/astral-sh/uv:python3.11-alpine
 
-# 设置环境变量
-ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONFAULTHANDLER=1 \
-    PYTHONPATH=/app
-
+ENV ENV_MODE production
 WORKDIR /app
 
-# 安装系统依赖
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache curl git
 
-# 创建非root用户
-RUN useradd -m -u 1000 appuser && \
-    chown -R appuser:appuser /app
+# Install Python dependencies
+COPY pyproject.toml uv.lock ./
+ENV UV_LINK_MODE=copy
+RUN --mount=type=cache,target=/root/.cache/uv uv sync --locked --quiet
 
-# 复制依赖文件
-COPY --chown=appuser:appuser requirements.txt .
+# Copy application code
+COPY . .
 
-# 安装 Python 依赖
-RUN pip install --no-cache-dir -r requirements.txt
+# Calculate optimal worker count based on 16 vCPUs
+# Using (2*CPU)+1 formula for CPU-bound applications
+ENV WORKERS=33
+ENV THREADS=2
+ENV WORKER_CONNECTIONS=2000
 
-# 切换用户
-USER appuser
-
-# 复制应用代码
-COPY --chown=appuser:appuser . .
-
-# 暴露端口
+ENV PYTHONPATH=/app
 EXPOSE 8000
 
-# 启动命令
-CMD ["gunicorn", "api:app", "--workers", "1", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000", "--timeout", "120"]
+# Gunicorn configuration
+CMD ["sh", "-c", "uv run gunicorn api:app \
+  --workers $WORKERS \
+  --worker-class uvicorn.workers.UvicornWorker \
+  --bind 0.0.0.0:8000 \
+  --timeout 1800 \
+  --graceful-timeout 600 \
+  --keep-alive 1800 \
+  --max-requests 0 \
+  --max-requests-jitter 0 \
+  --forwarded-allow-ips '*' \
+  --worker-connections $WORKER_CONNECTIONS \
+  --worker-tmp-dir /dev/shm \
+  --preload \
+  --log-level info \
+  --access-logfile - \
+  --error-logfile - \
+  --capture-output \
+  --enable-stdio-inheritance \
+  --threads $THREADS"]

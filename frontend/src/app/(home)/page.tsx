@@ -8,6 +8,8 @@ import { HeroSection } from '@/components/home/sections/hero-section';
 import { OpenSourceSection } from '@/components/home/sections/open-source-section';
 // import { PricingSection } from '@/components/home/sections/pricing-section';
 import { UseCasesSection } from '@/components/home/sections/use-cases-section';
+import { ModalProviders } from '@/providers/modal-providers';
+import { HeroVideoSection } from '@/components/home/sections/hero-video-section';
 
 export default function Home() {
   return (
