@@ -1,7 +1,14 @@
 import logging
+import os
 from typing import Optional
+from enum import Enum
 
 logger = logging.getLogger(__name__)
+
+class EnvMode(Enum):
+    LOCAL = "local"
+    STAGING = "staging"
+    PRODUCTION = "production"
 
 # 在 Configuration 类中，只保留最基本的配置项
 class Configuration:
@@ -175,9 +182,9 @@ class Configuration:
     REDIS_SSL: bool = True
     
     # Daytona sandbox configuration
-    DAYTONA_API_KEY: str
-    DAYTONA_SERVER_URL: str
-    DAYTONA_TARGET: str
+    DAYTONA_API_KEY: Optional[str] = None
+    DAYTONA_SERVER_URL: Optional[str] = None
+    DAYTONA_TARGET: Optional[str] = None
     
     # Search and other API keys
     TAVILY_API_KEY: str
@@ -215,8 +222,74 @@ class Configuration:
         return self.STRIPE_PRODUCT_ID_PROD
     
     def __init__(self):
-        """Initialize configuration"""
+        """Initialize configuration from environment variables"""
+        self._load_from_env()
         self._validate()
+    
+    def _load_from_env(self):
+        """Load configuration values from environment variables"""
+        # Environment mode
+        env_mode_str = os.getenv("ENV_MODE", "local").lower()
+        try:
+            self.ENV_MODE = EnvMode(env_mode_str)
+        except ValueError:
+            logger.warning(f"Invalid ENV_MODE '{env_mode_str}', defaulting to LOCAL")
+            self.ENV_MODE = EnvMode.LOCAL
+        
+        # Supabase configuration (required)
+        self.SUPABASE_URL = os.getenv("SUPABASE_URL", "")
+        self.SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY", "")
+        self.SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
+        
+        # Redis configuration
+        self.REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
+        self.REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))
+        self.REDIS_PASSWORD = os.getenv("REDIS_PASSWORD")
+        self.REDIS_SSL = os.getenv("REDIS_SSL", "false").lower() == "true"
+        
+        # RabbitMQ configuration
+        self.RABBITMQ_HOST = os.getenv("RABBITMQ_HOST", "localhost")
+        self.RABBITMQ_PORT = int(os.getenv("RABBITMQ_PORT", "5672"))
+        
+        # LLM API keys
+        self.ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
+        self.OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+        self.GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+        self.OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+        self.XAI_API_KEY = os.getenv("XAI_API_KEY")
+        
+        # AWS credentials
+        self.AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+        self.AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+        self.AWS_REGION_NAME = os.getenv("AWS_REGION_NAME")
+        
+        # Model configuration
+        self.MODEL_TO_USE = os.getenv("MODEL_TO_USE", "anthropic/claude-sonnet-4-20250514")
+        
+        # Daytona sandbox configuration
+        self.DAYTONA_API_KEY = os.getenv("DAYTONA_API_KEY")
+        self.DAYTONA_SERVER_URL = os.getenv("DAYTONA_SERVER_URL")
+        self.DAYTONA_TARGET = os.getenv("DAYTONA_TARGET")
+        
+        # Search and other API keys
+        self.TAVILY_API_KEY = os.getenv("TAVILY_API_KEY", "")
+        self.RAPID_API_KEY = os.getenv("RAPID_API_KEY", "")
+        self.CLOUDFLARE_API_TOKEN = os.getenv("CLOUDFLARE_API_TOKEN")
+        self.FIRECRAWL_API_KEY = os.getenv("FIRECRAWL_API_KEY", "")
+        self.FIRECRAWL_URL = os.getenv("FIRECRAWL_URL", "https://api.firecrawl.dev")
+        
+        # Stripe configuration
+        self.STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
+        self.STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET")
+        self.STRIPE_DEFAULT_PLAN_ID = os.getenv("STRIPE_DEFAULT_PLAN_ID")
+        
+        # LangFuse configuration
+        self.LANGFUSE_PUBLIC_KEY = os.getenv("LANGFUSE_PUBLIC_KEY")
+        self.LANGFUSE_SECRET_KEY = os.getenv("LANGFUSE_SECRET_KEY")
+        self.LANGFUSE_HOST = os.getenv("LANGFUSE_HOST", "https://cloud.langfuse.com")
+        
+        # Admin API key
+        self.ADMIN_API_KEY = os.getenv("ADMIN_API_KEY")
 
     def _validate(self):
         """只验证最基础的配置"""

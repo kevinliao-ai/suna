@@ -28,6 +28,9 @@ services:
       - LOG_LEVEL=INFO
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_PORT=5672
+      - WORKERS=4
+      - THREADS=2
+      - WORKER_CONNECTIONS=1000
     logging:
       driver: "json-file"
       options:

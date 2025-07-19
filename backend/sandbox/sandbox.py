@@ -7,28 +7,34 @@ from utils.config import Configuration
 load_dotenv()
 
 logger.debug("Initializing Daytona sandbox configuration")
-daytona_config = DaytonaConfig(
-    api_key=config.DAYTONA_API_KEY,
-    api_url=config.DAYTONA_SERVER_URL,  # Use api_url instead of server_url (deprecated)
-    target=config.DAYTONA_TARGET,
-)
+daytona_config = None
+daytona = None
 
-if daytona_config.api_key:
-    logger.debug("Daytona API key configured successfully")
+# Only initialize Daytona if API key is provided
+if config.DAYTONA_API_KEY:
+    daytona_config = DaytonaConfig(
+        api_key=config.DAYTONA_API_KEY,
+        api_url=config.DAYTONA_SERVER_URL,
+        target=config.DAYTONA_TARGET,
+    )
+    
+    if daytona_config.api_key:
+        logger.debug("Daytona API key configured successfully")
+        
+        if daytona_config.api_url:
+            logger.debug(f"Daytona API URL set to: {daytona_config.api_url}")
+        else:
+            logger.warning("No Daytona API URL found in environment variables")
+            
+        if daytona_config.target:
+            logger.debug(f"Daytona target set to: {daytona_config.target}")
+        else:
+            logger.warning("No Daytona target found in environment variables")
+            
+        # Initialize Daytona client only if API key is available
+        daytona = AsyncDaytona(daytona_config)
 else:
-    logger.warning("No Daytona API key found in environment variables")
-
-if daytona_config.api_url:
-    logger.debug(f"Daytona API URL set to: {daytona_config.api_url}")
-else:
-    logger.warning("No Daytona API URL found in environment variables")
-
-if daytona_config.target:
-    logger.debug(f"Daytona target set to: {daytona_config.target}")
-else:
-    logger.warning("No Daytona target found in environment variables")
-
-daytona = AsyncDaytona(daytona_config)
+    logger.warning("No Daytona API key found in environment variables - Daytona sandbox functionality will be disabled")
 
 async def get_or_start_sandbox(sandbox_id: str) -> AsyncSandbox:
     """Retrieve a sandbox by ID, check its state, and start it if needed."""

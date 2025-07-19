@@ -1,5 +1,12 @@
 # Suna Backend
 
+## Requirements
+
+- **Python**: 3.11 or higher (but less than 4.0)
+- **Docker**: For containerized deployment
+- **Redis**: For caching and session management
+- **RabbitMQ**: For message queuing
+
 ## Quick Setup
 
 The easiest way to get your backend configured is to use the setup wizard from the project root:
@@ -146,6 +153,22 @@ REDIS_PASSWORD=
 RABBITMQ_HOST=localhost # (instead of 'rabbitmq')
 RABBITMQ_PORT=5672
 ```
+
+### Troubleshooting
+
+#### Python Version Issues
+
+If you encounter Python version compatibility errors:
+
+1. **Check your Python version**: `python --version`
+2. **Ensure you're using Python 3.11-3.12**: The project requires `>=3.11,<4.0`
+3. **Dependency conflicts**: If you see errors like "langfuse requires Python <4.0,>=3.9", make sure your `pyproject.toml` has the correct `requires-python = ">=3.11,<4.0"`
+
+#### Common Dependency Errors
+
+- **ModuleNotFoundError**: Install dependencies with `uv sync` or `pip install -r requirements.txt`
+- **Version conflicts**: Clear your virtual environment and reinstall dependencies
+- **Docker build issues**: Ensure your Dockerfile uses a compatible Python base image
 
 ---
 
