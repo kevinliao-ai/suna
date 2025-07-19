@@ -1,0 +1,25 @@
+FROM python:3.11-alpine
+
+ENV ENV_MODE=production
+WORKDIR /app
+
+# Install minimal dependencies
+RUN apk add --no-cache curl
+
+# Install uv
+RUN pip install uv
+
+# Copy only essential files
+COPY backend/pyproject.toml backend/uv.lock ./
+RUN uv sync --no-dev
+
+# Copy application code
+COPY backend/ .
+
+ENV PYTHONPATH=/app
+
+# Minimal configuration for Railway
+EXPOSE 8000
+
+# Ultra-lightweight startup
+CMD ["uv", "run", "uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]

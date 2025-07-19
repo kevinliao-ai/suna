@@ -25,5 +25,5 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=30s --start-period=120s --retries=3 \
   CMD curl -f http://localhost:8000/api/health || exit 1
 
-# Direct command without shell variables
-CMD ["uv", "run", "gunicorn", "api:app", "--bind", "0.0.0.0:8000", "--workers", "1", "--worker-class", "uvicorn.workers.UvicornWorker", "--timeout", "300", "--log-level", "info", "--access-logfile", "-", "--error-logfile", "-"]
+# Railway optimized startup with error handling
+CMD ["sh", "-c", "echo 'Starting Suna Backend...' && uv run gunicorn api:app --bind 0.0.0.0:8000 --workers 1 --worker-class uvicorn.workers.UvicornWorker --timeout 120 --max-requests 100 --max-requests-jitter 10 --preload --log-level info --access-logfile - --error-logfile - || (echo 'Gunicorn failed, trying uvicorn...' && uv run uvicorn api:app --host 0.0.0.0 --port 8000)"]
