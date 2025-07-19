@@ -1,48 +1,46 @@
 #!/bin/bash
 
-# Railway startup script with robust port handling
+# Railway startup script with robust error handling
 set -e
 
-# Debug: Print all environment variables related to PORT
-echo "=== Environment Debug ==="
-echo "PORT environment variable: '$PORT'"
-echo "All environment variables containing 'PORT':"
-env | grep -i port || echo "No PORT-related environment variables found"
-echo "========================="
+echo "=== Railway Startup Debug ==="
+echo "Environment: ${ENV_MODE:-production}"
+echo "PORT: ${PORT:-not_set}"
+echo "Python version: $(python --version)"
+echo "Working directory: $(pwd)"
+echo "Files in directory:"
+ls -la
+echo "=========================="
 
-# Set default port with multiple fallback strategies
+# Set default port if not provided
 if [ -z "$PORT" ]; then
-    echo "PORT is empty, using default 8000"
-    PORT=8000
-elif ! echo "$PORT" | grep -qE '^[0-9]+$'; then
-    echo "PORT '$PORT' is not a valid number, using default 8000"
-    PORT=8000
-elif [ "$PORT" -lt 1 ] || [ "$PORT" -gt 65535 ]; then
-    echo "PORT '$PORT' is out of valid range, using default 8000"
+    echo "PORT not set, using default 8000"
     PORT=8000
 fi
 
-# Export the validated PORT
-export PORT
+# Validate port
+if ! echo "$PORT" | grep -qE '^[0-9]+$'; then
+    echo "Invalid PORT '$PORT', using 8000"
+    PORT=8000
+fi
 
-echo "Starting Suna Backend on Railway..."
-echo "Environment: ${ENV_MODE:-production}"
-echo "Final Port: $PORT"
-echo "Workers: ${WORKERS:-2}"
+echo "Final PORT: $PORT"
 
-# Start the application with explicit port
+# Test if we can import the app
+echo "Testing Python app import..."
+if ! uv run python -c "import api; print('App import successful')"; then
+    echo "ERROR: Failed to import app"
+    exit 1
+fi
+
+echo "Starting Gunicorn server..."
+
+# Start with minimal configuration first
 exec uv run gunicorn api:app \
-  --workers ${WORKERS:-2} \
+  --workers 1 \
   --worker-class uvicorn.workers.UvicornWorker \
   --bind "0.0.0.0:$PORT" \
-  --timeout 300 \
-  --graceful-timeout 120 \
-  --keep-alive 300 \
-  --max-requests 1000 \
-  --max-requests-jitter 100 \
-  --forwarded-allow-ips '*' \
-  --worker-connections ${WORKER_CONNECTIONS:-1000} \
-  --preload \
-  --log-level info \
+  --timeout 120 \
+  --log-level debug \
   --access-logfile - \
   --error-logfile -
