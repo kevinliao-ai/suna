@@ -1,0 +1,46 @@
+FROM ghcr.io/astral-sh/uv:python3.11-alpine
+
+ENV ENV_MODE=production
+WORKDIR /app
+
+# Install system dependencies
+RUN apk add --no-cache curl git
+
+# Install Python dependencies
+COPY pyproject.toml uv.lock ./
+ENV UV_LINK_MODE=copy
+RUN --mount=type=cache,target=/root/.cache/uv uv sync --quiet
+
+# Copy application code
+COPY . .
+
+ENV PYTHONPATH=/app
+
+# Railway automatically sets PORT environment variable
+EXPOSE $PORT
+
+# Optimized for Railway
+ENV WORKERS=2
+ENV THREADS=2
+ENV WORKER_CONNECTIONS=1000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD curl -f http://localhost:$PORT/api/health || exit 1
+
+# Railway deployment command
+CMD ["sh", "-c", "uv run gunicorn api:app \
+  --workers $WORKERS \
+  --worker-class uvicorn.workers.UvicornWorker \
+  --bind 0.0.0.0:$PORT \
+  --timeout 300 \
+  --graceful-timeout 120 \
+  --keep-alive 300 \
+  --max-requests 1000 \
+  --max-requests-jitter 100 \
+  --forwarded-allow-ips '*' \
+  --worker-connections $WORKER_CONNECTIONS \
+  --preload \
+  --log-level info \
+  --access-logfile - \
+  --error-logfile -"]

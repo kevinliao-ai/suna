@@ -1,0 +1,99 @@
+name: suna-backend
+region: nyc
+services:
+- name: api
+  source_dir: /backend
+  github:
+    repo: your-username/suna
+    branch: main
+    deploy_on_push: true
+  dockerfile_path: backend/Dockerfile
+  http_port: 8000
+  instance_count: 1
+  instance_size_slug: basic-xxs  # $12/month - 512MB RAM, 0.5 vCPU
+  # instance_size_slug: professional-xs  # $24/month - 1GB RAM, 1 vCPU (推荐)
+  routes:
+  - path: /
+  envs:
+  - key: ENV_MODE
+    value: production
+  - key: REDIS_HOST
+    value: ${redis.HOSTNAME}
+  - key: REDIS_PORT
+    value: ${redis.PORT}
+  - key: REDIS_PASSWORD
+    value: ${redis.PASSWORD}
+  - key: SUPABASE_URL
+    scope: RUN_TIME
+    type: SECRET
+  - key: SUPABASE_ANON_KEY
+    scope: RUN_TIME
+    type: SECRET
+  - key: SUPABASE_SERVICE_ROLE_KEY
+    scope: RUN_TIME
+    type: SECRET
+  - key: OPENAI_API_KEY
+    scope: RUN_TIME
+    type: SECRET
+  - key: ANTHROPIC_API_KEY
+    scope: RUN_TIME
+    type: SECRET
+  - key: MODEL_TO_USE
+    value: openai/gpt-4o
+  - key: TAVILY_API_KEY
+    scope: RUN_TIME
+    type: SECRET
+  - key: FIRECRAWL_API_KEY
+    scope: RUN_TIME
+    type: SECRET
+  - key: FIRECRAWL_URL
+    value: https://api.firecrawl.dev
+  - key: DAYTONA_API_KEY
+    scope: RUN_TIME
+    type: SECRET
+  - key: MCP_CREDENTIAL_ENCRYPTION_KEY
+    scope: RUN_TIME
+    type: SECRET
+
+- name: worker
+  source_dir: /backend
+  github:
+    repo: your-username/suna
+    branch: main
+    deploy_on_push: true
+  dockerfile_path: backend/Dockerfile
+  run_command: uv run dramatiq --processes 2 --threads 2 run_agent_background
+  instance_count: 1
+  instance_size_slug: basic-xxs
+  envs:
+  - key: ENV_MODE
+    value: production
+  - key: REDIS_HOST
+    value: ${redis.HOSTNAME}
+  - key: REDIS_PORT
+    value: ${redis.PORT}
+  - key: REDIS_PASSWORD
+    value: ${redis.PASSWORD}
+  - key: SUPABASE_URL
+    scope: RUN_TIME
+    type: SECRET
+  - key: SUPABASE_ANON_KEY
+    scope: RUN_TIME
+    type: SECRET
+  - key: SUPABASE_SERVICE_ROLE_KEY
+    scope: RUN_TIME
+    type: SECRET
+  - key: OPENAI_API_KEY
+    scope: RUN_TIME
+    type: SECRET
+  - key: ANTHROPIC_API_KEY
+    scope: RUN_TIME
+    type: SECRET
+  - key: MODEL_TO_USE
+    value: openai/gpt-4o
+
+databases:
+- name: redis
+  engine: REDIS
+  version: "7"
+  size: basic  # $15/month - 1GB RAM
