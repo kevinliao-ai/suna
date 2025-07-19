@@ -1,4 +1,4 @@
-FROM ghcr.io/astral-sh/uv:python3.11-alpine
+FROM python:3.11-alpine
 
 ENV ENV_MODE=production
 WORKDIR /app
@@ -6,16 +6,14 @@ WORKDIR /app
 # Install system dependencies
 RUN apk add --no-cache curl git
 
-# Copy Python dependency files
-COPY backend/pyproject.toml ./
-COPY backend/uv.lock ./
+# Install uv
+RUN pip install uv
+
+# Copy entire backend directory
+COPY backend/ .
 
 # Install Python dependencies
-ENV UV_LINK_MODE=copy
 RUN uv sync --quiet
-
-# Copy application code
-COPY backend/ .
 
 ENV PYTHONPATH=/app
 
@@ -26,10 +24,6 @@ EXPOSE $PORT
 ENV WORKERS=2
 ENV THREADS=2
 ENV WORKER_CONNECTIONS=1000
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD curl -f http://localhost:$PORT/api/health || exit 1
 
 # Railway deployment command
 CMD ["sh", "-c", "uv run gunicorn api:app \
