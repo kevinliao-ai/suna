@@ -4,7 +4,7 @@ ENV ENV_MODE=production
 WORKDIR /app
 
 # Install system dependencies
-RUN apk add --no-cache curl git
+RUN apk add --no-cache curl git bash
 
 # Copy Python dependency files
 COPY backend/pyproject.toml ./
@@ -17,25 +17,24 @@ RUN uv sync --quiet
 # Copy application code
 COPY backend/ .
 
+# Copy and make startup script executable
+COPY backend/railway-start.sh ./railway-start.sh
+RUN chmod +x ./railway-start.sh
+
 ENV PYTHONPATH=/app
 
-# Railway automatically sets PORT environment variable
-# Use default port 8000 if PORT is not set
+# Set default port (Railway will override this)
 ENV PORT=8000
-EXPOSE $PORT
+EXPOSE 8000
 
 # Optimized for Railway
 ENV WORKERS=2
 ENV THREADS=2
 ENV WORKER_CONNECTIONS=1000
 
-# Health check
+# Health check with fixed port for now
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD curl -f http://localhost:$PORT/api/health || exit 1
+  CMD curl -f http://localhost:8000/api/health || exit 1
 
-# Copy and make startup script executable
-COPY backend/railway-start.sh ./railway-start.sh
-RUN chmod +x ./railway-start.sh
-
-# Railway deployment command
-CMD ["./railway-start.sh"]
+# Railway deployment command - use sh to handle PORT variable properly
+CMD ["sh", "-c", "PORT=${PORT:-8000} && echo 'Starting on port:' $PORT && uv run gunicorn api:app --workers 2 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout 300 --graceful-timeout 120 --keep-alive 300 --max-requests 1000 --max-requests-jitter 100 --forwarded-allow-ips '*' --worker-connections 1000 --preload --log-level info --access-logfile - --error-logfile -"]
