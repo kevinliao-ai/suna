@@ -13,6 +13,15 @@ from datetime import datetime, timezone
 from utils.config import config, EnvMode
 import asyncio
 from utils.logger import logger, structlog
+
+# 在生产环境中设置 Redis broker（用于 Railway 等平台）
+if config.ENV_MODE in ["production", "staging"]:
+    try:
+        from config.redis_broker import setup_redis_broker
+        setup_redis_broker()
+        logger.info("Redis broker configured for message queuing")
+    except Exception as e:
+        logger.warning(f"Failed to setup Redis broker: {e}")
 import time
 from collections import OrderedDict
 from typing import Dict, Any
