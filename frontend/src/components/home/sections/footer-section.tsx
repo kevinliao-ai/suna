@@ -150,10 +150,10 @@ export function FooterSection() {
           />
         </div>
       </Link> */}
-      <div className="w-full py-4 text-center text-sm text-muted-foreground border-t border-border">
+      {/* <div className="w-full py-4 text-center text-sm text-muted-foreground border-t border-border">
         <p>open-source project under the Apache 2.0 license</p>
         <p className="mt-1">© 2025 Bilibili.</p>
-      </div>
+      </div> */}
     </footer>
   );
 }

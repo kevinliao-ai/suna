@@ -524,7 +524,7 @@ export function ToolCallSidePanel({
               <h2 className="text-md font-medium text-zinc-900 dark:text-zinc-100">
                 AniSora's Computer
               </h2>
-            </motion.div>
+            </div>
 
             {displayToolCall.toolResult?.content && !isStreaming && (
               <div className="flex items-center gap-2">
