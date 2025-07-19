@@ -3,7 +3,6 @@ builder = "DOCKERFILE"
 dockerfilePath = "backend/Dockerfile.railway"
 
 [deploy]
-startCommand = "uv run gunicorn api:app --workers 2 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout 300"
 healthcheckPath = "/api/health"
 healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
