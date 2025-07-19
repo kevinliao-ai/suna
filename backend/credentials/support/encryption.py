@@ -17,14 +17,22 @@ class EncryptionService:
     def _get_or_create_encryption_key(self) -> bytes:
         key_env = os.getenv("MCP_CREDENTIAL_ENCRYPTION_KEY")
         
+        if not key_env:
+            self._logger.warning("MCP_CREDENTIAL_ENCRYPTION_KEY not found, generating new key")
+            key = Fernet.generate_key()
+            self._logger.info(f"Generated new encryption key. Set this in your environment:")
+            self._logger.info(f"MCP_CREDENTIAL_ENCRYPTION_KEY={key.decode()}")
+            return key
+        
         try:
+            # The key should already be base64 encoded, so we just need to encode it as bytes
             if isinstance(key_env, str):
                 return key_env.encode('utf-8')
             else:
                 return key_env
                 
         except Exception as e:
-            self._logger.error(f"Invalid encryption key: {e}")
+            self._logger.error(f"Invalid encryption key format: {e}")
             self._logger.warning("Generating new encryption key for this session")
             key = Fernet.generate_key()
             self._logger.info(f"Generated new encryption key. Set this in your environment:")
