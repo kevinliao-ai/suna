@@ -57,24 +57,23 @@ export interface PricingTier {
 }
 
 export const siteConfig = {
-  name: 'Kortix Suna',
-  description: 'The Generalist AI Agent that can act on your behalf.',
+  name: 'AniSora AI',
+  description: 'AniSora AI is a powerful open-source AI model for generating anime-style videos.',
   cta: 'Start Free',
   url: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
-  keywords: ['AI Agent', 'Generalist AI', 'Open Source AI', 'Autonomous Agent'],
+  keywords: ['AI Agent', 'anime videos', 'anime-style videos', 'generate anime videos', 'Open Source AI', 'Autonomous Agent',  'Generalist AI'],
   links: {
-    email: 'support@kortix.ai',
-    twitter: 'https://x.com/kortixai',
-    discord: 'https://discord.gg/kortixai',
-    github: 'https://github.com/Kortix-ai/Suna',
-    instagram: 'https://instagram.com/kortixai',
+    email: 'liaokuanya0907@gmail.com',
+    discord: 'https://discord.gg/anisora',
+    github: 'https://github.com/bilibili/Index-anisora',
   },
   nav: {
     links: [
       { id: 1, name: 'Home', href: '#hero' },
-      { id: 2, name: 'Use Cases', href: '#use-cases' },
+      { id: 2, name: 'Use Cases', href: '#showcase' },
       { id: 3, name: 'Open Source', href: '#open-source' },
-      { id: 4, name: 'Pricing', href: '#pricing' },
+      { id: 4, name: 'FAQ', href: '#faq' },
+      // { id: 5, name: 'Pricing', href: '#pricing' },
     ],
   },
   hero: {
@@ -105,11 +104,10 @@ export const siteConfig = {
       </svg>
     ),
     badge: '100% OPEN SOURCE',
-    githubUrl: 'https://github.com/kortix-ai/suna',
-    title: 'Suna, the AI Employee.',
-    description:
-      'Suna by Kortix – is a generalist AI Agent that acts on your behalf.',
-    inputPlaceholder: 'Ask Suna to...',
+    githubUrl: 'https://github.com/bilibili/Index-anisora',
+    title: 'AniSora, the AI Employee.',
+    description:'the most powerful open-source animated video generation model.',
+    inputPlaceholder: 'Ask AniSora to...',
   },
   cloudPricingItems: [
     {
@@ -498,15 +496,15 @@ export const siteConfig = {
     ],
   },
   featureSection: {
-    title: 'How Kortix Suna Works',
+    title: 'How AniSora Works',
     description:
-      'Discover how Kortix Suna transforms your commands into action in four easy steps',
+      'Discover how Bilibili AniSora transforms your commands into action in four easy steps',
     items: [
       {
         id: 1,
         title: 'Request an Action',
         content:
-          'Speak or type your command—let Kortix Suna capture your intent. Your request instantly sets the process in motion.',
+          'Speak or type your command—let Bilibili AniSora capture your intent. Your request instantly sets the process in motion.',
         image:
           'https://images.unsplash.com/photo-1720371300677-ba4838fa0678?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
       },
@@ -514,7 +512,7 @@ export const siteConfig = {
         id: 2,
         title: 'AI Understanding & Planning',
         content:
-          'Suna analyzes your request, understands the context, and develops a structured plan to complete the task efficiently.',
+          'AniSora analyzes your request, understands the context, and develops a structured plan to complete the task efficiently.',
         image:
           'https://images.unsplash.com/photo-1686170287433-c95faf6d3608?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxmZWF0dXJlZC1waG90b3MtZmVlZHwzfHx8ZW58MHx8fHx8fA%3D%3D',
       },
@@ -522,7 +520,7 @@ export const siteConfig = {
         id: 3,
         title: 'Autonomous Execution',
         content:
-          'Using its capabilities and integrations, Suna executes the task independently, handling any complexities along the way.',
+          'Using its capabilities and integrations, AniSora executes the task independently, handling any complexities along the way.',
         image:
           'https://images.unsplash.com/photo-1720378042271-60aff1e1c538?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxmZWF0dXJlZC1waG90b3MtZmVlZHwxMHx8fGVufDB8fHx8fA%3D%3D',
       },
@@ -530,30 +528,30 @@ export const siteConfig = {
         id: 4,
         title: 'Results & Learning',
         content:
-          'Suna delivers results and learns from each interaction, continuously improving its performance to better serve your needs.',
+          'AniSora delivers results and learns from each interaction, continuously improving its performance to better serve your needs.',
         image:
           'https://images.unsplash.com/photo-1666882990322-e7f3b8df4f75?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1yZWxhdGVkfDF8fHxlbnwwfHx8fHw%3D',
       },
     ],
   },
   bentoSection: {
-    title: 'Empower Your Workflow with Kortix Suna',
+    title: 'Empower Your Workflow with Bilibili AniSora',
     description:
-      'Let Kortix Suna act on your behalf with advanced AI capabilities, seamless integrations, and autonomous task execution.',
+      'Let Bilibili AniSora act on your behalf with advanced AI capabilities, seamless integrations, and autonomous task execution.',
     items: [
       {
         id: 1,
         content: <FirstBentoAnimation />,
         title: 'Autonomous Task Execution',
         description:
-          'Experience true automation with Suna. Ask your AI Agent to complete tasks, research information, and handle complex workflows with minimal supervision.',
+          'Experience true automation with AniSora. Ask your AI Agent to complete tasks, research information, and handle complex workflows with minimal supervision.',
       },
       {
         id: 2,
         content: <SecondBentoAnimation />,
         title: 'Seamless Integrations',
         description:
-          'Connect Suna to your existing tools for a unified workflow. Boost productivity through AI-powered interconnected systems.',
+          'Connect AniSora to your existing tools for a unified workflow. Boost productivity through AI-powered interconnected systems.',
       },
       {
         id: 3,
@@ -567,21 +565,21 @@ export const siteConfig = {
         ),
         title: 'Intelligent Data Analysis',
         description:
-          "Transform raw data into actionable insights in seconds. Make better decisions with Suna's real-time, adaptive intelligence.",
+          "Transform raw data into actionable insights in seconds. Make better decisions with AniSora's real-time, adaptive intelligence.",
       },
       {
         id: 4,
         content: <FourthBentoAnimation once={false} />,
         title: 'Complete Customization',
         description:
-          'Tailor Suna to your specific needs. As an open source solution, you have full control over its capabilities, integrations, and implementation.',
+          'Tailor AniSora to your specific needs. As an open source solution, you have full control over its capabilities, integrations, and implementation.',
       },
     ],
   },
   benefits: [
     {
       id: 1,
-      text: "Automate everyday tasks with Suna's powerful AI capabilities.",
+      text: "Automate everyday tasks with AniSora's powerful AI capabilities.",
       image: '/Device-6.png',
     },
     {
@@ -591,7 +589,7 @@ export const siteConfig = {
     },
     {
       id: 3,
-      text: 'Improve focus on high-value work as Suna handles the routine.',
+      text: 'Improve focus on high-value work as AniSora handles the routine.',
       image: '/Device-8.png',
     },
     {
@@ -897,13 +895,13 @@ export const siteConfig = {
 
         title: 'Community Powered',
         description:
-          "Join a thriving community of developers and users continuously enhancing and expanding Suna's capabilities.",
+          "Join a thriving community of developers and users continuously enhancing and expanding AniSora's capabilities.",
       },
     ],
   },
   quoteSection: {
     quote:
-      'Kortix Suna has transformed how we approach everyday tasks. The level of automation it provides, combined with its open source nature, makes it an invaluable tool for our entire organization.',
+      'Bilibili AniSora has transformed how we approach everyday tasks. The level of automation it provides, combined with its open source nature, makes it an invaluable tool for our entire organization.',
     author: {
       name: 'Alex Johnson',
       role: 'CTO, Innovatech',
@@ -913,7 +911,7 @@ export const siteConfig = {
   pricing: {
     title: 'Open Source & Free Forever',
     description:
-      'Kortix Suna is 100% open source and free to use. No hidden fees, no premium features locked behind paywalls.',
+      'Bilibili AniSora is 100% open source and free to use. No hidden fees, no premium features locked behind paywalls.',
     pricingItems: [
       {
         name: 'Community',
@@ -928,7 +926,7 @@ export const siteConfig = {
           'Community support',
         ],
         description: 'Perfect for individual users and developers',
-        buttonText: 'Hire Suna',
+        buttonText: 'Hire AniSora',
         buttonColor: 'bg-accent text-primary',
         isPopular: false,
       },
@@ -1178,49 +1176,55 @@ export const siteConfig = {
   faqSection: {
     title: 'Frequently Asked Questions',
     description:
-      "Answers to common questions about Kortix Suna and its capabilities. If you have any other questions, please don't hesitate to contact us.",
+      'Find answers to common questions about AniSora, our open-source anime video generation model. If you have any other questions, feel free to reach out to our community!',
     faQitems: [
       {
         id: 1,
-        question: 'What is an AI Agent?',
+        question: 'What is AniSora?',
         answer:
-          'An AI Agent is an intelligent software program that can perform tasks autonomously, learn from interactions, and make decisions to help achieve specific goals. It combines artificial intelligence and machine learning to provide personalized assistance and automation.',
+          'AniSora is an advanced open-source anime video generation model developed by Bilibili. It enables users to create high-quality anime-style videos with various styles including series episodes, Chinese original animations, manga adaptations, VTuber content, and more!',
       },
       {
         id: 2,
-        question: 'How does Kortix Suna work?',
+        question: 'What are the system requirements for running AniSora?',
         answer:
-          'Kortix Suna works by analyzing your requirements, leveraging advanced AI algorithms to understand context, and executing tasks based on your instructions. It can integrate with your workflow, learn from feedback, and continuously improve its performance.',
+          'AniSora V1 can run on RTX 4090 GPUs, while V2 supports both GPUs and Huawei Ascend 910B NPUs. The specific requirements depend on the model version and your use case. For local deployment, we recommend at least 24GB of GPU memory for optimal performance.',
       },
       {
         id: 3,
-        question: 'Is Kortix Suna really free?',
+        question: 'What video styles does AniSora support?',
         answer:
-          'Yes, Kortix Suna is completely free and open source. We believe in democratizing AI technology and making it accessible to everyone. You can use it, modify it, and contribute to its development without any cost.',
+          'AniSora supports a wide range of anime styles including but not limited to: series episodes, Chinese original animations, manga adaptations, VTuber content, anime PVs, and mad-style parodies (鬼畜动画). The model has been trained on diverse datasets to handle various artistic styles.',
       },
       {
         id: 4,
-        question: 'Can I integrate Suna with my existing tools?',
+        question: 'Can I use AniSora for commercial projects?',
         answer:
-          'Yes, Kortix Suna is designed to be highly compatible with popular tools and platforms. We offer APIs and pre-built integrations for seamless connection with your existing workflow tools and systems.',
+          'Yes, AniSora is open-source and available for both personal and commercial use. However, please review the specific license terms included with the model for any usage restrictions or attribution requirements.',
       },
       {
         id: 5,
-        question: 'How can I contribute to Kortix Suna?',
+        question: 'How can I contribute to the AniSora project?',
         answer:
-          'You can contribute to Kortix Suna by submitting pull requests on GitHub, reporting bugs, suggesting new features, or helping with documentation. Join our Discord community to connect with other contributors and Hire Suna.',
+          'You can contribute to AniSora by submitting pull requests on GitHub, reporting issues, suggesting new features, or helping with documentation. We welcome contributions from the community to help improve the model and its capabilities.',
       },
       {
         id: 6,
-        question: 'How does Kortix Suna save me time?',
+        question: 'What makes AniSora different from other video generation models?',
         answer:
-          'Kortix Suna automates repetitive tasks, streamlines workflows, and provides quick solutions to common challenges. This automation and efficiency can save hours of manual work, allowing you to focus on more strategic activities.',
+          'AniSora is specifically designed for anime-style content generation, with specialized training on anime datasets. It offers features like localized region guidance, temporal control (first/last frame guidance, keyframe interpolation), and supports both GPU and NPU acceleration. The model has demonstrated state-of-the-art results in anime video generation benchmarks.',
+      },
+      {
+        id: 7,
+        question: 'How can I get started with AniSora?',
+        answer:
+          'You can get started by cloning our GitHub repository and following the setup instructions in the README. The project includes pre-trained models and example scripts to help you generate your first anime videos. Make sure your system meets the hardware requirements before proceeding.',
       },
     ],
   },
   ctaSection: {
     id: 'cta',
-    title: 'Start Using Kortix Suna Today',
+    title: 'Start Using Bilibili AniSora Today',
     backgroundImage: '/holo.png',
     button: {
       text: 'Get Started for free',
@@ -1230,23 +1234,19 @@ export const siteConfig = {
   },
   footerLinks: [
     {
-      title: 'Kortix',
+      title: 'AniSora',
       links: [
-        { id: 1, title: 'About', url: 'https://kortix.ai' },
-        { id: 3, title: 'Contact', url: 'mailto:hey@kortix.ai' },
-        { id: 4, title: 'Careers', url: 'https://kortix.ai/careers' },
+        { id: 1, title: 'Documentation', url: 'https://github.com/bilibili/Index-anisora' },
+        { id: 3, title: 'Discord', url: 'https://discord.gg/KXkc59Yy' },
+        { id: 4, title: 'Start Using', url: '/auth' },
       ],
     },
     {
-      title: 'Resources',
+      title: 'Quick Links',
       links: [
-        {
-          id: 5,
-          title: 'Documentation',
-          url: 'https://github.com/Kortix-ai/Suna',
-        },
-        { id: 7, title: 'Discord', url: 'https://discord.gg/Py6pCBUUPw' },
-        { id: 8, title: 'GitHub', url: 'https://github.com/Kortix-ai/Suna' },
+        { id: 1, title: 'Home', url: '#hero' },
+        { id: 2, title: 'Use Cases', url: '#showcase' },
+        { id: 3, title: 'FAQ', url: '#faq' },
       ],
     },
     {
@@ -1255,17 +1255,17 @@ export const siteConfig = {
         {
           id: 9,
           title: 'Privacy Policy',
-          url: 'https://suna.so/legal?tab=privacy',
+          url: '/legal?tab=privacy',
         },
         {
           id: 10,
           title: 'Terms of Service',
-          url: 'https://suna.so/legal?tab=terms',
+          url: '/legal?tab=terms',
         },
         {
           id: 11,
           title: 'License Apache 2.0',
-          url: 'https://github.com/Kortix-ai/Suna/blob/main/LICENSE',
+          url: 'https://github.com/bilibili/Index-anisora/blob/main/LICENSE',
         },
       ],
     },
@@ -1275,7 +1275,7 @@ export const siteConfig = {
       id: 'competitor-analysis',
       title: 'Competitor Analysis',
       description:
-        'Analyze the market for my next company in the healthcare industry, located in the UK. Give me the major players, their market size, strengths, and weaknesses, and add their website URLs. Once done, generate a PDF report.',
+        'The figures in the picture are sitting in a forward moving car waving to the rear, their hair swaying from side to side in the wind',
       category: 'research',
       featured: true,
       icon: (

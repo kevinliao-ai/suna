@@ -20,10 +20,10 @@ export function FooterSection() {
   }, []);
 
   const logoSrc = !mounted
-    ? '/kortix-logo.svg'
+    ? '/anisora-logo.png'
     : resolvedTheme === 'dark'
-      ? '/kortix-logo-white.svg'
-      : '/kortix-logo.svg';
+      ? '/anisora-logo.png'
+      : '/anisora-logo.png';
 
   return (
     <footer id="footer" className="w-full pb-0">
@@ -32,19 +32,20 @@ export function FooterSection() {
           <Link href="/" className="flex items-center gap-2">
             <Image
               src={logoSrc}
-              alt="Kortix Logo"
+              alt="AniSora Logo"
               width={122}
               height={22}
               priority
             />
+            {/* <span className="font-medium text-primary text-sm">AniSora</span> */}
           </Link>
           <p className="tracking-tight text-muted-foreground font-medium">
             {siteConfig.hero.description}
           </p>
 
-          <div className="flex items-center gap-4">
+          {/* <div className="flex items-center gap-4">
             <a
-              href="https://github.com/kortix-ai/suna"
+              href="https://github.com/bilibili/Index-anisora"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="GitHub"
@@ -94,7 +95,7 @@ export function FooterSection() {
                 />
               </svg>
             </a>
-          </div>
+          </div> */}
           {/* <div className="flex items-center gap-2 dark:hidden">
             <Icons.soc2 className="size-12" />
             <Icons.hipaa className="size-12" />
@@ -129,7 +130,7 @@ export function FooterSection() {
           </div>
         </div>
       </div>
-      <Link
+      {/* <Link
         href="https://www.youtube.com/watch?v=nuf5BF1jvjQ"
         target="_blank"
         rel="noopener noreferrer"
@@ -148,7 +149,11 @@ export function FooterSection() {
             flickerChance={0.1}
           />
         </div>
-      </Link>
+      </Link> */}
+      {/* <div className="w-full py-4 text-center text-sm text-muted-foreground border-t border-border">
+        <p>open-source project under the Apache 2.0 license</p>
+        <p className="mt-1">© 2025 Bilibili.</p>
+      </div> */}
     </footer>
   );
 }

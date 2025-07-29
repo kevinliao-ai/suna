@@ -1,0 +1,29 @@
+# robots.txt for AniSora AI
+# Last updated: 2025-06-30
+
+# Global rules for all crawlers
+User-agent: *
+Allow: /
+
+# Block sensitive areas
+Disallow: /admin/
+Disallow: /api/
+Disallow: /_next/data/
+Disallow: /*/private/
+
+# Allow all static assets
+Allow: /*.css$
+Allow: /*.js$
+Allow: /*.svg$
+Allow: /*.png$
+Allow: /*.jpg$
+Allow: /*.jpeg$
+Allow: /*.webp$
+Allow: /*.gif$
+
+# Allow Google AdSense verification
+User-agent: Googlebot
+Allow: /*?*google_adsense*
+
+# Block other query parameters
+Disallow: /*?*
