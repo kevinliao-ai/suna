@@ -6,6 +6,7 @@ import { CTASection } from '@/components/home/sections/cta-section';
 import { FooterSection } from '@/components/home/sections/footer-section';
 import { HeroSection } from '@/components/home/sections/hero-section';
 import { OpenSourceSection } from '@/components/home/sections/open-source-section';
+import { FAQSection } from '@/components/home/sections/faq-section';
 import { PricingSection } from '@/components/home/sections/pricing-section';
 import { UseCasesSection } from '@/components/home/sections/use-cases-section';
 import { ModalProviders } from '@/providers/modal-providers';
@@ -27,14 +28,14 @@ export default function Home() {
             {/* <FeatureSection /> */}
             {/* <GrowthSection /> */}
             <OpenSourceSection />
-            <div className='flex flex-col items-center px-4'>
+            {/* <div className='flex flex-col items-center px-4'>
               <PricingSection />
-            </div>
-            <div className="pb-10 mx-auto">
+            </div> */}
+            {/* <div className="pb-10 mx-auto">
               <HeroVideoSection />
-            </div>
+            </div> */}
             {/* <TestimonialSection /> */}
-            {/* <FAQSection /> */}
+            <FAQSection />
             <CTASection />
             <FooterSection />
           </div>
