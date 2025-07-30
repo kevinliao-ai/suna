@@ -9,7 +9,7 @@ import Image from 'next/image';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
 
-export function FooterSection() {
+export function FooterSection({ showMaintenanceQulckLink }: { showMaintenanceQulckLink?: boolean }) {
   const tablet = useMediaQuery('(max-width: 1024px)');
   const { theme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -114,17 +114,21 @@ export function FooterSection() {
                 <li className="mb-2 text-sm font-semibold text-primary">
                   {column.title}
                 </li>
-                {column.links.map((link) => (
-                  <li
-                    key={link.id}
-                    className="group inline-flex cursor-pointer items-center justify-start gap-1 text-[15px]/snug text-muted-foreground"
-                  >
-                    <Link href={link.url}>{link.title}</Link>
-                    <div className="flex size-4 items-center justify-center border border-border rounded translate-x-0 transform opacity-0 transition-all duration-300 ease-out group-hover:translate-x-1 group-hover:opacity-100">
-                      <ChevronRightIcon className="h-4 w-4 " />
-                    </div>
-                  </li>
-                ))}
+                {column.links.map((link) => {
+                  // 如果链接是锚点链接（以#开头），则添加完整路径
+                  const href = link.url.startsWith('#') ? `/${link.url}` : link.url;
+                  return (
+                    <li
+                      key={link.id}
+                      className="group inline-flex cursor-pointer items-center justify-start gap-1 text-[15px]/snug text-muted-foreground"
+                    >
+                      <Link href={href}>{link.title}</Link>
+                      <div className="flex size-4 items-center justify-center border border-border rounded translate-x-0 transform opacity-0 transition-all duration-300 ease-out group-hover:translate-x-1 group-hover:opacity-100">
+                        <ChevronRightIcon className="h-4 w-4 " />
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
             ))}
           </div>

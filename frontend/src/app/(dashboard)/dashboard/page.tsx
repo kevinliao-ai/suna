@@ -1,34 +1,71 @@
-import { cn } from "@/lib/utils";
-import { DashboardContent } from "../../../components/dashboard/dashboard-content";
-import { BackgroundAALChecker } from "@/components/auth/background-aal-checker";
-import { Suspense } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
-import { isFlagEnabled } from "@/lib/feature-flags";
+'use client';
 
-export default async function DashboardPage() {
+import dynamic from 'next/dynamic';
+import { Suspense, useEffect, useState } from 'react';
+import { useTheme } from 'next-themes';
+import Image from 'next/image';
+import Link from 'next/link';
+import { FooterSection } from '@/components/home/sections/footer-section';
+// Dynamically import the BilibiliEmbed component with no SSR
+const BilibiliEmbed = dynamic(
+  () => import('@/components/bilibili-embed').then(mod => mod.BilibiliEmbed),
+  { 
+    ssr: false,
+    loading: () => (
+      <div className="flex items-center justify-center h-full">
+        <div className="animate-pulse text-muted-foreground">
+          Loading Bilibili content...
+        </div>
+      </div>
+    )
+  }
+);
+
+export default function DashboardPage() {
+  const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const logoSrc = !mounted
+    ? '/anisora-logo.png'
+    : resolvedTheme === 'dark'
+      ? '/anisora-logo.png'
+      : '/anisora-logo.png';
+
   return (
-    <BackgroundAALChecker>
-      <Suspense
-        fallback={
-          <div className="flex flex-col h-full w-full">
-            <div className="flex-1 flex flex-col items-center justify-center px-4">
-              <div className={cn(
-                "flex flex-col items-center text-center w-full space-y-8",
-                "max-w-[850px] sm:max-w-full sm:px-4"
-              )}>
-                <Skeleton className="h-10 w-40 sm:h-8 sm:w-32" />
-                <Skeleton className="h-7 w-56 sm:h-6 sm:w-48" />
-                <Skeleton className="w-full h-[100px] rounded-xl sm:h-[80px]" />
-                <div className="block sm:hidden lg:block w-full">
-                  <Skeleton className="h-20 w-full" />
-                </div>
-              </div>
-            </div>
+    <div className="flex flex-col h-full w-full">
+      {/* Simple Header with Logo */}
+      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container flex h-14 items-center px-4">
+          <Link href="/" className="flex items-center -ml-1.5">
+            <Image
+              src={logoSrc}
+              alt="AniSora Logo"
+              width={120}
+              height={24}
+              className="h-6 w-auto"
+              priority
+            />
+          </Link>
+        </div>
+      </header>
+      
+      {/* Content */}
+      <div className="flex-1 w-full overflow-hidden">
+        <Suspense fallback={
+          <div className="flex-1 flex items-center justify-center h-full">
+            <div className="animate-pulse">Loading Bilibili content...</div>
           </div>
-        }
-      >
-        <DashboardContent />
-      </Suspense>
-    </BackgroundAALChecker>
+        }>
+          <div className="h-[calc(100vh-14rem)] w-full">
+            <BilibiliEmbed url="https://bilibili-index-anisora.ms.show/" />
+          </div>
+        </Suspense>
+      </div>
+      <FooterSection showMaintenanceQulckLink={false} />
+    </div>
   );
 }

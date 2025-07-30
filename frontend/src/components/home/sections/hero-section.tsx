@@ -301,11 +301,11 @@ export function HeroSection() {
           <div className="flex flex-col items-center justify-center gap-5">
             <h1 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-medium tracking-tighter text-balance text-center">
               {/* <span className="text-secondary">AniSora: </span> */}
-              <span className="text-secondary">Exploring the Frontiers of Animation Video Generation in the Sora Era</span>
+              <span className="text-secondary">the most powerful open-source AI model for generating anime-style videos</span>
             </h1>
-            <p className="text-base md:text-lg text-center text-muted-foreground font-medium text-balance leading-relaxed tracking-tight">
+            {/* <p className="text-base md:text-lg text-center text-muted-foreground font-medium text-balance leading-relaxed tracking-tight">
               {hero.description}
-            </p>
+            </p> */}
           </div>
           {/* <div className="flex items-center w-full max-w-xl gap-2 flex-wrap justify-center">
             <form className="w-full relative" onSubmit={handleSubmit}>
