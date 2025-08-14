@@ -15,7 +15,6 @@ import asyncio
 from utils.logger import logger, structlog
 import time
 from collections import OrderedDict
-from typing import Dict, Any
 
 from pydantic import BaseModel
 import uuid
@@ -29,7 +28,7 @@ from services import transcription as transcription_api
 import sys
 from services import email_api
 from triggers import api as triggers_api
-from triggers.endpoints.workflows import router as workflows_router
+from services import api_keys_api
 
 
 if sys.platform == "win32":
@@ -54,7 +53,6 @@ async def lifespan(app: FastAPI):
             instance_id
         )
         
-        # Workflows are now initialized via triggers module
         
         sandbox_api.initialize(db)
         
@@ -70,15 +68,11 @@ async def lifespan(app: FastAPI):
         # Start background tasks
         # asyncio.create_task(agent_api.restore_running_agent_runs())
         
-        # Initialize triggers API
         triggers_api.initialize(db)
-        
-        # Initialize workflows API (part of triggers module)
-        from triggers.endpoints.workflows import set_db_connection
-        set_db_connection(db)
-
-        # Initialize pipedream API
         pipedream_api.initialize(db)
+        credentials_api.initialize(db)
+        template_api.initialize(db)
+        composio_api.initialize(db)
         
         yield
         
@@ -154,8 +148,8 @@ app.add_middleware(
     allow_origins=allowed_origins,
     allow_origin_regex=allow_origin_regex,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["Content-Type", "Authorization", "X-Project-Id", "X-MCP-URL", "X-MCP-Type", "X-MCP-Headers", "X-Refresh-Token"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "X-Project-Id", "X-MCP-URL", "X-MCP-Type", "X-MCP-Headers", "X-Refresh-Token", "X-API-Key"],
 )
 
 # Create a main API router
@@ -166,6 +160,7 @@ api_router.include_router(agent_api.router)
 api_router.include_router(sandbox_api.router)
 api_router.include_router(billing_api.router)
 api_router.include_router(feature_flags_api.router)
+api_router.include_router(api_keys_api.router)
 
 from mcp_module import api as mcp_api
 from credentials import api as credentials_api
@@ -182,7 +177,6 @@ from knowledge_base import api as knowledge_base_api
 api_router.include_router(knowledge_base_api.router)
 
 api_router.include_router(triggers_api.router)
-api_router.include_router(workflows_router, prefix="/workflows")
 
 from pipedream import api as pipedream_api
 api_router.include_router(pipedream_api.router)
@@ -193,6 +187,9 @@ api_router.include_router(pipedream_api.router)
 
 from admin import api as admin_api
 api_router.include_router(admin_api.router)
+
+from composio_integration import api as composio_api
+api_router.include_router(composio_api.router)
 
 @api_router.get("/health")
 async def health_check():

@@ -141,19 +141,12 @@ def load_existing_env_vars():
         "rapidapi": {
             "RAPID_API_KEY": backend_env.get("RAPID_API_KEY", ""),
         },
-        "smithery": {
-            "SMITHERY_API_KEY": backend_env.get("SMITHERY_API_KEY", ""),
-        },
-        "qstash": {
-            "QSTASH_URL": backend_env.get("QSTASH_URL", ""),
-            "QSTASH_TOKEN": backend_env.get("QSTASH_TOKEN", ""),
-            "QSTASH_CURRENT_SIGNING_KEY": backend_env.get(
-                "QSTASH_CURRENT_SIGNING_KEY", ""
-            ),
-            "QSTASH_NEXT_SIGNING_KEY": backend_env.get("QSTASH_NEXT_SIGNING_KEY", ""),
+        "cron": {
+            # No secrets required. Make sure pg_cron and pg_net are enabled in Supabase
         },
         "webhook": {
             "WEBHOOK_BASE_URL": backend_env.get("WEBHOOK_BASE_URL", ""),
+            "TRIGGER_WEBHOOK_SECRET": backend_env.get("TRIGGER_WEBHOOK_SECRET", ""),
         },
         "slack": {
             "SLACK_CLIENT_ID": backend_env.get("SLACK_CLIENT_ID", ""),
@@ -170,6 +163,9 @@ def load_existing_env_vars():
             "PIPEDREAM_CLIENT_ID": backend_env.get("PIPEDREAM_CLIENT_ID", ""),
             "PIPEDREAM_CLIENT_SECRET": backend_env.get("PIPEDREAM_CLIENT_SECRET", ""),
             "PIPEDREAM_X_PD_ENVIRONMENT": backend_env.get("PIPEDREAM_X_PD_ENVIRONMENT", ""),
+        },
+        "kortix": {
+            "KORTIX_ADMIN_API_KEY": backend_env.get("KORTIX_ADMIN_API_KEY", ""),
         },
         "frontend": {
             "NEXT_PUBLIC_SUPABASE_URL": frontend_env.get(
@@ -244,6 +240,19 @@ def generate_encryption_key():
     return base64.b64encode(key_bytes).decode("utf-8")
 
 
+def generate_admin_api_key():
+    """Generates a secure admin API key for Kortix."""
+    # Generate 32 random bytes and encode as hex for a readable API key
+    key_bytes = secrets.token_bytes(32)
+    return key_bytes.hex()
+
+
+def generate_webhook_secret():
+    """Generates a secure shared secret for trigger webhooks."""
+    # 32 random bytes as hex (64 hex chars)
+    return secrets.token_hex(32)
+
+
 # --- Main Setup Class ---
 class SetupWizard:
     def __init__(self):
@@ -261,12 +270,12 @@ class SetupWizard:
             "llm": existing_env_vars["llm"],
             "search": existing_env_vars["search"],
             "rapidapi": existing_env_vars["rapidapi"],
-            "smithery": existing_env_vars["smithery"],
-            "qstash": existing_env_vars["qstash"],
+            "cron": existing_env_vars.get("cron", {}),
             "slack": existing_env_vars["slack"],
             "webhook": existing_env_vars["webhook"],
             "mcp": existing_env_vars["mcp"],
             "pipedream": existing_env_vars["pipedream"],
+            "kortix": existing_env_vars["kortix"],
         }
 
         # Override with any progress data (in case user is resuming)
@@ -277,7 +286,7 @@ class SetupWizard:
             else:
                 self.env_vars[key] = value
 
-        self.total_steps = 18
+        self.total_steps = 17
 
     def show_current_config(self):
         """Shows the current configuration status."""
@@ -325,17 +334,11 @@ class SetupWizard:
         else:
             config_items.append(f"{Colors.CYAN}○{Colors.ENDC} RapidAPI (optional)")
 
-        # Check Smithery (optional)
-        if self.env_vars["smithery"]["SMITHERY_API_KEY"]:
-            config_items.append(f"{Colors.GREEN}✓{Colors.ENDC} Smithery (optional)")
+        # Check Cron/Webhook setup
+        if self.env_vars["webhook"]["WEBHOOK_BASE_URL"]:
+            config_items.append(f"{Colors.GREEN}✓{Colors.ENDC} Supabase Cron & Webhooks")
         else:
-            config_items.append(f"{Colors.CYAN}○{Colors.ENDC} Smithery (optional)")
-
-        # Check QStash (required)
-        if self.env_vars["qstash"]["QSTASH_TOKEN"]:
-            config_items.append(f"{Colors.GREEN}✓{Colors.ENDC} QStash & Webhooks")
-        else:
-            config_items.append(f"{Colors.YELLOW}○{Colors.ENDC} QStash & Webhooks")
+            config_items.append(f"{Colors.YELLOW}○{Colors.ENDC} Supabase Cron & Webhooks")
 
         # Check MCP encryption key
         if self.env_vars["mcp"]["MCP_CREDENTIAL_ENCRYPTION_KEY"]:
@@ -369,6 +372,12 @@ class SetupWizard:
         else:
             config_items.append(f"{Colors.YELLOW}○{Colors.ENDC} Morph (recommended)")
 
+        # Check Kortix configuration
+        if self.env_vars["kortix"]["KORTIX_ADMIN_API_KEY"]:
+            config_items.append(f"{Colors.GREEN}✓{Colors.ENDC} Kortix Admin")
+        else:
+            config_items.append(f"{Colors.YELLOW}○{Colors.ENDC} Kortix Admin")
+
         if any("✓" in item for item in config_items):
             print_info("Current configuration status:")
             for item in config_items:
@@ -379,7 +388,7 @@ class SetupWizard:
         """Runs the setup wizard."""
         print_banner()
         print(
-            "This wizard will guide you through setting up Suna, an open-source generalist AI agent.\n"
+            "This wizard will guide you through setting up Suna, an open-source generalist AI Worker.\n"
         )
 
         # Show current configuration status
@@ -394,16 +403,17 @@ class SetupWizard:
             self.run_step(6, self.collect_morph_api_key)
             self.run_step(7, self.collect_search_api_keys)
             self.run_step(8, self.collect_rapidapi_keys)
-            self.run_step(9, self.collect_smithery_keys)
-            self.run_step(10, self.collect_qstash_keys)
+            self.run_step(9, self.collect_kortix_keys)
+            # Supabase Cron does not require keys; ensure DB migrations enable cron functions
+            self.run_step(10, self.collect_webhook_keys)
             self.run_step(11, self.collect_mcp_keys)
             self.run_step(12, self.collect_pipedream_keys)
             self.run_step(13, self.collect_slack_keys)
-            self.run_step(14, self.collect_webhook_keys)
-            self.run_step(15, self.configure_env_files)
-            self.run_step(16, self.setup_supabase_database)
-            self.run_step(17, self.install_dependencies)
-            self.run_step(18, self.start_suna)
+            # Removed duplicate webhook collection step
+            self.run_step(14, self.configure_env_files)
+            self.run_step(15, self.setup_supabase_database)
+            self.run_step(16, self.install_dependencies)
+            self.run_step(17, self.start_suna)
 
             self.final_instructions()
 
@@ -475,7 +485,7 @@ class SetupWizard:
                 "uv": "https://github.com/astral-sh/uv#installation",
                 "node": "https://nodejs.org/en/download/",
                 "npm": "https://docs.npmjs.com/downloading-and-installing-node-js-and-npm",
-                "docker": "https://docs.docker.com/get-docker/",  # For Redis/RabbitMQ
+                "docker": "https://docs.docker.com/get-docker/",  # For Redis
             }
 
         missing = []
@@ -659,8 +669,8 @@ class SetupWizard:
             f"Visit {Colors.GREEN}https://app.daytona.io/dashboard/snapshots{Colors.ENDC}{Colors.CYAN} to create a snapshot."
         )
         print_info("Create a snapshot with these exact settings:")
-        print_info(f"   - Name:\t\t{Colors.GREEN}kortix/suna:0.1.3{Colors.ENDC}")
-        print_info(f"   - Snapshot name:\t{Colors.GREEN}kortix/suna:0.1.3{Colors.ENDC}")
+        print_info(f"   - Name:\t\t{Colors.GREEN}kortix/suna:0.1.3.1{Colors.ENDC}")
+        print_info(f"   - Snapshot name:\t{Colors.GREEN}kortix/suna:0.1.3.1{Colors.ENDC}")
         print_info(
             f"   - Entrypoint:\t{Colors.GREEN}/usr/bin/supervisord -n -c /etc/supervisor/conf.d/supervisord.conf{Colors.ENDC}"
         )
@@ -745,7 +755,7 @@ class SetupWizard:
         # Set a default model if not already set
         if not self.env_vars["llm"].get("MODEL_TO_USE"):
             if self.env_vars["llm"].get("OPENAI_API_KEY"):
-                self.env_vars["llm"]["MODEL_TO_USE"] = "openai/gpt-4o"
+                self.env_vars["llm"]["MODEL_TO_USE"] = "openai/gpt-5"
             elif self.env_vars["llm"].get("ANTHROPIC_API_KEY"):
                 self.env_vars["llm"][
                     "MODEL_TO_USE"
@@ -904,93 +914,24 @@ class SetupWizard:
         else:
             print_info("Skipping RapidAPI key.")
 
-    def collect_smithery_keys(self):
-        """Collects the optional Smithery API key."""
-        print_step(9, self.total_steps, "Collecting Smithery API Key (Optional)")
+    def collect_kortix_keys(self):
+        """Generates or configures the Kortix admin API key."""
+        print_step(9, self.total_steps, "Configuring Kortix Admin API Key")
 
         # Check if we already have a value configured
-        existing_key = self.env_vars["smithery"]["SMITHERY_API_KEY"]
+        existing_key = self.env_vars["kortix"]["KORTIX_ADMIN_API_KEY"]
         if existing_key:
             print_info(
-                f"Found existing Smithery API key: {mask_sensitive_value(existing_key)}"
+                f"Found existing Kortix admin API key: {mask_sensitive_value(existing_key)}"
             )
-            print_info("Press Enter to keep current value or type a new one.")
+            print_info("Using existing admin API key.")
         else:
-            print_info(
-                "A Smithery API key is only required for custom agents and workflows."
-            )
-            print_info(
-                "Get a key at https://smithery.ai/. You can skip this and add it later."
-            )
+            print_info("Generating a secure admin API key for Kortix administrative functions...")
+            self.env_vars["kortix"]["KORTIX_ADMIN_API_KEY"] = generate_admin_api_key()
+            print_success("Kortix admin API key generated.")
 
-        smithery_api_key = self._get_input(
-            "Enter your Smithery API key (or press Enter to skip): ",
-            validate_api_key,
-            "The key seems invalid, but continuing. You can edit it later in backend/.env",
-            allow_empty=True,
-            default_value=existing_key,
-        )
-        self.env_vars["smithery"]["SMITHERY_API_KEY"] = smithery_api_key
-        if smithery_api_key:
-            print_success("Smithery API key saved.")
-        else:
-            print_info("Skipping Smithery API key.")
+        print_success("Kortix admin configuration saved.")
 
-    def collect_qstash_keys(self):
-        """Collects the required QStash configuration."""
-        print_step(
-            10,
-            self.total_steps,
-            "Collecting QStash Configuration",
-        )
-
-        # Check if we already have values configured
-        existing_token = self.env_vars["qstash"]["QSTASH_TOKEN"]
-        if existing_token:
-            print_info(
-                f"Found existing QStash token: {mask_sensitive_value(existing_token)}"
-            )
-            print_info("Press Enter to keep current values or type new ones.")
-        else:
-            print_info(
-                "QStash is required for Suna's background job processing and scheduling."
-            )
-            print_info(
-                "QStash enables workflows, automated tasks, and webhook handling."
-            )
-            print_info("Get your credentials at https://console.upstash.com/qstash")
-            input("Press Enter to continue once you have your QStash credentials...")
-
-        qstash_token = self._get_input(
-            "Enter your QStash token: ",
-            validate_api_key,
-            "Invalid QStash token format. It should be at least 10 characters long.",
-            default_value=existing_token,
-        )
-        self.env_vars["qstash"]["QSTASH_TOKEN"] = qstash_token
-
-        # Set default URL if not already configured
-        if not self.env_vars["qstash"]["QSTASH_URL"]:
-            self.env_vars["qstash"]["QSTASH_URL"] = "https://qstash.upstash.io"
-
-        # Collect signing keys
-        current_signing_key = self._get_input(
-            "Enter your QStash current signing key: ",
-            validate_api_key,
-            "Invalid signing key format. It should be at least 10 characters long.",
-            default_value=self.env_vars["qstash"]["QSTASH_CURRENT_SIGNING_KEY"],
-        )
-        self.env_vars["qstash"]["QSTASH_CURRENT_SIGNING_KEY"] = current_signing_key
-
-        next_signing_key = self._get_input(
-            "Enter your QStash next signing key: ",
-            validate_api_key,
-            "Invalid signing key format. It should be at least 10 characters long.",
-            default_value=self.env_vars["qstash"]["QSTASH_NEXT_SIGNING_KEY"],
-        )
-        self.env_vars["qstash"]["QSTASH_NEXT_SIGNING_KEY"] = next_signing_key
-
-        print_success("QStash configuration saved.")
 
     def collect_mcp_keys(self):
         """Collects the MCP configuration."""
@@ -1127,7 +1068,7 @@ class SetupWizard:
 
     def collect_webhook_keys(self):
         """Collects the webhook configuration."""
-        print_step(14, self.total_steps, "Collecting Webhook Configuration")
+        print_step(10, self.total_steps, "Collecting Webhook Configuration")
 
         # Check if we already have values configured
         has_existing = bool(self.env_vars["webhook"]["WEBHOOK_BASE_URL"])
@@ -1138,44 +1079,49 @@ class SetupWizard:
             print_info("Press Enter to keep current value or type a new one.")
         else:
             print_info("Webhook base URL is required for workflows to receive callbacks.")
-            print_info("This must be a publicly accessible URL where Suna can receive webhooks.")
-            print_info("For local development, you can use services like ngrok or localtunnel.")
+            print_info("This must be a publicly accessible URL where Suna API can receive webhooks from Supabase Cron.")
+            print_info("For local development, you can use services like ngrok or localtunnel to expose http://localhost:8000 to the internet.")
 
         self.env_vars["webhook"]["WEBHOOK_BASE_URL"] = self._get_input(
-            "Enter your webhook base URL (e.g., https://yourdomain.com): ",
+            "Enter your webhook base URL (e.g., https://your-domain.ngrok.io): ",
             validate_url,
             "Invalid webhook base URL format. It should be a valid publicly accessible URL.",
             default_value=self.env_vars["webhook"]["WEBHOOK_BASE_URL"],
         )
 
+        # Ensure a webhook secret exists; generate a strong default if missing
+        if not self.env_vars["webhook"].get("TRIGGER_WEBHOOK_SECRET"):
+            print_info("Generating a secure TRIGGER_WEBHOOK_SECRET for webhook authentication...")
+            self.env_vars["webhook"]["TRIGGER_WEBHOOK_SECRET"] = generate_webhook_secret()
+            print_success("Webhook secret generated.")
+        else:
+            print_info("Found existing TRIGGER_WEBHOOK_SECRET. Keeping existing value.")
+
         print_success("Webhook configuration saved.")
 
     def configure_env_files(self):
         """Configures and writes the .env files for frontend and backend."""
-        print_step(15, self.total_steps, "Configuring Environment Files")
+        print_step(14, self.total_steps, "Configuring Environment Files")
 
         # --- Backend .env ---
         is_docker = self.env_vars["setup_method"] == "docker"
         redis_host = "redis" if is_docker else "localhost"
-        rabbitmq_host = "rabbitmq" if is_docker else "localhost"
 
         backend_env = {
             "ENV_MODE": "local",
             **self.env_vars["supabase"],
             "REDIS_HOST": redis_host,
             "REDIS_PORT": "6379",
-            "RABBITMQ_HOST": rabbitmq_host,
-            "RABBITMQ_PORT": "5672",
             **self.env_vars["llm"],
             **self.env_vars["search"],
             **self.env_vars["rapidapi"],
-            **self.env_vars["smithery"],
-            **self.env_vars["qstash"],
+            **self.env_vars.get("cron", {}),
             **self.env_vars["slack"],
             **self.env_vars["webhook"],
             **self.env_vars["mcp"],
             **self.env_vars["pipedream"],
             **self.env_vars["daytona"],
+            **self.env_vars["kortix"],
             "NEXT_PUBLIC_URL": "http://localhost:3000",
         }
 
@@ -1196,6 +1142,7 @@ class SetupWizard:
             "NEXT_PUBLIC_BACKEND_URL": "http://localhost:8000/api",
             "NEXT_PUBLIC_URL": "http://localhost:3000",
             "NEXT_PUBLIC_ENV_MODE": "LOCAL",
+            "KORTIX_ADMIN_API_KEY": self.env_vars["kortix"]["KORTIX_ADMIN_API_KEY"],
         }
 
         frontend_env_content = "# Generated by Suna install script\n\n"
@@ -1208,7 +1155,7 @@ class SetupWizard:
 
     def setup_supabase_database(self):
         """Links the project to Supabase and pushes database migrations."""
-        print_step(16, self.total_steps, "Setting up Supabase Database")
+        print_step(15, self.total_steps, "Setting up Supabase Database")
 
         print_info(
             "This step will link your project to Supabase and push database migrations."
@@ -1217,15 +1164,8 @@ class SetupWizard:
             "You can skip this if you've already set up your database or prefer to do it manually."
         )
 
-        # Check if Supabase info is already configured
-        has_existing_supabase = any(self.env_vars["supabase"].values())
-
-        if has_existing_supabase:
-            prompt = "Do you want to skip the database setup? (Y/n): "
-            default_skip = True
-        else:
-            prompt = "Do you want to skip the database setup? (y/N): "
-            default_skip = False
+        prompt = "Do you want to skip the database setup? (y/N): "
+        default_skip = False
 
         user_input = input(prompt).lower().strip()
 
@@ -1293,7 +1233,7 @@ class SetupWizard:
 
             print_warning("IMPORTANT: You must manually expose the 'basejump' schema.")
             print_info(
-                "In your Supabase dashboard, go to: Project Settings -> API -> Exposed schemas"
+                "In your Supabase dashboard, go to: Project Settings -> Data API -> Exposed schemas"
             )
             print_info("Ensure 'basejump' is checked, then save.")
             input("Press Enter once you've completed this step...")
@@ -1307,7 +1247,7 @@ class SetupWizard:
 
     def install_dependencies(self):
         """Installs frontend and backend dependencies for manual setup."""
-        print_step(17, self.total_steps, "Installing Dependencies")
+        print_step(16, self.total_steps, "Installing Dependencies")
         if self.env_vars["setup_method"] == "docker":
             print_info(
                 "Skipping dependency installation for Docker setup (will be handled by Docker Compose)."
@@ -1349,7 +1289,7 @@ class SetupWizard:
 
     def start_suna(self):
         """Starts Suna using Docker Compose or shows instructions for manual startup."""
-        print_step(18, self.total_steps, "Starting Suna")
+        print_step(17, self.total_steps, "Starting Suna")
         if self.env_vars["setup_method"] == "docker":
             print_info("Starting Suna with Docker Compose...")
             try:
@@ -1416,7 +1356,7 @@ class SetupWizard:
             print(
                 f"\n{Colors.BOLD}1. Start Infrastructure (in project root):{Colors.ENDC}"
             )
-            print(f"{Colors.CYAN}   docker compose up redis rabbitmq -d{Colors.ENDC}")
+            print(f"{Colors.CYAN}   docker compose up redis -d{Colors.ENDC}")
 
             print(f"\n{Colors.BOLD}2. Start Frontend (in a new terminal):{Colors.ENDC}")
             print(f"{Colors.CYAN}   cd frontend && npm run dev{Colors.ENDC}")

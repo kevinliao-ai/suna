@@ -198,3 +198,13 @@
   year={2024}
 }
 ```
+
+---
+
+<div align="center">
+
+**Ready to build your first AI agent?** 
+
+[Get Started](./docs/SELF-HOSTING.md) • [Join Discord](https://discord.gg/Py6pCBUUPw) • [Follow on Twitter](https://x.com/kortixai)
+
+</div>

@@ -15,7 +15,7 @@ import uuid
 from agentpress.thread_manager import ThreadManager
 from services.supabase import DBConnection
 from services import redis
-from dramatiq.brokers.rabbitmq import RabbitmqBroker
+from dramatiq.brokers.redis import RedisBroker
 import os
 from services.langfuse import langfuse
 from utils.retry import retry
@@ -23,10 +23,11 @@ from utils.retry import retry
 import sentry_sdk
 from typing import Dict, Any
 
-rabbitmq_host = os.getenv('RABBITMQ_HOST', 'rabbitmq')
-rabbitmq_port = int(os.getenv('RABBITMQ_PORT', 5672))
-rabbitmq_broker = RabbitmqBroker(host=rabbitmq_host, port=rabbitmq_port, middleware=[dramatiq.middleware.AsyncIO()])
-dramatiq.set_broker(rabbitmq_broker)
+redis_host = os.getenv('REDIS_HOST', 'redis')
+redis_port = int(os.getenv('REDIS_PORT', 6379))
+redis_broker = RedisBroker(host=redis_host, port=redis_port, middleware=[dramatiq.middleware.AsyncIO()])
+
+dramatiq.set_broker(redis_broker)
 
 
 _initialized = False
@@ -113,7 +114,23 @@ async def run_agent_background(
         "is_agent_builder": is_agent_builder,
         "target_agent_id": target_agent_id,
     })
-    logger.info(f"🚀 Using model: {model_name} (thinking: {enable_thinking}, reasoning_effort: {reasoning_effort})")
+    
+    effective_model = model_name
+    if model_name == "anthropic/claude-sonnet-4-20250514" and agent_config and agent_config.get('model'):
+        agent_model = agent_config['model']
+        from utils.constants import MODEL_NAME_ALIASES
+        resolved_agent_model = MODEL_NAME_ALIASES.get(agent_model, agent_model)
+        effective_model = resolved_agent_model
+        logger.info(f"Using model from agent config: {agent_model} -> {effective_model} (no user selection)")
+    else:
+        from utils.constants import MODEL_NAME_ALIASES
+        effective_model = MODEL_NAME_ALIASES.get(model_name, model_name)
+        if model_name != "anthropic/claude-sonnet-4-20250514":
+            logger.info(f"Using user-selected model: {model_name} -> {effective_model}")
+        else:
+            logger.info(f"Using default model: {effective_model}")
+    
+    logger.info(f"🚀 Using model: {effective_model} (thinking: {enable_thinking}, reasoning_effort: {reasoning_effort})")
     if agent_config:
         logger.info(f"Using custom agent: {agent_config.get('name', 'Unknown')}")
 
@@ -175,7 +192,7 @@ async def run_agent_background(
         # Initialize agent generator
         agent_gen = run_agent(
             thread_id=thread_id, project_id=project_id, stream=stream,
-            model_name=model_name,
+            model_name=effective_model,
             enable_thinking=enable_thinking, reasoning_effort=reasoning_effort,
             enable_context_manager=enable_context_manager,
             agent_config=agent_config,
@@ -227,7 +244,7 @@ async def run_agent_background(
         all_responses = [json.loads(r) for r in all_responses_json]
 
         # Update DB status
-        await update_agent_run_status(client, agent_run_id, final_status, error=error_message, responses=all_responses)
+        await update_agent_run_status(client, agent_run_id, final_status, error=error_message)
 
         # Publish final control signal (END_STREAM or ERROR)
         control_signal = "END_STREAM" if final_status == "completed" else "ERROR" if final_status == "failed" else "STOP"
@@ -264,7 +281,7 @@ async def run_agent_background(
              all_responses = [error_response] # Use the error message we tried to push
 
         # Update DB status
-        await update_agent_run_status(client, agent_run_id, "failed", error=f"{error_message}\n{traceback_str}", responses=all_responses)
+        await update_agent_run_status(client, agent_run_id, "failed", error=f"{error_message}\n{traceback_str}")
 
         # Publish ERROR signal
         try:
@@ -347,7 +364,6 @@ async def update_agent_run_status(
     agent_run_id: str,
     status: str,
     error: Optional[str] = None,
-    responses: Optional[list[any]] = None # Expects parsed list of dicts
 ) -> bool:
     """
     Centralized function to update agent run status.
@@ -362,9 +378,7 @@ async def update_agent_run_status(
         if error:
             update_data["error"] = error
 
-        if responses:
-            # Ensure responses are stored correctly as JSONB
-            update_data["responses"] = responses
+
 
         # Retry up to 3 times
         for retry in range(3):

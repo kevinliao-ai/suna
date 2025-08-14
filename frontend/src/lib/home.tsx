@@ -49,6 +49,7 @@ export interface PricingTier {
   features: string[];
   stripePriceId: string;
   yearlyStripePriceId?: string; // Add yearly price ID support
+  monthlyCommitmentStripePriceId?: string; // Add monthly commitment with yearly commitment support
   upgradePlans: UpgradePlan[];
   hidden?: boolean; // Optional property to hide plans from display while keeping them in code
   billingPeriod?: 'monthly' | 'yearly'; // Add billing period support
@@ -121,6 +122,7 @@ export const siteConfig = {
       hours: '60 min',
       features: [
         '$5 free AI tokens included',
+        '2 custom agents',
         'Public projects',
         'Basic Models',
         'Community support',
@@ -142,12 +144,14 @@ export const siteConfig = {
       hours: '2 hours',
       features: [
         '$20 AI token credits/month',
+        '5 custom agents',
         'Private projects',
         'Premium AI Models',
         'Community support',
       ],
       stripePriceId: config.SUBSCRIPTION_TIERS.TIER_2_20.priceId,
       yearlyStripePriceId: config.SUBSCRIPTION_TIERS.TIER_2_20_YEARLY.priceId,
+      monthlyCommitmentStripePriceId: config.SUBSCRIPTION_TIERS.TIER_2_17_YEARLY_COMMITMENT.priceId,
       upgradePlans: [],
     },
     {
@@ -164,12 +168,14 @@ export const siteConfig = {
       hours: '6 hours',
       features: [
         '$50 AI token credits/month',
+        '20 custom agents',
         'Private projects',
         'Premium AI Models',
         'Community support',
       ],
       stripePriceId: config.SUBSCRIPTION_TIERS.TIER_6_50.priceId,
       yearlyStripePriceId: config.SUBSCRIPTION_TIERS.TIER_6_50_YEARLY.priceId,
+      monthlyCommitmentStripePriceId: config.SUBSCRIPTION_TIERS.TIER_6_42_YEARLY_COMMITMENT.priceId,
       upgradePlans: [],
     },
     {
@@ -185,6 +191,7 @@ export const siteConfig = {
       hours: '12 hours',
       features: [
         '$100 AI token credits/month',
+        '20 custom agents',
         'Private projects',
         'Premium AI Models',
         'Community support',
@@ -200,19 +207,21 @@ export const siteConfig = {
       yearlyPrice: '$2040',
       originalYearlyPrice: '$2400',
       discountPercentage: 15,
-      description: 'For power users and teams',
+      description: 'For power users',
       buttonText: 'Start Free',
-      buttonColor: 'bg-primary text-white dark:text-black',
+      buttonColor: 'bg-secondary text-white',
       isPopular: false,
       hours: '25 hours',
       features: [
         '$200 AI token credits/month',
+        '100 custom agents',
         'Private projects',
         'Premium AI Models',
         'Priority support',
       ],
       stripePriceId: config.SUBSCRIPTION_TIERS.TIER_25_200.priceId,
       yearlyStripePriceId: config.SUBSCRIPTION_TIERS.TIER_25_200_YEARLY.priceId,
+      monthlyCommitmentStripePriceId: config.SUBSCRIPTION_TIERS.TIER_25_170_YEARLY_COMMITMENT.priceId,
       upgradePlans: [],
     },
     {
@@ -221,7 +230,7 @@ export const siteConfig = {
       yearlyPrice: '$4080',
       originalYearlyPrice: '$4800',
       discountPercentage: 15,
-      description: 'For large organizations',
+      description: 'For large teams',
       buttonText: 'Start Free',
       buttonColor: 'bg-secondary text-white',
       isPopular: false,
@@ -230,10 +239,8 @@ export const siteConfig = {
         '$400 AI token credits/month',
         'Private projects',
         'Premium AI Models',
-        'Full Suna AI access',
-        'Community support',
+        'Priority support',
         'Custom integrations',
-        'Dedicated account manager',
       ],
       stripePriceId: config.SUBSCRIPTION_TIERS.TIER_50_400.priceId,
       yearlyStripePriceId: config.SUBSCRIPTION_TIERS.TIER_50_400_YEARLY.priceId,
@@ -246,7 +253,7 @@ export const siteConfig = {
       yearlyPrice: '$8160',
       originalYearlyPrice: '$9600',
       discountPercentage: 15,
-      description: 'For scaling enterprises',
+      description: 'For scaling teams',
       buttonText: 'Start Free',
       buttonColor: 'bg-secondary text-white',
       isPopular: false,
@@ -255,11 +262,9 @@ export const siteConfig = {
         '$800 AI token credits/month',
         'Private projects',
         'Premium AI Models',
-        'Full Suna AI access',
-        'Community support',
+        'Priority support',
         'Custom integrations',
         'Dedicated account manager',
-        'Custom SLA',
       ],
       stripePriceId: config.SUBSCRIPTION_TIERS.TIER_125_800.priceId,
       yearlyStripePriceId: config.SUBSCRIPTION_TIERS.TIER_125_800_YEARLY.priceId,
@@ -267,12 +272,12 @@ export const siteConfig = {
       hidden: true,
     },
     {
-      name: 'Premium',
+      name: 'Max',
       price: '$1000',
       yearlyPrice: '$10200',
       originalYearlyPrice: '$12000',
       discountPercentage: 15,
-      description: 'For maximum scale and performance',
+      description: 'Maximum performance',
       buttonText: 'Start Free',
       buttonColor: 'bg-secondary text-white',
       isPopular: false,
@@ -281,12 +286,10 @@ export const siteConfig = {
         '$1000 AI token credits/month',
         'Private projects',
         'Premium AI Models',
-        'Full Suna AI access',
         'Priority support',
         'Custom integrations',
         'Dedicated account manager',
-        'Custom SLA',
-        'White-label options',
+        'Custom deployment',
       ],
       stripePriceId: config.SUBSCRIPTION_TIERS.TIER_200_1000.priceId,
       yearlyStripePriceId: config.SUBSCRIPTION_TIERS.TIER_200_1000_YEARLY.priceId,
@@ -1230,7 +1233,7 @@ export const siteConfig = {
       text: 'Get Started for free',
       href: '/auth',
     },
-    subtext: 'The generalist AI Agent that acts on your behalf',
+    subtext: 'Build, manage and train your AI Workforce',
   },
   footerLinks: [
     {

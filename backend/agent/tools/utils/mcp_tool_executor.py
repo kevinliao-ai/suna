@@ -6,19 +6,19 @@ from mcp import ClientSession, StdioServerParameters
 from mcp.client.sse import sse_client
 from mcp.client.stdio import stdio_client
 from mcp.client.streamable_http import streamablehttp_client
-from mcp_module import mcp_manager
+from mcp_module import mcp_service
 from utils.logger import logger
 
 
 class MCPToolExecutor:
     def __init__(self, custom_tools: Dict[str, Dict[str, Any]], tool_wrapper=None):
-        self.mcp_manager = mcp_manager
+        self.mcp_manager = mcp_service
         self.custom_tools = custom_tools
         self.tool_wrapper = tool_wrapper
     
     async def execute_tool(self, tool_name: str, arguments: Dict[str, Any]) -> ToolResult:
         logger.info(f"Executing MCP tool {tool_name} with arguments {arguments}")
-        
+
         try:
             if tool_name in self.custom_tools:
                 return await self._execute_custom_tool(tool_name, arguments)
@@ -30,7 +30,6 @@ class MCPToolExecutor:
     
     async def _execute_standard_tool(self, tool_name: str, arguments: Dict[str, Any]) -> ToolResult:
         result = await self.mcp_manager.execute_tool(tool_name, arguments)
-        
         if isinstance(result, dict):
             if result.get('isError', False):
                 return self._create_error_result(result.get('content', 'Tool execution failed'))
@@ -43,7 +42,32 @@ class MCPToolExecutor:
         tool_info = self.custom_tools[tool_name]
         custom_type = tool_info['custom_type']
         
-        if custom_type == 'pipedream':
+        if custom_type == 'composio':
+            custom_config = tool_info['custom_config']
+            profile_id = custom_config.get('profile_id')
+            
+            if not profile_id:
+                return self._create_error_result("Missing profile_id for Composio tool")
+            
+            try:
+                from composio_integration.composio_profile_service import ComposioProfileService
+                from services.supabase import DBConnection
+                
+                db = DBConnection()
+                profile_service = ComposioProfileService(db)
+                mcp_url = await profile_service.get_mcp_url_for_runtime(profile_id)
+                modified_tool_info = tool_info.copy()
+                modified_tool_info['custom_config'] = {
+                    **custom_config,
+                    'url': mcp_url
+                }
+                return await self._execute_http_tool(tool_name, arguments, modified_tool_info)
+                
+            except Exception as e:
+                logger.error(f"Failed to resolve Composio profile {profile_id}: {str(e)}")
+                return self._create_error_result(f"Failed to resolve Composio profile: {str(e)}")
+                
+        elif custom_type == 'pipedream':
             return await self._execute_pipedream_tool(tool_name, arguments, tool_info)
         elif custom_type == 'sse':
             return await self._execute_sse_tool(tool_name, arguments, tool_info)
@@ -67,12 +91,9 @@ class MCPToolExecutor:
         
         try:
             import os
-            from pipedream.facade import PipedreamManager
+            from pipedream import connection_service
             
-            pipedream_manager = PipedreamManager()
-            http_client = pipedream_manager._http_client
-            
-            access_token = await http_client._ensure_access_token()
+            access_token = await connection_service._ensure_access_token()
             
             project_id = os.getenv("PIPEDREAM_PROJECT_ID")
             environment = os.getenv("PIPEDREAM_X_PD_ENVIRONMENT", "development")
@@ -85,8 +106,8 @@ class MCPToolExecutor:
                 "x-pd-app-slug": app_slug,
             }
             
-            if http_client.rate_limit_token:
-                headers["x-pd-rate-limit"] = http_client.rate_limit_token
+            if hasattr(connection_service, 'rate_limit_token') and connection_service.rate_limit_token:
+                headers["x-pd-rate-limit"] = connection_service.rate_limit_token
             
             if oauth_app_id:
                 headers["x-pd-oauth-app-id"] = oauth_app_id

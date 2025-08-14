@@ -131,6 +131,8 @@ export function FooterSection({ showMaintenanceQulckLink }: { showMaintenanceQul
                 })}
               </ul>
             ))}
+              </div>
+            </div>
           </div>
         </div>
       </div>

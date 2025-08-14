@@ -29,16 +29,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+import { NewAgentDialog } from '@/components/agents/new-agent-dialog';
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import {
@@ -46,13 +37,39 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Badge } from '../ui/badge';
 import { cn } from '@/lib/utils';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useFeatureFlags } from '@/lib/feature-flags';
-import { useCreateNewAgent } from '@/hooks/react-query/agents/use-agents';
-import { Button } from '../ui/button';
+import posthog from 'posthog-js';
+// Floating mobile menu button component
+function FloatingMobileMenuButton() {
+  const { setOpenMobile, openMobile } = useSidebar();
+  const isMobile = useIsMobile();
+
+  if (!isMobile || openMobile) return null;
+
+  return (
+    <div className="fixed top-6 left-4 z-50 md:hidden">
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            onClick={() => setOpenMobile(true)}
+            size="icon"
+            className="h-12 w-12 rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 transition-all duration-200 hover:scale-105 active:scale-95 touch-manipulation"
+            aria-label="Open menu"
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">
+          Open menu
+        </TooltipContent>
+      </Tooltip>
+    </div>
+  );
+}
 
 export function SidebarLeft({
   ...props
@@ -74,8 +91,14 @@ export function SidebarLeft({
   const { flags, loading: flagsLoading } = useFeatureFlags(['custom_agents', 'agent_marketplace']);
   const customAgentsEnabled = flags.custom_agents;
   const marketplaceEnabled = flags.agent_marketplace;
-  const createNewAgentMutation = useCreateNewAgent();
   const [showNewAgentDialog, setShowNewAgentDialog] = useState(false);
+
+  // Close mobile menu on page navigation
+  useEffect(() => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  }, [pathname, searchParams, isMobile, setOpenMobile]);
 
   
   useEffect(() => {
@@ -116,9 +139,7 @@ export function SidebarLeft({
   }, [state, setOpen]);
 
 
-  const handleCreateNewAgent = () => {
-    createNewAgentMutation.mutate();
-  };
+
 
   return (
     <Sidebar
@@ -128,33 +149,20 @@ export function SidebarLeft({
     >
       <SidebarHeader className="px-2 py-2">
         <div className="flex h-[40px] items-center px-1 relative">
-          <Link href="/dashboard">
-            <KortixLogo />
+          <Link href="/dashboard" className="flex-shrink-0" onClick={() => isMobile && setOpenMobile(false)}>
+            <KortixLogo size={24} />
           </Link>
           {state !== 'collapsed' && (
             <div className="ml-2 transition-all duration-200 ease-in-out whitespace-nowrap">
             </div>
           )}
           <div className="ml-auto flex items-center gap-2">
-            {state !== 'collapsed' && (
+            {state !== 'collapsed' && !isMobile && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <SidebarTrigger className="h-8 w-8" />
                 </TooltipTrigger>
                 <TooltipContent>Toggle sidebar (CMD+B)</TooltipContent>
-              </Tooltip>
-            )}
-            {isMobile && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={() => setOpenMobile(true)}
-                    className="h-8 w-8 flex items-center justify-center rounded-md hover:bg-accent"
-                  >
-                    <Menu className="h-4 w-4" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent>Open menu</TooltipContent>
               </Tooltip>
             )}
           </div>
@@ -163,9 +171,15 @@ export function SidebarLeft({
       <SidebarContent className="[&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
         <SidebarGroup>
           <Link href="/dashboard">
-            <SidebarMenuButton className={cn({
-              'bg-accent text-accent-foreground font-medium': pathname === '/dashboard',
-            })}>
+            <SidebarMenuButton 
+              className={cn('touch-manipulation', {
+                'bg-accent text-accent-foreground font-medium': pathname === '/dashboard',
+              })} 
+              onClick={() => {
+                posthog.capture('new_task_clicked');
+                if (isMobile) setOpenMobile(false);
+              }}
+            >
               <Plus className="h-4 w-4 mr-1" />
               <span className="flex items-center justify-between w-full">
                 New Task
@@ -182,6 +196,11 @@ export function SidebarLeft({
                   <CollapsibleTrigger asChild>
                     <SidebarMenuButton
                       tooltip="Agents"
+                      onClick={() => {
+                        if (state === 'collapsed') {
+                          setOpen(true);
+                        }
+                      }}
                     >
                       <Bot className="h-4 w-4 mr-1" />
                       <span>Agents</span>
@@ -191,27 +210,30 @@ export function SidebarLeft({
                   <CollapsibleContent>
                     <SidebarMenuSub>
                       <SidebarMenuSubItem>
-                        <SidebarMenuSubButton className={cn('pl-3', {
+                        <SidebarMenuSubButton className={cn('pl-3 touch-manipulation', {
                           'bg-accent text-accent-foreground font-medium': pathname === '/agents' && searchParams.get('tab') === 'marketplace',
                         })} asChild>
-                          <Link href="/agents?tab=marketplace">
+                          <Link href="/agents?tab=marketplace" onClick={() => isMobile && setOpenMobile(false)}>
                             <span>Explore</span>
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
                       <SidebarMenuSubItem>
-                        <SidebarMenuSubButton className={cn('pl-3', {
+                        <SidebarMenuSubButton className={cn('pl-3 touch-manipulation', {
                           'bg-accent text-accent-foreground font-medium': pathname === '/agents' && (searchParams.get('tab') === 'my-agents' || searchParams.get('tab') === null),
                         })} asChild>
-                          <Link href="/agents?tab=my-agents">
+                          <Link href="/agents?tab=my-agents" onClick={() => isMobile && setOpenMobile(false)}>
                             <span>My Agents</span>
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
                       <SidebarMenuSubItem>
                         <SidebarMenuSubButton 
-                          onClick={() => setShowNewAgentDialog(true)}
-                          className="cursor-pointer pl-3"
+                          onClick={() => {
+                            setShowNewAgentDialog(true);
+                            if (isMobile) setOpenMobile(false);
+                          }}
+                          className="cursor-pointer pl-3 touch-manipulation"
                         >
                           <span>New Agent</span>
                         </SidebarMenuSubButton>
@@ -224,9 +246,12 @@ export function SidebarLeft({
           )}
           {!flagsLoading && customAgentsEnabled && (
             <Link href="/settings/credentials">
-              <SidebarMenuButton className={cn({
-                'bg-accent text-accent-foreground font-medium': pathname === '/settings/credentials',
-              })}>
+              <SidebarMenuButton 
+                className={cn('touch-manipulation', {
+                  'bg-accent text-accent-foreground font-medium': pathname === '/settings/credentials',
+                })}
+                onClick={() => isMobile && setOpenMobile(false)}
+              >
                 <Plug className="h-4 w-4 mr-1" />
                 <span className="flex items-center justify-between w-full">
                   Integrations
@@ -256,20 +281,13 @@ export function SidebarLeft({
         <NavUserWithTeams user={user} />
       </SidebarFooter>
       <SidebarRail />
-      <AlertDialog open={showNewAgentDialog} onOpenChange={setShowNewAgentDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Create New Agent</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will create a new agent with a default name and description.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleCreateNewAgent}>Create</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <NewAgentDialog 
+        open={showNewAgentDialog} 
+        onOpenChange={setShowNewAgentDialog}
+      />
     </Sidebar>
   );
 }
+
+// Export the floating button so it can be used in the layout
+export { FloatingMobileMenuButton };

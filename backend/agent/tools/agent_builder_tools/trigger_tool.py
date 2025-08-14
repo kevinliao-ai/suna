@@ -1,12 +1,12 @@
 import json
 from typing import Optional, Dict, Any, List
-from agentpress.tool import ToolResult, openapi_schema, xml_schema
+from agentpress.tool import ToolResult, openapi_schema, usage_example
 from agentpress.thread_manager import ThreadManager
 from .base_tool import AgentBuilderBaseTool
 from utils.logger import logger
 from datetime import datetime
 from services.supabase import DBConnection
-from triggers.support.factory import TriggerModuleFactory
+from triggers import get_trigger_service
 
 
 class TriggerTool(AgentBuilderBaseTool):
@@ -57,18 +57,7 @@ class TriggerTool(AgentBuilderBaseTool):
             }
         }
     })
-    @xml_schema(
-        tag_name="create-scheduled-trigger",
-        mappings=[
-            {"param_name": "name", "node_type": "attribute", "path": ".", "required": True},
-            {"param_name": "description", "node_type": "element", "path": "description", "required": False},
-            {"param_name": "cron_expression", "node_type": "attribute", "path": ".", "required": True},
-            {"param_name": "execution_type", "node_type": "attribute", "path": ".", "required": True},
-            {"param_name": "workflow_id", "node_type": "element", "path": "workflow_id", "required": False},
-            {"param_name": "workflow_input", "node_type": "element", "path": "workflow_input", "required": False},
-            {"param_name": "agent_prompt", "node_type": "element", "path": "agent_prompt", "required": False}
-        ],
-        example='''
+    @usage_example('''
         <function_calls>
         <invoke name="create_scheduled_trigger">
         <parameter name="name">Daily Report Generation</parameter>
@@ -79,8 +68,7 @@ class TriggerTool(AgentBuilderBaseTool):
         <parameter name="workflow_input">{"report_type": "daily", "include_charts": true}</parameter>
         </invoke>
         </function_calls>
-        '''
-    )
+        ''')
     async def create_scheduled_trigger(
         self,
         name: str,
@@ -124,8 +112,7 @@ class TriggerTool(AgentBuilderBaseTool):
             else:
                 trigger_config["agent_prompt"] = agent_prompt
             
-            trigger_db = DBConnection()
-            trigger_svc, _, _ = await TriggerModuleFactory.create_trigger_module(trigger_db)
+            trigger_svc = get_trigger_service(self.db)
             
             try:
                 trigger = await trigger_svc.create_trigger(
@@ -153,12 +140,12 @@ class TriggerTool(AgentBuilderBaseTool):
                     "message": result_message,
                     "trigger": {
                         "id": trigger.trigger_id,
-                        "name": trigger.config.name,
-                        "description": trigger.config.description,
+                        "name": trigger.name,
+                        "description": trigger.description,
                         "cron_expression": cron_expression,
                         "execution_type": execution_type,
-                        "is_active": trigger.config.is_active,
-                        "created_at": trigger.metadata.created_at.isoformat()
+                        "is_active": trigger.is_active,
+                        "created_at": trigger.created_at.isoformat()
                     }
                 })
             except ValueError as ve:
@@ -183,24 +170,19 @@ class TriggerTool(AgentBuilderBaseTool):
             }
         }
     })
-    @xml_schema(
-        tag_name="get-scheduled-triggers",
-        mappings=[],
-        example='''
+    @usage_example('''
         <function_calls>
         <invoke name="get_scheduled_triggers">
         </invoke>
         </function_calls>
-        '''
-    )
+        ''')
     async def get_scheduled_triggers(self) -> ToolResult:
         try:
-            from triggers.core import TriggerType
+            from triggers import TriggerType
             
-            trigger_db = DBConnection()
-            trigger_manager = TriggerManager(trigger_db)
+            trigger_svc = get_trigger_service(self.db)
             
-            triggers = await trigger_manager.get_agent_triggers(self.agent_id)
+            triggers = await trigger_svc.get_agent_triggers(self.agent_id)
             
             schedule_triggers = [t for t in triggers if t.trigger_type == TriggerType.SCHEDULE]
             
@@ -267,25 +249,18 @@ class TriggerTool(AgentBuilderBaseTool):
             }
         }
     })
-    @xml_schema(
-        tag_name="delete-scheduled-trigger",
-        mappings=[
-            {"param_name": "trigger_id", "node_type": "attribute", "path": ".", "required": True}
-        ],
-        example='''
+    @usage_example('''
         <function_calls>
         <invoke name="delete_scheduled_trigger">
         <parameter name="trigger_id">trigger-123</parameter>
         </invoke>
         </function_calls>
-        '''
-    )
+        ''')
     async def delete_scheduled_trigger(self, trigger_id: str) -> ToolResult:
         try:
-            trigger_db = DBConnection()
-            trigger_manager = TriggerManager(trigger_db)
+            trigger_svc = get_trigger_service(self.db)
             
-            trigger_config = await trigger_manager.get_trigger(trigger_id)
+            trigger_config = await trigger_svc.get_trigger(trigger_id)
             
             if not trigger_config:
                 return self.fail_response("Trigger not found")
@@ -293,7 +268,7 @@ class TriggerTool(AgentBuilderBaseTool):
             if trigger_config.agent_id != self.agent_id:
                 return self.fail_response("This trigger doesn't belong to the current agent")
             
-            success = await trigger_manager.delete_trigger(trigger_id)
+            success = await trigger_svc.delete_trigger(trigger_id)
             
             if success:
                 return self.success_response({
@@ -328,27 +303,19 @@ class TriggerTool(AgentBuilderBaseTool):
             }
         }
     })
-    @xml_schema(
-        tag_name="toggle-scheduled-trigger",
-        mappings=[
-            {"param_name": "trigger_id", "node_type": "attribute", "path": ".", "required": True},
-            {"param_name": "is_active", "node_type": "attribute", "path": ".", "required": True}
-        ],
-        example='''
+    @usage_example('''
         <function_calls>
         <invoke name="toggle_scheduled_trigger">
         <parameter name="trigger_id">trigger-123</parameter>
         <parameter name="is_active">false</parameter>
         </invoke>
         </function_calls>
-        '''
-    )
+        ''')
     async def toggle_scheduled_trigger(self, trigger_id: str, is_active: bool) -> ToolResult:
         try:
-            trigger_db = DBConnection()
-            trigger_manager = TriggerManager(trigger_db)
+            trigger_svc = get_trigger_service(self.db)
             
-            trigger_config = await trigger_manager.get_trigger(trigger_id)
+            trigger_config = await trigger_svc.get_trigger(trigger_id)
             
             if not trigger_config:
                 return self.fail_response("Trigger not found")
@@ -356,7 +323,7 @@ class TriggerTool(AgentBuilderBaseTool):
             if trigger_config.agent_id != self.agent_id:
                 return self.fail_response("This trigger doesn't belong to the current agent")
             
-            updated_config = await trigger_manager.update_trigger(
+            updated_config = await trigger_svc.update_trigger(
                 trigger_id=trigger_id,
                 is_active=is_active
             )

@@ -1,5 +1,5 @@
 from typing import List, Optional, Union
-from agentpress.tool import Tool, ToolResult, openapi_schema, xml_schema
+from agentpress.tool import Tool, ToolResult, openapi_schema, usage_example
 from utils.logger import logger
 
 class MessageTool(Tool):
@@ -18,13 +18,13 @@ class MessageTool(Tool):
         "type": "function",
         "function": {
             "name": "ask",
-            "description": "Ask user a question and wait for response. Use for: 1) Requesting clarification on ambiguous requirements, 2) Seeking confirmation before proceeding with high-impact changes, 3) Gathering additional information needed to complete a task, 4) Offering options and requesting user preference, 5) Validating assumptions when critical to task success. IMPORTANT: Use this tool only when user input is essential to proceed. Always provide clear context and options when applicable. Include relevant attachments when the question relates to specific files or resources.",
+            "description": "Ask user a question and wait for response. Use for: 1) Requesting clarification on ambiguous requirements, 2) Seeking confirmation before proceeding with high-impact changes, 3) Gathering additional information needed to complete a task, 4) Offering options and requesting user preference, 5) Validating assumptions when critical to task success, 6) When encountering unclear or ambiguous results during task execution, 7) When tool results don't match expectations, 8) For natural conversation and follow-up questions, 9) When research reveals multiple entities with the same name, 10) When user requirements are unclear or could be interpreted differently. IMPORTANT: Use this tool when user input is essential to proceed. Always provide clear context and options when applicable. Use natural, conversational language that feels like talking with a helpful friend. Include relevant attachments when the question relates to specific files or resources. CRITICAL: When you discover ambiguity (like multiple people with the same name), immediately stop and ask for clarification rather than making assumptions.",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "text": {
                         "type": "string",
-                        "description": "Question text to present to user - should be specific and clearly indicate what information you need. Include: 1) Clear question or request, 2) Context about why the input is needed, 3) Available options if applicable, 4) Impact of different choices, 5) Any relevant constraints or considerations."
+                        "description": "Question text to present to user - should be specific and clearly indicate what information you need. Use natural, conversational language. Include: 1) Clear question or request, 2) Context about why the input is needed, 3) Available options if applicable, 4) Impact of different choices, 5) Any relevant constraints or considerations."
                     },
                     "attachments": {
                         "anyOf": [
@@ -38,13 +38,7 @@ class MessageTool(Tool):
             }
         }
     })
-    @xml_schema(
-        tag_name="ask",
-        mappings=[
-            {"param_name": "text", "node_type": "content", "path": "."},
-            {"param_name": "attachments", "node_type": "attribute", "path": ".", "required": False}
-        ],
-        example='''
+    @usage_example('''
         <function_calls>
         <invoke name="ask">
         <parameter name="text">I'm planning to bake the chocolate cake for your birthday party. The recipe mentions "rich frosting" but doesn't specify what type. Could you clarify your preferences? For example:
@@ -57,8 +51,7 @@ This information will help me make sure the cake meets your expectations for the
         <parameter name="attachments">recipes/chocolate_cake.txt,photos/cake_examples.jpg</parameter>
         </invoke>
         </function_calls>
-        '''
-    )
+        ''')
     async def ask(self, text: str, attachments: Optional[Union[str, List[str]]] = None) -> ToolResult:
         """Ask the user a question and wait for a response.
 
@@ -102,25 +95,20 @@ This information will help me make sure the cake meets your expectations for the
             }
         }
     })
-    @xml_schema(
-        tag_name="web-browser-takeover",
-        mappings=[
-            {"param_name": "text", "node_type": "content", "path": "."},
-            {"param_name": "attachments", "node_type": "attribute", "path": ".", "required": False}
-        ],
-        example='''
+    @usage_example('''
         <function_calls>
         <invoke name="web_browser_takeover">
-        <parameter name="text">I've encountered a CAPTCHA verification on the page. Please:
-1. Solve the CAPTCHA puzzle
+        <parameter name="text">I've encountered a CAPTCHA verification on the page that I can't solve automatically. Could you help me out?
+
+Here's what I need you to do:
+1. Solve the CAPTCHA puzzle that's currently displayed
 2. Let me know once you've completed it
 3. I'll then continue with the automated process
 
-If you encounter any issues or need to take additional steps, please let me know.</parameter>
+If you encounter any issues or need to take additional steps, please let me know. Thanks for your help!</parameter>
         </invoke>
         </function_calls>
-        '''
-    )
+        ''')
     async def web_browser_takeover(self, text: str, attachments: Optional[Union[str, List[str]]] = None) -> ToolResult:
         """Request user takeover of browser interaction.
 
@@ -237,13 +225,7 @@ If you encounter any issues or need to take additional steps, please let me know
             }
         }
     })
-    @xml_schema(
-        tag_name="complete",
-        mappings=[
-            {"param_name": "text", "node_type": "content", "path": ".", "required": False},
-            {"param_name": "attachments", "node_type": "attribute", "path": ".", "required": False}
-        ],
-        example='''
+    @usage_example('''
         <function_calls>
         <invoke name="complete">
         <parameter name="text">I have successfully completed all tasks for your project. Here's what was accomplished:
@@ -256,8 +238,7 @@ All deliverables are attached for your review.</parameter>
         <parameter name="attachments">app/src/main.js,docs/README.md,deployment-config.yaml</parameter>
         </invoke>
         </function_calls>
-        '''
-    )
+        ''')
     async def complete(self, text: Optional[str] = None, attachments: Optional[Union[str, List[str]]] = None) -> ToolResult:
         """Indicate that the agent has completed all tasks and is entering complete state.
 

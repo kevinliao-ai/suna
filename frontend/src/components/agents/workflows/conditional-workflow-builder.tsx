@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState, useCallback, useMemo } from 'react';
-import { 
-  Plus, 
-  Trash2, 
+import {
+  Plus,
+  Trash2,
   AlertTriangle,
   ChevronsUpDown,
   Check,
@@ -31,6 +31,8 @@ export interface ConditionalStep {
   order: number;
   enabled?: boolean;
   hasIssues?: boolean;
+  position?: { x: number; y: number }; // Added for storing node positions
+  parentConditionalId?: string; // Added for nested conditional grouping
 }
 
 interface ConditionalWorkflowBuilderProps {
@@ -48,12 +50,13 @@ const normalizeToolName = (toolName: string, toolType: 'agentpress' | 'mcp') => 
     const agentPressMapping: Record<string, string> = {
       'sb_shell_tool': 'Shell Tool',
       'sb_files_tool': 'Files Tool',
-      'sb_browser_tool': 'Browser Tool',
+      'browser_tool': 'Browser Tool',
       'sb_deploy_tool': 'Deploy Tool',
       'sb_expose_tool': 'Expose Tool',
       'web_search_tool': 'Web Search',
       'sb_vision_tool': 'Vision Tool',
       'data_providers_tool': 'Data Providers',
+      'sb_sheets_tool': 'Sheets Tool',
     };
     return agentPressMapping[toolName] || toolName;
   } else {
@@ -64,24 +67,14 @@ const normalizeToolName = (toolName: string, toolType: 'agentpress' | 'mcp') => 
   }
 };
 
-export function ConditionalWorkflowBuilder({ 
-  steps, 
-  onStepsChange, 
+export function ConditionalWorkflowBuilder({
+  steps,
+  onStepsChange,
   agentTools,
-  isLoadingTools 
+  isLoadingTools
 }: ConditionalWorkflowBuilderProps) {
-  const [toolSearchOpen, setToolSearchOpen] = useState<{[key: string]: boolean}>({});
-  const [activeConditionTab, setActiveConditionTab] = useState<{[key: string]: string}>({});
-
-  steps.forEach((step, index) => {
-    console.log(`Step ${index}:`, {
-      name: step.name,
-      type: step.type,
-      hasChildren: !!step.children,
-      childrenCount: step.children?.length || 0,
-      children: step.children?.map(child => ({ name: child.name, type: child.type }))
-    });
-  });
+  const [toolSearchOpen, setToolSearchOpen] = useState<{ [key: string]: boolean }>({});
+  const [activeConditionTab, setActiveConditionTab] = useState<{ [key: string]: string }>({});
 
   const generateId = () => Math.random().toString(36).substr(2, 9);
 
@@ -95,33 +88,46 @@ export function ConditionalWorkflowBuilder({
       order: 0,
       enabled: true,
     };
-    const updateSteps = (items: ConditionalStep[]): ConditionalStep[] => {
+
+    const updateSteps = (items: ConditionalStep[]): { updatedItems: ConditionalStep[], found: boolean } => {
       if (!parentId) {
         if (afterStepId) {
           const index = items.findIndex(s => s.id === afterStepId);
-          return [...items.slice(0, index + 1), newStep, ...items.slice(index + 1)];
+          return {
+            updatedItems: [...items.slice(0, index + 1), newStep, ...items.slice(index + 1)],
+            found: true
+          };
         }
-        return [...items, newStep];
+        return { updatedItems: [...items, newStep], found: true };
       }
 
-      return items.map(step => {
+      let found = false;
+      const updatedItems = items.map(step => {
         if (step.id === parentId) {
+          found = true;
           return {
             ...step,
             children: [...(step.children || []), newStep]
           };
         }
-        if (step.children) {
-          return {
-            ...step,
-            children: updateSteps(step.children)
-          };
+        if (step.children && !found) {
+          const result = updateSteps(step.children);
+          if (result.found) {
+            found = true;
+            return {
+              ...step,
+              children: result.updatedItems
+            };
+          }
         }
         return step;
       });
+
+      return { updatedItems, found };
     };
 
-    onStepsChange(updateSteps(steps));
+    const result = updateSteps(steps);
+    onStepsChange(result.updatedItems);
   }, [steps, onStepsChange]);
 
   const addCondition = useCallback((afterStepId: string) => {
@@ -147,7 +153,7 @@ export function ConditionalWorkflowBuilder({
           ...items.slice(index + 1)
         ];
       }
-      
+
       return items.map(step => {
         if (step.children) {
           return {
@@ -185,7 +191,7 @@ export function ConditionalWorkflowBuilder({
           ...items.slice(index + 1)
         ];
       }
-      
+
       return items.map(step => {
         if (step.children) {
           return {
@@ -223,7 +229,7 @@ export function ConditionalWorkflowBuilder({
           ...items.slice(index + 1)
         ];
       }
-      
+
       return items.map(step => {
         if (step.children) {
           return {
@@ -245,9 +251,9 @@ export function ConditionalWorkflowBuilder({
           const updatedStep = { ...step, ...updates };
           if (updatedStep.type === 'instruction' && updatedStep.name && updatedStep.name !== 'New Step') {
             updatedStep.hasIssues = false;
-          } else if (updatedStep.type === 'condition' && 
-                    (updatedStep.conditions?.type === 'if' || updatedStep.conditions?.type === 'elseif') && 
-                    updatedStep.conditions?.expression) {
+          } else if (updatedStep.type === 'condition' &&
+            (updatedStep.conditions?.type === 'if' || updatedStep.conditions?.type === 'elseif') &&
+            updatedStep.conditions?.expression) {
             updatedStep.hasIssues = false;
           } else if (updatedStep.type === 'condition' && updatedStep.conditions?.type === 'else') {
             updatedStep.hasIssues = false;
@@ -326,9 +332,9 @@ export function ConditionalWorkflowBuilder({
           {conditionSteps.map((step, index) => {
             const letter = getConditionLetter(index);
             const isActive = step.id === activeTabId;
-            const conditionType = step.conditions?.type === 'if' ? 'If' : 
-                                step.conditions?.type === 'elseif' ? 'Else If' :
-                                step.conditions?.type === 'else' ? 'Else' : 'If';
+            const conditionType = step.conditions?.type === 'if' ? 'If' :
+              step.conditions?.type === 'elseif' ? 'Else If' :
+                step.conditions?.type === 'else' ? 'Else' : 'If';
             return (
               <button
                 key={step.id}
@@ -337,7 +343,7 @@ export function ConditionalWorkflowBuilder({
                 tabIndex={0}
                 className={cn(
                   "flex items-center gap-2 px-3 py-2 rounded-md border text-sm font-medium transition-all",
-                  isActive 
+                  isActive
                     ? "bg-primary text-primary-foreground border-primary shadow-sm"
                     : "bg-background border-border text-foreground hover:bg-accent hover:text-accent-foreground"
                 )}
@@ -384,8 +390,8 @@ export function ConditionalWorkflowBuilder({
                 <Input
                   type="text"
                   value={activeStep.conditions.expression || ''}
-                  onChange={(e) => updateStep(activeStep.id, { 
-                    conditions: { ...activeStep.conditions, expression: e.target.value } 
+                  onChange={(e) => updateStep(activeStep.id, {
+                    conditions: { ...activeStep.conditions, expression: e.target.value }
                   })}
                   placeholder="e.g., user asks about pricing"
                   className="w-full bg-transparent text-sm px-3 py-2 rounded-md"
@@ -470,8 +476,8 @@ export function ConditionalWorkflowBuilder({
                 />
               )}
               {!isSequence && (
-                <Popover 
-                  open={toolSearchOpen[step.id] || false} 
+                <Popover
+                  open={toolSearchOpen[step.id] || false}
                   onOpenChange={(open) => setToolSearchOpen(prev => ({ ...prev, [step.id]: open }))}
                 >
                   <PopoverTrigger asChild>
@@ -598,7 +604,7 @@ export function ConditionalWorkflowBuilder({
                   onClick={() => removeStep(step.id)}
                   className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
                 >
-                  <Trash2 className="h-4 w-4 mr-2" />
+                  <Trash2 className="h-4 w-4" />
                   Delete step
                 </Button>
               </PopoverContent>
@@ -659,7 +665,7 @@ export function ConditionalWorkflowBuilder({
           <p className="text-muted-foreground mb-6 max-w-md mx-auto">
             Add steps and conditions to create a smart workflow that adapts to different scenarios.
           </p>
-          <Button 
+          <Button
             onClick={() => addStep()}
           >
             <Plus className="h-4 w-4" />
@@ -671,7 +677,7 @@ export function ConditionalWorkflowBuilder({
           {renderSteps()}
           <div className="flex justify-center pt-4">
             <div className="flex gap-3">
-              <Button 
+              <Button
                 variant="outline"
                 onClick={() => addStep()}
                 className="border-dashed"
@@ -679,8 +685,8 @@ export function ConditionalWorkflowBuilder({
                 <Plus className="h-4 w-4" />
                 Add step
               </Button>
-              
-              <Button 
+
+              <Button
                 variant="outline"
                 onClick={() => addCondition(steps[steps.length - 1]?.id || '')}
                 className="border-dashed"

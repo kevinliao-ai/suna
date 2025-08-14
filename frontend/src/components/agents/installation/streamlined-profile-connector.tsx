@@ -12,11 +12,13 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { CredentialProfileSelector } from '@/components/workflows/CredentialProfileSelector';
-import { CredentialProfileSelector as PipedreamCredentialProfileSelector } from '@/components/agents/pipedream/credential-profile-selector';
-import { PipedreamConnector } from '@/components/agents/pipedream/pipedream-connector';
-import { useCreateCredentialProfile, type CreateCredentialProfileRequest } from '@/hooks/react-query/mcp/use-credential-profiles';
+import { ComposioCredentialProfileSelector } from '@/components/agents/composio/composio-credential-profile-selector';
+import { ComposioConnector } from '@/components/agents/composio/composio-connector';
+import { useCreateCredentialProfile, useCredentialProfiles, type CreateCredentialProfileRequest } from '@/hooks/react-query/mcp/use-credential-profiles';
 import { useMCPServerDetails } from '@/hooks/react-query/mcp/use-mcp-servers';
-import { usePipedreamProfiles } from '@/hooks/react-query/pipedream/use-pipedream-profiles';
+
+import { useCredentialProfilesForMcp } from '@/hooks/react-query/mcp/use-credential-profiles';
+import { useComposioToolkits } from '@/hooks/react-query/composio/use-composio';
 import type { SetupStep } from './types';
 
 interface ProfileConnectorProps {
@@ -36,45 +38,52 @@ export const ProfileConnector: React.FC<ProfileConnectorProps> = ({
   const [isCreatingProfile, setIsCreatingProfile] = useState(false);
   const [newProfileName, setNewProfileName] = useState('');
   const [config, setConfig] = useState<Record<string, string>>({});
-  const [showPipedreamConnector, setShowPipedreamConnector] = useState(false);
+  const [showComposioConnector, setShowComposioConnector] = useState(false);
 
   const createProfileMutation = useCreateCredentialProfile();
-  const { data: serverDetails } = useMCPServerDetails(step.qualified_name);
+  const { data: serverDetails } = useMCPServerDetails(
+    step.qualified_name,
+    !step.qualified_name?.startsWith('composio.')
+  );
   
-  const isPipedreamStep = step.type === 'pipedream_profile';
+  const isComposioStep = step.type === 'composio_profile';
   
-  const { data: pipedreamProfiles } = usePipedreamProfiles(
-    isPipedreamStep ? { app_slug: step.app_slug, is_active: true } : undefined
+  const composioQualifiedName = React.useMemo(() => {
+    if (!isComposioStep || !step.app_slug) return null;
+    return `composio.${step.app_slug}`;
+  }, [isComposioStep, step.app_slug]);
+  
+  const { data: composioProfiles } = useCredentialProfilesForMcp(composioQualifiedName);
+  
+  const { data: composioToolkits } = useComposioToolkits(
+    isComposioStep ? step.app_slug : undefined,
+    undefined
   );
   const configProperties = serverDetails?.connections?.[0]?.configSchema?.properties || {};
   const requiredFields = serverDetails?.connections?.[0]?.configSchema?.required || [];
   
-  const hasConnectedPipedreamProfile = pipedreamProfiles?.some(p => p.is_connected) || false;
+  const hasConnectedComposioProfile = composioProfiles && composioProfiles.length > 0;
 
   useEffect(() => {
     setProfileStep('select');
     setIsCreatingProfile(false);
     setNewProfileName('');
     setConfig({});
-    setShowPipedreamConnector(false);
+    setShowComposioConnector(false);
   }, [step.qualified_name]);
 
-  const mockPipedreamApp = useMemo(() => ({
-    id: step.qualified_name,
-    name_slug: step.app_slug || step.qualified_name,
-    name: step.service_name,
-    description: `Connect your ${step.service_name} account to use its tools`,
-    img_src: '',
-    custom_fields_json: "[]",
-    categories: [],
-    featured_weight: 0,
-    auth_type: "keys" as const,
-    connect: {
-      allowed_domains: null,
-      base_proxy_target_url: "",
-      proxy_enabled: false
-    }
-  }), [step.app_slug, step.qualified_name, step.service_name]);
+  const mockComposioApp = useMemo(() => {
+    const actualToolkit = composioToolkits?.toolkits?.find(t => t.slug === step.app_slug);
+    return actualToolkit || {
+      slug: step.app_slug || step.qualified_name,
+      name: step.service_name,
+      description: `Connect your ${step.service_name} account to use its tools`,
+      logo: '',
+      tags: [],
+      auth_schemes: ['OAUTH2'],
+      categories: []
+    };
+  }, [step.app_slug, step.qualified_name, step.service_name, composioToolkits]);
 
   const handleCreateProfile = useCallback(async () => {
     if (!newProfileName.trim()) {
@@ -128,14 +137,14 @@ export const ProfileConnector: React.FC<ProfileConnectorProps> = ({
     return requiredFields.includes(fieldName);
   };
 
-  const SelectProfileStep = useMemo(() => (
+    const SelectProfileStep = useMemo(() => (
     <div className="space-y-4">
-      {isPipedreamStep ? (
+      {isComposioStep ? (
         <div className="space-y-4">
-          {hasConnectedPipedreamProfile ? (
-            <PipedreamCredentialProfileSelector
-              appSlug={step.app_slug || ''}
-              appName={step.service_name}
+          {hasConnectedComposioProfile ? (
+            <ComposioCredentialProfileSelector
+              toolkitSlug={step.app_slug || ''}
+              toolkitName={step.service_name}
               selectedProfileId={selectedProfileId}
               onProfileSelect={(profileId) => {
                 onProfileSelect(step.qualified_name, profileId);
@@ -151,7 +160,7 @@ export const ProfileConnector: React.FC<ProfileConnectorProps> = ({
               </Alert>
               
               <Button 
-                onClick={() => setShowPipedreamConnector(true)}
+                onClick={() => setShowComposioConnector(true)}
                 className="w-full"
               >
                 <Plus className="h-4 w-4" />
@@ -160,7 +169,7 @@ export const ProfileConnector: React.FC<ProfileConnectorProps> = ({
             </div>
           )}
 
-          {hasConnectedPipedreamProfile && (
+          {hasConnectedComposioProfile && (
             <>
               <div className="flex items-center gap-3">
                 <Separator className="flex-1" />
@@ -170,7 +179,7 @@ export const ProfileConnector: React.FC<ProfileConnectorProps> = ({
 
               <Button 
                 variant="outline" 
-                onClick={() => setShowPipedreamConnector(true)}
+                onClick={() => setShowComposioConnector(true)}
                 className="w-full"
               >
                 <Plus className="h-4 w-4" />
@@ -214,9 +223,9 @@ export const ProfileConnector: React.FC<ProfileConnectorProps> = ({
     step.service_name,
     step.qualified_name,
     step.app_slug,
-    isPipedreamStep,
+    isComposioStep,
     selectedProfileId,
-    hasConnectedPipedreamProfile,
+    hasConnectedComposioProfile,
     onProfileSelect
   ]);
 
@@ -334,15 +343,15 @@ export const ProfileConnector: React.FC<ProfileConnectorProps> = ({
         {profileStep === 'select' ? SelectProfileStep : CreateProfileStep}
       </div>
 
-      {isPipedreamStep && (
-        <PipedreamConnector
-          app={mockPipedreamApp}
-          open={showPipedreamConnector}
-          onOpenChange={setShowPipedreamConnector}
+      {isComposioStep && (
+        <ComposioConnector
+          app={mockComposioApp}
+          open={showComposioConnector}
+          onOpenChange={setShowComposioConnector}
           mode="profile-only"
-          onComplete={(profileId, selectedTools, appName, appSlug) => {
+          onComplete={(profileId, appName, appSlug) => {
             onProfileSelect(step.qualified_name, profileId);
-            setShowPipedreamConnector(false);
+            setShowComposioConnector(false);
             toast.success(`Connected to ${appName} successfully!`);
             onComplete?.();
           }}

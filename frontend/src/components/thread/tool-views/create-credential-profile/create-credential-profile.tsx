@@ -21,7 +21,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { LoadingState } from '../shared/LoadingState';
 import { Separator } from "@/components/ui/separator";
 import { extractCreateCredentialProfileData, CredentialProfile } from './_utils';
-import { usePipedreamAppIcon } from '@/hooks/react-query/pipedream/use-pipedream';
 
 export function CreateCredentialProfileToolView({
   name = 'create-credential-profile',
@@ -34,7 +33,7 @@ export function CreateCredentialProfileToolView({
 }: ToolViewProps) {
 
   const {
-    app_slug,
+    toolkit_slug,
     profile_name,
     display_name,
     message,
@@ -52,12 +51,7 @@ export function CreateCredentialProfileToolView({
 
   const toolTitle = getToolTitle(name);
 
-  // Fetch app icon using the logo hook
-  const { data: iconData } = usePipedreamAppIcon(app_slug || '', {
-    enabled: !!app_slug
-  });
-
-  const logoUrl = iconData?.icon_url;
+  const logoUrl = undefined;
 
   const formatCreatedAt = (dateString: string) => {
     try {
@@ -141,7 +135,7 @@ export function CreateCredentialProfileToolView({
                       {logoUrl ? (
                         <img
                           src={logoUrl}
-                          alt={`${profile.app_name} logo`}
+                          alt={`${profile.toolkit_name} logo`}
                           className="w-8 h-8 object-cover rounded"
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
@@ -161,7 +155,7 @@ export function CreateCredentialProfileToolView({
                         {profile.display_name}
                       </h3>
                       <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                        {profile.app_name}
+                        {profile.toolkit_name}
                       </p>
                     </div>
                   </div>
@@ -192,24 +186,13 @@ export function CreateCredentialProfileToolView({
                     </p>
                   </div>
 
-                  {/* App Slug */}
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
-                      <Server className="w-4 h-4" />
-                      <span>App Slug</span>
+                      <Server className="w-4 h-4" /> 
+                      <span>Toolkit Slug</span>
                     </div>
                     <p className="text-sm font-mono text-zinc-700 dark:text-zinc-300 pl-6">
-                      {profile.app_slug}
-                    </p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
-                      <Calendar className="w-4 h-4" />
-                      <span>Created</span>
-                    </div>
-                    <p className="text-sm text-zinc-700 dark:text-zinc-300 pl-6">
-                      {formatCreatedAt(profile.created_at)}
+                      {profile.toolkit_slug}
                     </p>
                   </div>
                 </div>
@@ -242,7 +225,7 @@ export function CreateCredentialProfileToolView({
                 Profile not created
               </h3>
               <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                {app_slug ? `Failed to create profile for "${app_slug}"` : 'Credential profile creation failed'}
+                {toolkit_slug ? `Failed to create profile for "${toolkit_slug}"` : 'Credential profile creation failed'}
               </p>
             </div>
           </div>

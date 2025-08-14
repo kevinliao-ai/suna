@@ -7,45 +7,20 @@ class SunaConfig:
     DESCRIPTION = "Suna is your AI assistant with access to various tools and integrations to help you with tasks across domains."
     AVATAR = "🌞"
     AVATAR_COLOR = "#F59E0B"
+    DEFAULT_MODEL = "anthropic/claude-sonnet-4-20250514"
     SYSTEM_PROMPT = SYSTEM_PROMPT
 
     DEFAULT_TOOLS = {
-        "sb_shell_tool": {
-            "enabled": True, 
-            "description": "Execute shell commands"
-        },
-        "sb_files_tool": {
-            "enabled": True, 
-            "description": "Read, write, and edit files"
-        },
-        "sb_browser_tool": {
-            "enabled": True, 
-            "description": "Browse websites and interact with web pages"
-        },
-        "sb_deploy_tool": {
-            "enabled": True, 
-            "description": "Deploy web applications"
-        },
-        "sb_expose_tool": {
-            "enabled": True, 
-            "description": "Expose local services to the internet"
-        },
-        "web_search_tool": {
-            "enabled": True, 
-            "description": "Search the web for information"
-        },
-        "sb_vision_tool": {
-            "enabled": True, 
-            "description": "Analyze and understand images"
-        },
-        "sb_image_edit_tool": {
-            "enabled": True, 
-            "description": "Edit and manipulate images"
-        },
-        "data_providers_tool": {
-            "enabled": True, 
-            "description": "Access structured data from various providers"
-        }
+        "sb_shell_tool": True,
+        "browser_tool": True,
+        "sb_deploy_tool": True,
+        "sb_expose_tool": True,
+        "web_search_tool": True,
+        "sb_vision_tool": True,
+        "sb_image_edit_tool": True,
+        "data_providers_tool": True,
+        "sb_sheets_tool": True,
+        "sb_files_tool": True,
     }
     
     DEFAULT_MCPS = []
@@ -61,10 +36,7 @@ class SunaConfig:
     
     @classmethod
     def get_system_prompt(cls) -> str:
-        return cls.SYSTEM_PROMPT.format(
-            current_date=datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d'),
-            current_time=datetime.datetime.now(datetime.timezone.utc).strftime('%H:%M:%S')
-        )
+        return cls.SYSTEM_PROMPT
     
     @classmethod
     def get_full_config(cls) -> Dict[str, Any]:
@@ -72,6 +44,7 @@ class SunaConfig:
             "name": cls.NAME,
             "description": cls.DESCRIPTION,
             "system_prompt": cls.get_system_prompt(),
+            "model": cls.DEFAULT_MODEL,
             "configured_mcps": cls.DEFAULT_MCPS,
             "custom_mcps": cls.DEFAULT_CUSTOM_MCPS,
             "agentpress_tools": cls.DEFAULT_TOOLS,

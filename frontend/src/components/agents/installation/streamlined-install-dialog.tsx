@@ -17,7 +17,6 @@ import {
   CheckCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { getAgentAvatar } from '@/lib/utils/get-agent-style';
 import { ProfileConnector } from './streamlined-profile-connector';
 import { CustomServerStep } from './custom-server-step';
 import type { MarketplaceTemplate, SetupStep } from './types';
@@ -53,22 +52,27 @@ export const StreamlinedInstallDialog: React.FC<StreamlinedInstallDialogProps> =
     if (!item?.mcp_requirements) return [];
     
     const steps: SetupStep[] = [];
-    
     item.mcp_requirements
-      .filter(req => req.custom_type === 'pipedream')
+      .filter(req => req.custom_type === 'composio')
       .forEach(req => {
-        const app_slug = req.qualified_name.startsWith('pipedream:') 
-          ? req.qualified_name.substring('pipedream:'.length)
-          : req.qualified_name;
+        let app_slug = req.qualified_name;
+        
+        if (app_slug.startsWith('composio.')) {
+          app_slug = app_slug.substring('composio.'.length);
+        } else if (app_slug.includes('composio_')) {
+          const parts = app_slug.split('composio_');
+          app_slug = parts[parts.length - 1];
+        }
         
         steps.push({
           id: req.qualified_name,
           title: `Connect ${req.display_name}`,
           description: `Select an existing ${req.display_name} profile or create a new one`,
-          type: 'pipedream_profile',
+          type: 'composio_profile',
           service_name: req.display_name,
           qualified_name: req.qualified_name,
-          app_slug: app_slug
+          app_slug: app_slug,
+          app_name: req.display_name
         });
       });
 
@@ -86,7 +90,7 @@ export const StreamlinedInstallDialog: React.FC<StreamlinedInstallDialogProps> =
       });
 
     item.mcp_requirements
-      .filter(req => req.custom_type && req.custom_type !== 'pipedream')
+      .filter(req => req.custom_type && req.custom_type !== 'composio')
       .forEach(req => {
         steps.push({
           id: req.qualified_name,
@@ -150,7 +154,7 @@ export const StreamlinedInstallDialog: React.FC<StreamlinedInstallDialogProps> =
     
     switch (step.type) {
       case 'credential_profile':
-      case 'pipedream_profile':
+      case 'composio_profile':
         return !!profileMappings[step.qualified_name];
       case 'custom_server':
         const config = customMcpConfigs[step.qualified_name] || {};
@@ -180,14 +184,10 @@ export const StreamlinedInstallDialog: React.FC<StreamlinedInstallDialogProps> =
     const finalCustomConfigs = { ...customMcpConfigs };
     
     setupSteps.forEach(step => {
-      if (step.type === 'pipedream_profile') {
+      if (step.type === 'composio_profile') {
         const profileId = profileMappings[step.qualified_name];
         if (profileId) {
           finalCustomConfigs[step.qualified_name] = {
-            url: 'https://remote.mcp.pipedream.net',
-            headers: {
-              'x-pd-app-slug': step.app_slug,
-            },
             profile_id: profileId
           };
         }
@@ -201,12 +201,8 @@ export const StreamlinedInstallDialog: React.FC<StreamlinedInstallDialogProps> =
   const isOnFinalStep = currentStep >= setupSteps.length;
   
   const { avatar, color } = useMemo(() => {
-    if (!item) return { avatar: '🤖', color: '#000' };
-    if (item.avatar && item.avatar_color) {
-      return { avatar: item.avatar, color: item.avatar_color };
-    }
-    return getAgentAvatar(item.id);
-  }, [item]);
+    return { avatar: '🤖', color: '#6366f1' };
+  }, []);
 
   if (!item) return null;
 
@@ -266,7 +262,7 @@ export const StreamlinedInstallDialog: React.FC<StreamlinedInstallDialogProps> =
         </div>
 
         <div>
-          {(currentStepData.type === 'credential_profile' || currentStepData.type === 'pipedream_profile') && (
+          {(currentStepData.type === 'credential_profile' || currentStepData.type === 'composio_profile') && (
             <ProfileConnector
               step={currentStepData}
               selectedProfileId={profileMappings[currentStepData.qualified_name]}
@@ -315,15 +311,23 @@ export const StreamlinedInstallDialog: React.FC<StreamlinedInstallDialogProps> =
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader className="space-y-4">
           <div className="flex items-center gap-3">
-            <div 
-              className="h-12 w-12 flex-shrink-0 rounded-lg flex items-center justify-center"
-              style={{ 
-                backgroundColor: color,
-                boxShadow: `0 16px 48px -8px ${color}70, 0 8px 24px -4px ${color}50`
-              }}
-            >
-              <span className="text-lg">{avatar}</span>
-            </div>
+            {item.profile_image_url ? (
+              <img 
+                src={item.profile_image_url} 
+                alt={item.name}
+                className="h-12 w-12 flex-shrink-0 rounded-lg object-cover shadow-lg"
+              />
+            ) : (
+              <div 
+                className="h-12 w-12 flex-shrink-0 rounded-lg flex items-center justify-center"
+                style={{ 
+                  backgroundColor: color,
+                  boxShadow: `0 16px 48px -8px ${color}70, 0 8px 24px -4px ${color}50`
+                }}
+              >
+                <span className="text-lg">{avatar}</span>
+              </div>
+            )}
             <div>
               <DialogTitle className="text-left flex items-center gap-2">
                 Install {item.name}

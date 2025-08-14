@@ -13,15 +13,18 @@ def extract_agent_config(agent_data: Dict[str, Any], version_data: Optional[Dict
     if version_data:
         logger.info(f"Using active version data for agent {agent_id} (version: {version_data.get('version_name', 'unknown')})")
         
+        model = None
         if version_data.get('config'):
             config = version_data['config'].copy()
             system_prompt = config.get('system_prompt', '')
+            model = config.get('model')
             tools = config.get('tools', {})
             configured_mcps = tools.get('mcp', [])
             custom_mcps = tools.get('custom_mcp', [])
             agentpress_tools = tools.get('agentpress', {})
         else:
             system_prompt = version_data.get('system_prompt', '')
+            model = version_data.get('model')
             configured_mcps = version_data.get('configured_mcps', [])
             custom_mcps = version_data.get('custom_mcps', [])
             agentpress_tools = version_data.get('agentpress_tools', {})
@@ -40,11 +43,15 @@ def extract_agent_config(agent_data: Dict[str, Any], version_data: Optional[Dict
             'current_version_id': agent_data.get('current_version_id'),
             'version_name': version_data.get('version_name', 'v1'),
             'system_prompt': system_prompt,
+            'model': model,
             'configured_mcps': configured_mcps,
             'custom_mcps': custom_mcps,
             'agentpress_tools': _extract_agentpress_tools_for_run(agentpress_tools),
+            # Deprecated fields retained for compatibility
             'avatar': agent_data.get('avatar'),
             'avatar_color': agent_data.get('avatar_color'),
+            # New field
+            'profile_image_url': agent_data.get('profile_image_url'),
             'is_suna_default': is_suna_default,
             'centrally_managed': centrally_managed,
             'restrictions': restrictions
@@ -68,6 +75,7 @@ def extract_agent_config(agent_data: Dict[str, Any], version_data: Optional[Dict
             'is_default': agent_data.get('is_default', False),
             'account_id': agent_data.get('account_id'),
             'current_version_id': agent_data.get('current_version_id'),
+            'model': config.get('model'),  # Include model from config
             'is_suna_default': is_suna_default,
             'centrally_managed': centrally_managed,
             'restrictions': restrictions
@@ -78,13 +86,39 @@ def extract_agent_config(agent_data: Dict[str, Any], version_data: Optional[Dict
         config['custom_mcps'] = tools.get('custom_mcp', [])
         config['agentpress_tools'] = _extract_agentpress_tools_for_run(tools.get('agentpress', {}))
         
+        # Legacy and new fields
         config['avatar'] = agent_data.get('avatar')
         config['avatar_color'] = agent_data.get('avatar_color')
+        config['profile_image_url'] = agent_data.get('profile_image_url')
         
         return config
     
-    logger.error(f"No config found for agent {agent_id} - this should not happen after migration")
-    raise ValueError(f"No configuration found for agent {agent_id}")
+    # Fallback: Create default configuration for agents without version or config data
+    logger.warning(f"No config found for agent {agent_id}, creating default configuration")
+    
+    # Create minimal default configuration
+    config = {
+        'agent_id': agent_data['agent_id'],
+        'name': agent_data.get('name', 'Unnamed Agent'),
+        'description': agent_data.get('description', ''),
+        'is_default': agent_data.get('is_default', False),
+        'account_id': agent_data.get('account_id'),
+        'current_version_id': agent_data.get('current_version_id'),
+        'version_name': 'v1',
+        'system_prompt': 'You are a helpful AI assistant.',
+        'model': None,  # No model specified for default config
+        'configured_mcps': [],
+        'custom_mcps': [],
+        'agentpress_tools': {},
+        'avatar': agent_data.get('avatar'),
+        'avatar_color': agent_data.get('avatar_color'),
+        'profile_image_url': agent_data.get('profile_image_url'),
+        'is_suna_default': is_suna_default,
+        'centrally_managed': centrally_managed,
+        'restrictions': restrictions
+    }
+    
+    return config
 
 
 def build_unified_config(

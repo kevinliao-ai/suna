@@ -11,6 +11,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
 import {
   BillingError,
+  AgentRunLimitError,
 } from '@/lib/api';
 import { useInitiateAgentMutation } from '@/hooks/react-query/dashboard/use-initiate-agent';
 import { useThreadQuery } from '@/hooks/react-query/threads/use-threads';
@@ -37,6 +38,8 @@ import { normalizeFilenameToNFC } from '@/lib/utils/unicode';
 import { createQueryHook } from '@/hooks/use-query';
 import { agentKeys } from '@/hooks/react-query/agents/keys';
 import { getAgents } from '@/hooks/react-query/agents/utils';
+import { AgentRunLimitDialog } from '@/components/thread/agent-run-limit-dialog';
+import { Examples } from '@/components/dashboard/examples';
 
 // Custom dialog overlay with blur effect
 const BlurredDialogOverlay = () => (
@@ -45,6 +48,8 @@ const BlurredDialogOverlay = () => (
 
 // Constant for localStorage key to ensure consistency
 const PENDING_PROMPT_KEY = 'pendingAgentPrompt';
+
+
 
 export function HeroSection() {
   const { hero } = siteConfig;
@@ -67,6 +72,11 @@ export function HeroSection() {
   const [initiatedThreadId, setInitiatedThreadId] = useState<string | null>(null);
   const threadQuery = useThreadQuery(initiatedThreadId || '');
   const chatInputRef = useRef<ChatInputHandles>(null);
+  const [showAgentLimitDialog, setShowAgentLimitDialog] = useState(false);
+  const [agentLimitData, setAgentLimitData] = useState<{
+    runningCount: number;
+    runningThreadIds: string[];
+  } | null>(null);
 
   // Fetch agents for selection
   const { data: agentsResponse } = createQueryHook(
@@ -197,8 +207,15 @@ export function HeroSection() {
       setInputValue('');
     } catch (error: any) {
       if (error instanceof BillingError) {
-        console.log('Billing error:', error.detail);
         onOpen("paymentRequiredDialog");
+      } else if (error instanceof AgentRunLimitError) {
+        const { running_thread_ids, running_count } = error.detail;
+        
+        setAgentLimitData({
+          runningCount: running_count,
+          runningThreadIds: running_thread_ids,
+        });
+        setShowAgentLimitDialog(true);
       } else {
         const isConnectionError =
           error instanceof TypeError &&
@@ -216,9 +233,9 @@ export function HeroSection() {
 
   return (
     <section id="hero" className="w-full relative overflow-hidden">
-      <div className="relative flex flex-col items-center w-full px-6">
+      <div className="relative flex flex-col items-center w-full px-4 sm:px-6">
         {/* Left side flickering grid with gradient fades */}
-        <div className="absolute left-0 top-0 h-[600px] md:h-[800px] w-1/3 -z-10 overflow-hidden">
+        <div className="hidden sm:block absolute left-0 top-0 h-[500px] sm:h-[600px] md:h-[800px] w-1/4 sm:w-1/3 -z-10 overflow-hidden">
           {/* Horizontal fade from left to right */}
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-background z-10" />
 
@@ -228,18 +245,20 @@ export function HeroSection() {
           {/* Vertical fade to bottom */}
           <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-background via-background/90 to-transparent z-10" />
 
-          <FlickeringGrid
-            className="h-full w-full"
-            squareSize={mounted && tablet ? 2 : 2.5}
-            gridGap={mounted && tablet ? 2 : 2.5}
-            color="var(--secondary)"
-            maxOpacity={0.4}
-            flickerChance={isScrolling ? 0.01 : 0.03} // Low flickering when not scrolling
-          />
+          {mounted && (
+            <FlickeringGrid
+              className="h-full w-full"
+              squareSize={tablet ? 2 : 2.5}
+              gridGap={tablet ? 2 : 2.5}
+              color="var(--secondary)"
+              maxOpacity={tablet ? 0.2 : 0.4}
+              flickerChance={isScrolling ? 0.005 : (tablet ? 0.015 : 0.03)} // Lower performance impact on mobile
+            />
+          )}
         </div>
 
         {/* Right side flickering grid with gradient fades */}
-        <div className="absolute right-0 top-0 h-[600px] md:h-[800px] w-1/3 -z-10 overflow-hidden">
+        <div className="hidden sm:block absolute right-0 top-0 h-[500px] sm:h-[600px] md:h-[800px] w-1/4 sm:w-1/3 -z-10 overflow-hidden">
           {/* Horizontal fade from right to left */}
           <div className="absolute inset-0 bg-gradient-to-l from-transparent via-transparent to-background z-10" />
 
@@ -249,18 +268,20 @@ export function HeroSection() {
           {/* Vertical fade to bottom */}
           <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-background via-background/90 to-transparent z-10" />
 
-          <FlickeringGrid
-            className="h-full w-full"
-            squareSize={mounted && tablet ? 2 : 2.5}
-            gridGap={mounted && tablet ? 2 : 2.5}
-            color="var(--secondary)"
-            maxOpacity={0.4}
-            flickerChance={isScrolling ? 0.01 : 0.03} // Low flickering when not scrolling
-          />
+          {mounted && (
+            <FlickeringGrid
+              className="h-full w-full"
+              squareSize={tablet ? 2 : 2.5}
+              gridGap={tablet ? 2 : 2.5}
+              color="var(--secondary)"
+              maxOpacity={tablet ? 0.2 : 0.4}
+              flickerChance={isScrolling ? 0.005 : (tablet ? 0.015 : 0.03)} // Lower performance impact on mobile
+            />
+          )}
         </div>
 
         {/* Center content background with rounded bottom */}
-        <div className="absolute inset-x-1/4 top-0 h-[600px] md:h-[800px] -z-20 bg-background rounded-b-xl"></div>
+        <div className="absolute inset-x-0 sm:inset-x-1/6 md:inset-x-1/4 top-0 h-[500px] sm:h-[600px] md:h-[800px] -z-20 bg-background rounded-b-xl"></div>
 
         <div className="relative z-10 pt-22 max-w-3xl mx-auto h-full w-full flex flex-col gap-10 items-center justify-center">
           {/* <p className="border border-border bg-accent rounded-full text-sm h-8 px-3 flex items-center gap-2">
@@ -313,7 +334,7 @@ export function HeroSection() {
                 <ChatInput
                   ref={chatInputRef}
                   onSubmit={handleChatInputSubmit}
-                  placeholder="Describe what you need help with..."
+                  placeholder="Describe the agent you want to build or the task you want completed..."
                   loading={isSubmitting}
                   disabled={isSubmitting}
                   value={inputValue}
@@ -328,8 +349,9 @@ export function HeroSection() {
             </form>
           </div> */}
         </div>
+
       </div>
-      <div className="mb-16 sm:mt-52 max-w-4xl mx-auto"></div>
+        <div className="mb-8 sm:mb-16 sm:mt-32 mx-auto"></div>
 
       {/* Auth Dialog */}
       <Dialog open={authDialogOpen} onOpenChange={setAuthDialogOpen}>
@@ -413,6 +435,16 @@ export function HeroSection() {
         onDismiss={clearBillingError}
         isOpen={!!billingError}
       />
+
+      {agentLimitData && (
+        <AgentRunLimitDialog
+          open={showAgentLimitDialog}
+          onOpenChange={setShowAgentLimitDialog}
+          runningCount={agentLimitData.runningCount}
+          runningThreadIds={agentLimitData.runningThreadIds}
+          projectId={undefined} // Hero section doesn't have a specific project context
+        />
+      )}
     </section>
   );
 }

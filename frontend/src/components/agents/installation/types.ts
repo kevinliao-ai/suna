@@ -1,5 +1,6 @@
 export interface MarketplaceTemplate {
   id: string;
+  creator_id: string;
   name: string;
   description: string;
   tags: string[];
@@ -7,16 +8,19 @@ export interface MarketplaceTemplate {
   creator_name: string;
   created_at: string;
   marketplace_published_at?: string;
+  profile_image_url?: string;
   avatar?: string;
   avatar_color?: string;
   template_id: string;
   is_kortix_team?: boolean;
+  model?: string;
+  agentpress_tools?: Record<string, any>;
   mcp_requirements?: Array<{
     qualified_name: string;
     display_name: string;
     enabled_tools?: string[];
     required_config: string[];
-    custom_type?: 'sse' | 'http' | 'pipedream';
+    custom_type?: 'sse' | 'http' | 'composio';
   }>;
   metadata?: {
     source_agent_id?: string;
@@ -29,7 +33,7 @@ export interface SetupStep {
   id: string;
   title: string;
   description: string;
-  type: 'credential_profile' | 'custom_server' | 'pipedream_profile';
+  type: 'credential_profile' | 'custom_server' | 'composio_profile';
   service_name: string;
   qualified_name: string;
   required_fields?: Array<{
@@ -39,7 +43,7 @@ export interface SetupStep {
     placeholder: string;
     description?: string;
   }>;
-  custom_type?: 'sse' | 'http' | 'pipedream'; 
+  custom_type?: 'sse' | 'http' | 'composio'; 
   app_slug?: string;
   app_name?: string;
-} 
+}
