@@ -322,7 +322,7 @@ export function OpenSourceSection() {
           <div className="rounded-xl bg-[#F3F4F6] dark:bg-[#F9FAFB]/[0.02] border border-border p-6">
             <div className="flex flex-col gap-6">
               <div className="flex items-center gap-2 text-primary font-medium">
-                <Github className="h-5 w-5" />
+                {/* <Github className="h-5 w-5" /> */}
                 <span>Index-AniSora</span>
               </div>
               <div className="relative">
@@ -486,7 +486,6 @@ export function OpenSourceSection() {
                 </div>
               </div>
             </div>
-            ))}
           </div>
         </div>
       </div>

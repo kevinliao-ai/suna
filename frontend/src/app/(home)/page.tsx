@@ -17,7 +17,6 @@ import { CompanyShowcase } from '@/components/home/sections/company-showcase';
 import { FeatureSection } from '@/components/home/sections/feature-section';
 import { QuoteSection } from '@/components/home/sections/quote-section';
 import { TestimonialSection } from '@/components/home/sections/testimonial-section';
-import { FAQSection } from '@/components/home/sections/faq-section';
 import { AgentShowcaseSection } from '@/components/home/sections/agent-showcase-section';
 
 export default function Home() {
