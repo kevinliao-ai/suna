@@ -5,7 +5,6 @@ import { Suspense, useEffect, useState } from 'react';
 import { useTheme } from 'next-themes';
 import Image from 'next/image';
 import Link from 'next/link';
-import { FooterSection } from '@/components/home/sections/footer-section';
 // Dynamically import the BilibiliEmbed component with no SSR
 const BilibiliEmbed = dynamic(
   () => import('@/components/bilibili-embed').then(mod => mod.BilibiliEmbed),
@@ -60,12 +59,11 @@ export default function DashboardPage() {
             <div className="animate-pulse">Loading Bilibili content...</div>
           </div>
         }>
-          <div className="h-[calc(100vh-14rem)] w-full">
+          <div className="h-[calc(100vh-58px)] w-full">
             <BilibiliEmbed url="https://bilibili-index-anisora.ms.show/" />
           </div>
         </Suspense>
       </div>
-      <FooterSection showMaintenanceQulckLink={false} />
     </div>
   );
 }

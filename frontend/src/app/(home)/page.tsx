@@ -19,6 +19,7 @@ import { QuoteSection } from '@/components/home/sections/quote-section';
 import { TestimonialSection } from '@/components/home/sections/testimonial-section';
 import { AgentShowcaseSection } from '@/components/home/sections/agent-showcase-section';
 
+
 export default function Home() {
   return (
     <>
@@ -27,16 +28,15 @@ export default function Home() {
         <main className="flex flex-col items-center justify-center min-h-screen w-full">
           <div className="w-full divide-y divide-border">
             <HeroSection />
-            <BentoSection />
+            <UseCasesSection />
+            {/* <BentoSection /> */}
             {/* <AgentShowcaseSection /> */}
             <OpenSourceSection />
             {/* <div className='flex flex-col items-center px-4'>
               <PricingSection />
             </div> */}
-            {/* <div className="pb-10 mx-auto">
-              <HeroVideoSection />
-            </div> */}
-            {/* <TestimonialSection /> */}
+           
+            <TestimonialSection />
             <FAQSection />
             <CTASection />
             <FooterSection />

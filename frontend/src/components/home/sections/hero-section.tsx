@@ -1,7 +1,7 @@
 'use client';
 import { HeroVideoSection } from '@/components/home/sections/hero-video-section';
 import { siteConfig } from '@/lib/home';
-import { ArrowRight, Github, X, AlertCircle, Square } from 'lucide-react';
+import { ArrowRight, Github, X, AlertCircle } from 'lucide-react';
 import { FlickeringGrid } from '@/components/home/ui/flickering-grid';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { useState, useEffect, useRef, FormEvent } from 'react';
@@ -10,14 +10,16 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
 import {
+  createProject,
+  createThread,
+  addUserMessage,
+  startAgent,
   BillingError,
-  AgentRunLimitError,
 } from '@/lib/api';
-import { useInitiateAgentMutation } from '@/hooks/react-query/dashboard/use-initiate-agent';
-import { useThreadQuery } from '@/hooks/react-query/threads/use-threads';
 import { generateThreadName } from '@/lib/actions/threads';
 import GoogleSignIn from '@/components/GoogleSignIn';
-import { useAgents } from '@/hooks/react-query/agents/use-agents';
+import { Input } from '@/components/ui/input';
+import { SubmitButton } from '@/components/ui/submit-button';
 import {
   Dialog,
   DialogContent,
@@ -31,15 +33,6 @@ import { useBillingError } from '@/hooks/useBillingError';
 import { useAccounts } from '@/hooks/use-accounts';
 import { isLocalMode, config } from '@/lib/config';
 import { toast } from 'sonner';
-import { useModal } from '@/hooks/use-modal-store';
-import GitHubSignIn from '@/components/GithubSignIn';
-import { ChatInput, ChatInputHandles } from '@/components/thread/chat-input/chat-input';
-import { normalizeFilenameToNFC } from '@/lib/utils/unicode';
-import { createQueryHook } from '@/hooks/use-query';
-import { agentKeys } from '@/hooks/react-query/agents/keys';
-import { getAgents } from '@/hooks/react-query/agents/utils';
-import { AgentRunLimitDialog } from '@/components/thread/agent-run-limit-dialog';
-import { Examples } from '@/components/dashboard/examples';
 
 // Custom dialog overlay with blur effect
 const BlurredDialogOverlay = () => (
@@ -48,8 +41,6 @@ const BlurredDialogOverlay = () => (
 
 // Constant for localStorage key to ensure consistency
 const PENDING_PROMPT_KEY = 'pendingAgentPrompt';
-
-
 
 export function HeroSection() {
   const { hero } = siteConfig;
@@ -60,47 +51,16 @@ export function HeroSection() {
   const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
   const { scrollY } = useScroll();
   const [inputValue, setInputValue] = useState('');
-  const [selectedAgentId, setSelectedAgentId] = useState<string | undefined>();
   const router = useRouter();
   const { user, isLoading } = useAuth();
   const { billingError, handleBillingError, clearBillingError } =
     useBillingError();
   const { data: accounts } = useAccounts();
   const personalAccount = accounts?.find((account) => account.personal_account);
-  const { onOpen } = useModal();
-  const initiateAgentMutation = useInitiateAgentMutation();
-  const [initiatedThreadId, setInitiatedThreadId] = useState<string | null>(null);
-  const threadQuery = useThreadQuery(initiatedThreadId || '');
-  const chatInputRef = useRef<ChatInputHandles>(null);
-  const [showAgentLimitDialog, setShowAgentLimitDialog] = useState(false);
-  const [agentLimitData, setAgentLimitData] = useState<{
-    runningCount: number;
-    runningThreadIds: string[];
-  } | null>(null);
-
-  // Fetch agents for selection
-  const { data: agentsResponse } = createQueryHook(
-    agentKeys.list({
-      limit: 100,
-      sort_by: 'name',
-      sort_order: 'asc'
-    }),
-    () => getAgents({
-      limit: 100,
-      sort_by: 'name',
-      sort_order: 'asc'
-    }),
-    {
-      enabled: !!user && !isLoading,
-      staleTime: 5 * 60 * 1000,
-      gcTime: 10 * 60 * 1000,
-    }
-  )();
-
-  const agents = agentsResponse?.agents || [];
 
   // Auth dialog state
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -130,12 +90,14 @@ export function HeroSection() {
     };
   }, [scrollY]);
 
+  // Store the input value when auth dialog opens
   useEffect(() => {
     if (authDialogOpen && inputValue.trim()) {
       localStorage.setItem(PENDING_PROMPT_KEY, inputValue.trim());
     }
   }, [authDialogOpen, inputValue]);
 
+  // Close dialog and redirect when user authenticates
   useEffect(() => {
     if (authDialogOpen && user && !isLoading) {
       setAuthDialogOpen(false);
@@ -143,80 +105,57 @@ export function HeroSection() {
     }
   }, [user, isLoading, authDialogOpen, router]);
 
-  useEffect(() => {
-    if (threadQuery.data && initiatedThreadId) {
-      const thread = threadQuery.data;
-      if (thread.project_id) {
-        router.push(`/projects/${thread.project_id}/thread/${initiatedThreadId}`);
-      } else {
-        router.push(`/agents/${initiatedThreadId}`);
-      }
-      setInitiatedThreadId(null);
-    }
-  }, [threadQuery.data, initiatedThreadId, router]);
+  // Create an agent with the provided prompt
+  const createAgentWithPrompt = async () => {
+    if (!inputValue.trim() || isSubmitting) return;
 
-  // Handle ChatInput submission
-  const handleChatInputSubmit = async (
-    message: string,
-    options?: { model_name?: string; enable_thinking?: boolean }
-  ) => {
-    if ((!message.trim() && !chatInputRef.current?.getPendingFiles().length) || isSubmitting) return;
-
-    // If user is not logged in, save prompt and show auth dialog
-    if (!user && !isLoading) {
-      localStorage.setItem(PENDING_PROMPT_KEY, message.trim());
-      setAuthDialogOpen(true);
-      return;
-    }
-
-    // User is logged in, create the agent with files like dashboard does
     setIsSubmitting(true);
+
     try {
-      const files = chatInputRef.current?.getPendingFiles() || [];
-      localStorage.removeItem(PENDING_PROMPT_KEY);
+      // Generate a name for the project using GPT
+      const projectName = await generateThreadName(inputValue);
 
-      const formData = new FormData();
-      formData.append('prompt', message);
-
-      // Add selected agent if one is chosen
-      if (selectedAgentId) {
-        formData.append('agent_id', selectedAgentId);
-      }
-
-      // Add files if any
-      files.forEach((file) => {
-        const normalizedName = normalizeFilenameToNFC(file.name);
-        formData.append('files', file, normalizedName);
+      // 1. Create a new project with the GPT-generated name
+      const newAgent = await createProject({
+        name: projectName,
+        description: '',
       });
 
-      if (options?.model_name) formData.append('model_name', options.model_name);
-      formData.append('enable_thinking', String(options?.enable_thinking ?? false));
-      formData.append('reasoning_effort', 'low');
-      formData.append('stream', 'true');
-      formData.append('enable_context_manager', 'false');
+      // 2. Create a new thread for this project
+      const thread = await createThread(newAgent.id);
 
-      const result = await initiateAgentMutation.mutateAsync(formData);
+      // 3. Add the user message to the thread
+      await addUserMessage(thread.thread_id, inputValue.trim());
 
-      if (result.thread_id) {
-        setInitiatedThreadId(result.thread_id);
-      } else {
-        throw new Error('Agent initiation did not return a thread_id.');
-      }
+      // 4. Start the agent with the thread ID
+      await startAgent(thread.thread_id, {
+        stream: true,
+      });
 
-      chatInputRef.current?.clearPendingFiles();
+      // 5. Navigate to the new agent's thread page
+      router.push(`/agents/${thread.thread_id}`);
+      // Clear input on success
       setInputValue('');
     } catch (error: any) {
+      console.error('Error creating agent:', error);
+
+      // Check specifically for BillingError (402)
       if (error instanceof BillingError) {
-        onOpen("paymentRequiredDialog");
-      } else if (error instanceof AgentRunLimitError) {
-        const { running_thread_ids, running_count } = error.detail;
-        
-        setAgentLimitData({
-          runningCount: running_count,
-          runningThreadIds: running_thread_ids,
+        console.log('Handling BillingError from hero section:', error.detail);
+        handleBillingError({
+          message:
+            error.detail.message ||
+            'Monthly usage limit reached. Please upgrade your plan.',
+          currentUsage: error.detail.currentUsage as number | undefined,
+          limit: error.detail.limit as number | undefined,
+          subscription: error.detail.subscription || {
+            price_id: config.SUBSCRIPTION_TIERS.FREE.priceId, // Default Free
+            plan_name: 'Free',
+          },
         });
-        setShowAgentLimitDialog(true);
+        // Don't show toast for billing errors
       } else {
+        // Handle other errors (e.g., network, other API errors)
         const isConnectionError =
           error instanceof TypeError &&
           error.message.includes('Failed to fetch');
@@ -231,11 +170,65 @@ export function HeroSection() {
     }
   };
 
+  // Handle form submission
+  const handleSubmit = async (e?: FormEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation(); // Stop event propagation to prevent dialog closing
+    }
+
+    if (!inputValue.trim() || isSubmitting) return;
+
+    // If user is not logged in, save prompt and show auth dialog
+    if (!user && !isLoading) {
+      // Save prompt to localStorage BEFORE showing the dialog
+      localStorage.setItem(PENDING_PROMPT_KEY, inputValue.trim());
+      setAuthDialogOpen(true);
+      return;
+    }
+
+    // User is logged in, create the agent
+    createAgentWithPrompt();
+  };
+
+  // Handle Enter key press
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault(); // Prevent default form submission
+      e.stopPropagation(); // Stop event propagation
+      handleSubmit();
+    }
+  };
+
+  // Handle auth form submission
+  const handleSignIn = async (prevState: any, formData: FormData) => {
+    setAuthError(null);
+    try {
+      // Implement sign in logic here
+      const email = formData.get('email') as string;
+      const password = formData.get('password') as string;
+
+      // Add the returnUrl to the form data for proper redirection
+      formData.append('returnUrl', '/dashboard');
+
+      // Call your authentication function here
+
+      // Return any error state
+      return { message: 'Invalid credentials' };
+    } catch (error) {
+      console.error('Sign in error:', error);
+      setAuthError(
+        error instanceof Error ? error.message : 'An error occurred',
+      );
+      return { message: 'An error occurred during sign in' };
+    }
+  };
+
   return (
     <section id="hero" className="w-full relative overflow-hidden">
-      <div className="relative flex flex-col items-center w-full px-4 sm:px-6">
+      <div className="relative flex flex-col items-center w-full px-6">
         {/* Left side flickering grid with gradient fades */}
-        <div className="hidden sm:block absolute left-0 top-0 h-[500px] sm:h-[600px] md:h-[800px] w-1/4 sm:w-1/3 -z-10 overflow-hidden">
+        <div className="absolute left-0 top-0 h-[600px] md:h-[800px] w-1/3 -z-10 overflow-hidden">
           {/* Horizontal fade from left to right */}
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-background z-10" />
 
@@ -245,20 +238,18 @@ export function HeroSection() {
           {/* Vertical fade to bottom */}
           <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-background via-background/90 to-transparent z-10" />
 
-          {mounted && (
-            <FlickeringGrid
-              className="h-full w-full"
-              squareSize={tablet ? 2 : 2.5}
-              gridGap={tablet ? 2 : 2.5}
-              color="var(--secondary)"
-              maxOpacity={tablet ? 0.2 : 0.4}
-              flickerChance={isScrolling ? 0.005 : (tablet ? 0.015 : 0.03)} // Lower performance impact on mobile
-            />
-          )}
+          <FlickeringGrid
+            className="h-full w-full"
+            squareSize={mounted && tablet ? 2 : 2.5}
+            gridGap={mounted && tablet ? 2 : 2.5}
+            color="var(--secondary)"
+            maxOpacity={0.4}
+            flickerChance={isScrolling ? 0.01 : 0.03} // Low flickering when not scrolling
+          />
         </div>
 
         {/* Right side flickering grid with gradient fades */}
-        <div className="hidden sm:block absolute right-0 top-0 h-[500px] sm:h-[600px] md:h-[800px] w-1/4 sm:w-1/3 -z-10 overflow-hidden">
+        <div className="absolute right-0 top-0 h-[600px] md:h-[800px] w-1/3 -z-10 overflow-hidden">
           {/* Horizontal fade from right to left */}
           <div className="absolute inset-0 bg-gradient-to-l from-transparent via-transparent to-background z-10" />
 
@@ -268,20 +259,18 @@ export function HeroSection() {
           {/* Vertical fade to bottom */}
           <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-background via-background/90 to-transparent z-10" />
 
-          {mounted && (
-            <FlickeringGrid
-              className="h-full w-full"
-              squareSize={tablet ? 2 : 2.5}
-              gridGap={tablet ? 2 : 2.5}
-              color="var(--secondary)"
-              maxOpacity={tablet ? 0.2 : 0.4}
-              flickerChance={isScrolling ? 0.005 : (tablet ? 0.015 : 0.03)} // Lower performance impact on mobile
-            />
-          )}
+          <FlickeringGrid
+            className="h-full w-full"
+            squareSize={mounted && tablet ? 2 : 2.5}
+            gridGap={mounted && tablet ? 2 : 2.5}
+            color="var(--secondary)"
+            maxOpacity={0.4}
+            flickerChance={isScrolling ? 0.01 : 0.03} // Low flickering when not scrolling
+          />
         </div>
 
         {/* Center content background with rounded bottom */}
-        <div className="absolute inset-x-0 sm:inset-x-1/6 md:inset-x-1/4 top-0 h-[500px] sm:h-[600px] md:h-[800px] -z-20 bg-background rounded-b-xl"></div>
+        <div className="absolute inset-x-1/4 top-0 h-[600px] md:h-[800px] -z-20 bg-background rounded-b-xl"></div>
 
         <div className="relative z-10 pt-22 max-w-3xl mx-auto h-full w-full flex flex-col gap-10 items-center justify-center">
           {/* <p className="border border-border bg-accent rounded-full text-sm h-8 px-3 flex items-center gap-2">
@@ -289,7 +278,6 @@ export function HeroSection() {
             {hero.badge}
           </p> */}
 
-          {/* <Link
           {/* <Link
             href={hero.githubUrl}
             target="_blank"
@@ -322,41 +310,56 @@ export function HeroSection() {
           <div className="flex flex-col items-center justify-center gap-5">
             <h1 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-medium tracking-tighter text-balance text-center">
               {/* <span className="text-secondary">AniSora: </span> */}
-              <span className="text-secondary">the most powerful open-source AI model for generating anime-style videos</span>
+              <span className="text-secondary">Exploring the Frontiers of Animation Video Generation in the Sora Era</span>
             </h1>
-            {/* <p className="text-base md:text-lg text-center text-muted-foreground font-medium text-balance leading-relaxed tracking-tight">
+            <p className="text-base md:text-lg text-center text-muted-foreground font-medium text-balance leading-relaxed tracking-tight">
               {hero.description}
-            </p> */}
+            </p>
           </div>
           {/* <div className="flex items-center w-full max-w-xl gap-2 flex-wrap justify-center">
             <form className="w-full relative" onSubmit={handleSubmit}>
               <div className="relative z-10">
-                <ChatInput
-                  ref={chatInputRef}
-                  onSubmit={handleChatInputSubmit}
-                  placeholder="Describe the agent you want to build or the task you want completed..."
-                  loading={isSubmitting}
-                  disabled={isSubmitting}
-                  value={inputValue}
-                  onChange={setInputValue}
-                  isLoggedIn={!!user}
-                  selectedAgentId={selectedAgentId}
-                  onAgentSelect={setSelectedAgentId}
-                  autoFocus={false}
-                />
+                <div className="flex items-center rounded-full border border-border bg-background/80 backdrop-blur px-4 shadow-lg transition-all duration-200 hover:border-secondary/50 focus-within:border-secondary/50 focus-within:shadow-[0_0_15px_rgba(var(--secondary),0.3)]">
+                  <input
+                    type="text"
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder={hero.inputPlaceholder}
+                    className="flex-1 h-12 md:h-14 rounded-full px-2 bg-transparent focus:outline-none text-sm md:text-base py-2"
+                    disabled={isSubmitting}
+                  />
+                  <button
+                    type="submit"
+                    className={`rounded-full p-2 md:p-3 transition-all duration-200 ${
+                      inputValue.trim()
+                        ? 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+                        : 'bg-muted text-muted-foreground'
+                    }`}
+                    disabled={!inputValue.trim() || isSubmitting}
+                    aria-label="Submit"
+                  >
+                    {isSubmitting ? (
+                      <div className="h-4 md:h-5 w-4 md:w-5 border-2 border-secondary-foreground border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <ArrowRight className="size-4 md:size-5" />
+                    )}
+                  </button>
+                </div>
               </div>
               <div className="absolute -bottom-4 inset-x-0 h-6 bg-secondary/20 blur-xl rounded-full -z-10 opacity-70"></div>
             </form>
           </div> */}
         </div>
-
       </div>
-        <div className="mb-8 sm:mb-16 sm:mt-32 mx-auto"></div>
+      <div className="mb-10 max-w-4xl mx-auto">
+        <HeroVideoSection />
+      </div>
 
       {/* Auth Dialog */}
       <Dialog open={authDialogOpen} onOpenChange={setAuthDialogOpen}>
         <BlurredDialogOverlay />
-        <DialogContent className="sm:max-w-md rounded-xl bg-background border border-border">
+        <DialogContent className="sm:max-w-md rounded-xl bg-[#F3F4F6] dark:bg-[#F9FAFB]/[0.02] border border-border">
           <DialogHeader>
             <div className="flex items-center justify-between">
               <DialogTitle className="text-xl font-medium">
@@ -374,12 +377,17 @@ export function HeroSection() {
             </DialogDescription>
           </DialogHeader>
 
+          {/* Auth error message */}
+          {authError && (
+            <div className="mb-4 p-3 rounded-lg flex items-center gap-3 bg-secondary/10 border border-secondary/20 text-secondary">
+              <AlertCircle className="h-5 w-5 flex-shrink-0 text-secondary" />
+              <span className="text-sm font-medium">{authError}</span>
+            </div>
+          )}
 
-
-          {/* OAuth Sign In */}
+          {/* Google Sign In */}
           <div className="w-full">
             <GoogleSignIn returnUrl="/dashboard" />
-            <GitHubSignIn returnUrl="/dashboard" />
           </div>
 
           {/* Divider */}
@@ -394,24 +402,58 @@ export function HeroSection() {
             </div>
           </div>
 
-          {/* Sign in options */}
-          <div className="space-y-4 pt-4">
-            <Link
-              href={`/auth?returnUrl=${encodeURIComponent('/dashboard')}`}
-              className="flex h-12 items-center justify-center w-full text-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-md"
-              onClick={() => setAuthDialogOpen(false)}
-            >
-              Sign in with email
-            </Link>
+          {/* Sign in form */}
+          <form className="space-y-4">
+            <div>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                placeholder="Email address"
+                className="h-12 rounded-full bg-background border-border"
+                required
+              />
+            </div>
 
-            <Link
-              href={`/auth?mode=signup&returnUrl=${encodeURIComponent('/dashboard')}`}
-              className="flex h-12 items-center justify-center w-full text-center rounded-full border border-border bg-background hover:bg-accent/20 transition-all"
-              onClick={() => setAuthDialogOpen(false)}
-            >
-              Create new account
-            </Link>
-          </div>
+            <div>
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                placeholder="Password"
+                className="h-12 rounded-full bg-background border-border"
+                required
+              />
+            </div>
+
+            <div className="space-y-4 pt-4">
+              <SubmitButton
+                formAction={handleSignIn}
+                className="w-full h-12 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-md"
+                pendingText="Signing in..."
+              >
+                Sign in
+              </SubmitButton>
+
+              <Link
+                href={`/auth?mode=signup&returnUrl=${encodeURIComponent('/dashboard')}`}
+                className="flex h-12 items-center justify-center w-full text-center rounded-full border border-border bg-background hover:bg-accent/20 transition-all"
+                onClick={() => setAuthDialogOpen(false)}
+              >
+                Create new account
+              </Link>
+            </div>
+
+            <div className="text-center pt-2">
+              <Link
+                href={`/auth?returnUrl=${encodeURIComponent('/dashboard')}`}
+                className="text-sm text-primary hover:underline"
+                onClick={() => setAuthDialogOpen(false)}
+              >
+                More sign in options
+              </Link>
+            </div>
+          </form>
 
           <div className="mt-4 text-center text-xs text-muted-foreground">
             By continuing, you agree to our{' '}
@@ -435,16 +477,6 @@ export function HeroSection() {
         onDismiss={clearBillingError}
         isOpen={!!billingError}
       />
-
-      {agentLimitData && (
-        <AgentRunLimitDialog
-          open={showAgentLimitDialog}
-          onOpenChange={setShowAgentLimitDialog}
-          runningCount={agentLimitData.runningCount}
-          runningThreadIds={agentLimitData.runningThreadIds}
-          projectId={undefined} // Hero section doesn't have a specific project context
-        />
-      )}
     </section>
   );
 }

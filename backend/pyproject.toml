@@ -70,7 +70,7 @@ dependencies = [
 
 [project.urls]
 homepage = "https://www.suna.so/"
-repository = "https://github.com/kortix-ai/suna"
+repository = "https://github.com/bilibili/Index-anisora"
 
 [tool.uv]
 package = false

@@ -20,6 +20,7 @@ import { useAuth } from '@/components/AuthProvider';
 import { useAuthMethodTracking } from '@/lib/stores/auth-tracking';
 import { toast } from 'sonner';
 import { useFeatureFlag } from '@/lib/feature-flags';
+import Image from 'next/image';
 
 import {
   Dialog,
@@ -271,7 +272,13 @@ function LoginContent() {
       <div className="min-h-screen bg-background relative">
         <div className="absolute top-6 left-6 z-10">
           <Link href="/" className="flex items-center">
-            <KortixLogo size={28} />
+            <Image src="/anisora-logo.png"
+              alt="AniSora Logo"
+              width={120}
+              height={24}
+              className="h-6 w-auto"
+              priority
+            />
           </Link>
         </div>
         <div className="flex min-h-screen">
