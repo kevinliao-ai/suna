@@ -9,7 +9,7 @@ import Image from 'next/image';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
 
-export function FooterSection() {
+export function FooterSection({ showMaintenanceQulckLink }: { showMaintenanceQulckLink?: boolean }) {
   const tablet = useMediaQuery('(max-width: 1024px)');
   const { theme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -20,10 +20,10 @@ export function FooterSection() {
   }, []);
 
   const logoSrc = !mounted
-    ? '/kortix-logo.svg'
+    ? '/anisora-logo.png'
     : resolvedTheme === 'dark'
-      ? '/kortix-logo-white.svg'
-      : '/kortix-logo.svg';
+      ? '/anisora-logo.png'
+      : '/anisora-logo.png';
 
   return (
     <footer id="footer" className="w-full pb-0">
@@ -32,19 +32,20 @@ export function FooterSection() {
           <Link href="/" className="flex items-center gap-2">
             <Image
               src={logoSrc}
-              alt="Kortix Logo"
+              alt="AniSora Logo"
               width={122}
               height={22}
               priority
             />
+            {/* <span className="font-medium text-primary text-sm">AniSora</span> */}
           </Link>
           <p className="tracking-tight text-muted-foreground font-medium">
             {siteConfig.hero.description}
           </p>
 
-          <div className="flex items-center gap-4">
+          {/* <div className="flex items-center gap-4">
             <a
-              href="https://github.com/kortix-ai/suna"
+              href="https://github.com/bilibili/Index-anisora"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="GitHub"
@@ -94,7 +95,7 @@ export function FooterSection() {
                 />
               </svg>
             </a>
-          </div>
+          </div> */}
           {/* <div className="flex items-center gap-2 dark:hidden">
             <Icons.soc2 className="size-12" />
             <Icons.hipaa className="size-12" />
@@ -113,33 +114,37 @@ export function FooterSection() {
                 <li className="mb-2 text-sm font-semibold text-primary">
                   {column.title}
                 </li>
-                {column.links.map((link) => (
-                  <li
-                    key={link.id}
-                    className="group inline-flex cursor-pointer items-center justify-start gap-1 text-[15px]/snug text-muted-foreground"
-                  >
-                    <Link href={link.url}>{link.title}</Link>
-                    <div className="flex size-4 items-center justify-center border border-border rounded translate-x-0 transform opacity-0 transition-all duration-300 ease-out group-hover:translate-x-1 group-hover:opacity-100">
-                      <ChevronRightIcon className="h-4 w-4 " />
-                    </div>
-                  </li>
-                ))}
+                {column.links.map((link) => {
+                  // 如果链接是锚点链接（以#开头），则添加完整路径
+                  const href = link.url.startsWith('#') ? `/${link.url}` : link.url;
+                  return (
+                    <li
+                      key={link.id}
+                      className="group inline-flex cursor-pointer items-center justify-start gap-1 text-[15px]/snug text-muted-foreground"
+                    >
+                      <Link href={href}>{link.title}</Link>
+                      <div className="flex size-4 items-center justify-center border border-border rounded translate-x-0 transform opacity-0 transition-all duration-300 ease-out group-hover:translate-x-1 group-hover:opacity-100">
+                        <ChevronRightIcon className="h-4 w-4 " />
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
             ))}
           </div>
         </div>
       </div>
-      <Link
+      {/* <Link
         href="https://www.youtube.com/watch?v=nuf5BF1jvjQ"
         target="_blank"
         rel="noopener noreferrer"
         className="block w-full h-48 md:h-64 relative mt-24 z-0 cursor-pointer"
       >
         <div className="absolute inset-0 bg-gradient-to-t from-transparent to-background z-10 from-40%" />
-        <div className="absolute inset-0 mx-6">
+        <div className="absolute inset-0 ">
           <FlickeringGrid
-            text={tablet ? 'Agents Agents Agents' : 'Agents Agents Agents'}
-            fontSize={tablet ? 70 : 90}
+            text={tablet ? 'Agents' : 'Agents Agents Agents'}
+            fontSize={tablet ? 60 : 90}
             className="h-full w-full"
             squareSize={2}
             gridGap={tablet ? 2 : 3}
@@ -148,7 +153,11 @@ export function FooterSection() {
             flickerChance={0.1}
           />
         </div>
-      </Link>
+      </Link> */}
+      {/* <div className="w-full py-4 text-center text-sm text-muted-foreground border-t border-border">
+        <p>open-source project under the Apache 2.0 license</p>
+        <p className="mt-1">© 2025 Bilibili.</p>
+      </div> */}
     </footer>
   );
 }

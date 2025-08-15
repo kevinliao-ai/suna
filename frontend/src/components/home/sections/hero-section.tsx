@@ -272,13 +272,13 @@ export function HeroSection() {
         {/* Center content background with rounded bottom */}
         <div className="absolute inset-x-1/4 top-0 h-[600px] md:h-[800px] -z-20 bg-background rounded-b-xl"></div>
 
-        <div className="relative z-10 pt-32 max-w-3xl mx-auto h-full w-full flex flex-col gap-10 items-center justify-center">
+        <div className="relative z-10 pt-22 max-w-3xl mx-auto h-full w-full flex flex-col gap-10 items-center justify-center">
           {/* <p className="border border-border bg-accent rounded-full text-sm h-8 px-3 flex items-center gap-2">
             {hero.badgeIcon}
             {hero.badge}
           </p> */}
 
-          <Link
+          {/* <Link
             href={hero.githubUrl}
             target="_blank"
             rel="noopener noreferrer"
@@ -306,19 +306,18 @@ export function HeroSection() {
                 />
               </svg>
             </span>
-          </Link>
+          </Link> */}
           <div className="flex flex-col items-center justify-center gap-5">
             <h1 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-medium tracking-tighter text-balance text-center">
-              <span className="text-secondary">Suna</span>
-              <span className="text-primary">, your AI Employee.</span>
+              {/* <span className="text-secondary">AniSora: </span> */}
+              <span className="text-secondary">Exploring the Frontiers of Animation Video Generation in the Sora Era</span>
             </h1>
             <p className="text-base md:text-lg text-center text-muted-foreground font-medium text-balance leading-relaxed tracking-tight">
               {hero.description}
             </p>
           </div>
-          <div className="flex items-center w-full max-w-xl gap-2 flex-wrap justify-center">
+          {/* <div className="flex items-center w-full max-w-xl gap-2 flex-wrap justify-center">
             <form className="w-full relative" onSubmit={handleSubmit}>
-              {/* ChatGPT-like input with glow effect */}
               <div className="relative z-10">
                 <div className="flex items-center rounded-full border border-border bg-background/80 backdrop-blur px-4 shadow-lg transition-all duration-200 hover:border-secondary/50 focus-within:border-secondary/50 focus-within:shadow-[0_0_15px_rgba(var(--secondary),0.3)]">
                   <input
@@ -348,10 +347,9 @@ export function HeroSection() {
                   </button>
                 </div>
               </div>
-              {/* Subtle glow effect */}
               <div className="absolute -bottom-4 inset-x-0 h-6 bg-secondary/20 blur-xl rounded-full -z-10 opacity-70"></div>
             </form>
-          </div>
+          </div> */}
         </div>
       </div>
       <div className="mb-10 max-w-4xl mx-auto">
@@ -375,7 +373,7 @@ export function HeroSection() {
               </button> */}
             </div>
             <DialogDescription className="text-muted-foreground">
-              Sign in or create an account to talk with Suna
+              Sign in or create an account to talk with AniSora
             </DialogDescription>
           </DialogHeader>
 

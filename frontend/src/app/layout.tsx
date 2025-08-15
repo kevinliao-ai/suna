@@ -9,6 +9,8 @@ import { Analytics } from '@vercel/analytics/react';
 import { GoogleAnalytics } from '@next/third-parties/google';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import Script from 'next/script';
+import { PostHogIdentify } from '@/components/posthog-identify';
+import '@/lib/polyfills'; // Load polyfills early
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -31,25 +33,25 @@ export const metadata: Metadata = {
     template: `%s - ${siteConfig.name}`,
   },
   description:
-    'Suna is a fully open source AI assistant that helps you accomplish real-world tasks with ease. Through natural conversation, Suna becomes your digital companion for research, data analysis, and everyday challenges.',
+    'AniSora is an advanced open-source anime video generation model developed by Bilibili. It enables users to create high-quality anime-style videos with various styles including series episodes, Chinese original animations, manga adaptations, VTuber content, and more!',
   keywords: [
     'AI',
-    'artificial intelligence',
-    'browser automation',
-    'web scraping',
-    'file management',
-    'AI assistant',
+    'Anime Video Generation',
+    'Anime Video',
     'open source',
-    'research',
-    'data analysis',
+    'Video Generator',
+    'Text to video generator',
+    'AI Animation Tool',
+    'Text to Anime',
+    'AI Character Animation'
   ],
-  authors: [{ name: 'Kortix Team', url: 'https://suna.so' }],
+  authors: [{ name: 'Bilibili Team', url: 'https://www.bilibili.com' }],
   creator:
-    'Kortix Team - Adam Cohen Hillel, Marko Kraemer, Domenico Gagliardi, and Quoc Dat Le',
+    'Bilibili Team',
   publisher:
-    'Kortix Team - Adam Cohen Hillel, Marko Kraemer, Domenico Gagliardi, and Quoc Dat Le',
+    'Bilibili Team',
   category: 'Technology',
-  applicationName: 'Suna',
+  applicationName: 'AniSora',
   formatDetection: {
     telephone: false,
     email: false,
@@ -64,17 +66,17 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: 'Suna - Open Source Generalist AI Agent',
+    title: 'AniSora - Open Source Generalist AI Agent',
     description:
-      'Suna is a fully open source AI assistant that helps you accomplish real-world tasks with ease through natural conversation.',
+      'AniSora is an advanced open-source anime video generation model developed by Bilibili. It enables users to create high-quality anime-style videos with various styles including series episodes, Chinese original animations, manga adaptations, VTuber content, and more!',
     url: siteConfig.url,
-    siteName: 'Suna',
+    siteName: 'AniSora',
     images: [
       {
         url: '/banner.png',
         width: 1200,
         height: 630,
-        alt: 'Suna - Open Source Generalist AI Agent',
+        alt: 'AniSora - Open Source Generalist AI Agent',
         type: 'image/png',
       },
     ],
@@ -83,23 +85,23 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Suna - Open Source Generalist AI Agent',
+    title: 'AniSora - Open Source Generalist AI Agent',
     description:
-      'Suna is a fully open source AI assistant that helps you accomplish real-world tasks with ease through natural conversation.',
-    creator: '@kortixai',
-    site: '@kortixai',
+      'AniSora is an advanced open-source anime video generation model developed by Bilibili. It enables users to create high-quality anime-style videos with various styles including series episodes, Chinese original animations, manga adaptations, VTuber content, and more!',
+    creator: '@bilibili',
+    site: '@bilibili',
     images: [
       {
         url: '/banner.png',
         width: 1200,
         height: 630,
-        alt: 'Suna - Open Source Generalist AI Agent',
+        alt: 'AniSora - Open Source Generalist AI Agent',
       },
     ],
   },
   icons: {
-    icon: [{ url: '/favicon.png', sizes: 'any' }],
-    shortcut: '/favicon.png',
+    icon: [{ url: '/faviconHerd.png', sizes: 'any' }],
+    shortcut: '/faviconHerd.png',
   },
   // manifest: "/manifest.json",
   alternates: {
@@ -123,18 +125,33 @@ export default function RootLayout({
           'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
           })(window,document,'script','dataLayer','GTM-PCHSN4M2');`}
         </Script>
-        {/* End Google Tag Manager */}
+        <Script async src="https://cdn.tolt.io/tolt.js" data-tolt={process.env.NEXT_PUBLIC_TOLT_REFERRAL_ID}></Script>
+        {/* Google AdSense */}
+        <Script 
+          id="google-adsense" 
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4146045147843356"
+          strategy="afterInteractive"
+          crossOrigin="anonymous"
+          async
+        />
+        {/* End Google AdSense */}
+        {/* Google AdSense */}
+        <Script 
+          src="https://cdn.ampproject.org/v0/amp-auto-ads-0.1.js"
+          async
+          custom-element="amp-auto-ads"
+        />
+        {/* End Google AdSense */}
       </head>
 
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased font-sans bg-background`}
       >
-        {/* Google Tag Manager (noscript) */}
-        <noscript>
-          <iframe
-            src="https://www.googletagmanager.com/ns.html?id=GTM-PCHSN4M2"
-            height="0"
-            width="0"
+       <noscript>
+          <iframe 
+            src="https://www.googletagmanager.com/ns.html?id=GTM-MPT74VX8"
+            height="0" 
+            width="0" 
             style={{ display: 'none', visibility: 'hidden' }}
           />
         </noscript>
@@ -153,6 +170,7 @@ export default function RootLayout({
           <Analytics />
           <GoogleAnalytics gaId="G-6ETJFB3PT3" />
           <SpeedInsights />
+          <PostHogIdentify />
         </ThemeProvider>
       </body>
     </html>

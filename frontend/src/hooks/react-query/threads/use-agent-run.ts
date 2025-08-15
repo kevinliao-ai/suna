@@ -1,6 +1,6 @@
 import { createMutationHook, createQueryHook } from "@/hooks/use-query";
 import { threadKeys } from "./keys";
-import { BillingError, getAgentRuns, startAgent, stopAgent } from "@/lib/api";
+import { BillingError, AgentRunLimitError, getAgentRuns, startAgent, stopAgent } from "@/lib/api";
 
 export const useAgentRunsQuery = (threadId: string) =>
   createQueryHook(
@@ -24,10 +24,12 @@ export const useStartAgentMutation = () =>
         enable_thinking?: boolean;
         reasoning_effort?: string;
         stream?: boolean;
+        agent_id?: string;
       };
     }) => startAgent(threadId, options),
     {
       onError: (error) => {
+        // Only silently handle BillingError - let AgentRunLimitError bubble up to be handled by the page component
         if (!(error instanceof BillingError)) {
           throw error;
         }

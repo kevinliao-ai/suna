@@ -29,7 +29,7 @@ interface AttachmentGroupProps {
     onRemove?: (index: number) => void;
     layout?: LayoutStyle;
     className?: string;
-    onFileClick?: (path: string) => void;
+    onFileClick?: (path: string, filePathList?: string[]) => void;
     showPreviews?: boolean;
     maxHeight?: string;
     gridImageHeight?: number; // New prop for grid image height
@@ -83,7 +83,7 @@ export function AttachmentGroup({
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
-                className={layout === 'inline' ? "mb-3 py-1 px-0.5" : "mt-4"}
+                className={layout === 'inline' ? "" : "mt-4"}
             />
         );
     }
@@ -101,8 +101,10 @@ export function AttachmentGroup({
     // Ensure path has proper format when clicking
     const handleFileClick = (path: string) => {
         if (onFileClick) {
-            // Just pass the path to the parent handler which will call getFileUrl
-            onFileClick(path);
+            // Create the file path list from all files in the group
+            const filePathList = uniqueFiles.map(file => getFilePath(file));
+            // Pass both the clicked path and the complete list
+            onFileClick(path, filePathList);
         }
     };
 
@@ -112,11 +114,19 @@ export function AttachmentGroup({
         return !sandboxId ? file.localUrl : undefined;
     };
 
-    // Check if a file is HTML, Markdown, or CSV
+    // Check if a file is HTML, Markdown, CSV, or PDF (previewable types in grid)
     const isPreviewableFile = (file: string | UploadedFile): boolean => {
         const path = getFilePath(file);
         const ext = path.split('.').pop()?.toLowerCase() || '';
-        return ext === 'html' || ext === 'htm' || ext === 'md' || ext === 'markdown' || ext === 'csv' || ext === 'tsv';
+        return (
+            ext === 'html' ||
+            ext === 'htm' ||
+            ext === 'md' ||
+            ext === 'markdown' ||
+            ext === 'csv' ||
+            ext === 'tsv' ||
+            ext === 'pdf'
+        );
     };
 
     // Pre-compute any conditional values used in rendering
@@ -275,9 +285,9 @@ export function AttachmentGroup({
         } else {
             // For inline layout with pre-computed data
             return (
-                <div className={cn("flex flex-wrap gap-3", className)} style={{ maxHeight }}>
+                <div className={cn("flex flex-wrap gap-3", className)}>
                     {visibleFilesWithMeta.map((item, index) => (
-                        <div key={index} className={cn("relative group", item.wrapperClassName)}>
+                        <div key={index} className={cn("relative group h-[54px]", item.wrapperClassName)}>
                             <FileAttachment
                                 filepath={item.path}
                                 onClick={handleFileClick}
@@ -344,16 +354,18 @@ export function AttachmentGroup({
             <AnimatePresence>
                 <motion.div
                     initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
+                    animate={{
+                        opacity: 1, height: 'auto'
+                    }}
                     exit={{ opacity: 0, height: 0 }}
-                    className={layout === 'inline' ? "mb-3 py-1 px-0.5" : "mt-4"}
+                    className={layout === 'inline' ? "pt-1.5 px-1.5 pb-0" : "mt-4"}
                 >
                     {renderContent()}
                 </motion.div>
-            </AnimatePresence>
+            </AnimatePresence >
 
             {/* Modal dialog to show all files - conditionally rendered based on isModalOpen state */}
-            <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+            < Dialog open={isModalOpen} onOpenChange={setIsModalOpen} >
                 <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
                     <DialogHeader className="mb-1">
                         <DialogTitle>
@@ -479,7 +491,7 @@ export function AttachmentGroup({
                         })()}
                     </div>
                 </DialogContent>
-            </Dialog>
+            </Dialog >
         </>
     );
 } 

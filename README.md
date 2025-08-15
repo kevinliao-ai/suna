@@ -1,145 +1,210 @@
+
 <div align="center">
-
-# Suna - Open Source Generalist AI Agent
-
-(that acts on your behalf)
-
-![Suna Screenshot](frontend/public/banner.png)
-
-Suna is a fully open source AI assistant that helps you accomplish real-world tasks with ease. Through natural conversation, Suna becomes your digital companion for research, data analysis, and everyday challenges—combining powerful capabilities with an intuitive interface that understands what you need and delivers results.
-
-Suna's powerful toolkit includes seamless browser automation to navigate the web and extract data, file management for document creation and editing, web crawling and extended search capabilities, command-line execution for system tasks, website deployment, and integration with various APIs and services. These capabilities work together harmoniously, allowing Suna to solve your complex problems and automate workflows through simple conversations!
-
-[![License](https://img.shields.io/badge/License-Apache--2.0-blue)](./license)
-[![Discord Follow](https://dcbadge.limes.pink/api/server/Py6pCBUUPw?style=flat)](https://discord.gg/Py6pCBUUPw)
-[![Twitter Follow](https://img.shields.io/twitter/follow/kortixai)](https://x.com/kortixai)
-[![GitHub Repo stars](https://img.shields.io/github/stars/kortix-ai/suna)](https://github.com/kortix-ai/suna)
-[![Issues](https://img.shields.io/github/issues/kortix-ai/suna)](https://github.com/kortix-ai/suna/labels/bug)
-
+<img src="assets/index_icon.png" width="250"/>
 </div>
 
-## Table of Contents
+<p align="center">
+       🖥️  <a href="https://github.com/bilibili/Index-anisora/tree/main">GitHub</a> &nbsp&nbsp  |  &nbsp&nbsp🤗 <a href=https://huggingface.co/IndexTeam/Index-anisora>Hugging Face</a>&nbsp&nbsp |  &nbsp&nbsp🤖 <a href=https://www.modelscope.cn/organization/bilibili-index>Model Scope</a>&nbsp&nbsp | 📑 <a href='http://arxiv.org/abs/2412.10255'><img src='https://img.shields.io/badge/ArXiv-2412.10255-red'></a> &nbsp&nbsp ｜  📑 <a href='http://arxiv.org/abs/2504.10044'><img src='https://img.shields.io/badge/ArXiv-2504.10044-red'></a> &nbsp&nbsp
+<br>
 
-- [Suna Architecture](#project-architecture)
-  - [Backend API](#backend-api)
-  - [Frontend](#frontend)
-  - [Agent Docker](#agent-docker)
-  - [Supabase Database](#supabase-database)
-- [Use Cases](#use-cases)
-- [Self-Hosting](#self-hosting)
-- [Acknowledgements](#acknowledgements)
-- [License](#license)
+<p align="center">
 
-## Project Architecture
+**中文简体** | [**English**](./README.md)
 
-![Architecture Diagram](docs/images/diagram.png)
+<br>
 
-Suna consists of four main components:
 
-### Backend API
+----
 
-Python/FastAPI service that handles REST endpoints, thread management, and LLM integration with Anthropic, and others via LiteLLM.
+[**Index‑AniSora：终极开源动漫视频生成模型**](http://arxiv.org/abs/2412.10255) <be>
 
-### Frontend
+本项目是哔哩哔哩献给二次元世界的礼物——**Index‑AniSora**，目前最强大的开源动漫视频生成模型。  
+它支持一键生成多种动漫风格的视频镜头，包括番剧片段、国创动画、漫画改编、VTuber 内容、动画 PV、鬼畜（MAD）等！  
+该项目基于我们已被 IJCAI ’25 录用的论文  
+<a href='http://arxiv.org/abs/2412.10255'>*AniSora: Exploring the Frontiers of Animation Video Generation in the Sora Era*</a>  
 
-Next.js/React application providing a responsive UI with chat interface, dashboard, etc.
+## 🎬 视频演示
+<div align="center">
+    <video src="https://github.com/user-attachments/assets/4351fc5e-f7fd-456b-807e-82fdcb321de2" controls width="60%" poster=""></video>
 
-### Agent Docker
+## 📣 更新日志
 
-Isolated execution environment for every agent - with browser automation, code interpreter, file system access, tool integration, and security features.
+- `2025/05/12` 🔥 **所有成果均已开源，欢迎查看！**  
+- `2025/05/10` 🔥 论文被 IJCAI ’25 接收，已更新定稿版本。  
+- `2024/12/19` 项目及评测基准首次在 arXiv 发布。
 
-### Supabase Database
+## 项目指南
 
-Handles data persistence with authentication, user management, conversation history, file storage, agent state, analytics, and real-time subscriptions.
+### AniSora V1.0
+位置：📁 `anisoraV1_infer`
 
-## Use Cases
+- 基于 **CogVideoX‑5B** 基础模型训练，完整训练与推理代码开源  
+- 支持 **局部区域控制**、**时间控制**（首帧/尾帧/关键帧插帧、多帧引导）  
+- 在 📁 `anisoraV1_train_npu` 提供完整训练代码  
+- 可在 RTX 4090 上经济部署  
+- 覆盖 80 % 应用场景
 
-1. **Competitor Analysis** ([Watch](https://www.suna.so/share/5ee791ac-e19c-4986-a61c-6d0659d0e5bc)) - _"Analyze the market for my next company in the healthcare industry, located in the UK. Give me the major players, their market size, strengths, and weaknesses, and add their website URLs. Once done, generate a PDF report."_
+### AniSora V2.0
+位置：📁 `anisoraV2_gpu`, `anisoraV2_npu`
 
-2. **VC List** ([Watch](https://www.suna.so/share/804d20a3-cf1c-4adb-83bb-0e77cc6adeac)) - _"Give me the list of the most important VC Funds in the United States based on Assets Under Management. Give me website URLs, and if possible an email to reach them out."_
+- 基于升级后的 **Wan2.1‑14B** 基础模型，稳定性更佳  
+- 蒸馏加速推理，无损画质，更快更省  
+- 原生支持华为 Ascend 910B NPU（全流程国产芯片训练）  
+- 高质量镜头生成，覆盖 90 % 应用场景
 
-3. **Looking for Candidates** ([Watch](https://www.suna.so/share/3ae581b0-2db8-4c63-b324-3b8d29762e74)) - _"Go on LinkedIn, and find me 10 profiles available - they are not working right now - for a junior software engineer position, who are located in Munich, Germany. They should have at least one bachelor's degree in Computer Science or anything related to it, and 1-year of experience in any field/role."_
+### 生态工具
+位置：📁 `data_pipeline`
 
-4. **Planning Company Trip** ([Watch](https://www.suna.so/share/725e64a0-f1e2-4bb6-8a1f-703c2833fd72)) - _"Generate me a route plan for my company. We should go to California. We'll be in 8 people. Compose the trip from the departure (Paris, France) to the activities we can do considering that the trip will be 7 days long - departure on the 21st of Apr 2025. Check the weather forecast and temperature for the upcoming days, and based on that, you can plan our activities (outdoor vs indoor)."_
+- 端到端数据集流水线，快速扩充训练数据  
+- 动画数据清洗管道
 
-5. **Working on Excel** ([Watch](https://www.suna.so/share/128f23a4-51cd-42a6-97a0-0b458b32010e)) - _"My company asked me to set up an Excel spreadsheet with all the information about Italian lottery games (Lotto, 10eLotto, and Million Day). Based on that, generate and send me a spreadsheet with all the basic information (public ones)."_
+### 面向动漫的评测体系
+位置：📁 `reward`
 
-6. **Automate Event Speaker Prospecting** ([Watch](https://www.suna.so/share/7a7592ea-ed44-4c69-bcb5-5f9bb88c188c)) - _"Find 20 AI ethics speakers from Europe who've spoken at conferences in the past year. Scrapes conference sites, cross-references LinkedIn and YouTube, and outputs contact info + talk summaries."_
+- 为动漫视频生成定制的评测模型与打分算法  
+- 适用于强化学习和基准测试的奖励模型  
+- 与 ACG 审美对齐的标准测试集  
+- 人工偏好对齐
 
-7. **Summarize and Cross-Reference Scientific Papers** ([Watch](https://www.suna.so/share/c2081b3c-786e-4e7c-9bf4-46e9b23bb662)) - _"Research and compare scientific papers talking about Alcohol effects on our bodies during the last 5 years. Generate a report about the most important scientific papers talking about the topic I wrote before."_
+该评测数据集包含 948 段动画视频片段，每个动作标签含 10–30 个视频。文本提示先由 Qwen‑VL2 自动生成，再由人工校对以确保文本‑视频对齐。  
+填写表格后以 PDF 形式发送至 yangsiqian@bilibili.com 或 xubaohan@bilibili.com（链接在同意协议后提供）。
 
-8. **Research + First Contact Draft** ([Watch](https://www.suna.so/share/6b6296a6-8683-49e5-9ad0-a32952d12c44)) - _"Research my potential customers (B2B) on LinkedIn. They should be in the clean tech industry. Find their websites and their email addresses. After that, based on the company profile, generate a personalized first contact email where I present my company which is offering consulting services to cleantech companies to maximize their profits and reduce their costs."_
+### AniSora V1.0_RL
+位置：📁 `anisora_rl`
 
-9. **SEO Analysis** ([Watch](https://www.suna.so/share/43491cb0-cd6c-45f0-880c-66ddc8c4b842)) - _"Based on my website suna.so, generate an SEO report analysis, find top-ranking pages by keyword clusters, and identify topics I'm missing."_
+- 首个面向动漫视频生成的 RLHF 框架  
+- RL 优化后的 AniSora V1.0，可生成更具动漫风格的作品  
+- 详见预印本：<a href='http://arxiv.org/abs/2504.10044'>*Aligning Anime Video Generation with Human Feedback*</a>
 
-10. **Generate a Personal Trip** ([Watch](https://www.suna.so/share/37b31907-8349-4f63-b0e5-27ca597ed02a)) - _"Generate a personal trip to London, with departure from Bangkok on the 1st of May. The trip will last 10 days. Find an accommodation in the center of London, with a rating on Google reviews of at least 4.5. Find me interesting outdoor activities to do during the journey. Generate a detailed itinerary plan."_
+## 📑 待办列表
+- **AniSora V2.0**
+    - [ ] 支持 14B 版本，预计 5 月底前发布
+- **AniSora 数据集**
+    - [ ] **开放高质量训练集申请**
+- **AniSora 基准**
+    - [ ] 更新最新 SOTA 模型性能
 
-11. **Recently Funded Startups** ([Watch](https://www.suna.so/share/8b2a897e-985a-4d5e-867b-15239274f764)) - _"Go on Crunchbase, Dealroom, and TechCrunch, filter by Series A funding rounds in the SaaS Finance Space, and build a report with company data, founders, and contact info for outbound sales."_
+---
+## 💡 摘要
+动画内容在当今影视行业中备受关注。  
+尽管 Sora、Kling、CogVideoX 等先进模型在自然视频生成方面表现出色，但在动漫视频上仍捉襟见肘。  
+此外，由于动漫独特的艺术风格、夸张的运动以及对物理规律的打破，也给评测带来了巨大挑战。  
 
-12. **Scrape Forum Discussions** ([Watch](https://www.suna.so/share/7d7a5d93-a20d-48b0-82cc-e9a876e9fd04)) - _"I need to find the best beauty centers in Rome, but I want to find them by using open forums that speak about this topic. Go on Google, and scrape the forums by looking for beauty center discussions located in Rome. Then generate a list of 5 beauty centers with the best comments about them."_
+本文提出了完整的系统 **AniSora**，涵盖：  
 
-## Self-Hosting
+1. **数据处理流水线**：超过 1000 万高质量数据；  
+2. **可控生成模型**：引入时空掩码模块，支持图生视频、帧插值、局部图像引导等关键动画制作功能；  
+3. **评测数据集**：收集 948 段多样化动画视频，配套双盲人评实验及 VBench 测试，人物一致性与运动一致性均达到 SOTA。
 
-Suna can be self-hosted on your own infrastructure using our setup wizard. For a comprehensive guide to self-hosting Suna, please refer to our [Self-Hosting Guide](./docs/SELF-HOSTING.md).
+## 🖥️ 方法
 
-The setup process includes:
+下图展示了 Index‑AniSora 的整体框架：
 
-- Setting up a Supabase project for database and authentication
-- Configuring Redis for caching and session management
-- Setting up Daytona for secure agent execution
-- Integrating with LLM providers (Anthropic, OpenAI, Groq, etc.)
-- Configuring web search and scraping capabilities
+<picture>
+  <img src="assets/framework.png"  width="800"/>
+</picture>
 
-### Quick Start
+**主要特点：**
 
-1. **Clone the repository**:
+1. 搭建了完整的视频处理系统，显著提升生成前的数据预处理效率；  
+2. 提出统一的时空掩码框架，用于动漫视频生成，可同时处理图生视频、帧插值、局部引导等任务；  
+3. 发布面向动漫视频生成的专用基准数据集。
 
-```bash
-git clone https://github.com/kortix-ai/suna.git
-cd suna
+## 🎞️ 案例展示
+
+**不同艺术风格的图生视频：**
+
+| 提示词 | 图片 | 视频 |
+| --- | --- | --- |
+| 画面中，角色坐在前进的汽车里，朝后方挥手，长发在风中左右摆动。| <img src="assets/000000(225).png" width="800"/> | ![Demo](assets/000000(225).gif)|
+| 场景中，两位身着红色婚服的角色拉着红绳，携手远去。| <img src="assets/000000(223).png" width="800"/> | ![Demo](assets/000000(223).gif)|
+| 金发角色伸手轻触跪地之人的头顶，后者喘息起伏。| <img src="assets/000000(232).png" width="800"/> | ![Demo](assets/000000(232).gif)|
+| 画面中，一人高速冲刺向前，速度导致动作出现轻微拖影。| <img src="assets/image_1.jpg"  width="800"/> | ![Demo](assets/image_1_vid.gif)|
+| 画面中，角色抬起手臂，手臂表面有气流流动效果。| <img src="assets/image_2.jpg"  width="800"/> | ![Demo](assets/image_2_vid.gif)|
+| 老人目光锁定宝石，右手微调放大镜，似在揭示古老秘密。| <img src="assets/image_3.jpg"  width="800"/> | ![Demo](assets/image_3_vid.gif)|
+| 左侧男子紧抿双唇，面露愤怒与决然；右侧男子张口欲言。| <img src="assets/image_4.jpg"  width="800"/> | ![Demo](assets/image_4_vid.gif)|
+| 岩石爆炸，耀眼光芒四射，碎片向四周激射。| <img src="assets/image_5.jpg"  width="800"/> | ![Demo](assets/image_5_vid.gif)|
+
+**时间控制示例：**
+
+| 提示词 | 首帧 | 中间帧 | 末帧 | 视频 |
+| --- | --- | --- | --- | --- |
+| 动画电影《美女与野兽》场景：贝儿身着紫色礼服，站在落地窗前对窗外说话，金发披肩。| <img src="assets/cartoon_films_ren_wu_shuo_hua_34_firstmidlast_first.png" width="800"/> |<img src="assets/cartoon_films_ren_wu_shuo_hua_34_firstmidlast_mid.png" width="800"/> |<img src="assets/cartoon_films_ren_wu_shuo_hua_34_firstmidlast_last.png" width="800"/> |![Demo](assets/cartoon_films_ren_wu_shuo_hua_34_firstmidlast.gif)|
+| 夜晚，一位金发女子在车门后探出身子向外张望，星空与满月照亮场景，她神情担忧。|  <img src="assets/motion_comics_tui_la_5_firstlast_first.png" width="800"/> | 无 | <img src="assets/motion_comics_tui_la_5_firstlast_last.jpeg" width="800"/>|![Demo](assets/motion_comics_tui_la_5_firstlast.gif)|
+| 一只卡通猫闭眼张口，似在捣蛋或好奇中，准备惊叫。| 无 | 无 |<img src="assets/motion_comics_zhi_dong_xi_2_last.jpeg" width="800"/>|![Demo](assets/motion_comics_zhi_dong_xi_2_last.gif)|
+
+**空间控制示例：**
+
+| 提示词 | 首帧 | 运动掩码 | 视频（含掩码可视化） |
+| --- | --- | --- | --- | 
+| 在《海底总动员》的缤纷水下世界里，小丑鱼马林和尼莫在大型紫色珊瑚附近交谈……| <img src="assets/132.png" width="800"/> |<img src="assets/132_mask.png" width="800"/> |![Demo](assets/132.gif)|
+| 同上 | 同上 | <img src="assets/133_mask.png" width="800"/>|![Demo](assets/133.gif)|
+
+**<span style="font-size:18px;"> 更多示例视频： [作品画廊](https://pwz4yo5eenw.feishu.cn/docx/XN9YdiOwCoqJuexLdCpcakSlnkg) </span>**
+
+## 📑 评测结果
+
+**VBench 结果：**
+
+| 方法 | 运动平滑度 | 运动得分 | 美学质量 | 成像质量 | I2V 主体 | I2V 背景 | 整体一致性 | 主体一致性 |
+|--------------------------|-------------------|--------------|-------------------|-----------------|-------------|----------------|---------------------|---------------------|
+| Opensora‑Plan(V1.3)  | 99.13 | 76.45 | 53.21 | 65.11 | 93.53 | 94.71 | 21.67 | 88.86 |
+| Opensora(V1.2)       | 98.78 | 73.62 | 54.30 | 68.44 | 93.15 | 91.09 | 22.68 | 87.71 |
+| Vidu                 | 97.71 | **77.51** | 53.68 | 69.23 | 92.25 | 93.06 | 20.87 | 88.27 |
+| CogVideo(5B‑V1)      | 97.67 | 71.47 | **54.87** | 68.16 | 90.68 | 91.79 | 21.87 | 90.29 |
+| MiniMax              | 99.20 | 66.53 | 54.56 | **71.67** | 95.95 | **95.42** | 21.82 | 93.62 |
+| **AniSora**          | **99.34** | 45.59 | 54.31 | 70.58 | **97.52** | 95.04 | 21.15 | **96.99** |
+| AniSora‑K            | 99.12 | 59.49 | 53.76 | 68.68 | 95.13 | 93.36 | 21.13 | 94.61 |
+| AniSora‑I            | 99.31 | 54.96 | 54.67 | 68.98 | 94.16 | 92.38 | 20.47 | 95.75 |
+| GT                   | 98.72 | 56.05 | 52.70 | 70.50 | 96.02 | 95.03 | 21.29 | 94.37 |
+
+**AniSora 基准结果：**
+
+| 方法 | 人工评分 | 视觉平滑 | 视觉运动 | 视觉吸引力 | 文本‑视频一致 | 图像‑视频一致 | 角色一致性 |
+|--------------------------|------------------|---------------|---------------|---------------|------------------------|-------------------------|-----------------------|
+| Vidu‑1.5                 | 60.98            | 55.37         | **78.95**     | 50.68         | 60.71                  | 66.85                   | 82.57                 |
+| Opensora‑V1.2            | 41.10            | 22.28         | 74.90         | 22.62         | 52.19                  | 55.67                   | 74.76                 |
+| Opensora‑Plan‑V1.3       | 46.14            | 35.08         | 77.47         | 36.14         | 56.19                  | 59.42                   | 81.19                 |
+| CogVideoX‑5B‑V1          | 53.29            | 39.91         | 73.07         | 39.59         | 67.98                  | 65.49                   | 83.07                 |
+| MiniMax‑I2V01            | 69.63            | 69.38         | 68.05         | **70.34**     | **76.14**              | 78.74                   | 89.47                 |
+| **AniSora (Ours)**       | **70.13**        | **71.47**     | 47.94         | 64.44         | 72.92                  | **81.54**               | **94.54**             |
+| AniSora (Interpolated Avg) | -             | 70.78         | 53.02         | 64.41         | 73.56                  | 80.62                   | 91.59                 |
+| AniSora (KeyFrame Interp) | -             | 70.03         | 58.10         | 64.57         | 74.57                  | 80.78                   | 91.98                 |
+| AniSora (KeyFrame Interp) | -             | 70.03         | 58.10         | 64.57         | 74.57                  | 80.78                   | 91.98                 |
+| GT                       | -                | 92.20         | 58.27         | 89.72         | 92.51                  | 94.69                   | 95.08                 |
+
+> **说明**  
+> *AniSora*：我们的 I2V 结果  
+> *AniSora‑K*：关键帧插帧结果  
+> *AniSora‑I*：帧插值（平均）结果
+
+## 🐳 基准数据集
+
+该基准数据集包含 948 段动画视频片段，每段标注不同动作。每个标签含 10–30 个视频，文本提示由 Qwen‑VL2 生成并经人工校对，确保文本‑视频对齐。  
+请填写 <a href="assets/anisora_benchmark_agreement_form.doc">申请表</a> 并将 PDF 发送至 yangsiqian@bilibili.com 或 xubaohan@bilibili.com（须先同意 B 站协议）。
+
+## 🤗 致谢
+特别感谢 [CogVideoX](https://github.com/THUDM/CogVideo)、[Wan2.1](https://github.com/Wan-Video/Wan2.1)、[FasterCache](https://github.com/Vchitect/FasterCache) 以及 [OSS](https://github.com/bebebe666/OptimalSteps) 的宝贵工作。
+
+## 📚 引用
+
+如果本项目对您有帮助，请为我们的仓库点 Star，并引用下述论文：
+
+```
+@article{jiang2024anisora,
+  title={AniSora: Exploring the Frontiers of Animation Video Generation in the Sora Era},
+  author={Yudong Jiang, Baohan Xu, Siqian Yang, Mingyu Yin, Jing Liu, Chao Xu, Siqi Wang, Yidi Wu, Bingwen Zhu, Xinwen Zhang, Xingyu Zheng,Jixuan Xu, Yue Zhang, Jinlong Hou and Huyang Sun},
+  journal={arXiv preprint arXiv:2412.10255},
+  year={2024}
+}
 ```
 
-2. **Run the setup wizard**:
+---
 
-```bash
-python setup.py
-```
+<div align="center">
 
-3. **Start or stop the containers**:
+**Ready to build your first AI agent?** 
 
-```bash
-python start.py
-```
+[Get Started](./docs/SELF-HOSTING.md) • [Join Discord](https://discord.gg/Py6pCBUUPw) • [Follow on Twitter](https://x.com/kortixai)
 
-### Manual Setup
-
-See the [Self-Hosting Guide](./docs/SELF-HOSTING.md) for detailed manual setup instructions.
-
-The wizard will guide you through all necessary steps to get your Suna instance up and running. For detailed instructions, troubleshooting tips, and advanced configuration options, see the [Self-Hosting Guide](./SELF-HOSTING.md).
-
-## Contributing
-
-We welcome contributions from the community! Please see our [Contributing Guide](./CONTRIBUTING.md) for more details.
-
-## Acknowledgements
-
-### Main Contributors
-
-- [Adam Cohen Hillel](https://x.com/adamcohenhillel)
-- [Dat-lequoc](https://x.com/datlqqq)
-- [Marko Kraemer](https://twitter.com/markokraemer)
-
-### Technologies
-
-- [Daytona](https://daytona.io/) - Secure agent execution environment
-- [Supabase](https://supabase.com/) - Database and authentication
-- [Playwright](https://playwright.dev/) - Browser automation
-- [OpenAI](https://openai.com/) - LLM provider
-- [Anthropic](https://www.anthropic.com/) - LLM provider
-- [Tavily](https://tavily.com/) - Search capabilities
-- [Firecrawl](https://firecrawl.dev/) - Web scraping capabilities
-- [RapidAPI](https://rapidapi.com/) - API services
-
-## License
-
-Kortix Suna is licensed under the Apache License, Version 2.0. See [LICENSE](./LICENSE) for the full license text.
+</div>

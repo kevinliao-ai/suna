@@ -1,7 +1,7 @@
 from tavily import AsyncTavilyClient
 import httpx
 from dotenv import load_dotenv
-from agentpress.tool import Tool, ToolResult, openapi_schema, xml_schema
+from agentpress.tool import Tool, ToolResult, openapi_schema, usage_example
 from utils.config import config
 from sandbox.tool_base import SandboxToolsBase
 from agentpress.thread_manager import ThreadManager
@@ -55,40 +55,22 @@ class SandboxWebSearchTool(SandboxToolsBase):
             }
         }
     })
-    @xml_schema(
-        tag_name="web-search",
-        mappings=[
-            {"param_name": "query", "node_type": "attribute", "path": "."},
-            {"param_name": "num_results", "node_type": "attribute", "path": "."}
-        ],
-        example='''
-        <!-- 
-        The web-search tool allows you to search the internet for real-time information.
-        Use this tool when you need to find current information, research topics, or verify facts.
-        
-        THE TOOL NOW RETURNS:
-        - Direct answer to your query from search results
-        - Relevant images when available
-        - Detailed search results including titles, URLs, and snippets
-        
-        WORKFLOW RECOMMENDATION:
-        1. Use web-search first with a specific question to get direct answers
-        2. Only use scrape-webpage if you need more detailed information from specific pages
-        -->
-        
-        <!-- Simple search example -->
-        <web-search 
-            query="what is Kortix AI and what are they building?" 
-            num_results="20">
-        </web-search>
+    @usage_example('''
+        <function_calls>
+        <invoke name="web_search">
+        <parameter name="query">what is Kortix AI and what are they building?</parameter>
+        <parameter name="num_results">20</parameter>
+        </invoke>
+        </function_calls>
         
         <!-- Another search example -->
-        <web-search 
-            query="latest AI research on transformer models" 
-            num_results="20">
-        </web-search>
-        '''
-    )
+        <function_calls>
+        <invoke name="web_search">
+        <parameter name="query">latest AI research on transformer models</parameter>
+        <parameter name="num_results">20</parameter>
+        </invoke>
+        </function_calls>
+        ''')
     async def web_search(
         self, 
         query: str,
@@ -125,14 +107,27 @@ class SandboxWebSearchTool(SandboxToolsBase):
                 search_depth="advanced",
             )
             
+            # Check if we have actual results or an answer
+            results = search_response.get('results', [])
+            answer = search_response.get('answer', '')
+            
             # Return the complete Tavily response 
             # This includes the query, answer, results, images and more
-            logging.info(f"Retrieved search results for query: '{query}' with answer and {len(search_response.get('results', []))} results")
+            logging.info(f"Retrieved search results for query: '{query}' with answer and {len(results)} results")
             
-            return ToolResult(
-                success=True,
-                output=json.dumps(search_response, ensure_ascii=False)
-            )
+            # Consider search successful if we have either results OR an answer
+            if len(results) > 0 or (answer and answer.strip()):
+                return ToolResult(
+                    success=True,
+                    output=json.dumps(search_response, ensure_ascii=False)
+                )
+            else:
+                # No results or answer found
+                logging.warning(f"No search results or answer found for query: '{query}'")
+                return ToolResult(
+                    success=False,
+                    output=json.dumps(search_response, ensure_ascii=False)
+                )
         
         except Exception as e:
             error_message = str(e)
@@ -159,58 +154,13 @@ class SandboxWebSearchTool(SandboxToolsBase):
             }
         }
     })
-    @xml_schema(
-        tag_name="scrape-webpage",
-        mappings=[
-            {"param_name": "urls", "node_type": "attribute", "path": "."}
-        ],
-        example='''
-  <!-- 
-        IMPORTANT: The scrape-webpage tool should ONLY be used when you absolutely need
-        the full content of specific web pages that can't be answered by web-search alone.
-        
-        WORKFLOW PRIORITY:
-        1. ALWAYS use web-search first - it now provides direct answers to questions
-        2. Only use scrape-webpage when you need specific details not found in the search results
-        3. Remember that web-search now returns:
-           - Direct answers to your query
-           - Relevant images
-           - Detailed search result snippets
-        
-        When to use scrape-webpage:
-        - When you need complete article text beyond what search snippets provide
-        - For extracting structured data from specific pages
-        - When analyzing lengthy documentation or guides
-        - For comparing detailed content across multiple sources
-        
-        When NOT to use scrape-webpage:
-        - When web-search already answers the query
-        - For simple fact-checking or basic information
-        - When only a high-level overview is needed
-        -->
-        
-        <!-- Example workflow: -->
-        <!-- 1. First search for relevant content with a specific question -->
-        <web-search 
-            query="what is Kortix AI and what are they building?" 
-            num_results="20">
-        </web-search>
-        
-        <!-- 2. Only if you need specific details not in the search results, then scrape -->
-        <scrape-webpage 
-            urls="https://www.kortix.ai/,https://github.com/kortix-ai/suna">
-        </scrape-webpage>
-        
-        <!-- 3. Only if scrape fails or interaction needed, use browser tools -->
-        <!-- Example of when to use browser tools:
-             - Dynamic content loading
-             - JavaScript-heavy sites
-             - Pages requiring login
-             - Interactive elements
-             - Infinite scroll pages
-        -->
-        '''
-    )
+    @usage_example('''
+        <function_calls>
+        <invoke name="scrape_webpage">
+        <parameter name="urls">https://www.kortix.ai/,https://github.com/kortix-ai/suna</parameter>
+        </invoke>
+        </function_calls>
+        ''')
     async def scrape_webpage(
         self,
         urls: str
@@ -247,26 +197,25 @@ class SandboxWebSearchTool(SandboxToolsBase):
             
             logging.info(f"Processing {len(url_list)} URLs: {url_list}")
             
-            # Process each URL and collect results
-            results = []
-            for url in url_list:
-                try:
-                    # Add protocol if missing
-                    if not (url.startswith('http://') or url.startswith('https://')):
-                        url = 'https://' + url
-                        logging.info(f"Added https:// protocol to URL: {url}")
-                    
-                    # Scrape this URL
-                    result = await self._scrape_single_url(url)
-                    results.append(result)
-                    
-                except Exception as e:
-                    logging.error(f"Error processing URL {url}: {str(e)}")
-                    results.append({
-                        "url": url,
+            # Process each URL concurrently and collect results
+            tasks = [self._scrape_single_url(url) for url in url_list]
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+
+            # Process results, handling exceptions
+            processed_results = []
+            for i, result in enumerate(results):
+                if isinstance(result, Exception):
+                    logging.error(f"Error processing URL {url_list[i]}: {str(result)}")
+                    processed_results.append({
+                        "url": url_list[i],
                         "success": False,
-                        "error": str(e)
+                        "error": str(result)
                     })
+                else:
+                    processed_results.append(result)
+            
+            results = processed_results
+
             
             # Summarize results
             successful = sum(1 for r in results if r.get("success", False))
@@ -305,6 +254,12 @@ class SandboxWebSearchTool(SandboxToolsBase):
         """
         Helper function to scrape a single URL and return the result information.
         """
+        
+        # # Add protocol if missing
+        # if not (url.startswith('http://') or url.startswith('https://')):
+        #     url = 'https://' + url
+        #     logging.info(f"Added https:// protocol to URL: {url}")
+            
         logging.info(f"Scraping single URL: {url}")
         
         try:
@@ -322,7 +277,7 @@ class SandboxWebSearchTool(SandboxToolsBase):
                 
                 # Use longer timeout and retry logic for more reliability
                 max_retries = 3
-                timeout_seconds = 120
+                timeout_seconds = 30
                 retry_count = 0
                 
                 while retry_count < max_retries:
@@ -383,15 +338,15 @@ class SandboxWebSearchTool(SandboxToolsBase):
             
             # Save results to a file in the /workspace/scrape directory
             scrape_dir = f"{self.workspace_path}/scrape"
-            self.sandbox.fs.create_folder(scrape_dir, "755")
+            await self.sandbox.fs.create_folder(scrape_dir, "755")
             
             results_file_path = f"{scrape_dir}/{safe_filename}"
             json_content = json.dumps(formatted_result, ensure_ascii=False, indent=2)
             logging.info(f"Saving content to file: {results_file_path}, size: {len(json_content)} bytes")
             
-            self.sandbox.fs.upload_file(
-                results_file_path, 
-                json_content.encode()
+            await self.sandbox.fs.upload_file(
+                json_content.encode(),
+                results_file_path,
             )
             
             return {

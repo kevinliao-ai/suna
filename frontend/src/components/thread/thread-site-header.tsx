@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from "@/components/ui/button"
-import { FolderOpen, Link, PanelRightOpen, Check, X, Menu, Share2 } from "lucide-react"
+import { FolderOpen, Share2, Monitor } from "lucide-react"
 import { usePathname } from "next/navigation"
 import { toast } from "sonner"
 import {
@@ -12,12 +12,21 @@ import {
 } from "@/components/ui/tooltip"
 import { useState, useRef, KeyboardEvent } from "react"
 import { Input } from "@/components/ui/input"
-import { updateProject } from "@/lib/api"
+import { useUpdateProject } from "@/hooks/react-query"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
-import { useSidebar } from "@/components/ui/sidebar"
 import { ShareModal } from "@/components/sidebar/share-modal"
+import { useQueryClient } from "@tanstack/react-query";
+import { projectKeys } from "@/hooks/react-query/sidebar/keys";
+import { threadKeys } from "@/hooks/react-query/threads/keys";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { useFeatureFlags } from "@/lib/feature-flags";
 
 interface ThreadSiteHeaderProps {
   threadId: string;
@@ -44,13 +53,21 @@ export function SiteHeader({
   const [isEditing, setIsEditing] = useState(false)
   const [editName, setEditName] = useState(projectName)
   const inputRef = useRef<HTMLInputElement>(null)
-  const [showShareModal, setShowShareModal] = useState(false)
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [showKnowledgeBase, setShowKnowledgeBase] = useState(false);
+  const queryClient = useQueryClient();
+  const { flags, loading: flagsLoading } = useFeatureFlags(['knowledge_base']);
+  const knowledgeBaseEnabled = flags.knowledge_base;
 
   const isMobile = useIsMobile() || isMobileView
-  const { setOpenMobile } = useSidebar()
+  const updateProjectMutation = useUpdateProject()
 
   const openShareModal = () => {
     setShowShareModal(true)
+  }
+
+  const openKnowledgeBase = () => {
+    setShowKnowledgeBase(true)
   }
 
   const startEditing = () => {
@@ -83,10 +100,13 @@ export function SiteHeader({
           return;
         }
 
-        const updatedProject = await updateProject(projectId, { name: editName })
+        const updatedProject = await updateProjectMutation.mutateAsync({
+          projectId,
+          data: { name: editName }
+        })
         if (updatedProject) {
           onProjectRenamed?.(editName);
-          toast.success('Project renamed successfully');
+          queryClient.invalidateQueries({ queryKey: threadKeys.project(projectId) });
         } else {
           throw new Error('Failed to update project');
         }
@@ -116,47 +136,19 @@ export function SiteHeader({
         "bg-background sticky top-0 flex h-14 shrink-0 items-center gap-2 z-20 w-full",
         isMobile && "px-2"
       )}>
-        {isMobile && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setOpenMobile(true)}
-            className="h-9 w-9 mr-1"
-            aria-label="Open sidebar"
-          >
-            <Menu className="h-4 w-4" />
-          </Button>
-        )}
+
 
         <div className="flex flex-1 items-center gap-2 px-3">
           {isEditing ? (
-            <div className="flex items-center gap-1">
-              <Input
-                ref={inputRef}
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
-                onKeyDown={handleKeyDown}
-                onBlur={saveNewName}
-                className="h-8 w-auto min-w-[180px] text-base font-medium"
-                maxLength={50}
-              />
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7"
-                onClick={saveNewName}
-              >
-                <Check className="h-3.5 w-3.5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7"
-                onClick={cancelEditing}
-              >
-                <X className="h-3.5 w-3.5" />
-              </Button>
-            </div>
+            <Input
+              ref={inputRef}
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              onKeyDown={handleKeyDown}
+              onBlur={saveNewName}
+              className="h-8 w-auto min-w-[180px] text-base font-medium"
+              maxLength={50}
+            />
           ) : !projectName || projectName === 'Project' ? (
             <Skeleton className="h-5 w-32" />
           ) : (
@@ -178,69 +170,56 @@ export function SiteHeader({
             </div>
           )}
 
-          {isMobile ? (
-            // Mobile view - only show the side panel toggle
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onToggleSidePanel}
-              className="h-9 w-9 cursor-pointer"
-              aria-label="Toggle computer panel"
-            >
-              <PanelRightOpen className="h-4 w-4" />
-            </Button>
-          ) : (
-            // Desktop view - show all buttons with tooltips
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={onViewFiles}
-                    className="h-9 w-9 cursor-pointer"
-                  >
-                    <FolderOpen className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>View Files in Task</p>
-                </TooltipContent>
-              </Tooltip>
+          {/* Show all buttons on both mobile and desktop - responsive tooltips */}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onViewFiles}
+                  className="h-9 w-9 cursor-pointer"
+                >
+                  <FolderOpen className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side={isMobile ? "bottom" : "bottom"}>
+                <p>View Files in Task</p>
+              </TooltipContent>
+            </Tooltip>
 
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={openShareModal}
-                    className="h-9 w-9 cursor-pointer"
-                  >
-                    <Share2 className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Share Chat</p>
-                </TooltipContent>
-              </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={openShareModal}
+                  className="h-9 w-9 cursor-pointer"
+                >
+                  <Share2 className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side={isMobile ? "bottom" : "bottom"}>
+                <p>Share Chat</p>
+              </TooltipContent>
+            </Tooltip>
 
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={onToggleSidePanel}
-                    className="h-9 w-9 cursor-pointer"
-                  >
-                    <PanelRightOpen className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Toggle Computer Preview (CMD+I)</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onToggleSidePanel}
+                  className="h-9 w-9 cursor-pointer"
+                >
+                  <Monitor className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side={isMobile ? "bottom" : "bottom"}>
+                <p>Toggle Computer Preview (CMD+I)</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </header>
       <ShareModal
@@ -249,6 +228,7 @@ export function SiteHeader({
         threadId={threadId}
         projectId={projectId}
       />
+      
     </>
   )
 } 

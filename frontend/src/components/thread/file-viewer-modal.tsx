@@ -8,11 +8,9 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
 import {
   File,
   Folder,
-  FolderOpen,
   Upload,
   Download,
   ChevronRight,
@@ -22,15 +20,16 @@ import {
   AlertTriangle,
   FileText,
   ChevronDown,
+  Archive,
+  Copy,
+  Check,
 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   FileRenderer,
-  getFileTypeFromExtension,
 } from '@/components/file-renderers';
 import {
   listSandboxFiles,
-  getSandboxFileContent,
   type FileInfo,
   Project,
 } from '@/lib/api';
@@ -43,7 +42,13 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
-import { useCachedFile, getCachedFile, FileCache } from '@/hooks/use-cached-file';
+import {
+  useDirectoryQuery,
+  useFileContentQuery,
+  FileCache
+} from '@/hooks/react-query/files';
+import JSZip from 'jszip';
+import { normalizeFilenameToNFC } from '@/lib/utils/unicode';
 
 // Define API_URL
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || '';
@@ -54,6 +59,7 @@ interface FileViewerModalProps {
   sandboxId: string;
   initialFilePath?: string | null;
   project?: Project;
+  filePathList?: string[];
 }
 
 export function FileViewerModal({
@@ -62,18 +68,35 @@ export function FileViewerModal({
   sandboxId,
   initialFilePath,
   project,
+  filePathList,
 }: FileViewerModalProps) {
+  // Safely handle initialFilePath to ensure it's a string or null
+  const safeInitialFilePath = typeof initialFilePath === 'string' ? initialFilePath : null;
+
   // Auth for session token
   const { session } = useAuth();
 
   // File navigation state
   const [currentPath, setCurrentPath] = useState('/workspace');
-  const [files, setFiles] = useState<FileInfo[]>([]);
-  const [isLoadingFiles, setIsLoadingFiles] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
 
+  // Add navigation state for file list mode
+  const [currentFileIndex, setCurrentFileIndex] = useState<number>(-1);
+  const isFileListMode = Boolean(filePathList && filePathList.length > 0);
+
+
+  // Use React Query for directory listing
+  const {
+    data: files = [],
+    isLoading: isLoadingFiles,
+    error: filesError,
+    refetch: refetchFiles
+  } = useDirectoryQuery(sandboxId, currentPath, {
+    enabled: open && !!sandboxId,
+    staleTime: 30 * 1000, // 30 seconds
+  });
+
   // Add a navigation lock to prevent race conditions
-  const [isNavigationLocked, setIsNavigationLocked] = useState(false);
   const currentNavigationRef = useRef<string | null>(null);
 
   // File content state
@@ -85,22 +108,20 @@ export function FileViewerModal({
   const [blobUrlForRenderer, setBlobUrlForRenderer] = useState<string | null>(
     null,
   );
-  const [isLoadingContent, setIsLoadingContent] = useState(false);
   const [contentError, setContentError] = useState<string | null>(null);
 
-  // Add a ref to track current loading operation
-  const loadingFileRef = useRef<string | null>(null);
-
-  // Use the cached file hook for the selected file
+  // Use the React Query hook for the selected file instead of useCachedFile
   const {
     data: cachedFileContent,
     isLoading: isCachedFileLoading,
     error: cachedFileError,
-  } = useCachedFile(
+  } = useFileContentQuery(
     sandboxId,
-    selectedFilePath,
+    selectedFilePath || undefined,
     {
-      contentType: 'text', // Default to text, we'll handle binary later
+      // Auto-detect content type consistently with other components
+      enabled: !!selectedFilePath,
+      staleTime: 5 * 60 * 1000, // 5 minutes
     }
   );
 
@@ -119,16 +140,22 @@ export function FileViewerModal({
 
   // Add state for PDF export
   const [isExportingPdf, setIsExportingPdf] = useState(false);
-  const markdownContainerRef = useRef<HTMLDivElement>(null);
   const markdownRef = useRef<HTMLDivElement>(null);
-
-  // Add state for print orientation
-  const [pdfOrientation, setPdfOrientation] = useState<
-    'portrait' | 'landscape'
-  >('portrait');
 
   // Add a ref to track active download URLs
   const activeDownloadUrls = useRef<Set<string>>(new Set());
+
+  // Add state for download all functionality
+  const [isDownloadingAll, setIsDownloadingAll] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState<{
+    current: number;
+    total: number;
+    currentFile: string;
+  } | null>(null);
+
+  // Add state for copy functionality
+  const [isCopyingPath, setIsCopyingPath] = useState(false);
+  const [isCopyingContent, setIsCopyingContent] = useState(false);
 
   // Setup project with sandbox URL if not provided directly
   useEffect(() => {
@@ -141,11 +168,6 @@ export function FileViewerModal({
   const normalizePath = useCallback((path: unknown): string => {
     // Explicitly check if the path is a non-empty string
     if (typeof path !== 'string' || !path) {
-      console.warn(
-        `[FILE VIEWER] normalizePath received non-string or empty value:`,
-        path,
-        `Returning '/workspace'`,
-      );
       return '/workspace';
     }
     // Now we know path is a string
@@ -153,6 +175,174 @@ export function FileViewerModal({
       ? path
       : `/workspace/${path.replace(/^\//, '')}`;
   }, []);
+
+  // Recursive function to discover all files in the workspace
+  const discoverAllFiles = useCallback(async (
+    startPath: string = '/workspace'
+  ): Promise<{ files: FileInfo[], totalSize: number }> => {
+    const allFiles: FileInfo[] = [];
+    let totalSize = 0;
+    const visited = new Set<string>();
+
+    const exploreDirectory = async (dirPath: string) => {
+      if (visited.has(dirPath)) return;
+      visited.add(dirPath);
+
+      try {
+        const files = await listSandboxFiles(sandboxId, dirPath);
+
+        for (const file of files) {
+          if (file.is_dir) {
+            // Recursively explore subdirectories
+            await exploreDirectory(file.path);
+          } else {
+            // Add file to collection
+            allFiles.push(file);
+            totalSize += file.size || 0;
+          }
+        }
+      } catch (error) {
+        toast.error(`Failed to read directory: ${dirPath}`);
+      }
+    };
+
+    await exploreDirectory(startPath);
+
+    return { files: allFiles, totalSize };
+  }, [sandboxId]);
+
+  // Function to download all files as a zip
+  const handleDownloadAll = useCallback(async () => {
+    if (!session?.access_token || isDownloadingAll) return;
+
+    try {
+      setIsDownloadingAll(true);
+      setDownloadProgress({ current: 0, total: 0, currentFile: 'Discovering files...' });
+
+      // Step 1: Discover all files
+      const { files } = await discoverAllFiles();
+
+      if (files.length === 0) {
+        toast.error('No files found to download');
+        return;
+      }
+
+      // Step 2: Create zip and load files
+      const zip = new JSZip();
+      setDownloadProgress({ current: 0, total: files.length, currentFile: 'Creating archive...' });
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const relativePath = file.path.replace(/^\/workspace\//, ''); // Remove /workspace/ prefix
+
+        setDownloadProgress({
+          current: i + 1,
+          total: files.length,
+          currentFile: relativePath
+        });
+
+        try {
+          // Determine content type for proper loading
+          const contentType = FileCache.getContentTypeFromPath(file.path);
+
+          // Check cache first
+          const cacheKey = `${sandboxId}:${file.path}:${contentType}`;
+          let content = FileCache.get(cacheKey);
+
+          if (!content) {
+            // Load from server if not cached
+            const response = await fetch(
+              `${process.env.NEXT_PUBLIC_BACKEND_URL}/sandboxes/${sandboxId}/files/content?path=${encodeURIComponent(file.path)}`,
+              {
+                headers: { 'Authorization': `Bearer ${session.access_token}` }
+              }
+            );
+
+            if (!response.ok) {
+              continue; // Skip this file and continue with others
+            }
+
+            if (contentType === 'blob') {
+              content = await response.blob();
+            } else if (contentType === 'json') {
+              content = JSON.stringify(await response.json(), null, 2);
+            } else {
+              content = await response.text();
+            }
+
+            // Cache the content
+            FileCache.set(cacheKey, content);
+          }
+
+          // Add to zip with proper structure
+          if (content instanceof Blob) {
+            zip.file(relativePath, content);
+          } else if (typeof content === 'string') {
+            // Handle blob URLs by fetching the actual content
+            if (content.startsWith('blob:')) {
+              try {
+                const blobResponse = await fetch(content);
+                const blobContent = await blobResponse.blob();
+                zip.file(relativePath, blobContent);
+              } catch (blobError) {
+                // Fallback: try to fetch from server directly
+                const fallbackResponse = await fetch(
+                  `${process.env.NEXT_PUBLIC_BACKEND_URL}/sandboxes/${sandboxId}/files/content?path=${encodeURIComponent(file.path)}`,
+                  { headers: { 'Authorization': `Bearer ${session.access_token}` } }
+                );
+                if (fallbackResponse.ok) {
+                  const fallbackBlob = await fallbackResponse.blob();
+                  zip.file(relativePath, fallbackBlob);
+                }
+              }
+            } else {
+              // Regular text content
+              zip.file(relativePath, content);
+            }
+          } else {
+            // Handle other content types (convert to JSON string)
+            zip.file(relativePath, JSON.stringify(content, null, 2));
+          }
+
+        } catch (fileError) {
+          // Continue with other files
+        }
+      }
+
+      // Step 3: Generate and download the zip
+      setDownloadProgress({
+        current: files.length,
+        total: files.length,
+        currentFile: 'Generating zip file...'
+      });
+
+      const zipBlob = await zip.generateAsync({
+        type: 'blob',
+        compression: 'DEFLATE',
+        compressionOptions: { level: 6 }
+      });
+
+      // Download the zip file
+      const url = URL.createObjectURL(zipBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `workspace-${sandboxId}-${new Date().toISOString().slice(0, 10)}.zip`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Clean up
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+
+      toast.success(`Downloaded ${files.length} files as zip archive`);
+
+    } catch (error) {
+      toast.error(`Failed to create zip archive: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setIsDownloadingAll(false);
+      setDownloadProgress(null);
+    }
+  }, [sandboxId, session?.access_token, isDownloadingAll, discoverAllFiles]);
 
   // Helper function to check if a value is a Blob (type-safe version of instanceof)
   const isBlob = (value: any): value is Blob => {
@@ -166,30 +356,18 @@ export function FileViewerModal({
     setTextContentForRenderer(null); // Clear derived text content
     setBlobUrlForRenderer(null); // Clear derived blob URL
     setContentError(null);
-    setIsLoadingContent(false);
-    loadingFileRef.current = null; // Clear the loading ref
-  }, []);
+    // Only reset file list mode index when not in file list mode
+    if (!isFileListMode) {
+      setCurrentFileIndex(-1);
+    }
+  }, [isFileListMode]);
 
-  // Forward declaration for openFile - will be defined below but referenced first
   // Core file opening function
   const openFile = useCallback(
     async (file: FileInfo) => {
       if (file.is_dir) {
-        // Since navigateToFolder is defined below, we can safely call it
-        // We define navigateToFolder first, then use it in openFile
         // For directories, just navigate to that folder
-        if (!file.is_dir) return;
-
-        // Ensure the path is properly normalized
         const normalizedPath = normalizePath(file.path);
-
-        // Always navigate to the folder to ensure breadcrumbs update correctly
-        console.log(
-          `[FILE VIEWER] Navigating to folder: ${file.path} → ${normalizedPath}`,
-        );
-        console.log(
-          `[FILE VIEWER] Current path before navigation: ${currentPath}`,
-        );
 
         // Clear selected file when navigating
         clearSelectedFile();
@@ -199,143 +377,29 @@ export function FileViewerModal({
         return;
       }
 
-      // Skip if already selected and content exists
-      if (selectedFilePath === file.path && rawContent) {
-        console.log(`[FILE VIEWER] File already loaded: ${file.path}`);
+      // Skip if already selected
+      if (selectedFilePath === file.path) {
         return;
       }
 
-      console.log(`[FILE VIEWER] Opening file: ${file.path}`);
-
-      // Check if this is an image or PDF file
-      const isImageFile = FileCache.isImageFile(file.path);
-      const isPdfFile = FileCache.isPdfFile(file.path);
-
-      // Check for Office documents and other binary files
-      const extension = file.path.split('.').pop()?.toLowerCase();
-      const isOfficeFile = ['xlsx', 'xls', 'docx', 'doc', 'pptx', 'ppt'].includes(extension || '');
-
-      if (isImageFile) {
-        console.log(`[FILE VIEWER][IMAGE DEBUG] Opening image file: ${file.path}`);
-      } else if (isPdfFile) {
-        console.log(`[FILE VIEWER] Opening PDF file: ${file.path}`);
-      } else if (isOfficeFile) {
-        console.log(`[FILE VIEWER] Opening Office document: ${file.path} (${extension})`);
-      }
-
-      // Clear previous state FIRST
+      // Clear previous state and set selected file
       clearSelectedFile();
-
-      // Set loading state immediately for UX
-      setIsLoadingContent(true);
       setSelectedFilePath(file.path);
 
-      // Set the loading ref to track current operation
-      loadingFileRef.current = file.path;
-
-      try {
-        // For PDFs and Office documents, always use blob content type
-        const contentType = isPdfFile || isOfficeFile ? 'blob' : FileCache.getContentTypeFromPath(file.path);
-
-        console.log(`[FILE VIEWER] Fetching content for ${file.path} with content type: ${contentType}`);
-
-        // Fetch content using the cached file utility
-        const content = await getCachedFile(
-          sandboxId,
-          file.path,
-          {
-            contentType: contentType as 'text' | 'blob' | 'json',
-            force: isPdfFile, // Force refresh for PDFs to ensure we get a blob
-            token: session?.access_token,
-          }
-        );
-
-
-
-        // Critical check: Ensure the file we just loaded is still the one selected
-        if (loadingFileRef.current !== file.path) {
-          console.log(
-            `[FILE VIEWER] Selection changed during loading, aborting. Loading: ${loadingFileRef.current}, Expected: ${file.path}`,
-          );
-          setIsLoadingContent(false);
-          return;
-        }
-
-        // Store raw content
-        setRawContent(content);
-
-        // Handle content based on type
-        if (typeof content === 'string') {
-          if (content.startsWith('blob:')) {
-            console.log(`[FILE VIEWER] Setting blob URL directly: ${content}`);
-            setTextContentForRenderer(null);
-            setBlobUrlForRenderer(content);
-          } else if (isPdfFile || isOfficeFile) {
-            // For PDFs and Office files, we should never get here as they should be handled as blobs
-            console.error(`[FILE VIEWER] Received binary file content as string instead of blob, length: ${content.length}`);
-            console.log(`[FILE VIEWER] First 100 chars of content: ${content.substring(0, 100)}`);
-
-            // Try one more time with explicit blob type and force refresh
-            console.log(`[FILE VIEWER] Retrying binary file fetch with explicit blob type and force refresh`);
-            const binaryBlob = await getCachedFile(
-              sandboxId,
-              file.path,
-              {
-                contentType: 'blob',
-                force: true,
-                token: session.access_token,
-              }
-            );
-
-            if (typeof binaryBlob === 'string' && binaryBlob.startsWith('blob:')) {
-              console.log(`[FILE VIEWER] Successfully got blob URL on retry: ${binaryBlob}`);
-              setTextContentForRenderer(null);
-              setBlobUrlForRenderer(binaryBlob);
-            } else {
-              throw new Error('Failed to load binary file in correct format after retry');
-            }
-          } else {
-            console.log(`[FILE VIEWER] Setting text content directly for renderer.`);
-            setTextContentForRenderer(content);
-            setBlobUrlForRenderer(null);
-          }
-        } else if (isBlob(content)) {
-          console.log(`[FILE VIEWER] Content is a Blob. Creating blob URL.`);
-          const url = URL.createObjectURL(content);
-          console.log(`[FILE VIEWER] Created blob URL: ${url}`);
-          setTextContentForRenderer(null);
-          setBlobUrlForRenderer(url);
-        }
-
-        setIsLoadingContent(false);
-      } catch (error) {
-        console.error(`[FILE VIEWER] Error loading file:`, error);
-        if (loadingFileRef.current === file.path) {
-          const errorMessage = error instanceof Error ? error.message : String(error);
-          if (errorMessage.includes('Authentication token required') ||
-            errorMessage.includes('Authentication token missing')) {
-            toast.error('Authentication error. Please refresh and login again.');
-            setContentError('Authentication error. Please refresh the page and login again.');
-          } else {
-            setContentError(`Failed to load file: ${errorMessage}`);
-          }
-          setIsLoadingContent(false);
-          setRawContent(null);
-        }
-      } finally {
-        if (loadingFileRef.current === file.path) {
-          loadingFileRef.current = null;
-        }
+      // Only reset file index if we're NOT in file list mode or the file is not in the list
+      if (!isFileListMode || !filePathList?.includes(file.path)) {
+        setCurrentFileIndex(-1);
       }
+
+      // The useFileContentQuery hook will automatically handle loading the content
+      // No need to manually fetch here - React Query will handle it
     },
     [
-      sandboxId,
       selectedFilePath,
-      rawContent,
       clearSelectedFile,
-      session?.access_token,
-      currentPath,
       normalizePath,
+      isFileListMode,
+      filePathList,
     ],
   );
 
@@ -347,74 +411,24 @@ export function FileViewerModal({
 
     // Skip repeated loads for the same path
     if (isLoadingFiles && currentNavigationRef.current === currentPath) {
-      console.log(`[FILE VIEWER] Already loading ${currentPath}, skipping duplicate load`);
       return;
     }
 
     // Track current navigation
     currentNavigationRef.current = currentPath;
-    console.log(`[FILE VIEWER] Starting navigation to: ${currentPath}`);
 
-    const loadTimeout = setTimeout(async () => {
-      setIsLoadingFiles(true);
-      console.log(
-        `[FILE VIEWER] useEffect[currentPath]: Triggered. Loading files for path: ${currentPath}`,
-      );
-      try {
-        // Log cache status
-        console.log(`[FILE VIEWER] Checking cache for directory listing at ${currentPath}`);
+    // React Query handles the loading state automatically
 
-        // Create a cache key for this directory listing
-        const dirCacheKey = `${sandboxId}:directory:${currentPath}`;
+    // After the first load, set isInitialLoad to false
+    if (isInitialLoad) {
+      setIsInitialLoad(false);
+    }
 
-        // Check if we have this directory listing cached
-        let filesData;
-        if (FileCache.has(dirCacheKey) && !isInitialLoad) {
-          console.log(`[FILE VIEWER] Using cached directory listing for ${currentPath}`);
-          filesData = FileCache.get(dirCacheKey);
-        } else {
-          console.log(`[FILE VIEWER] Cache miss, fetching directory listing from API for ${currentPath}`);
-          filesData = await listSandboxFiles(sandboxId, currentPath);
-
-          // Cache the directory listing
-          if (filesData && Array.isArray(filesData)) {
-            console.log(`[FILE VIEWER] Caching directory listing: ${filesData.length} files`);
-            FileCache.set(dirCacheKey, filesData);
-          }
-        }
-
-        // Only update files if we're still on the same path
-        if (currentNavigationRef.current === currentPath) {
-          console.log(
-            `[FILE VIEWER] useEffect[currentPath]: Got ${filesData?.length || 0} files for ${currentPath}`,
-          );
-          setFiles(filesData || []);
-        } else {
-          console.log(`[FILE VIEWER] Path changed during loading, aborting file update for ${currentPath}`);
-        }
-
-        // After the first load, set isInitialLoad to false
-        if (isInitialLoad) {
-          setIsInitialLoad(false);
-        }
-      } catch (error) {
-        console.error('Failed to load files:', error);
-        toast.error('Failed to load files');
-        if (currentNavigationRef.current === currentPath) {
-          setFiles([]);
-        }
-      } finally {
-        // Only clear loading state if we're still working with the current path
-        if (currentNavigationRef.current === currentPath) {
-          setIsLoadingFiles(false);
-          console.log(`[FILE VIEWER] Completed loading for: ${currentPath}`);
-        }
-      }
-    }, 50); // Short delay to allow state updates to settle
-
-    return () => clearTimeout(loadTimeout);
-    // Dependency: Only re-run when open, sandboxId, currentPath changes
-  }, [open, sandboxId, currentPath, isInitialLoad, isLoadingFiles]);
+    // Handle any loading errors
+    if (filesError) {
+      toast.error('Failed to load files');
+    }
+  }, [open, sandboxId, currentPath, isInitialLoad, isLoadingFiles, filesError]);
 
   // Helper function to navigate to a folder
   const navigateToFolder = useCallback(
@@ -423,14 +437,6 @@ export function FileViewerModal({
 
       // Ensure the path is properly normalized
       const normalizedPath = normalizePath(folder.path);
-
-      // Always navigate to the folder to ensure breadcrumbs update correctly
-      console.log(
-        `[FILE VIEWER] Navigating to folder: ${folder.path} → ${normalizedPath}`,
-      );
-      console.log(
-        `[FILE VIEWER] Current path before navigation: ${currentPath}`,
-      );
 
       // Clear selected file when navigating
       clearSelectedFile();
@@ -446,11 +452,6 @@ export function FileViewerModal({
     (path: string) => {
       const normalizedPath = normalizePath(path);
 
-      // Always navigate when clicking breadcrumbs to ensure proper update
-      console.log(
-        `[FILE VIEWER] Navigating to breadcrumb path: ${path} → ${normalizedPath}`,
-      );
-
       // Clear selected file and set path
       clearSelectedFile();
       setCurrentPath(normalizedPath);
@@ -460,9 +461,6 @@ export function FileViewerModal({
 
   // Helper function to navigate to home
   const navigateHome = useCallback(() => {
-    // Always navigate home when clicked to ensure consistent behavior
-    console.log('[FILE VIEWER] Navigating home from:', currentPath);
-
     clearSelectedFile();
     setCurrentPath('/workspace');
   }, [clearSelectedFile, currentPath]);
@@ -493,7 +491,7 @@ export function FileViewerModal({
   );
 
   // Add a helper to directly interact with the raw cache
-  const directlyAccessCache = useCallback(
+  const _directlyAccessCache = useCallback(
     (filePath: string): {
       found: boolean;
       content: any;
@@ -510,30 +508,70 @@ export function FileViewerModal({
 
       // Create cache key with detected content type
       const cacheKey = `${sandboxId}:${normalizedPath}:${detectedContentType}`;
-      console.log(`[FILE VIEWER] Checking cache for key: ${cacheKey}`);
 
       if (FileCache.has(cacheKey)) {
         const cachedContent = FileCache.get(cacheKey);
-        console.log(`[FILE VIEWER] Direct cache hit for ${normalizedPath} (${detectedContentType})`);
         return { found: true, content: cachedContent, contentType: detectedContentType };
       }
 
-      console.log(`[FILE VIEWER] Cache miss for key: ${cacheKey}`);
       return { found: false, content: null, contentType: detectedContentType };
     },
     [sandboxId],
   );
 
+  // Navigation functions for file list mode
+  const navigateToFileByIndex = useCallback((index: number) => {
+    if (!isFileListMode || !filePathList || index < 0 || index >= filePathList.length) {
+      return;
+    }
+
+    const filePath = filePathList[index];
+    setCurrentFileIndex(index);
+
+    // Create a temporary FileInfo object for the file
+    const fileName = filePath.split('/').pop() || '';
+    const normalizedPath = normalizePath(filePath);
+
+    const fileInfo: FileInfo = {
+      name: fileName,
+      path: normalizedPath,
+      is_dir: false,
+      size: 0,
+      mod_time: new Date().toISOString(),
+    };
+
+    openFile(fileInfo);
+  }, [isFileListMode, filePathList, normalizePath, openFile]);
+
+  const navigatePrevious = useCallback(() => {
+    if (currentFileIndex > 0) {
+      navigateToFileByIndex(currentFileIndex - 1);
+    }
+  }, [currentFileIndex, navigateToFileByIndex]);
+
+  const navigateNext = useCallback(() => {
+    if (isFileListMode && filePathList && currentFileIndex < filePathList.length - 1) {
+      navigateToFileByIndex(currentFileIndex + 1);
+    }
+  }, [currentFileIndex, isFileListMode, filePathList, navigateToFileByIndex]);
+
   // Handle initial file path - Runs ONLY ONCE on open if initialFilePath is provided
   useEffect(() => {
     // Only run if modal is open, initial path is provided, AND it hasn't been processed yet
-    if (open && initialFilePath && !initialPathProcessed) {
-      console.log(
-        `[FILE VIEWER] useEffect[initialFilePath]: Processing initial path: ${initialFilePath}`,
-      );
+    if (open && safeInitialFilePath && !initialPathProcessed) {
+      // If we're in file list mode, find the index and navigate to it
+      if (isFileListMode && filePathList) {
+        const normalizedInitialPath = normalizePath(safeInitialFilePath);
+        const index = filePathList.findIndex(path => normalizePath(path) === normalizedInitialPath);
+        if (index !== -1) {
+          navigateToFileByIndex(index);
+          setInitialPathProcessed(true);
+          return;
+        }
+      }
 
       // Normalize the initial path
-      const fullPath = normalizePath(initialFilePath);
+      const fullPath = normalizePath(safeInitialFilePath);
       const lastSlashIndex = fullPath.lastIndexOf('/');
       const directoryPath =
         lastSlashIndex > 0
@@ -542,23 +580,14 @@ export function FileViewerModal({
       const fileName =
         lastSlashIndex >= 0 ? fullPath.substring(lastSlashIndex + 1) : '';
 
-      console.log(
-        `[FILE VIEWER] useEffect[initialFilePath]: Normalized Path: ${fullPath}, Directory: ${directoryPath}, File: ${fileName}`,
-      );
-
       // Set the current path to the target directory
       // This will trigger the other useEffect to load files for this directory
       if (currentPath !== directoryPath) {
-        console.log(
-          `[FILE VIEWER] useEffect[initialFilePath]: Setting current path to ${directoryPath}`,
-        );
         setCurrentPath(directoryPath);
       }
 
       // Try to load the file directly from cache if possible
-      if (initialFilePath) {
-        console.log(`[FILE VIEWER] Attempting to load initial file directly from cache: ${initialFilePath}`);
-
+      if (safeInitialFilePath) {
         // Create a temporary FileInfo object for the initial file
         const initialFile: FileInfo = {
           name: fileName,
@@ -569,7 +598,6 @@ export function FileViewerModal({
         };
 
         // Now that openFile is defined first, we can call it directly
-        console.log(`[FILE VIEWER] Opening initial file: ${fullPath}`);
         openFile(initialFile);
       }
 
@@ -577,163 +605,114 @@ export function FileViewerModal({
       setInitialPathProcessed(true);
     } else if (!open) {
       // Reset the processed flag when the modal closes
-      console.log(
-        '[FILE VIEWER] useEffect[initialFilePath]: Modal closed, resetting initialPathProcessed flag.',
-      );
       setInitialPathProcessed(false);
     }
-  }, [open, initialFilePath, initialPathProcessed, normalizePath, currentPath, openFile]);
-
-  // Fix the useEffect that's causing infinite rendering by using a stable reference check
-  // Replace the problematic useEffect around line 369
-  useEffect(() => {
-    // Only create a blob URL if we have raw content that is a Blob AND we don't already have a blob URL
-    // This prevents the infinite loop of creating URLs → triggering renders → creating more URLs
-    if (rawContent && isBlob(rawContent) && selectedFilePath && !blobUrlForRenderer) {
-      // Check if this is an image file
-      const isImageFile = selectedFilePath.match(/\.(png|jpg|jpeg|gif|svg|webp|bmp)$/i);
-
-      // Create a blob URL for binary content
-      const url = URL.createObjectURL(rawContent);
-
-      if (isImageFile) {
-        console.log(`[FILE VIEWER][IMAGE DEBUG] Created new blob URL: ${url} for image: ${selectedFilePath}`);
-        console.log(`[FILE VIEWER][IMAGE DEBUG] Image blob size: ${rawContent.size} bytes, type: ${rawContent.type}`);
-      } else {
-        console.log(`[FILE VIEWER] Created blob URL: ${url} for ${selectedFilePath}`);
-      }
-
-      setBlobUrlForRenderer(url);
-    }
-
-    // Clean up previous URL when component unmounts or URL changes
-    return () => {
-      if (blobUrlForRenderer) {
-        console.log(`[FILE VIEWER] Revoking blob URL on cleanup: ${blobUrlForRenderer}`);
-        URL.revokeObjectURL(blobUrlForRenderer);
-      }
-    };
-  }, [rawContent, selectedFilePath, isBlob, blobUrlForRenderer]);
+  }, [open, safeInitialFilePath, initialPathProcessed, normalizePath, currentPath, openFile, isFileListMode, filePathList, navigateToFileByIndex]);
 
   // Effect to handle cached file content updates
   useEffect(() => {
     if (!selectedFilePath) return;
 
-    // Only update loading state if it's different from what we expect
-    if (isCachedFileLoading && !isLoadingContent) {
-      setIsLoadingContent(true);
-    } else if (!isCachedFileLoading && isLoadingContent) {
-      if (cachedFileError) {
-        setContentError(`Failed to load file: ${cachedFileError.message}`);
-      } else if (cachedFileContent !== null) {
-        console.log(`[FILE VIEWER] Received cached content type: ${typeof cachedFileContent}`);
-        console.log(`[FILE VIEWER] Received cached content is Blob: ${isBlob(cachedFileContent)}`);
-        console.log(`[FILE VIEWER] Received cached content is string: ${typeof cachedFileContent === 'string'}`);
-        console.log(`[FILE VIEWER] Received cached content starts with blob: ${typeof cachedFileContent === 'string' && cachedFileContent.startsWith('blob:')}`);
-
-        // Check if this is a PDF file or Office file
-        const isPdfFile = FileCache.isPdfFile(selectedFilePath);
-        const extension = selectedFilePath.split('.').pop()?.toLowerCase();
-        const isOfficeFile = ['xlsx', 'xls', 'docx', 'doc', 'pptx', 'ppt'].includes(extension || '');
-
-        if (isPdfFile || isOfficeFile) {
-          // For PDFs and Office files, handle specially to ensure it's always a blob URL
-          if (typeof cachedFileContent === 'string' && cachedFileContent.startsWith('blob:')) {
-            console.log(`[FILE VIEWER] Using existing blob URL for binary file`);
-            setBlobUrlForRenderer(cachedFileContent);
-            setTextContentForRenderer(null);
-          } else if (isBlob(cachedFileContent)) {
-            console.log(`[FILE VIEWER] Creating new blob URL from cached binary blob`);
-            const url = URL.createObjectURL(cachedFileContent);
-            setBlobUrlForRenderer(url);
-            setTextContentForRenderer(null);
-          } else {
-            // If we somehow got text content for a binary file, force a refresh with blob type
-            console.log(`[FILE VIEWER] Invalid binary content type, forcing refresh with blob type`);
-
-            // Force refresh with blob type
-            (async () => {
-              try {
-                console.log(`[FILE VIEWER] Explicitly fetching binary file as blob`);
-
-                const binaryContent = await getCachedFile(
-                  sandboxId,
-                  selectedFilePath,
-                  {
-                    contentType: 'blob',
-                    force: true,
-                    token: session?.access_token
-                  }
-                );
-
-                if (typeof binaryContent === 'string' && binaryContent.startsWith('blob:')) {
-                  console.log(`[FILE VIEWER] Received correct blob URL for binary file: ${binaryContent}`);
-                  setBlobUrlForRenderer(binaryContent);
-                  setTextContentForRenderer(null);
-                } else {
-                  console.error(`[FILE VIEWER] Failed to get correct binary format after retry`);
-                  setContentError('Failed to load file in correct format');
-                }
-              } catch (err) {
-                console.error(`[FILE VIEWER] Error loading binary file:`, err);
-                setContentError(`Failed to load file: ${err instanceof Error ? err.message : String(err)}`);
-              } finally {
-                setIsLoadingContent(false);
-              }
-            })();
-
-            return; // Skip the rest since we're handling loading manually
-          }
-        } else {
-          // For non-PDF files, handle as before
-          setRawContent(cachedFileContent);
-
-          if (typeof cachedFileContent === 'string') {
-            if (cachedFileContent.startsWith('blob:')) {
-              setTextContentForRenderer(null);
-              setBlobUrlForRenderer(cachedFileContent);
-            } else {
-              setTextContentForRenderer(cachedFileContent);
-              setBlobUrlForRenderer(null);
-            }
-          } else if (cachedFileContent && isBlob(cachedFileContent)) {
-            const url = URL.createObjectURL(cachedFileContent);
-            setTextContentForRenderer(null);
-            setBlobUrlForRenderer(url);
-          }
-        }
-      }
-      setIsLoadingContent(false);
+    // Handle errors
+    if (cachedFileError) {
+      setContentError(`Failed to load file: ${cachedFileError.message}`);
+      return;
     }
-  }, [selectedFilePath, cachedFileContent, isCachedFileLoading, cachedFileError, isLoadingContent, isBlob, openFile, sandboxId, session?.access_token]);
+
+    // Handle successful content
+    if (cachedFileContent !== null && !isCachedFileLoading) {
+      // Check file type to determine proper handling
+      const isImageFile = FileCache.isImageFile(selectedFilePath);
+      const isPdfFile = FileCache.isPdfFile(selectedFilePath);
+      const extension = selectedFilePath.split('.').pop()?.toLowerCase();
+      const isOfficeFile = ['xlsx', 'xls', 'docx', 'doc', 'pptx', 'ppt'].includes(extension || '');
+      const isBinaryFile = isImageFile || isPdfFile || isOfficeFile;
+
+      // Store raw content
+      setRawContent(cachedFileContent);
+
+      // Handle content based on type and file extension
+      if (typeof cachedFileContent === 'string') {
+        if (cachedFileContent.startsWith('blob:')) {
+          // It's already a blob URL
+          setTextContentForRenderer(null);
+          setBlobUrlForRenderer(cachedFileContent);
+        } else if (isBinaryFile) {
+          // Binary files should not be displayed as text, even if they come as strings
+          setTextContentForRenderer(null);
+          setBlobUrlForRenderer(null);
+          setContentError('Binary file received in incorrect format. Please try refreshing.');
+        } else {
+          // Actual text content for text files
+          setTextContentForRenderer(cachedFileContent);
+          setBlobUrlForRenderer(null);
+        }
+      } else if (isBlob(cachedFileContent)) {
+        // Create blob URL for binary content
+        const url = URL.createObjectURL(cachedFileContent);
+        setBlobUrlForRenderer(url);
+        setTextContentForRenderer(null);
+      } else if (typeof cachedFileContent === 'object') {
+        // convert to json string if file_contents is a object
+        const jsonString = JSON.stringify(cachedFileContent, null, 2);
+        setTextContentForRenderer(jsonString);
+        setBlobUrlForRenderer(null);
+      }
+      else {
+        // Unknown content type
+        setTextContentForRenderer(null);
+        setBlobUrlForRenderer(null);
+        setContentError('Unknown content type received.');
+      }
+    }
+  }, [selectedFilePath, cachedFileContent, isCachedFileLoading, cachedFileError]);
 
   // Modify the cleanup effect to respect active downloads
   useEffect(() => {
     return () => {
       if (blobUrlForRenderer && !isDownloading && !activeDownloadUrls.current.has(blobUrlForRenderer)) {
-        console.log(`[FILE VIEWER] Revoking blob URL on cleanup: ${blobUrlForRenderer}`);
         URL.revokeObjectURL(blobUrlForRenderer);
       }
     };
   }, [blobUrlForRenderer, isDownloading]);
 
-  // Modify handleOpenChange to respect active downloads
+  // Keyboard navigation
+  useEffect(() => {
+    if (!open || !isFileListMode) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        navigatePrevious();
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        navigateNext();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [open, isFileListMode, navigatePrevious, navigateNext]);
+
+  // Handle modal close
   const handleOpenChange = useCallback(
     (open: boolean) => {
       if (!open) {
-        console.log('[FILE VIEWER] handleOpenChange: Modal closing, resetting state.');
-
         // Only revoke if not downloading and not an active download URL
         if (blobUrlForRenderer && !isDownloading && !activeDownloadUrls.current.has(blobUrlForRenderer)) {
-          console.log(`[FILE VIEWER] Manually revoking blob URL on modal close: ${blobUrlForRenderer}`);
           URL.revokeObjectURL(blobUrlForRenderer);
         }
 
         clearSelectedFile();
         setCurrentPath('/workspace');
-        setFiles([]);
+        // React Query will handle clearing the files data
         setInitialPathProcessed(false);
         setIsInitialLoad(true);
+        setCurrentFileIndex(-1); // Reset file index
+
+        // Reset download all state
+        setIsDownloadingAll(false);
+        setDownloadProgress(null);
       }
       onOpenChange(open);
     },
@@ -744,6 +723,42 @@ export function FileViewerModal({
   const isMarkdownFile = useCallback((filePath: string | null) => {
     return filePath ? filePath.toLowerCase().endsWith('.md') : false;
   }, []);
+
+  // Copy functions
+  const copyToClipboard = useCallback(async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch (err) {
+      return false;
+    }
+  }, []);
+
+  const handleCopyPath = useCallback(async () => {
+    if (!textContentForRenderer) return;
+    
+    setIsCopyingPath(true);
+    const success = await copyToClipboard(textContentForRenderer);
+    if (success) {
+      toast.success('File content copied to clipboard');
+    } else {
+      toast.error('Failed to copy file content');
+    }
+    setTimeout(() => setIsCopyingPath(false), 500);
+  }, [textContentForRenderer, copyToClipboard]);
+
+  const handleCopyContent = useCallback(async () => {
+    if (!textContentForRenderer) return;
+    
+    setIsCopyingContent(true);
+    const success = await copyToClipboard(textContentForRenderer);
+    if (success) {
+      toast.success('File content copied to clipboard');
+    } else {
+      toast.error('Failed to copy file content');
+    }
+    setTimeout(() => setIsCopyingContent(false), 500);
+  }, [textContentForRenderer, copyToClipboard]);
 
   // Handle PDF export for markdown files
   const handleExportPdf = useCallback(
@@ -772,7 +787,7 @@ export function FileViewerModal({
         }
 
         // Get the base URL for resolving relative URLs
-        const baseUrl = window.location.origin;
+        const _baseUrl = window.location.origin;
 
         // Generate HTML content
         const fileName = selectedFilePath.split('/').pop() || 'document';
@@ -909,7 +924,6 @@ export function FileViewerModal({
 
         toast.success('PDF export initiated. Check your print dialog.');
       } catch (error) {
-        console.error('PDF export failed:', error);
         toast.error(
           `Failed to export PDF: ${error instanceof Error ? error.message : String(error)}`,
         );
@@ -979,7 +993,6 @@ export function FileViewerModal({
       downloadBlob(finalBlob, fileName);
 
     } catch (error) {
-      console.error('[FILE VIEWER] Download error:', error);
       toast.error(`Failed to download file: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       setIsDownloading(false);
@@ -1013,6 +1026,8 @@ export function FileViewerModal({
     }
   }, []);
 
+
+
   // Process uploaded file - Define after helpers
   const processUpload = useCallback(
     async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -1022,9 +1037,15 @@ export function FileViewerModal({
       setIsUploading(true);
 
       try {
+        // Normalize filename to NFC
+        const normalizedName = normalizeFilenameToNFC(file.name);
+        const uploadPath = `${currentPath}/${normalizedName}`;
+
         const formData = new FormData();
-        formData.append('file', file);
-        formData.append('path', `${currentPath}/${file.name}`);
+        // If the filename was normalized, append with the normalized name in the field name
+        // The server will use the path parameter for the actual filename
+        formData.append('file', file, normalizedName);
+        formData.append('path', uploadPath);
 
         const supabase = createClient();
         const {
@@ -1051,13 +1072,11 @@ export function FileViewerModal({
           throw new Error(error || 'Upload failed');
         }
 
-        // Reload the file list
-        const filesData = await listSandboxFiles(sandboxId, currentPath);
-        setFiles(filesData);
+        // Reload the file list using React Query
+        await refetchFiles();
 
-        toast.success(`Uploaded: ${file.name}`);
+        toast.success(`Uploaded: ${normalizedName}`);
       } catch (error) {
-        console.error('Upload failed:', error);
         toast.error(
           `Upload failed: ${error instanceof Error ? error.message : String(error)}`,
         );
@@ -1066,17 +1085,75 @@ export function FileViewerModal({
         if (event.target) event.target.value = '';
       }
     },
-    [currentPath, sandboxId],
+    [currentPath, sandboxId, refetchFiles],
   );
+
+  // Reset file list mode when modal opens without filePathList
+  useEffect(() => {
+    if (open && !filePathList) {
+      setCurrentFileIndex(-1);
+    }
+  }, [open, filePathList]);
 
   // --- Render --- //
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[90vw] md:max-w-[1200px] w-[95vw] h-[90vh] max-h-[900px] flex flex-col p-0 gap-0 overflow-hidden">
-        <DialogHeader className="px-4 py-2 border-b flex-shrink-0">
+        <DialogHeader className="px-4 py-2 border-b flex-shrink-0 flex flex-row gap-4 items-center">
           <DialogTitle className="text-lg font-semibold">
             Workspace Files
           </DialogTitle>
+
+          {/* Download progress display */}
+          {downloadProgress && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="flex items-center gap-1">
+                <Loader className="h-3 w-3 animate-spin" />
+                <span>
+                  {downloadProgress.total > 0
+                    ? `${downloadProgress.current}/${downloadProgress.total}`
+                    : 'Preparing...'
+                  }
+                </span>
+              </div>
+              <span className="max-w-[200px] truncate">
+                {downloadProgress.currentFile}
+              </span>
+            </div>
+          )}
+
+          <div className="flex items-center gap-2">
+            {/* Navigation arrows for file list mode */}
+            {(() => {
+              return isFileListMode && selectedFilePath && filePathList && filePathList.length > 1 && currentFileIndex >= 0;
+            })() && (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={navigatePrevious}
+                    disabled={currentFileIndex <= 0}
+                    className="h-8 w-8 p-0"
+                    title="Previous file (←)"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <div className="text-xs text-muted-foreground px-1">
+                    {currentFileIndex + 1} / {(filePathList?.length || 0)}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={navigateNext}
+                    disabled={currentFileIndex >= (filePathList?.length || 0) - 1}
+                    className="h-8 w-8 p-0"
+                    title="Next file (→)"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </>
+              )}
+          </div>
         </DialogHeader>
 
         {/* Navigation Bar */}
@@ -1103,7 +1180,7 @@ export function FileViewerModal({
 
             {currentPath !== '/workspace' && (
               <>
-                {getBreadcrumbSegments(currentPath).map((segment, index) => (
+                {getBreadcrumbSegments(currentPath).map((segment) => (
                   <Fragment key={segment.path}>
                     <ChevronRight className="h-4 w-4 mx-1 text-muted-foreground opacity-50 flex-shrink-0" />
                     <Button
@@ -1134,11 +1211,29 @@ export function FileViewerModal({
           <div className="flex items-center gap-2 flex-shrink-0">
             {selectedFilePath && (
               <>
+                {/* Copy content button - only show for text files */}
+                {textContentForRenderer && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCopyContent}
+                    disabled={isCopyingContent || isCachedFileLoading}
+                    className="h-8 gap-1"
+                  >
+                    {isCopyingContent ? (
+                      <Check className="h-4 w-4" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                    <span className="hidden sm:inline">Copy</span>
+                  </Button>
+                )}
+
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={handleDownload}
-                  disabled={isDownloading || isLoadingContent}
+                  disabled={isDownloading || isCachedFileLoading}
                   className="h-8 gap-1"
                 >
                   {isDownloading ? (
@@ -1158,7 +1253,7 @@ export function FileViewerModal({
                         size="sm"
                         disabled={
                           isExportingPdf ||
-                          isLoadingContent ||
+                          isCachedFileLoading ||
                           contentError !== null
                         }
                         className="h-8 gap-1"
@@ -1192,20 +1287,40 @@ export function FileViewerModal({
             )}
 
             {!selectedFilePath && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleUpload}
-                disabled={isUploading}
-                className="h-8 gap-1"
-              >
-                {isUploading ? (
-                  <Loader className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Upload className="h-4 w-4" />
+              <>
+                {/* Download All button - only show when in home directory */}
+                {currentPath === '/workspace' && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleDownloadAll}
+                    disabled={isDownloadingAll || isLoadingFiles}
+                    className="h-8 gap-1"
+                  >
+                    {isDownloadingAll ? (
+                      <Loader className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Archive className="h-4 w-4" />
+                    )}
+                    <span className="hidden sm:inline">Download All</span>
+                  </Button>
                 )}
-                <span className="hidden sm:inline">Upload</span>
-              </Button>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleUpload}
+                  disabled={isUploading}
+                  className="h-8 gap-1"
+                >
+                  {isUploading ? (
+                    <Loader className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Upload className="h-4 w-4" />
+                  )}
+                  <span className="hidden sm:inline">Upload</span>
+                </Button>
+              </>
             )}
 
             <input
@@ -1223,7 +1338,7 @@ export function FileViewerModal({
           {selectedFilePath ? (
             /* File Viewer */
             <div className="h-full w-full overflow-auto">
-              {isLoadingContent ? (
+              {isCachedFileLoading ? (
                 <div className="h-full w-full flex flex-col items-center justify-center">
                   <Loader className="h-8 w-8 animate-spin text-primary mb-3" />
                   <p className="text-sm text-muted-foreground">
@@ -1265,7 +1380,6 @@ export function FileViewerModal({
                       <Button
                         onClick={() => {
                           setContentError(null);
-                          setIsLoadingContent(true);
                           openFile({
                             path: selectedFilePath,
                             name: selectedFilePath.split('/').pop() || '',
@@ -1290,19 +1404,41 @@ export function FileViewerModal({
                 </div>
               ) : (
                 <div className="h-full w-full relative">
-                  <FileRenderer
-                    key={selectedFilePath}
-                    content={textContentForRenderer}
-                    binaryUrl={blobUrlForRenderer}
-                    fileName={selectedFilePath}
-                    className="h-full w-full"
-                    project={projectWithSandbox}
-                    markdownRef={
-                      isMarkdownFile(selectedFilePath) ? markdownRef : undefined
+                  {(() => {
+                    // Safety check: don't render text content for binary files
+                    const isImageFile = FileCache.isImageFile(selectedFilePath);
+                    const isPdfFile = FileCache.isPdfFile(selectedFilePath);
+                    const extension = selectedFilePath?.split('.').pop()?.toLowerCase();
+                    const isOfficeFile = ['xlsx', 'xls', 'docx', 'doc', 'pptx', 'ppt'].includes(extension || '');
+                    const isBinaryFile = isImageFile || isPdfFile || isOfficeFile;
+
+                    // For binary files, only render if we have a blob URL
+                    if (isBinaryFile && !blobUrlForRenderer) {
+                      return (
+                        <div className="h-full w-full flex items-center justify-center">
+                          <div className="text-sm text-muted-foreground">
+                            Loading {isPdfFile ? 'PDF' : isImageFile ? 'image' : 'file'}...
+                          </div>
+                        </div>
+                      );
                     }
-                    onDownload={handleDownload}
-                    isDownloading={isDownloading}
-                  />
+
+                    return (
+                      <FileRenderer
+                        key={selectedFilePath}
+                        content={isBinaryFile ? null : textContentForRenderer}
+                        binaryUrl={blobUrlForRenderer}
+                        fileName={selectedFilePath}
+                        className="h-full w-full"
+                        project={projectWithSandbox}
+                        markdownRef={
+                          isMarkdownFile(selectedFilePath) ? markdownRef : undefined
+                        }
+                        onDownload={handleDownload}
+                        isDownloading={isDownloading}
+                      />
+                    );
+                  })()}
                 </div>
               )}
             </div>
@@ -1326,15 +1462,12 @@ export function FileViewerModal({
                     {files.map((file) => (
                       <button
                         key={file.path}
-                        className={`flex flex-col items-center p-3 rounded-lg border hover:bg-muted/50 transition-colors ${selectedFilePath === file.path
+                        className={`flex flex-col items-center p-3 rounded-2xl border hover:bg-muted/50 transition-colors ${selectedFilePath === file.path
                           ? 'bg-muted border-primary/20'
                           : ''
                           }`}
                         onClick={() => {
                           if (file.is_dir) {
-                            console.log(
-                              `[FILE VIEWER] Folder clicked: ${file.name}, path: ${file.path}`,
-                            );
                             navigateToFolder(file);
                           } else {
                             openFile(file);

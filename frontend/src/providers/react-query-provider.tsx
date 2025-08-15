@@ -7,6 +7,8 @@ import {
   QueryClientProvider,
 } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import { handleApiError } from '@/lib/error-handler';
+import { isLocalMode } from '@/lib/config';
 
 export function ReactQueryProvider({
   children,
@@ -23,6 +25,7 @@ export function ReactQueryProvider({
             staleTime: 20 * 1000,
             gcTime: 5 * 60 * 1000,
             retry: (failureCount, error: any) => {
+              if (error?.status >= 400 && error?.status < 500) return false;
               if (error?.status === 404) return false;
               return failureCount < 3;
             },
@@ -31,17 +34,28 @@ export function ReactQueryProvider({
             refetchOnReconnect: 'always',
           },
           mutations: {
-            retry: 1,
+            retry: (failureCount, error: any) => {
+              if (error?.status >= 400 && error?.status < 500) return false;
+              return failureCount < 1;
+            },
+            onError: (error: any, variables: any, context: any) => {
+              handleApiError(error, {
+                operation: 'perform action',
+                silent: false,
+              });
+            },
           },
         },
       }),
   );
 
+  const isLocal = isLocalMode();
+
   return (
     <QueryClientProvider client={queryClient}>
       <HydrationBoundary state={dehydratedState}>
         {children}
-        {process.env.NODE_ENV !== 'production' && (
+        {isLocal && (
           <ReactQueryDevtools initialIsOpen={false} />
         )}
       </HydrationBoundary>

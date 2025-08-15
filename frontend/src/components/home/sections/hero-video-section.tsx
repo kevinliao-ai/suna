@@ -1,4 +1,5 @@
 import { HeroVideoDialog } from '@/components/home/ui/hero-video-dialog';
+const AniSoraHeroVideo = `/AniSoraHeroVideo.mp4`;
 
 export function HeroVideoSection() {
   return (
@@ -7,16 +8,16 @@ export function HeroVideoSection() {
         <HeroVideoDialog
           className="block dark:hidden"
           animationStyle="from-center"
-          videoSrc="https://www.youtube.com/embed/Jnxq0osSg2c?si=k8ddEM8h8lver20s"
-          thumbnailSrc="/thumbnail-light.png"
-          thumbnailAlt="Hero Video"
+          videoSrc={AniSoraHeroVideo}
+          thumbnailSrc="/examples/000000(225).gif"
+          thumbnailAlt="Video Demos"
         />
         <HeroVideoDialog
           className="hidden dark:block"
           animationStyle="from-center"
-          videoSrc="https://www.youtube.com/embed/Jnxq0osSg2c?si=k8ddEM8h8lver20s"
-          thumbnailSrc="/thumbnail-dark.png"
-          thumbnailAlt="Hero Video"
+          videoSrc={AniSoraHeroVideo}
+          thumbnailSrc="/examples/000000(225).gif"
+          thumbnailAlt="Video Demos"
         />
       </div>
     </div>

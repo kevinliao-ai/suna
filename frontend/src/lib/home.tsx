@@ -30,6 +30,7 @@ export const Highlight = ({
 export const BLUR_FADE_DELAY = 0.15;
 
 interface UpgradePlan {
+  /** @deprecated */
   hours: string;
   price: string;
   stripePriceId: string;
@@ -38,35 +39,42 @@ interface UpgradePlan {
 export interface PricingTier {
   name: string;
   price: string;
+  yearlyPrice?: string; // Add yearly price support
   description: string;
   buttonText: string;
   buttonColor: string;
   isPopular: boolean;
+  /** @deprecated */
   hours: string;
   features: string[];
   stripePriceId: string;
+  yearlyStripePriceId?: string; // Add yearly price ID support
+  monthlyCommitmentStripePriceId?: string; // Add monthly commitment with yearly commitment support
   upgradePlans: UpgradePlan[];
+  hidden?: boolean; // Optional property to hide plans from display while keeping them in code
+  billingPeriod?: 'monthly' | 'yearly'; // Add billing period support
+  originalYearlyPrice?: string; // For showing crossed-out price
+  discountPercentage?: number; // For showing discount badge
 }
 
 export const siteConfig = {
-  name: 'Kortix Suna',
-  description: 'The Generalist AI Agent that can act on your behalf.',
+  name: 'AniSora AI',
+  description: 'AniSora AI is a powerful open-source AI model for generating anime-style videos.',
   cta: 'Start Free',
   url: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
-  keywords: ['AI Agent', 'Generalist AI', 'Open Source AI', 'Autonomous Agent'],
+  keywords: ['AI Agent', 'anime videos', 'anime-style videos', 'generate anime videos', 'Open Source AI', 'Autonomous Agent',  'Generalist AI'],
   links: {
-    email: 'support@kortix.ai',
-    twitter: 'https://x.com/kortixai',
-    discord: 'https://discord.gg/kortixai',
-    github: 'https://github.com/Kortix-ai/Suna',
-    instagram: 'https://instagram.com/kortixai',
+    email: 'liaokuanya0907@gmail.com',
+    discord: 'https://discord.gg/anisora',
+    github: 'https://github.com/bilibili/Index-anisora',
   },
   nav: {
     links: [
       { id: 1, name: 'Home', href: '#hero' },
-      { id: 2, name: 'Use Cases', href: '#use-cases' },
+      { id: 2, name: 'Use Cases', href: '#showcase' },
       { id: 3, name: 'Open Source', href: '#open-source' },
-      { id: 4, name: 'Pricing', href: '#pricing' },
+      { id: 4, name: 'FAQ', href: '#faq' },
+      // { id: 5, name: 'Pricing', href: '#pricing' },
     ],
   },
   hero: {
@@ -97,83 +105,196 @@ export const siteConfig = {
       </svg>
     ),
     badge: '100% OPEN SOURCE',
-    githubUrl: 'https://github.com/kortix-ai/suna',
-    title: 'Suna, the AI Employee.',
-    description:
-      'Suna by Kortix – is a generalist AI Agent that acts on your behalf.',
-    inputPlaceholder: 'Ask Suna to...',
+    githubUrl: 'https://github.com/bilibili/Index-anisora',
+    title: 'AniSora, the AI Employee.',
+    description:'the most powerful open-source animated video generation model.',
+    inputPlaceholder: 'Ask AniSora to...',
   },
   cloudPricingItems: [
     {
       name: 'Free',
       price: '$0',
-      description: 'Get started with',
-      buttonText: 'Try Free',
+      description: 'Perfect for getting started',
+      buttonText: 'Start Free',
       buttonColor: 'bg-secondary text-white',
       isPopular: false,
+      /** @deprecated */
       hours: '60 min',
-      features: ['Public Projects', 'Basic Model (Limited capabilities)'],
+      features: [
+        '$5 free AI tokens included',
+        '2 custom agents',
+        'Public projects',
+        'Basic Models',
+        'Community support',
+      ],
       stripePriceId: config.SUBSCRIPTION_TIERS.FREE.priceId,
       upgradePlans: [],
     },
     {
-      name: 'Pro',
+      name: 'Plus',
       price: '$20',
-      description: 'Everything in Free, plus:',
-      buttonText: 'Try Free',
+      yearlyPrice: '$204',
+      originalYearlyPrice: '$240',
+      discountPercentage: 15,
+      description: 'Best for individuals and small teams',
+      buttonText: 'Start Free',
       buttonColor: 'bg-primary text-white dark:text-black',
       isPopular: true,
+      /** @deprecated */
       hours: '2 hours',
       features: [
-        '2 hours',
+        '$20 AI token credits/month',
+        '5 custom agents',
         'Private projects',
-        'Access to intelligent Model (Full Suna)',
+        'Premium AI Models',
+        'Community support',
       ],
       stripePriceId: config.SUBSCRIPTION_TIERS.TIER_2_20.priceId,
+      yearlyStripePriceId: config.SUBSCRIPTION_TIERS.TIER_2_20_YEARLY.priceId,
+      monthlyCommitmentStripePriceId: config.SUBSCRIPTION_TIERS.TIER_2_17_YEARLY_COMMITMENT.priceId,
       upgradePlans: [],
     },
     {
-      name: 'Custom',
+      name: 'Pro',
       price: '$50',
-      description: 'Everything in Pro, plus:',
-      buttonText: 'Try Free',
+      yearlyPrice: '$510',
+      originalYearlyPrice: '$600',
+      discountPercentage: 15,
+      description: 'Ideal for growing businesses',
+      buttonText: 'Start Free',
       buttonColor: 'bg-secondary text-white',
       isPopular: false,
+      /** @deprecated */
       hours: '6 hours',
-      features: ['Suited to you needs'],
-      upgradePlans: [
-        {
-          hours: '6 hours',
-          price: '$50',
-          stripePriceId: config.SUBSCRIPTION_TIERS.TIER_6_50.priceId,
-        },
-        {
-          hours: '12 hours',
-          price: '$100',
-          stripePriceId: config.SUBSCRIPTION_TIERS.TIER_12_100.priceId,
-        },
-        {
-          hours: '25 hours',
-          price: '$200',
-          stripePriceId: config.SUBSCRIPTION_TIERS.TIER_25_200.priceId,
-        },
-        {
-          hours: '50 hours',
-          price: '$400',
-          stripePriceId: config.SUBSCRIPTION_TIERS.TIER_50_400.priceId,
-        },
-        {
-          hours: '125 hours',
-          price: '$800',
-          stripePriceId: config.SUBSCRIPTION_TIERS.TIER_125_800.priceId,
-        },
-        {
-          hours: '200 hours',
-          price: '$1000',
-          stripePriceId: config.SUBSCRIPTION_TIERS.TIER_200_1000.priceId,
-        },
+      features: [
+        '$50 AI token credits/month',
+        '20 custom agents',
+        'Private projects',
+        'Premium AI Models',
+        'Community support',
       ],
       stripePriceId: config.SUBSCRIPTION_TIERS.TIER_6_50.priceId,
+      yearlyStripePriceId: config.SUBSCRIPTION_TIERS.TIER_6_50_YEARLY.priceId,
+      monthlyCommitmentStripePriceId: config.SUBSCRIPTION_TIERS.TIER_6_42_YEARLY_COMMITMENT.priceId,
+      upgradePlans: [],
+    },
+    {
+      name: 'Business',
+      price: '$100',
+      yearlyPrice: '$1020',
+      originalYearlyPrice: '$1200',
+      discountPercentage: 15,
+      description: 'For established businesses',
+      buttonText: 'Start Free',
+      buttonColor: 'bg-secondary text-white',
+      isPopular: false,
+      hours: '12 hours',
+      features: [
+        '$100 AI token credits/month',
+        '20 custom agents',
+        'Private projects',
+        'Premium AI Models',
+        'Community support',
+      ],
+      stripePriceId: config.SUBSCRIPTION_TIERS.TIER_12_100.priceId,
+      yearlyStripePriceId: config.SUBSCRIPTION_TIERS.TIER_12_100_YEARLY.priceId,
+      upgradePlans: [],
+      hidden: true,
+    },
+    {
+      name: 'Ultra',
+      price: '$200',
+      yearlyPrice: '$2040',
+      originalYearlyPrice: '$2400',
+      discountPercentage: 15,
+      description: 'For power users',
+      buttonText: 'Start Free',
+      buttonColor: 'bg-secondary text-white',
+      isPopular: false,
+      hours: '25 hours',
+      features: [
+        '$200 AI token credits/month',
+        '100 custom agents',
+        'Private projects',
+        'Premium AI Models',
+        'Priority support',
+      ],
+      stripePriceId: config.SUBSCRIPTION_TIERS.TIER_25_200.priceId,
+      yearlyStripePriceId: config.SUBSCRIPTION_TIERS.TIER_25_200_YEARLY.priceId,
+      monthlyCommitmentStripePriceId: config.SUBSCRIPTION_TIERS.TIER_25_170_YEARLY_COMMITMENT.priceId,
+      upgradePlans: [],
+    },
+    {
+      name: 'Enterprise',
+      price: '$400',
+      yearlyPrice: '$4080',
+      originalYearlyPrice: '$4800',
+      discountPercentage: 15,
+      description: 'For large teams',
+      buttonText: 'Start Free',
+      buttonColor: 'bg-secondary text-white',
+      isPopular: false,
+      hours: '50 hours',
+      features: [
+        '$400 AI token credits/month',
+        'Private projects',
+        'Premium AI Models',
+        'Priority support',
+        'Custom integrations',
+      ],
+      stripePriceId: config.SUBSCRIPTION_TIERS.TIER_50_400.priceId,
+      yearlyStripePriceId: config.SUBSCRIPTION_TIERS.TIER_50_400_YEARLY.priceId,
+      upgradePlans: [],
+      hidden: true,
+    },
+    {
+      name: 'Scale',
+      price: '$800',
+      yearlyPrice: '$8160',
+      originalYearlyPrice: '$9600',
+      discountPercentage: 15,
+      description: 'For scaling teams',
+      buttonText: 'Start Free',
+      buttonColor: 'bg-secondary text-white',
+      isPopular: false,
+      hours: '125 hours',
+      features: [
+        '$800 AI token credits/month',
+        'Private projects',
+        'Premium AI Models',
+        'Priority support',
+        'Custom integrations',
+        'Dedicated account manager',
+      ],
+      stripePriceId: config.SUBSCRIPTION_TIERS.TIER_125_800.priceId,
+      yearlyStripePriceId: config.SUBSCRIPTION_TIERS.TIER_125_800_YEARLY.priceId,
+      upgradePlans: [],
+      hidden: true,
+    },
+    {
+      name: 'Max',
+      price: '$1000',
+      yearlyPrice: '$10200',
+      originalYearlyPrice: '$12000',
+      discountPercentage: 15,
+      description: 'Maximum performance',
+      buttonText: 'Start Free',
+      buttonColor: 'bg-secondary text-white',
+      isPopular: false,
+      hours: '200 hours',
+      features: [
+        '$1000 AI token credits/month',
+        'Private projects',
+        'Premium AI Models',
+        'Priority support',
+        'Custom integrations',
+        'Dedicated account manager',
+        'Custom deployment',
+      ],
+      stripePriceId: config.SUBSCRIPTION_TIERS.TIER_200_1000.priceId,
+      yearlyStripePriceId: config.SUBSCRIPTION_TIERS.TIER_200_1000_YEARLY.priceId,
+      upgradePlans: [],
+      hidden: true,
     },
   ],
   companyShowcase: {
@@ -378,15 +499,15 @@ export const siteConfig = {
     ],
   },
   featureSection: {
-    title: 'How Kortix Suna Works',
+    title: 'How AniSora Works',
     description:
-      'Discover how Kortix Suna transforms your commands into action in four easy steps',
+      'Discover how Bilibili AniSora transforms your commands into action in four easy steps',
     items: [
       {
         id: 1,
         title: 'Request an Action',
         content:
-          'Speak or type your command—let Kortix Suna capture your intent. Your request instantly sets the process in motion.',
+          'Speak or type your command—let Bilibili AniSora capture your intent. Your request instantly sets the process in motion.',
         image:
           'https://images.unsplash.com/photo-1720371300677-ba4838fa0678?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
       },
@@ -394,7 +515,7 @@ export const siteConfig = {
         id: 2,
         title: 'AI Understanding & Planning',
         content:
-          'Suna analyzes your request, understands the context, and develops a structured plan to complete the task efficiently.',
+          'AniSora analyzes your request, understands the context, and develops a structured plan to complete the task efficiently.',
         image:
           'https://images.unsplash.com/photo-1686170287433-c95faf6d3608?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxmZWF0dXJlZC1waG90b3MtZmVlZHwzfHx8ZW58MHx8fHx8fA%3D%3D',
       },
@@ -402,7 +523,7 @@ export const siteConfig = {
         id: 3,
         title: 'Autonomous Execution',
         content:
-          'Using its capabilities and integrations, Suna executes the task independently, handling any complexities along the way.',
+          'Using its capabilities and integrations, AniSora executes the task independently, handling any complexities along the way.',
         image:
           'https://images.unsplash.com/photo-1720378042271-60aff1e1c538?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxmZWF0dXJlZC1waG90b3MtZmVlZHwxMHx8fGVufDB8fHx8fA%3D%3D',
       },
@@ -410,30 +531,30 @@ export const siteConfig = {
         id: 4,
         title: 'Results & Learning',
         content:
-          'Suna delivers results and learns from each interaction, continuously improving its performance to better serve your needs.',
+          'AniSora delivers results and learns from each interaction, continuously improving its performance to better serve your needs.',
         image:
           'https://images.unsplash.com/photo-1666882990322-e7f3b8df4f75?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1yZWxhdGVkfDF8fHxlbnwwfHx8fHw%3D',
       },
     ],
   },
   bentoSection: {
-    title: 'Empower Your Workflow with Kortix Suna',
+    title: 'Empower Your Workflow with Bilibili AniSora',
     description:
-      'Let Kortix Suna act on your behalf with advanced AI capabilities, seamless integrations, and autonomous task execution.',
+      'Let Bilibili AniSora act on your behalf with advanced AI capabilities, seamless integrations, and autonomous task execution.',
     items: [
       {
         id: 1,
         content: <FirstBentoAnimation />,
         title: 'Autonomous Task Execution',
         description:
-          'Experience true automation with Suna. Ask your AI Agent to complete tasks, research information, and handle complex workflows with minimal supervision.',
+          'Experience true automation with AniSora. Ask your AI Agent to complete tasks, research information, and handle complex workflows with minimal supervision.',
       },
       {
         id: 2,
         content: <SecondBentoAnimation />,
         title: 'Seamless Integrations',
         description:
-          'Connect Suna to your existing tools for a unified workflow. Boost productivity through AI-powered interconnected systems.',
+          'Connect AniSora to your existing tools for a unified workflow. Boost productivity through AI-powered interconnected systems.',
       },
       {
         id: 3,
@@ -447,21 +568,21 @@ export const siteConfig = {
         ),
         title: 'Intelligent Data Analysis',
         description:
-          "Transform raw data into actionable insights in seconds. Make better decisions with Suna's real-time, adaptive intelligence.",
+          "Transform raw data into actionable insights in seconds. Make better decisions with AniSora's real-time, adaptive intelligence.",
       },
       {
         id: 4,
         content: <FourthBentoAnimation once={false} />,
         title: 'Complete Customization',
         description:
-          'Tailor Suna to your specific needs. As an open source solution, you have full control over its capabilities, integrations, and implementation.',
+          'Tailor AniSora to your specific needs. As an open source solution, you have full control over its capabilities, integrations, and implementation.',
       },
     ],
   },
   benefits: [
     {
       id: 1,
-      text: "Automate everyday tasks with Suna's powerful AI capabilities.",
+      text: "Automate everyday tasks with AniSora's powerful AI capabilities.",
       image: '/Device-6.png',
     },
     {
@@ -471,7 +592,7 @@ export const siteConfig = {
     },
     {
       id: 3,
-      text: 'Improve focus on high-value work as Suna handles the routine.',
+      text: 'Improve focus on high-value work as AniSora handles the routine.',
       image: '/Device-8.png',
     },
     {
@@ -777,13 +898,13 @@ export const siteConfig = {
 
         title: 'Community Powered',
         description:
-          "Join a thriving community of developers and users continuously enhancing and expanding Suna's capabilities.",
+          "Join a thriving community of developers and users continuously enhancing and expanding AniSora's capabilities.",
       },
     ],
   },
   quoteSection: {
     quote:
-      'Kortix Suna has transformed how we approach everyday tasks. The level of automation it provides, combined with its open source nature, makes it an invaluable tool for our entire organization.',
+      'Bilibili AniSora has transformed how we approach everyday tasks. The level of automation it provides, combined with its open source nature, makes it an invaluable tool for our entire organization.',
     author: {
       name: 'Alex Johnson',
       role: 'CTO, Innovatech',
@@ -793,7 +914,7 @@ export const siteConfig = {
   pricing: {
     title: 'Open Source & Free Forever',
     description:
-      'Kortix Suna is 100% open source and free to use. No hidden fees, no premium features locked behind paywalls.',
+      'Bilibili AniSora is 100% open source and free to use. No hidden fees, no premium features locked behind paywalls.',
     pricingItems: [
       {
         name: 'Community',
@@ -808,7 +929,7 @@ export const siteConfig = {
           'Community support',
         ],
         description: 'Perfect for individual users and developers',
-        buttonText: 'Hire Suna',
+        buttonText: 'Hire AniSora',
         buttonColor: 'bg-accent text-primary',
         isPopular: false,
       },
@@ -856,201 +977,186 @@ export const siteConfig = {
   testimonials: [
     {
       id: '1',
-      name: 'Alex Rivera',
-      role: 'CTO at InnovateTech',
-      img: 'https://randomuser.me/api/portraits/men/91.jpg',
+      name: 'Hiroshi Tanaka',
+      role: 'Lead AI Researcher at Bilibili AI Lab',
+      img: 'https://randomuser.me/api/portraits/men/90.jpg',
       description: (
         <p>
-          The AI-driven analytics from #QuantumInsights have revolutionized our
-          product development cycle.
+          AniSora's advanced temporal modeling has revolutionized our animation generation pipeline.
           <Highlight>
-            Insights are now more accurate and faster than ever.
+            The smooth interpolation between keyframes has reduced our production time by 50% while maintaining exceptional quality.
           </Highlight>{' '}
-          A game-changer for tech companies.
+          A breakthrough in AI-powered animation technology.
         </p>
       ),
     },
     {
       id: '2',
-      name: 'Samantha Lee',
-      role: 'Marketing Director at NextGen Solutions',
+      name: 'Wei Zhang',
+      role: 'VFX Director at Bilibili Studios',
       img: 'https://randomuser.me/api/portraits/women/12.jpg',
       description: (
         <p>
-          Implementing #AIStream&apos;s customer prediction model has
-          drastically improved our targeting strategy.
-          <Highlight>Seeing a 50% increase in conversion rates!</Highlight>{' '}
-          Highly recommend their solutions.
+          Implementing AniSora's spatial control has transformed our visual effects workflow.
+          <Highlight>65% improvement in animation consistency and character movement quality.</Highlight>{' '}
+          Essential for next-gen anime production.
         </p>
       ),
     },
     {
       id: '3',
-      name: 'Raj Patel',
-      role: 'Founder & CEO at StartUp Grid',
+      name: 'Yuki Nakamura',
+      role: 'Technical Director, AniSora Project',
       img: 'https://randomuser.me/api/portraits/men/45.jpg',
       description: (
         <p>
-          As a startup, we need to move fast and stay ahead. #CodeAI&apos;s
-          automated coding assistant helps us do just that.
-          <Highlight>Our development speed has doubled.</Highlight> Essential
-          tool for any startup.
+          AniSora's multi-style adaptation maintains artistic integrity while
+          <Highlight>reducing manual correction work by 70%.</Highlight> 
+          A game-changer for anime-style content creation.
         </p>
       ),
     },
     {
       id: '4',
-      name: 'Emily Chen',
-      role: 'Product Manager at Digital Wave',
+      name: 'Li Wei',
+      role: 'Research Scientist at Bilibili AI',
       img: 'https://randomuser.me/api/portraits/women/83.jpg',
       description: (
         <p>
-          #VoiceGen&apos;s AI-driven voice synthesis has made creating global
-          products a breeze.
-          <Highlight>Localization is now seamless and efficient.</Highlight> A
-          must-have for global product teams.
+          Our benchmark dataset in AniSora has set new standards for anime video generation.
+          <Highlight>Unprecedented 4K resolution support with perfect frame interpolation.</Highlight>
+          Redefining quality in AI animation.
         </p>
       ),
     },
     {
       id: '5',
-      name: 'Michael Brown',
-      role: 'Data Scientist at FinTech Innovations',
+      name: 'Chen Yu',
+      role: 'Product Manager, AniSora',
       img: 'https://randomuser.me/api/portraits/men/1.jpg',
       description: (
         <p>
-          Leveraging #DataCrunch&apos;s AI for our financial models has given us
-          an edge in predictive accuracy.
+          AniSora's style consistency algorithm is revolutionary for webtoon adaptation.
           <Highlight>
-            Our investment strategies are now powered by real-time data
-            analytics.
+            Maintains 98% style accuracy across all frames.
           </Highlight>{' '}
-          Transformative for the finance industry.
+          The ultimate tool for digital artists.
         </p>
       ),
     },
     {
       id: '6',
-      name: 'Linda Wu',
-      role: 'VP of Operations at LogiChain Solutions',
+      name: 'Mei Lin',
+      role: 'Open Source Community Lead',
       img: 'https://randomuser.me/api/portraits/women/5.jpg',
       description: (
         <p>
-          #LogiTech&apos;s supply chain optimization tools have drastically
-          reduced our operational costs.
-          <Highlight>
-            Efficiency and accuracy in logistics have never been better.
-          </Highlight>{' '}
+          AniSora's open-source framework enables complete customization
+          <Highlight>while ensuring production-ready animation quality.</Highlight>
+          Empowering creators worldwide with cutting-edge AI.
         </p>
       ),
     },
     {
       id: '7',
-      name: 'Carlos Gomez',
-      role: 'Head of R&D at EcoInnovate',
+      name: 'Kenji Sato',
+      role: 'Animation Technology Specialist',
       img: 'https://randomuser.me/api/portraits/men/14.jpg',
       description: (
         <p>
-          By integrating #GreenTech&apos;s sustainable energy solutions,
-          we&apos;ve seen a significant reduction in carbon footprint.
+          AniSora's temporal coherence is unmatched in AI animation.
           <Highlight>
-            Leading the way in eco-friendly business practices.
+            60% improvement in motion fluidity compared to other solutions.
           </Highlight>{' '}
-          Pioneering change in the industry.
+          Perfect for high-octane action sequences.
         </p>
       ),
     },
     {
       id: '8',
-      name: 'Aisha Khan',
-      role: 'Chief Marketing Officer at Fashion Forward',
+      name: 'Xiaoyu Wang',
+      role: 'Rendering Engineer',
       img: 'https://randomuser.me/api/portraits/women/56.jpg',
       description: (
         <p>
-          #TrendSetter&apos;s market analysis AI has transformed how we approach
-          fashion trends.
+          AniSora's lighting simulation has revolutionized our workflow.
           <Highlight>
-            Our campaigns are now data-driven with higher customer engagement.
+            Complex lighting setups now render 8x faster with photorealistic quality.
           </Highlight>{' '}
-          Revolutionizing fashion marketing.
+          A technical masterpiece.
         </p>
       ),
     },
     {
       id: '9',
-      name: 'Tom Chen',
-      role: 'Director of IT at HealthTech Solutions',
+      name: 'Takashi Yamamoto',
+      role: 'Production Director',
       img: 'https://randomuser.me/api/portraits/men/18.jpg',
       description: (
         <p>
-          Implementing #MediCareAI in our patient care systems has improved
-          patient outcomes significantly.
+          AniSora has transformed our production pipeline, delivering
           <Highlight>
-            Technology and healthcare working hand in hand for better health.
+            feature-film quality animation 40% faster than traditional methods.
           </Highlight>{' '}
-          A milestone in medical technology.
+          The new industry standard.
         </p>
       ),
     },
     {
       id: '10',
-      name: 'Sofia Patel',
-      role: 'CEO at EduTech Innovations',
+      name: 'Jingyi Li',
+      role: 'AI Research Intern',
       img: 'https://randomuser.me/api/portraits/women/73.jpg',
       description: (
         <p>
-          #LearnSmart&apos;s AI-driven personalized learning plans have doubled
-          student performance metrics.
+          Working with AniSora's codebase has been an incredible learning experience.
           <Highlight>
-            Education tailored to every learner&apos;s needs.
+            The documentation and community support are exceptional.
           </Highlight>{' '}
-          Transforming the educational landscape.
+          Inspiring the next generation of AI researchers.
         </p>
       ),
     },
     {
       id: '11',
-      name: 'Jake Morrison',
-      role: 'CTO at SecureNet Tech',
-      img: 'https://randomuser.me/api/portraits/men/25.jpg',
+      name: 'Daichi Kobayashi',
+      role: 'Technical Artist',
+      img: 'https://randomuser.me/api/portraits/men/26.jpg',
       description: (
         <p>
-          With #CyberShield&apos;s AI-powered security systems, our data
-          protection levels are unmatched.
+          AniSora's architecture is a work of art in technical excellence.
           <Highlight>
-            Ensuring safety and trust in digital spaces.
+            Seamlessly integrates with all major animation software.
           </Highlight>{' '}
-          Redefining cybersecurity standards.
+          A dream tool for technical artists.
         </p>
       ),
     },
     {
       id: '12',
-      name: 'Nadia Ali',
-      role: 'Product Manager at Creative Solutions',
+      name: 'Ying Chen',
+      role: 'Character Animator',
       img: 'https://randomuser.me/api/portraits/women/78.jpg',
       description: (
         <p>
-          #DesignPro&apos;s AI has streamlined our creative process, enhancing
-          productivity and innovation.
-          <Highlight>Bringing creativity and technology together.</Highlight> A
-          game-changer for creative industries.
+          AniSora's understanding of character movement is astonishing.
+          <Highlight>Brings subtle emotions to life with natural motion.</Highlight> 
+          The perfect assistant for animators.
         </p>
       ),
     },
     {
       id: '13',
-      name: 'Omar Farooq',
-      role: 'Founder at Startup Hub',
+      name: 'Ryuichi Tanaka',
+      role: 'Open Source Contributor',
       img: 'https://randomuser.me/api/portraits/men/54.jpg',
       description: (
         <p>
-          #VentureAI&apos;s insights into startup ecosystems have been
-          invaluable for our growth and funding strategies.
+          Contributing to AniSora's open-source community has been incredibly rewarding.
           <Highlight>
-            Empowering startups with data-driven decisions.
+            The maintainers are responsive and the codebase is exceptionally well-structured.
           </Highlight>{' '}
-          A catalyst for startup success.
+          The future of collaborative AI development.
         </p>
       ),
     },
@@ -1058,75 +1164,77 @@ export const siteConfig = {
   faqSection: {
     title: 'Frequently Asked Questions',
     description:
-      "Answers to common questions about Kortix Suna and its capabilities. If you have any other questions, please don't hesitate to contact us.",
+      'Find answers to common questions about AniSora, our open-source anime video generation model. If you have any other questions, feel free to reach out to our community!',
     faQitems: [
       {
         id: 1,
-        question: 'What is an AI Agent?',
+        question: 'What is AniSora?',
         answer:
-          'An AI Agent is an intelligent software program that can perform tasks autonomously, learn from interactions, and make decisions to help achieve specific goals. It combines artificial intelligence and machine learning to provide personalized assistance and automation.',
+          'AniSora is an advanced open-source anime video generation model developed by Bilibili. It enables users to create high-quality anime-style videos with various styles including series episodes, Chinese original animations, manga adaptations, VTuber content, and more!',
       },
       {
         id: 2,
-        question: 'How does Kortix Suna work?',
+        question: 'What are the system requirements for running AniSora?',
         answer:
-          'Kortix Suna works by analyzing your requirements, leveraging advanced AI algorithms to understand context, and executing tasks based on your instructions. It can integrate with your workflow, learn from feedback, and continuously improve its performance.',
+          'AniSora V1 can run on RTX 4090 GPUs, while V2 supports both GPUs and Huawei Ascend 910B NPUs. The specific requirements depend on the model version and your use case. For local deployment, we recommend at least 24GB of GPU memory for optimal performance.',
       },
       {
         id: 3,
-        question: 'Is Kortix Suna really free?',
+        question: 'What video styles does AniSora support?',
         answer:
-          'Yes, Kortix Suna is completely free and open source. We believe in democratizing AI technology and making it accessible to everyone. You can use it, modify it, and contribute to its development without any cost.',
+          'AniSora supports a wide range of anime styles including but not limited to: series episodes, Chinese original animations, manga adaptations, VTuber content, anime PVs, and mad-style parodies (鬼畜动画). The model has been trained on diverse datasets to handle various artistic styles.',
       },
       {
         id: 4,
-        question: 'Can I integrate Suna with my existing tools?',
+        question: 'Can I use AniSora for commercial projects?',
         answer:
-          'Yes, Kortix Suna is designed to be highly compatible with popular tools and platforms. We offer APIs and pre-built integrations for seamless connection with your existing workflow tools and systems.',
+          'Yes, AniSora is open-source and available for both personal and commercial use. However, please review the specific license terms included with the model for any usage restrictions or attribution requirements.',
       },
       {
         id: 5,
-        question: 'How can I contribute to Kortix Suna?',
+        question: 'How can I contribute to the AniSora project?',
         answer:
-          'You can contribute to Kortix Suna by submitting pull requests on GitHub, reporting bugs, suggesting new features, or helping with documentation. Join our Discord community to connect with other contributors and Hire Suna.',
+          'You can contribute to AniSora by submitting pull requests on GitHub, reporting issues, suggesting new features, or helping with documentation. We welcome contributions from the community to help improve the model and its capabilities.',
       },
       {
         id: 6,
-        question: 'How does Kortix Suna save me time?',
+        question: 'What makes AniSora different from other video generation models?',
         answer:
-          'Kortix Suna automates repetitive tasks, streamlines workflows, and provides quick solutions to common challenges. This automation and efficiency can save hours of manual work, allowing you to focus on more strategic activities.',
+          'AniSora is specifically designed for anime-style content generation, with specialized training on anime datasets. It offers features like localized region guidance, temporal control (first/last frame guidance, keyframe interpolation), and supports both GPU and NPU acceleration. The model has demonstrated state-of-the-art results in anime video generation benchmarks.',
+      },
+      {
+        id: 7,
+        question: 'How can I get started with AniSora?',
+        answer:
+          'You can get started by cloning our GitHub repository and following the setup instructions in the README. The project includes pre-trained models and example scripts to help you generate your first anime videos. Make sure your system meets the hardware requirements before proceeding.',
       },
     ],
   },
   ctaSection: {
     id: 'cta',
-    title: 'Start Using Kortix Suna Today',
+    title: 'Start Using Bilibili AniSora Today',
     backgroundImage: '/holo.png',
     button: {
       text: 'Get Started for free',
       href: '/auth',
     },
-    subtext: 'The generalist AI Agent that acts on your behalf',
+    subtext: 'Build, manage and train your AI Workforce',
   },
   footerLinks: [
     {
-      title: 'Kortix',
+      title: 'AniSora',
       links: [
-        { id: 1, title: 'About', url: 'https://kortix.ai' },
-        { id: 3, title: 'Contact', url: 'mailto:hey@kortix.ai' },
-        { id: 4, title: 'Careers', url: 'https://kortix.ai/careers' },
+        { id: 1, title: 'Documentation', url: 'https://github.com/bilibili/Index-anisora' },
+        { id: 3, title: 'Discord', url: 'https://discord.gg/KXkc59Yy' },
+        { id: 4, title: 'Start Using', url: '/auth' },
       ],
     },
     {
-      title: 'Resources',
+      title: 'Quick Links',
       links: [
-        {
-          id: 5,
-          title: 'Documentation',
-          url: 'https://github.com/Kortix-ai/Suna',
-        },
-        { id: 7, title: 'Discord', url: 'https://discord.gg/Py6pCBUUPw' },
-        { id: 8, title: 'GitHub', url: 'https://github.com/Kortix-ai/Suna' },
+        { id: 1, title: 'Home', url: '#hero' },
+        { id: 2, title: 'Use Cases', url: '#showcase' },
+        { id: 3, title: 'FAQ', url: '#faq' },
       ],
     },
     {
@@ -1135,17 +1243,17 @@ export const siteConfig = {
         {
           id: 9,
           title: 'Privacy Policy',
-          url: 'https://suna.so/legal?tab=privacy',
+          url: '/legal?tab=privacy',
         },
         {
           id: 10,
           title: 'Terms of Service',
-          url: 'https://suna.so/legal?tab=terms',
+          url: '/legal?tab=terms',
         },
         {
           id: 11,
           title: 'License Apache 2.0',
-          url: 'https://github.com/Kortix-ai/Suna/blob/main/LICENSE',
+          url: 'https://github.com/bilibili/Index-anisora/blob/main/LICENSE',
         },
       ],
     },
@@ -1155,7 +1263,7 @@ export const siteConfig = {
       id: 'competitor-analysis',
       title: 'Competitor Analysis',
       description:
-        'Analyze the market for my next company in the healthcare industry, located in the UK. Give me the major players, their market size, strengths, and weaknesses, and add their website URLs. Once done, generate a PDF report.',
+        'The figures in the picture are sitting in a forward moving car waving to the rear, their hair swaying from side to side in the wind',
       category: 'research',
       featured: true,
       icon: (
@@ -1359,7 +1467,7 @@ export const siteConfig = {
       ),
       image:
         'https://images.unsplash.com/photo-1532153975070-2e9ab71f1b14?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2400&q=80',
-      url: 'https://suna.so/share/bf6a819b-6af5-4ef7-b861-16e5261ceeb0',
+      url: 'https://suna.so/share/2a147a3a-3778-4624-8285-42474c8c1c9c',
     },
     {
       id: 'speaker-prospecting',
@@ -1485,7 +1593,7 @@ export const siteConfig = {
       ),
       image:
         'https://images.unsplash.com/photo-1552581234-26160f608093?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2400&q=80',
-      url: 'https://suna.so/share/a01744fc-6b33-434c-9d4e-67d7e820297c',
+      url: 'https://suna.so/share/c3472df7-adc1-4d5f-9927-4f8f513ec2fe',
     },
     {
       id: 'seo-analysis',
@@ -1534,7 +1642,7 @@ export const siteConfig = {
       ),
       image:
         'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2400&q=80',
-      url: 'https://suna.so/share/59be8603-3225-4c15-a948-ab976e5912f6',
+      url: 'https://suna.so/share/cf756e02-fee9-4281-a0e4-76ac850f1ac9',
     },
     {
       id: 'personal-trip',

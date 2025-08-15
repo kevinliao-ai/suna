@@ -5,8 +5,9 @@ from typing import Optional
 from fastapi import FastAPI, UploadFile, File, HTTPException, APIRouter, Form, Depends, Request
 from fastapi.responses import Response
 from pydantic import BaseModel
+from daytona_sdk import AsyncSandbox
 
-from sandbox.sandbox import get_or_start_sandbox
+from sandbox.sandbox import get_or_start_sandbox, delete_sandbox
 from utils.logger import logger
 from utils.auth_utils import get_optional_user_id
 from services.supabase import DBConnection
@@ -105,7 +106,7 @@ async def verify_sandbox_access(client, sandbox_id: str, user_id: Optional[str] 
     
     raise HTTPException(status_code=403, detail="Not authorized to access this sandbox")
 
-async def get_sandbox_by_id_safely(client, sandbox_id: str):
+async def get_sandbox_by_id_safely(client, sandbox_id: str) -> AsyncSandbox:
     """
     Safely retrieve a sandbox object by its ID, using the project that owns it.
     
@@ -114,7 +115,7 @@ async def get_sandbox_by_id_safely(client, sandbox_id: str):
         sandbox_id: The sandbox ID to retrieve
     
     Returns:
-        Sandbox: The sandbox object
+        AsyncSandbox: The sandbox object
         
     Raises:
         HTTPException: If the sandbox doesn't exist or can't be retrieved
@@ -166,7 +167,7 @@ async def create_file(
         content = await file.read()
         
         # Create file using raw binary content
-        sandbox.fs.upload_file(path, content)
+        await sandbox.fs.upload_file(content, path)
         logger.info(f"File created at {path} in sandbox {sandbox_id}")
         
         return {"status": "success", "created": True, "path": path}
@@ -196,7 +197,7 @@ async def list_files(
         sandbox = await get_sandbox_by_id_safely(client, sandbox_id)
         
         # List files
-        files = sandbox.fs.list_files(path)
+        files = await sandbox.fs.list_files(path)
         result = []
         
         for file in files:
@@ -244,35 +245,9 @@ async def read_file(
         # Get sandbox using the safer method
         sandbox = await get_sandbox_by_id_safely(client, sandbox_id)
         
-        # Verify the file exists first
+        # Read file directly - don't check existence first with a separate call
         try:
-            filename = os.path.basename(path)
-            parent_dir = os.path.dirname(path)
-            
-            # List files in the parent directory to check if the file exists
-            files_in_dir = sandbox.fs.list_files(parent_dir)
-            
-            # Look for the target file with exact name match
-            file_exists = any(file.name == filename for file in files_in_dir)
-            
-            if not file_exists:
-                logger.warning(f"File not found: {path} in sandbox {sandbox_id}")
-                
-                # Try to find similar files to help diagnose
-                close_matches = [file.name for file in files_in_dir if filename.lower() in file.name.lower()]
-                error_detail = f"File '{filename}' not found in directory '{parent_dir}'"
-                
-                if close_matches:
-                    error_detail += f". Similar files in the directory: {', '.join(close_matches)}"
-                
-                raise HTTPException(status_code=404, detail=error_detail)
-        except Exception as list_err:
-            # If we can't list files, continue with the download attempt
-            logger.warning(f"Error checking if file exists: {str(list_err)}")
-        
-        # Read file
-        try:
-            content = sandbox.fs.download_file(path)
+            content = await sandbox.fs.download_file(path)
         except Exception as download_err:
             logger.error(f"Error downloading file {path} from sandbox {sandbox_id}: {str(download_err)}")
             raise HTTPException(
@@ -299,6 +274,58 @@ async def read_file(
         raise
     except Exception as e:
         logger.error(f"Error reading file in sandbox {sandbox_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.delete("/sandboxes/{sandbox_id}/files")
+async def delete_file(
+    sandbox_id: str, 
+    path: str,
+    request: Request = None,
+    user_id: Optional[str] = Depends(get_optional_user_id)
+):
+    """Delete a file from the sandbox"""
+    # Normalize the path to handle UTF-8 encoding correctly
+    path = normalize_path(path)
+    
+    logger.info(f"Received file delete request for sandbox {sandbox_id}, path: {path}, user_id: {user_id}")
+    client = await db.client
+    
+    # Verify the user has access to this sandbox
+    await verify_sandbox_access(client, sandbox_id, user_id)
+    
+    try:
+        # Get sandbox using the safer method
+        sandbox = await get_sandbox_by_id_safely(client, sandbox_id)
+        
+        # Delete file
+        await sandbox.fs.delete_file(path)
+        logger.info(f"File deleted at {path} in sandbox {sandbox_id}")
+        
+        return {"status": "success", "deleted": True, "path": path}
+    except Exception as e:
+        logger.error(f"Error deleting file in sandbox {sandbox_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.delete("/sandboxes/{sandbox_id}")
+async def delete_sandbox_route(
+    sandbox_id: str,
+    request: Request = None,
+    user_id: Optional[str] = Depends(get_optional_user_id)
+):
+    """Delete an entire sandbox"""
+    logger.info(f"Received sandbox delete request for sandbox {sandbox_id}, user_id: {user_id}")
+    client = await db.client
+    
+    # Verify the user has access to this sandbox
+    await verify_sandbox_access(client, sandbox_id, user_id)
+    
+    try:
+        # Delete the sandbox using the sandbox module function
+        await delete_sandbox(sandbox_id)
+        
+        return {"status": "success", "deleted": True, "sandbox_id": sandbox_id}
+    except Exception as e:
+        logger.error(f"Error deleting sandbox {sandbox_id}: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # Should happen on server-side fully
