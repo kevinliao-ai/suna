@@ -30,7 +30,7 @@ const CustomHeroSection = () => {
       <div className="relative flex flex-col items-center w-full px-6">
         <div className="relative z-10 pt-32 mx-auto h-full w-full max-w-6xl flex flex-col items-center justify-center">
           <div className="flex flex-col items-center justify-center gap-6 pt-12 max-w-4xl mx-auto">
-            {/* Kortix Logo */}
+            {/* Anisora Logo */}
             <div className="mb-8">
               <KortixLogo size={48} />
             </div>

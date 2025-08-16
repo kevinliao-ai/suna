@@ -80,10 +80,21 @@ export function HeroVideoDialog({
 
   // Add autoplay parameter to YouTube URL when opened
   const getVideoSrcWithAutoplay = () => {
-    const url = new URL(videoSrc);
-    // Preserve existing query parameters and add autoplay=1
-    url.searchParams.set('autoplay', '1');
-    return url.toString();
+    try {
+      // 处理相对路径
+      if (videoSrc.startsWith('/') || !videoSrc.startsWith('http')) {
+        return videoSrc;
+      }
+      
+      // 处理完整 URL
+      const url = new URL(videoSrc);
+      // 保留现有查询参数并添加 autoplay=1
+      url.searchParams.set('autoplay', '1');
+      return url.toString();
+    } catch (error) {
+      console.error('Error processing video URL:', error);
+      return videoSrc;
+    }
   };
 
   return (
