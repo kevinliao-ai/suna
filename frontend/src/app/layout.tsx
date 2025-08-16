@@ -32,26 +32,13 @@ export const metadata: Metadata = {
     default: siteConfig.name,
     template: `%s - ${siteConfig.name}`,
   },
-  description:
-    'AniSora is an advanced open-source anime video generation model developed by Bilibili. It enables users to create high-quality anime-style videos with various styles including series episodes, Chinese original animations, manga adaptations, VTuber content, and more!',
-  keywords: [
-    'AI',
-    'Anime Video Generation',
-    'Anime Video',
-    'open source',
-    'Video Generator',
-    'Text to video generator',
-    'AI Animation Tool',
-    'Text to Anime',
-    'AI Character Animation'
-  ],
-  authors: [{ name: 'Bilibili Team', url: 'https://www.bilibili.com' }],
-  creator:
-    'Bilibili Team',
-  publisher:
-    'Bilibili Team',
-  category: 'Technology',
+  description: siteConfig.description,
+  keywords: siteConfig.keywords,
+  authors: [{ name: 'AniSora Team', url: 'https://github.com/bilibili/Index-anisora' }],
+  creator: 'AniSora Team',
+  publisher: 'Bilibili',
   applicationName: 'AniSora',
+  category: 'Technology',
   formatDetection: {
     telephone: false,
     email: false,
@@ -63,14 +50,18 @@ export const metadata: Metadata = {
     googleBot: {
       index: true,
       follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
     },
   },
   openGraph: {
-    title: 'AniSora - Open Source Generalist AI Agent',
-    description:
-      'AniSora is an advanced open-source anime video generation model developed by Bilibili. It enables users to create high-quality anime-style videos with various styles including series episodes, Chinese original animations, manga adaptations, VTuber content, and more!',
+    title: siteConfig.title,
+    description: siteConfig.description,
     url: siteConfig.url,
-    siteName: 'AniSora',
+    siteName: siteConfig.siteName,
+    locale: siteConfig.locale,
+    type: 'website',
     images: [
       {
         url: '/banner.png',
@@ -80,14 +71,11 @@ export const metadata: Metadata = {
         type: 'image/png',
       },
     ],
-    locale: 'en_US',
-    type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'AniSora - Open Source Generalist AI Agent',
-    description:
-      'AniSora is an advanced open-source anime video generation model developed by Bilibili. It enables users to create high-quality anime-style videos with various styles including series episodes, Chinese original animations, manga adaptations, VTuber content, and more!',
+    title: siteConfig.title,
+    description: siteConfig.description,
     creator: '@bilibili',
     site: '@bilibili',
     images: [
@@ -106,6 +94,11 @@ export const metadata: Metadata = {
   // manifest: "/manifest.json",
   alternates: {
     canonical: siteConfig.url,
+    types: {
+      'application/rss+xml': [
+        { url: '/rss.xml', title: 'AniSora RSS Feed' },
+      ],
+    },
   },
 };
 
