@@ -7,11 +7,11 @@ export const metadata: Metadata = {
   keywords: ['AniSora', 'AI', 'Agent'],
   authors: [
     {
-      name: 'Bilibili Team',
+      name: 'AniSora AI Corp',
       url: 'https://www.bilibili.com',
     },
   ],
-  creator: 'Bilibili Team',
+  creator: 'AniSora AI Corp',
   openGraph: {
     type: 'website',
     locale: 'en_US',
