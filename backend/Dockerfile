@@ -8,8 +8,8 @@ RUN apk add --no-cache curl git
 # Install Python dependencies
 COPY pyproject.toml uv.lock ./
 ENV UV_LINK_MODE=copy
-# 使用--no-cache参数避免缓存问题
-RUN uv pip install --no-cache-dir -e .
+# 使用--system参数直接安装到系统Python环境
+RUN uv pip install --system --no-cache-dir -e .
 
 # Copy application code
 COPY . .
