@@ -1225,7 +1225,7 @@ export const siteConfig = {
       title: 'AniSora',
       links: [
         { id: 1, title: 'Documentation', url: 'https://github.com/bilibili/Index-anisora' },
-        { id: 3, title: 'Discord', url: 'https://discord.gg/KXkc59Yy' },
+        // { id: 3, title: 'Discord', url: 'https://discord.gg/KXkc59Yy' },
         { id: 4, title: 'Start Using', url: '/auth' },
       ],
     },

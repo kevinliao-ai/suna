@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useCallback } from 'react';
 import Link from 'next/link';
 import { FlickeringGrid } from '@/components/home/ui/flickering-grid';
 import { useMediaQuery } from '@/hooks/use-media-query';
@@ -22,37 +22,33 @@ function LegalContent() {
   const [mounted, setMounted] = useState(false);
   const [isScrolling, setIsScrolling] = useState(false);
 
-  // Function to update URL without refreshing the page
-  const updateUrl = (tab: string) => {
+  // Memoize the updateUrl function to prevent unnecessary re-renders
+  const updateUrl = useCallback((tab: string) => {
     const params = new URLSearchParams(searchParams);
     params.set('tab', tab);
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-  };
+  }, [searchParams, pathname, router]);
 
+  // Initialize and handle URL changes
   useEffect(() => {
     setMounted(true);
-
-    // Update the URL if it doesn't match the active tab
-    if (tabParam !== activeTab) {
-      updateUrl(activeTab);
+    
+    // If there's no tab parameter in URL, set the default tab
+    if (!tabParam) {
+      updateUrl('terms');
+    } 
+    // If the URL parameter is valid but doesn't match activeTab, update activeTab
+    else if ((tabParam === 'terms' || tabParam === 'privacy') && tabParam !== activeTab) {
+      setActiveTab(tabParam);
     }
   }, [tabParam, activeTab, updateUrl]);
 
-  // Update the URL when the tab changes
-  useEffect(() => {
-    updateUrl(activeTab);
-  }, [activeTab, updateUrl]);
-
-  // Update the active tab when URL changes
-  useEffect(() => {
-    if (tabParam === 'terms' || tabParam === 'privacy') {
-      setActiveTab(tabParam);
-    }
-  }, [tabParam]);
-
-  // Handle tab change
+  // Handle tab changes from UI
   const handleTabChange = (tab: 'terms' | 'privacy') => {
-    setActiveTab(tab);
+    if (tab !== activeTab) {
+      setActiveTab(tab);
+      updateUrl(tab);
+    }
   };
 
   return (
@@ -688,10 +684,10 @@ function LegalContent() {
                       For questions regarding the Service, you can get in touch
                       by emailing us at{' '}
                       <a
-                        href="mailto:legal@kortixai.com"
+                        href="mailto:liaokuanya0907@gmail.com"
                         className="text-secondary hover:underline"
                       >
-                        legal@kortixai.com
+                        liaokuanya0907@gmail.com
                       </a>
                       .
                     </p>
@@ -912,10 +908,10 @@ function LegalContent() {
                     <p className="text-muted-foreground text-balance">
                       You can get in touch by emailing us at{' '}
                       <a
-                        href="mailto:legal@kortixai.com"
+                        href="mailto:liaokuanya0907@gmail.com"
                         className="text-secondary hover:underline"
                       >
-                        legal@kortixai.com
+                        liaokuanya0907@gmail.com
                       </a>
                       .
                     </p>
