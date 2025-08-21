@@ -164,10 +164,52 @@ async def sync_workflows_to_version_config(agent_id: str):
         
         await client.table('agent_versions').update({'config': config}).eq('version_id', current_version_id).execute()
         
-        logger.info(f"Synced {len(workflows)} workflows to version config for agent {agent_id}")
+        logger.debug(f"Synced {len(workflows)} workflows to version config for agent {agent_id}")
         
     except Exception as e:
         logger.error(f"Failed to sync workflows to version config: {e}")
+
+
+async def sync_triggers_to_version_config(agent_id: str):
+    try:
+        client = await db.client
+        
+        agent_result = await client.table('agents').select('current_version_id').eq('agent_id', agent_id).single().execute()
+        if not agent_result.data or not agent_result.data.get('current_version_id'):
+            logger.warning(f"No current version found for agent {agent_id}")
+            return
+        
+        current_version_id = agent_result.data['current_version_id']
+        
+        triggers_result = await client.table('agent_triggers').select('*').eq('agent_id', agent_id).execute()
+        triggers = []
+        if triggers_result.data:
+            import json
+            for trigger in triggers_result.data:
+                trigger_copy = trigger.copy()
+                if 'config' in trigger_copy and isinstance(trigger_copy['config'], str):
+                    try:
+                        trigger_copy['config'] = json.loads(trigger_copy['config'])
+                    except json.JSONDecodeError:
+                        logger.warning(f"Failed to parse trigger config for {trigger_copy.get('trigger_id')}")
+                        trigger_copy['config'] = {}
+                triggers.append(trigger_copy)
+        
+        version_result = await client.table('agent_versions').select('config').eq('version_id', current_version_id).single().execute()
+        if not version_result.data:
+            logger.warning(f"Version {current_version_id} not found")
+            return
+        
+        config = version_result.data.get('config', {})
+        
+        config['triggers'] = triggers
+        
+        await client.table('agent_versions').update({'config': config}).eq('version_id', current_version_id).execute()
+        
+        logger.debug(f"Synced {len(triggers)} triggers to version config for agent {agent_id}")
+        
+    except Exception as e:
+        logger.error(f"Failed to sync triggers to version config: {e}")
 
 
 @router.get("/providers")
@@ -323,6 +365,9 @@ async def create_agent_trigger(
             description=request.description
         )
         
+        # Sync triggers to version config after creation
+        await sync_triggers_to_version_config(agent_id)
+        
         base_url = os.getenv("WEBHOOK_BASE_URL", "http://localhost:8000")
         webhook_url = f"{base_url}/api/triggers/{trigger.trigger_id}/webhook"
         
@@ -414,6 +459,9 @@ async def update_trigger(
             is_active=request.is_active
         )
         
+        # Sync triggers to version config after update
+        await sync_triggers_to_version_config(updated_trigger.agent_id)
+        
         base_url = os.getenv("WEBHOOK_BASE_URL", "http://localhost:8000")
         webhook_url = f"{base_url}/api/triggers/{trigger_id}/webhook"
 
@@ -455,9 +503,15 @@ async def delete_trigger(
 
         await verify_agent_access(trigger.agent_id, user_id)
         
+        # Store agent_id before deletion
+        agent_id = trigger.agent_id
+        
         success = await trigger_service.delete_trigger(trigger_id)
         if not success:
             raise HTTPException(status_code=404, detail="Trigger not found")
+        
+        # Sync triggers to version config after deletion
+        await sync_triggers_to_version_config(agent_id)
         
         return {"message": "Trigger deleted successfully"}
         
@@ -509,7 +563,7 @@ async def trigger_webhook(
         if result.should_execute_agent or result.should_execute_workflow:
             trigger = await trigger_service.get_trigger(trigger_id)
             if trigger:
-                logger.info(f"Executing agent {trigger.agent_id} for trigger {trigger_id}")
+                logger.debug(f"Executing agent {trigger.agent_id} for trigger {trigger_id}")
                 
                 from .trigger_service import TriggerEvent
                 event = TriggerEvent(
@@ -526,7 +580,7 @@ async def trigger_webhook(
                     trigger_event=event
                 )
                 
-                logger.info(f"Agent execution result: {execution_result}")
+                logger.debug(f"Agent execution result: {execution_result}")
                 
                 return JSONResponse(content={
                     "success": True,
@@ -541,7 +595,7 @@ async def trigger_webhook(
             else:
                 logger.warning(f"Trigger {trigger_id} not found for execution")
         
-        logger.info(f"Webhook processed but no execution needed")
+        logger.debug(f"Webhook processed but no execution needed")
         return JSONResponse(content={
             "success": True,
             "message": "Trigger processed successfully (no execution needed)",
@@ -732,7 +786,7 @@ async def execute_agent_workflow(
     if active_version and active_version.model:
         model_name = active_version.model
     else:
-        model_name = config.MODEL_TO_USE or "anthropic/claude-sonnet-4-20250514"
+        model_name = "openai/gpt-5-mini"
     
     can_use, model_message, allowed_models = await can_use_model(client, account_id, model_name)
     if not can_use:
@@ -772,7 +826,7 @@ async def execute_agent_workflow(
     )
     
     if execution_result["success"]:
-        logger.info(f"Manual workflow execution started: {execution_result}")
+        logger.debug(f"Manual workflow execution started: {execution_result}")
         return {
             "thread_id": execution_result.get("thread_id"),
             "agent_run_id": execution_result.get("agent_run_id"),

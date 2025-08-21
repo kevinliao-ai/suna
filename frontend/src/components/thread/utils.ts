@@ -23,6 +23,7 @@ import {
   Table2,
   ListTodo,
   List,
+  Computer,
 } from 'lucide-react';
 
 // Flag to control whether tool result messages are rendered
@@ -113,6 +114,10 @@ export const getToolIcon = (toolName: string): ElementType => {
       return Terminal;
     case 'terminate-command':
       return Terminal;
+
+    // Port operations
+    case 'expose-port':
+      return Computer;
 
     // Web operations
     case 'web-search':
@@ -303,6 +308,7 @@ const TOOL_DISPLAY_NAMES = new Map([
   ['str_replace', 'Editing Text'],
   ['edit_file', 'Editing File'],
   ['edit-file', 'Editing File'],
+  ['upload-file', 'Uploading File'],
 
   ['create-tasks', 'Creating Tasks'],
   ['update-tasks', 'Updating Tasks'],

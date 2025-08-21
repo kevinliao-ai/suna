@@ -202,7 +202,7 @@ class VersionService:
         change_description: Optional[str] = None
     ) -> AgentVersion:
         
-        logger.info(f"Creating version for agent {agent_id}")
+        logger.debug(f"Creating version for agent {agent_id}")
         client = await self.db.client
         
         is_owner, _ = await self._verify_agent_access(agent_id, user_id)
@@ -216,8 +216,6 @@ class VersionService:
         
         previous_version_id = current_result.data.get('current_version_id')
         
-        # Get the next version number by querying the max version number directly from DB
-        # This avoids race conditions with the cached version_count
         max_version_result = await client.table('agent_versions').select('version_number').eq('agent_id', agent_id).order('version_number', desc=True).limit(1).execute()
         max_version_number = 0
         if max_version_result.data and max_version_result.data[0].get('version_number'):
@@ -229,6 +227,20 @@ class VersionService:
         
         workflows_result = await client.table('agent_workflows').select('*').eq('agent_id', agent_id).execute()
         workflows = workflows_result.data if workflows_result.data else []
+        
+        triggers_result = await client.table('agent_triggers').select('*').eq('agent_id', agent_id).execute()
+        triggers = []
+        if triggers_result.data:
+            import json
+            for trigger in triggers_result.data:
+                trigger_copy = trigger.copy()
+                if 'config' in trigger_copy and isinstance(trigger_copy['config'], str):
+                    try:
+                        trigger_copy['config'] = json.loads(trigger_copy['config'])
+                    except json.JSONDecodeError:
+                        logger.warning(f"Failed to parse trigger config for {trigger_copy.get('trigger_id')}")
+                        trigger_copy['config'] = {}
+                triggers.append(trigger_copy)
         
         normalized_custom_mcps = self._normalize_custom_mcps(custom_mcps)
         
@@ -269,7 +281,8 @@ class VersionService:
                     'mcp': version.configured_mcps,
                     'custom_mcp': normalized_custom_mcps
                 },
-                'workflows': workflows
+                'workflows': workflows,
+                'triggers': triggers
             }
         }
         
@@ -281,7 +294,7 @@ class VersionService:
         version_count = await self._count_versions(agent_id)
         await self._update_agent_current_version(agent_id, version.version_id, version_count)
         
-        logger.info(f"Created version {version.version_name} for agent {agent_id}")
+        logger.debug(f"Created version {version.version_name} for agent {agent_id}")
         return version
     
     async def get_version(self, agent_id: str, version_id: str, user_id: str) -> AgentVersion:
@@ -359,7 +372,7 @@ class VersionService:
         version_count = await self._count_versions(agent_id)
         await self._update_agent_current_version(agent_id, version_id, version_count)
         
-        logger.info(f"Activated version {version['version_name']} for agent {agent_id}")
+        logger.debug(f"Activated version {version['version_name']} for agent {agent_id}")
     
     async def compare_versions(
         self,
