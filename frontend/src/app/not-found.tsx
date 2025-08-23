@@ -12,15 +12,14 @@ export default function NotFound() {
   const [mounted, setMounted] = useState(false);
   const [isScrolling, setIsScrolling] = useState(false);
   const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
-  const { scrollY } = useScroll();
+  const [scrollY, setScrollY] = useState(0);
 
   useEffect(() => {
     setMounted(true);
-  }, []);
 
-  // Detect when scrolling is active to reduce animation complexity
-  useEffect(() => {
-    const unsubscribe = scrollY.on('change', () => {
+    // Simple scroll handler
+    const handleScroll = () => {
+      setScrollY(window.scrollY);
       setIsScrolling(true);
 
       // Clear any existing timeout
@@ -32,15 +31,18 @@ export default function NotFound() {
       scrollTimeout.current = setTimeout(() => {
         setIsScrolling(false);
       }, 300); // Wait 300ms after scroll stops
-    });
+    };
+
+    // Add scroll event listener
+    window.addEventListener('scroll', handleScroll, { passive: true });
 
     return () => {
-      unsubscribe();
+      window.removeEventListener('scroll', handleScroll);
       if (scrollTimeout.current) {
         clearTimeout(scrollTimeout.current);
       }
     };
-  }, [scrollY]);
+  }, []);
 
   return (
     <section className="w-full relative overflow-hidden min-h-screen flex items-center justify-center">

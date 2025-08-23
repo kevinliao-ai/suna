@@ -482,7 +482,7 @@ export const PlaybackControls = ({
                 <Link href="/">
                   <img
                     src="/anisora-logo.png"
-                    alt="Kortix"
+                    alt="anisora"
                     width={16}
                     height={16}
                     className="object-contain"
