@@ -6,6 +6,7 @@ import { safeJsonParse } from '@/components/thread/utils';
 import { ParsedContent } from '@/components/thread/types';
 import { extractToolName } from '@/components/thread/tool-views/xml-parser';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { extractAskData } from '@/components/thread/tool-views/ask-tool/_utils';
 
 interface UseToolCallsReturn {
   toolCalls: ToolCallInput[];
@@ -65,10 +66,21 @@ function parseToolContent(content: any): {
   return null;
 }
 
+// Helper function to check if an ask tool should be filtered out (no attachments)
+function shouldFilterAskTool(toolName: string, assistantContent: any, toolContent: any): boolean {
+  if (toolName.toLowerCase() !== 'ask') {
+    return false; // Not an ask tool, don't filter
+  }
+  
+  const { attachments } = extractAskData(assistantContent, toolContent, true);
+  return !attachments || attachments.length === 0;
+}
+
 export function useToolCalls(
   messages: UnifiedMessage[],
   setLeftSidebarOpen: (open: boolean) => void,
-  agentStatus?: AgentStatus
+  agentStatus?: AgentStatus,
+  compact?: boolean
 ): UseToolCallsReturn {
   const [toolCalls, setToolCalls] = useState<ToolCallInput[]>([]);
   const [currentToolIndex, setCurrentToolIndex] = useState<number>(0);
@@ -186,6 +198,12 @@ export function useToolCalls(
           } catch { }
         }
 
+        // Check if this ask tool should be filtered out
+        if (shouldFilterAskTool(toolName, assistantMsg.content, resultMessage.content)) {
+          // Skip this tool call - don't add it to historicalToolPairs
+          return;
+        }
+
         const toolIndex = historicalToolPairs.length;
         historicalToolPairs.push({
           assistantCall: {
@@ -215,13 +233,13 @@ export function useToolCalls(
         setCurrentToolIndex(historicalToolPairs.length - 1);
       } else if (isSidePanelOpen && !userClosedPanelRef.current && !userNavigatedRef.current) {
         setCurrentToolIndex(historicalToolPairs.length - 1);
-      } else if (!isSidePanelOpen && !autoOpenedPanel && !userClosedPanelRef.current && !isMobile) {
+      } else if (!isSidePanelOpen && !autoOpenedPanel && !userClosedPanelRef.current && !isMobile && !compact) {
         setCurrentToolIndex(historicalToolPairs.length - 1);
         setIsSidePanelOpen(true);
         setAutoOpenedPanel(true);
       }
     }
-  }, [messages, isSidePanelOpen, autoOpenedPanel, agentStatus, isMobile]);
+  }, [messages, isSidePanelOpen, autoOpenedPanel, agentStatus, isMobile, compact]);
 
   // Reset user navigation flag when agent stops
   useEffect(() => {
@@ -372,9 +390,11 @@ export function useToolCalls(
         });
       }
       
-      setIsSidePanelOpen(true);
+      if (!compact) {
+        setIsSidePanelOpen(true);
+      }
     },
-    [toolCalls.length],
+    [toolCalls.length, compact],
   );
 
   return {

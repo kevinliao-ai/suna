@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, Suspense, useEffect, useRef } from 'react';
+import React, { useState, Suspense, useCallback, useEffect } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Joyride, { CallBackProps, STATUS, Step } from 'react-joyride';
 import {
   ChatInput,
   ChatInputHandles,
@@ -27,16 +28,43 @@ import { useThreadQuery } from '@/hooks/react-query/threads/use-threads';
 import { normalizeFilenameToNFC } from '@/lib/utils/unicode';
 import { KortixLogo } from '../sidebar/kortix-logo';
 import { AgentRunLimitDialog } from '@/components/thread/agent-run-limit-dialog';
-import { useFeatureFlag } from '@/lib/feature-flags';
 import { CustomAgentsSection } from './custom-agents-section';
 import { toast } from 'sonner';
 import { ReleaseBadge } from '../auth/release-badge';
+import { useDashboardTour } from '@/hooks/use-dashboard-tour';
+import { TourConfirmationDialog } from '@/components/tour/TourConfirmationDialog';
+import { Calendar, MessageSquare, Plus, Sparkles, Zap } from 'lucide-react';
 
 const PENDING_PROMPT_KEY = 'pendingAgentPrompt';
+
+const dashboardTourSteps: Step[] = [
+  {
+    target: '[data-tour="chat-input"]',
+    content: 'Type your questions or tasks here. Suna can help with research, analysis, automation, and much more.',
+    title: 'Start a Conversation',
+    placement: 'top',
+    disableBeacon: true,
+  },
+  {
+    target: '[data-tour="my-agents"]',
+    content: 'Create and manage your custom AI agents here. Build specialized agents for different tasks and workflows.',
+    title: 'Manage Your Agents',
+    placement: 'right',
+    disableBeacon: true,
+  },
+  {
+    target: '[data-tour="examples"]',
+    content: 'Get started quickly with these example prompts. Click any example to try it out.',
+    title: 'Example Prompts',
+    placement: 'top',
+    disableBeacon: true,
+  },
+];
 
 export function DashboardContent() {
   const [inputValue, setInputValue] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const [autoSubmit, setAutoSubmit] = useState(false);
   const { 
     selectedAgentId, 
@@ -57,12 +85,22 @@ export function DashboardContent() {
   const isMobile = useIsMobile();
   const { data: accounts } = useAccounts();
   const personalAccount = accounts?.find((account) => account.personal_account);
-  const chatInputRef = useRef<ChatInputHandles>(null);
+  const chatInputRef = React.useRef<ChatInputHandles>(null);
   const initiateAgentMutation = useInitiateAgentWithInvalidation();
   const [showPaymentModal, setShowPaymentModal] = useState(false);
 
+  // Tour integration
+  const {
+    run,
+    stepIndex,
+    setStepIndex,
+    stopTour,
+    showWelcome,
+    handleWelcomeAccept,
+    handleWelcomeDecline,
+  } = useDashboardTour();
+
   // Feature flag for custom agents section
-  const { enabled: customAgentsEnabled } = useFeatureFlag('custom_agents');
 
   // Fetch agents to get the selected agent's name
   const { data: agentsResponse } = useAgents({
@@ -83,20 +121,13 @@ export function DashboardContent() {
 
   const enabledEnvironment = isStagingMode() || isLocalMode();
 
-  useEffect(() => {
-    console.log('🚀 Dashboard effect:', { 
-      agentsLength: agents.length, 
-      selectedAgentId, 
-      agents: agents.map(a => ({ id: a.agent_id, name: a.name, isDefault: a.metadata?.is_suna_default })) 
-    });
-    
+  React.useEffect(() => {
     if (agents.length > 0) {
-      console.log('📞 Calling initializeFromAgents');
       initializeFromAgents(agents, undefined, setSelectedAgent);
     }
   }, [agents, initializeFromAgents, setSelectedAgent]);
 
-  useEffect(() => {
+  React.useEffect(() => {
     const agentIdFromUrl = searchParams.get('agent_id');
     if (agentIdFromUrl && agentIdFromUrl !== selectedAgentId) {
       setSelectedAgent(agentIdFromUrl);
@@ -106,9 +137,10 @@ export function DashboardContent() {
     }
   }, [searchParams, selectedAgentId, router, setSelectedAgent]);
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (threadQuery.data && initiatedThreadId) {
       const thread = threadQuery.data;
+      setIsRedirecting(true);
       if (thread.project_id) {
         router.push(`/projects/${thread.project_id}/thread/${initiatedThreadId}`);
       } else {
@@ -117,6 +149,16 @@ export function DashboardContent() {
       setInitiatedThreadId(null);
     }
   }, [threadQuery.data, initiatedThreadId, router]);
+
+  const handleTourCallback = useCallback((data: CallBackProps) => {
+    const { status, type, index } = data;
+    
+    if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {
+      stopTour();
+    } else if (type === 'step:after') {
+      setStepIndex(index + 1);
+    }
+  }, [stopTour, setStepIndex]);
 
   const handleSubmit = async (
     message: string,
@@ -130,7 +172,8 @@ export function DashboardContent() {
   ) => {
     if (
       (!message.trim() && !chatInputRef.current?.getPendingFiles().length) ||
-      isSubmitting
+      isSubmitting ||
+      isRedirecting
     )
       return;
 
@@ -163,6 +206,7 @@ export function DashboardContent() {
 
       if (result.thread_id) {
         setInitiatedThreadId(result.thread_id);
+        // Don't reset isSubmitting here - keep loading until redirect happens
       } else {
         throw new Error('Agent initiation did not return a thread_id.');
       }
@@ -182,12 +226,12 @@ export function DashboardContent() {
         const errorMessage = error instanceof Error ? error.message : 'Operation failed';
         toast.error(errorMessage);
       }
-    } finally {
+      // Only reset loading state if there was an error or no thread_id was returned
       setIsSubmitting(false);
     }
   };
 
-  useEffect(() => {
+  React.useEffect(() => {
     const timer = setTimeout(() => {
       const pendingPrompt = localStorage.getItem(PENDING_PROMPT_KEY);
 
@@ -200,8 +244,8 @@ export function DashboardContent() {
     return () => clearTimeout(timer);
   }, []);
 
-  useEffect(() => {
-    if (autoSubmit && inputValue && !isSubmitting) {
+  React.useEffect(() => {
+    if (autoSubmit && inputValue && !isSubmitting && !isRedirecting) {
       const timer = setTimeout(() => {
         handleSubmit(inputValue);
         setAutoSubmit(false);
@@ -209,10 +253,84 @@ export function DashboardContent() {
 
       return () => clearTimeout(timer);
     }
-  }, [autoSubmit, inputValue, isSubmitting]);
+  }, [autoSubmit, inputValue, isSubmitting, isRedirecting]);
 
   return (
     <>
+      <Joyride
+        steps={dashboardTourSteps}
+        run={run}
+        stepIndex={stepIndex}
+        callback={handleTourCallback}
+        continuous
+        showProgress
+        showSkipButton
+        disableOverlayClose
+        disableScrollParentFix
+        styles={{
+          options: {
+            primaryColor: '#000000',
+            backgroundColor: '#ffffff',
+            textColor: '#000000',
+            overlayColor: 'rgba(0, 0, 0, 0.7)',
+            arrowColor: '#ffffff',
+            zIndex: 1000,
+          },
+          tooltip: {
+            backgroundColor: '#ffffff',
+            borderRadius: 8,
+            fontSize: 14,
+            padding: 20,
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+            border: '1px solid #e5e7eb',
+          },
+          tooltipTitle: {
+            color: '#000000',
+            fontSize: 16,
+            fontWeight: 600,
+            marginBottom: 8,
+          },
+          tooltipContent: {
+            color: '#000000',
+            fontSize: 14,
+            lineHeight: 1.5,
+          },
+          buttonNext: {
+            backgroundColor: '#000000',
+            color: '#ffffff',
+            fontSize: 12,
+            padding: '8px 16px',
+            borderRadius: 6,
+            border: 'none',
+            fontWeight: 500,
+          },
+          buttonBack: {
+            color: '#6b7280',
+            backgroundColor: 'transparent',
+            fontSize: 12,
+            padding: '8px 16px',
+            border: '1px solid #e5e7eb',
+            borderRadius: 6,
+          },
+          buttonSkip: {
+            color: '#6b7280',
+            backgroundColor: 'transparent',
+            fontSize: 12,
+            border: 'none',
+          },
+          buttonClose: {
+            color: '#6b7280',
+            backgroundColor: 'transparent',
+          },
+        }}
+      />
+      
+      <TourConfirmationDialog
+        open={showWelcome}
+        onAccept={handleWelcomeAccept}
+        onDecline={handleWelcomeDecline}
+      />
+
       <BillingModal 
         open={showPaymentModal} 
         onOpenChange={setShowPaymentModal}
@@ -221,7 +339,7 @@ export function DashboardContent() {
       <div className="flex flex-col h-screen w-full overflow-hidden">
         <div className="flex-1 overflow-y-auto">
           <div className="min-h-full flex flex-col">
-            {customAgentsEnabled && (
+            {(
               <div className="flex justify-center px-4 pt-4 md:pt-8">
                 <ReleaseBadge text="Custom Agents, Playbooks, and more!" link="/agents?tab=my-agents" />
               </div>
@@ -229,15 +347,18 @@ export function DashboardContent() {
             <div className="flex-1 flex items-center justify-center px-4 py-8">
               <div className="w-full max-w-[650px] flex flex-col items-center justify-center space-y-4 md:space-y-6">
                 <div className="flex flex-col items-center text-center w-full">
-                  <p className="tracking-tight text-2xl md:text-3xl font-normal text-foreground/90">
+                  <p 
+                    className="tracking-tight text-2xl md:text-3xl font-normal text-foreground/90"
+                    data-tour="dashboard-title"
+                  >
                     What would you like to do today?
                   </p>
                 </div>
-                <div className="w-full">
+                <div className="w-full" data-tour="chat-input">
                   <ChatInput
                     ref={chatInputRef}
                     onSubmit={handleSubmit}
-                    loading={isSubmitting}
+                    loading={isSubmitting || isRedirecting}
                     placeholder="Describe what you need help with..."
                     value={inputValue}
                     onChange={setInputValue}
@@ -248,13 +369,13 @@ export function DashboardContent() {
                     onConfigureAgent={(agentId) => router.push(`/agents/config/${agentId}`)}
                   />
                 </div>
-                <div className="w-full">
+                <div className="w-full" data-tour="examples">
                   <Examples onSelectPrompt={setInputValue} count={isMobile ? 3 : 4} />
                 </div>
               </div>
             </div>
-            {enabledEnvironment && customAgentsEnabled && (
-              <div className="w-full px-4 pb-8">
+            {enabledEnvironment && (
+              <div className="w-full px-4 pb-8" data-tour="custom-agents">
                 <div className="max-w-7xl mx-auto">
                   <CustomAgentsSection 
                     onAgentSelect={setSelectedAgent}

@@ -76,7 +76,7 @@ export const Changelog = ({
                   <img
                     src={entry.image}
                     alt={`${entry.version} visual`}
-                    className="mt-8 w-full rounded-lg object-cover"
+                    className="mt-8 w-[100px] rounded-lg object-cover"
                   />
                 )}
                 {entry.button && (

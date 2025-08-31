@@ -6,7 +6,6 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 import { useAgents, useUpdateAgent, useDeleteAgent, useOptimisticAgentUpdate, useAgentDeletionState } from '@/hooks/react-query/agents/use-agents';
 import { useMarketplaceTemplates, useInstallTemplate, useMyTemplates, useUnpublishTemplate, usePublishTemplate, useCreateTemplate, useDeleteTemplate } from '@/hooks/react-query/secure-mcp/use-secure-mcp';
-import { useFeatureFlag } from '@/lib/feature-flags';
 import { useAuth } from '@/components/AuthProvider';
 
 import { StreamlinedInstallDialog } from '@/components/agents/installation/streamlined-install-dialog';
@@ -44,16 +43,7 @@ interface PublishDialogData {
 
 export default function AgentsPage() {
   const { user } = useAuth();
-  const { enabled: customAgentsEnabled, loading: agentsFlagLoading } = useFeatureFlag("custom_agents");
-  const { enabled: agentMarketplaceEnabled, loading: marketplaceFlagLoading } = useFeatureFlag("agent_marketplace");
   const router = useRouter();
-  const flagLoading = agentsFlagLoading || marketplaceFlagLoading;
-
-  useEffect(() => {
-    if (!flagLoading && !customAgentsEnabled) {
-      router.replace("/dashboard");
-    }
-  }, [flagLoading, customAgentsEnabled, router]);
 
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingAgentId, setEditingAgentId] = useState<string | null>(null);
@@ -62,6 +52,7 @@ export default function AgentsPage() {
   const pathname = usePathname();
   
   const [agentsPage, setAgentsPage] = useState(1);
+  const [agentsPageSize, setAgentsPageSize] = useState(20);
   const [agentsSearchQuery, setAgentsSearchQuery] = useState('');
   const [agentsSortBy, setAgentsSortBy] = useState<AgentSortOption>('created_at');
   const [agentsSortOrder, setAgentsSortOrder] = useState<SortOrder>('desc');
@@ -73,6 +64,7 @@ export default function AgentsPage() {
   });
 
   const [marketplacePage, setMarketplacePage] = useState(1);
+  const [marketplacePageSize, setMarketplacePageSize] = useState(20);
   const [marketplaceSearchQuery, setMarketplaceSearchQuery] = useState('');
   const [marketplaceSelectedTags, setMarketplaceSelectedTags] = useState<string[]>([]);
   const [marketplaceSortBy, setMarketplaceSortBy] = useState<MarketplaceSortOption>('newest');
@@ -81,6 +73,12 @@ export default function AgentsPage() {
   const [showInstallDialog, setShowInstallDialog] = useState(false);
   const [showPreviewDialog, setShowPreviewDialog] = useState(false);
   const [marketplaceFilter, setMarketplaceFilter] = useState<'all' | 'kortix' | 'community' | 'mine'>('all');
+  
+  const [templatesPage, setTemplatesPage] = useState(1);
+  const [templatesPageSize, setTemplatesPageSize] = useState(20);
+  const [templatesSearchQuery, setTemplatesSearchQuery] = useState('');
+  const [templatesSortBy, setTemplatesSortBy] = useState<'created_at' | 'name' | 'download_count'>('created_at');
+  const [templatesSortOrder, setTemplatesSortOrder] = useState<'asc' | 'desc'>('desc');
 
   const [templatesActioningId, setTemplatesActioningId] = useState<string | null>(null);
   const [publishDialog, setPublishDialog] = useState<PublishDialogData | null>(null);
@@ -97,10 +95,11 @@ export default function AgentsPage() {
   const agentsQueryParams: AgentsParams = useMemo(() => {
     const params: AgentsParams = {
       page: agentsPage,
-      limit: 20,
+      limit: agentsPageSize,
       search: agentsSearchQuery || undefined,
       sort_by: agentsSortBy,
       sort_order: agentsSortOrder,
+      content_type: "agents",
     };
 
     if (agentsFilters.hasDefaultAgent) {
@@ -117,20 +116,53 @@ export default function AgentsPage() {
     }
 
     return params;
-  }, [agentsPage, agentsSearchQuery, agentsSortBy, agentsSortOrder, agentsFilters]);
+  }, [agentsPage, agentsPageSize, agentsSearchQuery, agentsSortBy, agentsSortOrder, agentsFilters]);
 
-  const marketplaceQueryParams = useMemo(() => ({
-    limit: 20,
-    offset: (marketplacePage - 1) * 20,
-    search: marketplaceSearchQuery || undefined,
-    tags: marketplaceSelectedTags.length > 0 ? marketplaceSelectedTags.join(',') : undefined,
-  }), [marketplacePage, marketplaceSearchQuery, marketplaceSelectedTags]);
+  const marketplaceQueryParams = useMemo(() => {
+    const params: any = {
+      page: marketplacePage,
+      limit: marketplacePageSize,
+      search: marketplaceSearchQuery || undefined,
+      tags: marketplaceSelectedTags.length > 0 ? marketplaceSelectedTags.join(',') : undefined,
+      sort_by: "download_count",
+      sort_order: "desc"
+    };
+    
+    if (marketplaceFilter === 'kortix') {
+      params.is_kortix_team = true;
+    } else if (marketplaceFilter === 'community') {
+      params.is_kortix_team = false;
+    } else if (marketplaceFilter === 'mine') {
+      params.mine = true;
+    }
+    
+    return params;
+  }, [marketplacePage, marketplacePageSize, marketplaceSearchQuery, marketplaceSelectedTags, marketplaceFilter]);
+
+  const templatesQueryParams = useMemo(() => ({
+    page: templatesPage,
+    limit: templatesPageSize,
+    search: templatesSearchQuery || undefined,
+    sort_by: templatesSortBy,
+    sort_order: templatesSortOrder
+  }), [templatesPage, templatesPageSize, templatesSearchQuery, templatesSortBy, templatesSortOrder]);
 
   const { data: agentsResponse, isLoading: agentsLoading, error: agentsError, refetch: loadAgents } = useAgents(agentsQueryParams);
   const { data: marketplaceTemplates, isLoading: marketplaceLoading } = useMarketplaceTemplates(marketplaceQueryParams);
-  const { data: myTemplates, isLoading: templatesLoading, error: templatesError } = useMyTemplates();
 
-  console.log(marketplaceTemplates);
+  const templatesAgentsQueryParams = useMemo(() => ({
+    ...agentsQueryParams,
+    page: templatesPage,
+    limit: templatesPageSize,
+    search: templatesSearchQuery || undefined,
+    sort_by: templatesSortBy,
+    sort_order: templatesSortOrder,
+    content_type: "templates"
+  }), [templatesPage, templatesPageSize, templatesSearchQuery, templatesSortBy, templatesSortOrder]);
+  
+  const { data: templatesResponse, isLoading: templatesLoading, error: templatesError } = useAgents(templatesAgentsQueryParams);
+  const myTemplates = templatesResponse?.agents;
+  const templatesPagination = templatesResponse?.pagination;
   
   const updateAgentMutation = useUpdateAgent();
   const { optimisticallyUpdateAgent, revertOptimisticUpdate } = useOptimisticAgentUpdate();
@@ -144,13 +176,10 @@ export default function AgentsPage() {
   const agents = agentsResponse?.agents || [];
   const agentsPagination = agentsResponse?.pagination;
 
-  const { kortixTeamItems, communityItems, mineItems } = useMemo(() => {
-    const kortixItems: MarketplaceTemplate[] = [];
-    const communityItems: MarketplaceTemplate[] = [];
-    const mineItems: MarketplaceTemplate[] = [];
-
-    if (marketplaceTemplates) {
-      marketplaceTemplates.forEach(template => {
+  const allMarketplaceItems = useMemo(() => {
+    const items: MarketplaceTemplate[] = [];
+    if (marketplaceTemplates?.templates) {
+      marketplaceTemplates.templates.forEach(template => {
         const item: MarketplaceTemplate = {
           id: template.template_id,
           creator_id: template.creator_id,
@@ -162,67 +191,23 @@ export default function AgentsPage() {
           created_at: template.created_at,
           marketplace_published_at: template.marketplace_published_at,
           profile_image_url: template.profile_image_url,
+          avatar: template.avatar,
+          avatar_color: template.avatar_color,
+          icon_name: template.icon_name,
+          icon_color: template.icon_color,
+          icon_background: template.icon_background,
           template_id: template.template_id,
           is_kortix_team: template.is_kortix_team,
           mcp_requirements: template.mcp_requirements,
           metadata: template.metadata,
         };
 
-        const matchesSearch = !marketplaceSearchQuery.trim() || (() => {
-          const searchLower = marketplaceSearchQuery.toLowerCase();
-          return item.name.toLowerCase().includes(searchLower) ||
-                 item.description?.toLowerCase().includes(searchLower) ||
-                 item.tags.some(tag => tag.toLowerCase().includes(searchLower)) ||
-                 item.creator_name?.toLowerCase().includes(searchLower);
-        })();
-
-        if (!matchesSearch) return;
-
-        if (user?.id === template.creator_id) {
-          mineItems.push(item);
-        }
-        
-        if (template.is_kortix_team === true) {
-          kortixItems.push(item);
-        } else {
-          communityItems.push(item);
-        }
+        items.push(item);
       });
     }
 
-    const sortItems = (items: MarketplaceTemplate[]) =>
-      items.sort((a, b) => {
-        switch (marketplaceSortBy) {
-          case 'newest':
-            return new Date(b.marketplace_published_at || b.created_at).getTime() - 
-                   new Date(a.marketplace_published_at || a.created_at).getTime();
-          case 'popular':
-          case 'most_downloaded':
-            return b.download_count - a.download_count;
-          case 'name':
-            return a.name.localeCompare(b.name);
-          default:
-            return 0;
-        }
-      });
-
-    return {
-      kortixTeamItems: sortItems(kortixItems),
-      communityItems: sortItems(communityItems),
-      mineItems: sortItems(mineItems)
-    };
-  }, [marketplaceTemplates, marketplaceSortBy, user?.id, marketplaceSearchQuery]);
-
-  const allMarketplaceItems = useMemo(() => {
-    if (marketplaceFilter === 'kortix') {
-      return kortixTeamItems;
-    } else if (marketplaceFilter === 'community') {
-      return communityItems;
-    } else if (marketplaceFilter === 'mine') {
-      return mineItems;
-    }
-    return [...kortixTeamItems, ...communityItems];
-  }, [kortixTeamItems, communityItems, mineItems, marketplaceFilter]);
+    return items;
+  }, [marketplaceTemplates]);
 
   const handleTabChange = (newTab: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -249,6 +234,10 @@ export default function AgentsPage() {
   useEffect(() => {
     setMarketplacePage(1);
   }, [marketplaceSearchQuery, marketplaceSelectedTags, marketplaceSortBy]);
+
+  useEffect(() => {
+    setTemplatesPage(1);
+  }, [templatesSearchQuery, templatesSortBy, templatesSortOrder]);
 
   useEffect(() => {
     const agentId = searchParams.get('agent');
@@ -452,6 +441,21 @@ export default function AgentsPage() {
     };
   };
 
+  const handleAgentsPageSizeChange = (newPageSize: number) => {
+    setAgentsPageSize(newPageSize);
+    setAgentsPage(1);
+  };
+
+  const handleMarketplacePageSizeChange = (newPageSize: number) => {
+    setMarketplacePageSize(newPageSize);
+    setMarketplacePage(1);
+  };
+
+  const handleTemplatesPageSizeChange = (newPageSize: number) => {
+    setTemplatesPageSize(newPageSize);
+    setTemplatesPage(1);
+  };
+
   const handleUnpublish = async (templateId: string, templateName: string) => {
     try {
       setTemplatesActioningId(templateId);
@@ -535,30 +539,6 @@ export default function AgentsPage() {
     };
   };
 
-  if (flagLoading) {
-    return (
-      <div className="min-h-screen">
-        <div className="container max-w-7xl mx-auto px-4 py-8">
-          <AgentsPageHeader />
-        </div>
-        
-        <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-border/40 shadow-sm">
-          <div className="container max-w-7xl mx-auto px-4 py-4">
-            <TabsNavigation activeTab={activeTab} onTabChange={handleTabChange} onCreateAgent={handleCreateNewAgent} />
-          </div>
-        </div>
-
-        <div className="container max-w-7xl mx-auto px-4 py-8">
-          <LoadingSkeleton />
-        </div>
-      </div>
-    );
-  }
-
-  if (!customAgentsEnabled) {
-    return null;
-  }
-
   return (
     <div className="min-h-screen">
       <div className="container mx-auto max-w-7xl px-4 py-8">
@@ -592,10 +572,19 @@ export default function AgentsPage() {
               onClearFilters={clearAgentsFilters}
               isDeletingAgent={isDeletingAgent}
               setAgentsPage={setAgentsPage}
+              agentsPageSize={agentsPageSize}
+              onAgentsPageSizeChange={handleAgentsPageSizeChange}
               myTemplates={myTemplates}
               templatesLoading={templatesLoading}
               templatesError={templatesError}
               templatesActioningId={templatesActioningId}
+              templatesPagination={templatesPagination}
+              templatesPage={templatesPage}
+              setTemplatesPage={setTemplatesPage}
+              templatesPageSize={templatesPageSize}
+              onTemplatesPageSizeChange={handleTemplatesPageSizeChange}
+              templatesSearchQuery={templatesSearchQuery}
+              setTemplatesSearchQuery={setTemplatesSearchQuery}
               onPublish={openPublishDialog}
               onUnpublish={handleUnpublish}
               getTemplateStyling={getTemplateStyling}
@@ -612,15 +601,18 @@ export default function AgentsPage() {
               setMarketplaceFilter={setMarketplaceFilter}
               marketplaceLoading={marketplaceLoading}
               allMarketplaceItems={allMarketplaceItems}
-              kortixTeamItems={kortixTeamItems}
-              communityItems={communityItems}
-              mineItems={mineItems}
+              mineItems={[]}
               installingItemId={installingItemId}
               onInstallClick={handleInstallClick}
               onDeleteTemplate={handleDeleteTemplate}
               getItemStyling={getItemStyling}
               currentUserId={user?.id}
               onAgentPreview={handleAgentPreview}
+              marketplacePage={marketplacePage}
+              setMarketplacePage={setMarketplacePage}
+              marketplacePageSize={marketplacePageSize}
+              onMarketplacePageSizeChange={handleMarketplacePageSizeChange}
+              marketplacePagination={marketplaceTemplates?.pagination}
             />
           )}
         </div>

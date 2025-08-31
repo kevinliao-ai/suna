@@ -359,6 +359,9 @@ class InstallationService:
             'avatar': template.avatar,
             'avatar_color': template.avatar_color,
             'profile_image_url': template.profile_image_url,
+            'icon_name': template.icon_name or 'brain',
+            'icon_color': template.icon_color or '#000000',
+            'icon_background': template.icon_background or '#F3F4F6',
             'metadata': {
                 **template.metadata,
                 'created_from_template': template.template_id,
@@ -387,9 +390,12 @@ class InstallationService:
             agentpress_tools = tools.get('agentpress', {})
             model = agent_config.get('model')
             
-            from agent.versioning.version_service import get_version_service
+            logger.debug(f"Creating initial version for agent {agent_id} with system_prompt: {system_prompt[:100]}...")
+            logger.debug(f"Agent config tools: agentpress={len(agentpress_tools)}, mcp={len(configured_mcps)}, custom_mcp={len(custom_mcps)}")
+            
+            from agent.handlers.versioning.version_service import get_version_service
             version_service = await get_version_service()
-            await version_service.create_version(
+            version = await version_service.create_version(
                 agent_id=agent_id,
                 user_id=user_id,
                 system_prompt=system_prompt,
@@ -401,10 +407,19 @@ class InstallationService:
                 change_description="Initial version from template"
             )
             
-            logger.debug(f"Created initial version for agent {agent_id}")
+            logger.info(f"Successfully created initial version {version.version_id} for agent {agent_id}")
+            
+            # Verify the agent was updated with current_version_id
+            client = await self._db.client
+            agent_check = await client.table('agents').select('current_version_id').eq('agent_id', agent_id).execute()
+            if agent_check.data and agent_check.data[0].get('current_version_id'):
+                logger.debug(f"Agent {agent_id} current_version_id updated to: {agent_check.data[0]['current_version_id']}")
+            else:
+                logger.error(f"Agent {agent_id} current_version_id was not updated after version creation!")
             
         except Exception as e:
-            logger.warning(f"Failed to create initial version for agent {agent_id}: {e}")
+            logger.error(f"Failed to create initial version for agent {agent_id}: {e}", exc_info=True)
+            raise  # Re-raise the exception to ensure installation fails if version creation fails
     
     async def _restore_workflows(self, agent_id: str, template_config: Dict[str, Any]) -> None:
         workflows = template_config.get('workflows', [])
@@ -546,11 +561,19 @@ class InstallationService:
             
             workflow_id = None
             if trigger_config.get('execution_type') == 'workflow':
-                workflow_name = trigger_config.get('workflow_name')
-                if workflow_name and workflow_name in workflow_name_to_id:
-                    workflow_id = workflow_name_to_id[workflow_name]
+                existing_workflow_id = trigger_config.get('workflow_id')
+                if existing_workflow_id:
+                    workflow_id = existing_workflow_id
+                    logger.debug(f"Using existing workflow_id {workflow_id} for trigger '{trigger.get('name')}'")
                 else:
-                    logger.warning(f"Workflow '{workflow_name}' not found for trigger '{trigger.get('name')}'")
+                    workflow_name = trigger_config.get('workflow_name')
+                    if workflow_name and workflow_name in workflow_name_to_id:
+                        workflow_id = workflow_name_to_id[workflow_name]
+                        logger.debug(f"Resolved workflow_name '{workflow_name}' to workflow_id {workflow_id} for trigger '{trigger.get('name')}'")
+                    elif workflow_name:
+                        logger.warning(f"Workflow '{workflow_name}' not found for trigger '{trigger.get('name')}'")
+                    else:
+                        logger.warning(f"No workflow_name or workflow_id specified for workflow execution trigger '{trigger.get('name')}'")
             
             if provider_id == 'composio':
                 qualified_name = trigger_config.get('qualified_name')
@@ -578,6 +601,13 @@ class InstallationService:
                 else:
                     failed_count += 1
             else:
+                updated_trigger_config = trigger_config.copy()
+                if workflow_id:
+                    updated_trigger_config['workflow_id'] = workflow_id
+                
+                execution_type = trigger_config.get('execution_type', 'agent')
+                trigger_workflow_id = workflow_id if execution_type == 'workflow' else None
+                
                 trigger_data = {
                     'trigger_id': str(uuid4()),
                     'agent_id': agent_id,
@@ -585,14 +615,16 @@ class InstallationService:
                     'name': trigger.get('name', 'Unnamed Trigger'),
                     'description': trigger.get('description'),
                     'is_active': trigger.get('is_active', True),
-                    'config': trigger_config,
+                    'config': updated_trigger_config,
+                    'workflow_id': trigger_workflow_id,
+                    'execution_type': execution_type,
                     'created_at': datetime.now(timezone.utc).isoformat(),
                     'updated_at': datetime.now(timezone.utc).isoformat()
                 }
                 result = await client.table('agent_triggers').insert(trigger_data).execute()
                 if result.data:
                     created_count += 1
-                    logger.debug(f"Restored trigger '{trigger_data['name']}' for agent {agent_id}")
+                    logger.debug(f"Restored trigger '{trigger_data['name']}' with workflow_id {trigger_workflow_id} for agent {agent_id}")
                 else:
                     failed_count += 1
                     logger.warning(f"Failed to insert trigger '{trigger.get('name')}' for agent {agent_id}")

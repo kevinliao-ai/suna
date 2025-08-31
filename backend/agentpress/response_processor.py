@@ -86,7 +86,7 @@ class ProcessorConfig:
 class ResponseProcessor:
     """Processes LLM responses, extracting and executing tool calls."""
     
-    def __init__(self, tool_registry: ToolRegistry, add_message_callback: Callable, trace: Optional[StatefulTraceClient] = None, is_agent_builder: bool = False, target_agent_id: Optional[str] = None, agent_config: Optional[dict] = None):
+    def __init__(self, tool_registry: ToolRegistry, add_message_callback: Callable, trace: Optional[StatefulTraceClient] = None, agent_config: Optional[dict] = None):
         """Initialize the ResponseProcessor.
         
         Args:
@@ -100,8 +100,8 @@ class ResponseProcessor:
         self.trace = trace or langfuse.trace(name="anonymous:response_processor")
         # Initialize the XML parser
         self.xml_parser = XMLToolParser()
-        self.is_agent_builder = is_agent_builder
-        self.target_agent_id = target_agent_id
+        self.is_agent_builder = False  # Deprecated - keeping for compatibility
+        self.target_agent_id = None  # Deprecated - keeping for compatibility
         self.agent_config = agent_config
 
     async def _yield_message(self, message_obj: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
@@ -112,6 +112,53 @@ class ResponseProcessor:
         if message_obj:
             return format_for_yield(message_obj)
         return None
+
+    def _serialize_model_response(self, model_response) -> Dict[str, Any]:
+        """Convert a LiteLLM ModelResponse object to a JSON-serializable dictionary.
+        
+        Args:
+            model_response: The LiteLLM ModelResponse object
+            
+        Returns:
+            A dictionary representation of the ModelResponse
+        """
+        try:
+            # Try to use the model_dump method if available (Pydantic v2)
+            if hasattr(model_response, 'model_dump'):
+                return model_response.model_dump()
+            
+            # Try to use the dict method if available (Pydantic v1)
+            elif hasattr(model_response, 'dict'):
+                return model_response.dict()
+            
+            # Fallback: manually extract common attributes
+            else:
+                result = {}
+                
+                # Common LiteLLM ModelResponse attributes
+                for attr in ['id', 'object', 'created', 'model', 'choices', 'usage', 'system_fingerprint']:
+                    if hasattr(model_response, attr):
+                        value = getattr(model_response, attr)
+                        # Recursively handle nested objects
+                        if hasattr(value, 'model_dump'):
+                            result[attr] = value.model_dump()
+                        elif hasattr(value, 'dict'):
+                            result[attr] = value.dict()
+                        elif isinstance(value, list):
+                            result[attr] = [
+                                item.model_dump() if hasattr(item, 'model_dump') 
+                                else item.dict() if hasattr(item, 'dict')
+                                else item for item in value
+                            ]
+                        else:
+                            result[attr] = value
+                
+                return result
+                
+        except Exception as e:
+            logger.warning(f"Failed to serialize ModelResponse: {str(e)}, falling back to string representation")
+            # Ultimate fallback: convert to string
+            return {"raw_response": str(model_response), "serialization_error": str(e)}
 
     async def _add_message_with_agent_info(
         self,
@@ -447,7 +494,7 @@ class ResponseProcessor:
                                  context.result = result
                                  tool_results_buffer.append((execution["tool_call"], result, tool_idx, context))
                                  
-                                 if tool_name in ['ask', 'complete']:
+                                 if tool_name in ['ask', 'complete', 'present_presentation']:
                                      logger.debug(f"Terminating tool '{tool_name}' completed during streaming. Setting termination flag.")
                                      self.trace.event(name="terminating_tool_completed_during_streaming", level="DEFAULT", status_message=(f"Terminating tool '{tool_name}' completed during streaming. Setting termination flag."))
                                      agent_should_terminate = True
@@ -472,7 +519,7 @@ class ResponseProcessor:
                             tool_results_buffer.append((execution["tool_call"], result, tool_idx, context))
                             
                             # Check if this is a terminating tool
-                            if tool_name in ['ask', 'complete']:
+                            if tool_name in ['ask', 'complete', 'present_presentation']:
                                 logger.debug(f"Terminating tool '{tool_name}' completed during streaming. Setting termination flag.")
                                 self.trace.event(name="terminating_tool_completed_during_streaming", level="DEFAULT", status_message=(f"Terminating tool '{tool_name}' completed during streaming. Setting termination flag."))
                                 agent_should_terminate = True
@@ -1009,11 +1056,14 @@ class ResponseProcessor:
             # --- Save and Yield assistant_response_end ---
             if assistant_message_object: # Only save if assistant message was saved
                 try:
-                    # Save the full LiteLLM response object directly in content
+                    # Convert LiteLLM ModelResponse to a JSON-serializable dictionary
+                    response_dict = self._serialize_model_response(llm_response)
+                    
+                    # Save the serialized response object in content
                     await self.add_message(
                         thread_id=thread_id,
                         type="assistant_response_end",
-                        content=llm_response,
+                        content=response_dict,
                         is_llm_message=False,
                         metadata={"thread_run_id": thread_run_id}
                     )
@@ -1653,7 +1703,7 @@ class ResponseProcessor:
             metadata["linked_tool_result_message_id"] = tool_message_id
             
         # <<< ADDED: Signal if this is a terminating tool >>>
-        if context.function_name in ['ask', 'complete']:
+        if context.function_name in ['ask', 'complete', 'present_presentation']:
             metadata["agent_should_terminate"] = "true"
             logger.debug(f"Marking tool status for '{context.function_name}' with termination signal.")
             self.trace.event(name="marking_tool_status_for_termination", level="DEFAULT", status_message=(f"Marking tool status for '{context.function_name}' with termination signal."))

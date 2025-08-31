@@ -41,7 +41,6 @@ import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { useFeatureFlags } from '@/lib/feature-flags';
 import posthog from 'posthog-js';
 // Floating mobile menu button component
 function FloatingMobileMenuButton() {
@@ -88,9 +87,6 @@ export function SidebarLeft({
 
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { flags, loading: flagsLoading } = useFeatureFlags(['custom_agents', 'agent_marketplace']);
-  const customAgentsEnabled = flags.custom_agents;
-  const marketplaceEnabled = flags.agent_marketplace;
   const [showNewAgentDialog, setShowNewAgentDialog] = useState(false);
 
   // Close mobile menu on page navigation
@@ -186,10 +182,25 @@ export function SidebarLeft({
               </span>
             </SidebarMenuButton>
           </Link>
-          {!flagsLoading && customAgentsEnabled && (
+          <Link href="/tasks">
+            <SidebarMenuButton 
+              className={cn('touch-manipulation mt-1', {
+                'bg-accent text-accent-foreground font-medium': pathname === '/tasks',
+              })} 
+              onClick={() => {
+                if (isMobile) setOpenMobile(false);
+              }}
+            >
+              <Zap className="h-4 w-4 mr-1" />
+              <span className="flex items-center justify-between w-full">
+                Tasks
+              </span>
+            </SidebarMenuButton>
+          </Link>
+          {(
             <SidebarMenu>
               <Collapsible
-                defaultOpen={pathname?.includes('/agents')}
+                defaultOpen={true}
                 className="group/collapsible"
               >
                 <SidebarMenuItem>
@@ -218,7 +229,7 @@ export function SidebarLeft({
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
-                      <SidebarMenuSubItem>
+                      <SidebarMenuSubItem data-tour="my-agents">
                         <SidebarMenuSubButton className={cn('pl-3 touch-manipulation', {
                           'bg-accent text-accent-foreground font-medium': pathname === '/agents' && (searchParams.get('tab') === 'my-agents' || searchParams.get('tab') === null),
                         })} asChild>
@@ -227,7 +238,7 @@ export function SidebarLeft({
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
-                      <SidebarMenuSubItem>
+                      <SidebarMenuSubItem data-tour="new-agent">
                         <SidebarMenuSubButton 
                           onClick={() => {
                             setShowNewAgentDialog(true);

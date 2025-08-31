@@ -22,20 +22,26 @@ export type FileType =
   | 'csv'
   | 'xlsx';
 
+export interface FileRendererProject {
+  id?: string;
+  name?: string;
+  description?: string;
+  created_at?: string;
+  sandbox?: {
+    id?: string;
+    sandbox_url?: string;
+    vnc_preview?: string;
+    pass?: string;
+  };
+}
+
 interface FileRendererProps {
   content: string | null;
   binaryUrl: string | null;
   fileName: string;
   filePath?: string;
   className?: string;
-  project?: {
-    sandbox?: {
-      id?: string;
-      sandbox_url?: string;
-      vnc_preview?: string;
-      pass?: string;
-    };
-  };
+  project?: FileRendererProject;
   markdownRef?: React.RefObject<HTMLDivElement>;
   onDownload?: () => void;
   isDownloading?: boolean;
@@ -178,8 +184,8 @@ export function FileRenderer({
 
   // Construct HTML file preview URL if we have a sandbox and the file is HTML
   const htmlPreviewUrl =
-    isHtmlFile && project?.sandbox?.sandbox_url && fileName
-      ? constructHtmlPreviewUrl(project.sandbox.sandbox_url, fileName)
+    isHtmlFile && project?.sandbox?.sandbox_url && (filePath || fileName)
+      ? constructHtmlPreviewUrl(project.sandbox.sandbox_url, filePath || fileName)
       : blobHtmlUrl; // Use blob URL as fallback
 
   // Clean up blob URL on unmount
@@ -200,7 +206,7 @@ export function FileRenderer({
       ) : fileType === 'pdf' && binaryUrl ? (
         <PdfRenderer url={binaryUrl} />
       ) : fileType === 'markdown' ? (
-        <MarkdownRenderer content={content || ''} ref={markdownRef} />
+        <MarkdownRenderer content={content || ''} ref={markdownRef} project={project} />
       ) : fileType === 'csv' ? (
         <CsvRenderer content={content || ''} />
       ) : fileType === 'xlsx' ? (
