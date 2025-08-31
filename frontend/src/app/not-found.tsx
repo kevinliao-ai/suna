@@ -8,39 +8,45 @@ import { FlickeringGrid } from '@/components/home/ui/flickering-grid';
 import { useMediaQuery } from '@/hooks/use-media-query';
 
 export default function NotFound() {
-  const tablet = useMediaQuery('(max-width: 1024px)');
   const [mounted, setMounted] = useState(false);
   const [isScrolling, setIsScrolling] = useState(false);
   const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
+  
+  // 只在客户端执行
+  const tablet = useMediaQuery('(max-width: 1024px)');
   const { scrollY } = useScroll();
+  
+  // 只在客户端执行滚动监听
+  useEffect(() => {
+    if (!mounted) return;
+    
+    // 滚动监听逻辑
+    const handleScroll = () => {
+      setIsScrolling(true);
+      
+      if (scrollTimeout.current) {
+        clearTimeout(scrollTimeout.current);
+      }
+      
+      scrollTimeout.current = setTimeout(() => {
+        setIsScrolling(false);
+      }, 300);
+    };
+    
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      if (scrollTimeout.current) {
+        clearTimeout(scrollTimeout.current);
+      }
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [mounted]);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Detect when scrolling is active to reduce animation complexity
-  useEffect(() => {
-    const unsubscribe = scrollY.on('change', () => {
-      setIsScrolling(true);
-
-      // Clear any existing timeout
-      if (scrollTimeout.current) {
-        clearTimeout(scrollTimeout.current);
-      }
-
-      // Set a new timeout
-      scrollTimeout.current = setTimeout(() => {
-        setIsScrolling(false);
-      }, 300); // Wait 300ms after scroll stops
-    });
-
-    return () => {
-      unsubscribe();
-      if (scrollTimeout.current) {
-        clearTimeout(scrollTimeout.current);
-      }
-    };
-  }, [scrollY]);
+  // 滚动检测逻辑已移到上面的 useEffect 中
 
   return (
     <section className="w-full relative overflow-hidden min-h-screen flex items-center justify-center">
