@@ -42,7 +42,7 @@ export function extractCreateAgentWorkflowData(
   toolContent?: any,
   isSuccess?: boolean,
   toolTimestamp?: string,
-  assistantTimestamp?: string
+  assistantTimestamp?: string,
 ): CreateAgentWorkflowData & {
   actualIsSuccess: boolean;
   actualToolTimestamp: string | undefined;
@@ -62,7 +62,7 @@ export function extractCreateAgentWorkflowData(
     workflow: null,
     actualIsSuccess: isSuccess || false,
     actualToolTimestamp: toolTimestamp,
-    actualAssistantTimestamp: assistantTimestamp
+    actualAssistantTimestamp: assistantTimestamp,
   };
 
   try {
@@ -78,10 +78,12 @@ export function extractCreateAgentWorkflowData(
 
       if (content && typeof content === 'object' && content.content) {
         try {
-          const nestedContent = typeof content.content === 'string' ? JSON.parse(content.content) : content.content;
+          const nestedContent =
+            typeof content.content === 'string'
+              ? JSON.parse(content.content)
+              : content.content;
           content = nestedContent;
-        } catch (e) {
-        }
+        } catch (e) {}
       }
 
       if (content && typeof content === 'object' && content.tool_execution) {
@@ -100,7 +102,7 @@ export function extractCreateAgentWorkflowData(
               description: args.description || null,
               is_default: args.is_default || false,
               workflow: output.workflow,
-              actualIsSuccess: true
+              actualIsSuccess: true,
             };
           }
         }
@@ -123,7 +125,7 @@ export function extractCreateAgentWorkflowData(
             description: args.description || null,
             is_default: args.is_default || false,
             workflow: toolOutput.workflow,
-            actualIsSuccess: true
+            actualIsSuccess: true,
           };
         }
       }
@@ -134,4 +136,4 @@ export function extractCreateAgentWorkflowData(
     console.error('Error extracting create agent workflow data:', error);
     return defaultResult;
   }
-} 
+}

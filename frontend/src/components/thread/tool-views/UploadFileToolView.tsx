@@ -22,11 +22,16 @@ import {
   Table,
 } from 'lucide-react';
 import { ToolViewProps } from './types';
-import { formatTimestamp, getToolTitle, normalizeContentToString, extractToolData } from './utils';
+import {
+  formatTimestamp,
+  getToolTitle,
+  normalizeContentToString,
+  extractToolData,
+} from './utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { LoadingState } from './shared/LoadingState';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -46,7 +51,10 @@ interface UploadResult {
   success?: boolean;
 }
 
-function extractUploadData(assistantContent: any, toolContent: any): {
+function extractUploadData(
+  assistantContent: any,
+  toolContent: any,
+): {
   uploadData: UploadData;
   uploadResult: UploadResult | null;
   rawContent: string | null;
@@ -66,15 +74,22 @@ function extractUploadData(assistantContent: any, toolContent: any): {
       const parsed = JSON.parse(assistantStr);
       if (parsed.parameters) {
         uploadData.file_path = parsed.parameters.file_path || null;
-        uploadData.bucket_name = parsed.parameters.bucket_name || 'file-uploads';
+        uploadData.bucket_name =
+          parsed.parameters.bucket_name || 'file-uploads';
         uploadData.custom_filename = parsed.parameters.custom_filename || null;
       }
     } catch (e) {
       // Try regex extraction as fallback
-      const filePathMatch = assistantStr.match(/file_path["']\s*:\s*["']([^"']+)["']/);
-      const bucketMatch = assistantStr.match(/bucket_name["']\s*:\s*["']([^"']+)["']/);
-      const filenameMatch = assistantStr.match(/custom_filename["']\s*:\s*["']([^"']+)["']/);
-      
+      const filePathMatch = assistantStr.match(
+        /file_path["']\s*:\s*["']([^"']+)["']/,
+      );
+      const bucketMatch = assistantStr.match(
+        /bucket_name["']\s*:\s*["']([^"']+)["']/,
+      );
+      const filenameMatch = assistantStr.match(
+        /custom_filename["']\s*:\s*["']([^"']+)["']/,
+      );
+
       if (filePathMatch) uploadData.file_path = filePathMatch[1];
       if (bucketMatch) uploadData.bucket_name = bucketMatch[1];
       if (filenameMatch) uploadData.custom_filename = filenameMatch[1];
@@ -87,7 +102,7 @@ function extractUploadData(assistantContent: any, toolContent: any): {
     rawContent = toolStr;
     try {
       const parsed = JSON.parse(toolStr);
-      
+
       // Handle nested tool_execution structure
       let resultData = null;
       if (parsed.tool_execution && parsed.tool_execution.result) {
@@ -99,7 +114,7 @@ function extractUploadData(assistantContent: any, toolContent: any): {
       if (resultData) {
         // Parse the output message to extract structured data
         const output = resultData.output || '';
-        
+
         uploadResult = {
           message: output,
           success: resultData.success !== undefined ? resultData.success : true,
@@ -122,7 +137,9 @@ function extractUploadData(assistantContent: any, toolContent: any): {
       // If parsing fails, treat as plain text result
       uploadResult = {
         message: toolStr,
-        success: !toolStr.toLowerCase().includes('error') && !toolStr.toLowerCase().includes('failed'),
+        success:
+          !toolStr.toLowerCase().includes('error') &&
+          !toolStr.toLowerCase().includes('failed'),
       };
     }
   }
@@ -142,14 +159,18 @@ export function UploadFileToolView({
   const [isCopyingUrl, setIsCopyingUrl] = useState(false);
   const [isCopyingPath, setIsCopyingPath] = useState(false);
 
-  const { uploadData, uploadResult, rawContent } = extractUploadData(assistantContent, toolContent);
+  const { uploadData, uploadResult, rawContent } = extractUploadData(
+    assistantContent,
+    toolContent,
+  );
   const toolTitle = getToolTitle(name);
-  const actualIsSuccess = uploadResult?.success !== undefined ? uploadResult.success : isSuccess;
+  const actualIsSuccess =
+    uploadResult?.success !== undefined ? uploadResult.success : isSuccess;
 
   const copyToClipboard = async (text: string, type: 'url' | 'path') => {
     try {
       await navigator.clipboard.writeText(text);
-      
+
       if (type === 'url') {
         setIsCopyingUrl(true);
         setTimeout(() => setIsCopyingUrl(false), 2000);
@@ -157,8 +178,10 @@ export function UploadFileToolView({
         setIsCopyingPath(true);
         setTimeout(() => setIsCopyingPath(false), 2000);
       }
-      
-      toast.success(`${type === 'url' ? 'Secure URL' : 'Storage path'} copied to clipboard!`);
+
+      toast.success(
+        `${type === 'url' ? 'Secure URL' : 'Storage path'} copied to clipboard!`,
+      );
     } catch (err) {
       toast.error('Failed to copy to clipboard');
     }
@@ -176,16 +199,18 @@ export function UploadFileToolView({
 
   const getFileIcon = (filename: string) => {
     const ext = getFileExtension(filename);
-    
-    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext)) return FileImage;
-    if (['js', 'ts', 'jsx', 'tsx', 'py', 'html', 'css', 'json'].includes(ext)) return FileCode;
+
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext))
+      return FileImage;
+    if (['js', 'ts', 'jsx', 'tsx', 'py', 'html', 'css', 'json'].includes(ext))
+      return FileCode;
     if (['txt', 'md', 'doc', 'docx', 'pdf'].includes(ext)) return FileText;
     if (['csv', 'xlsx', 'xls'].includes(ext)) return Table;
     if (['mp4', 'mov', 'avi', 'webm'].includes(ext)) return FileVideo;
     if (['mp3', 'wav', 'ogg', 'flac'].includes(ext)) return FileAudio;
     if (['zip', 'rar', 'tar', 'gz'].includes(ext)) return FileArchive;
     if (ext === 'json') return FileJson;
-    
+
     return File;
   };
 
@@ -199,7 +224,9 @@ export function UploadFileToolView({
     try {
       const date = new Date(expiryStr);
       const now = new Date();
-      const diffHours = Math.round((date.getTime() - now.getTime()) / (1000 * 60 * 60));
+      const diffHours = Math.round(
+        (date.getTime() - now.getTime()) / (1000 * 60 * 60),
+      );
       return `${expiryStr} (${diffHours}h remaining)`;
     } catch {
       return expiryStr;
@@ -229,8 +256,8 @@ export function UploadFileToolView({
               variant="secondary"
               className={
                 actualIsSuccess
-                  ? "bg-gradient-to-b from-emerald-200 to-emerald-100 text-emerald-700 dark:from-emerald-800/50 dark:to-emerald-900/60 dark:text-emerald-300"
-                  : "bg-gradient-to-b from-rose-200 to-rose-100 text-rose-700 dark:from-rose-800/50 dark:to-rose-900/60 dark:text-rose-300"
+                  ? 'bg-gradient-to-b from-emerald-200 to-emerald-100 text-emerald-700 dark:from-emerald-800/50 dark:to-emerald-900/60 dark:text-emerald-300'
+                  : 'bg-gradient-to-b from-rose-200 to-rose-100 text-rose-700 dark:from-rose-800/50 dark:to-rose-900/60 dark:text-rose-300'
               }
             >
               {actualIsSuccess ? (
@@ -288,7 +315,10 @@ export function UploadFileToolView({
                           <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                             Secure Access URL
                           </span>
-                          <Badge variant="outline" className="text-xs h-5 px-1.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800">
+                          <Badge
+                            variant="outline"
+                            className="text-xs h-5 px-1.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
+                          >
                             Private
                           </Badge>
                         </div>
@@ -306,7 +336,9 @@ export function UploadFileToolView({
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => copyToClipboard(uploadResult.secure_url!, 'url')}
+                            onClick={() =>
+                              copyToClipboard(uploadResult.secure_url!, 'url')
+                            }
                             className="h-6 px-2 text-xs"
                           >
                             {isCopyingUrl ? (
@@ -319,7 +351,9 @@ export function UploadFileToolView({
                         </div>
 
                         <Button
-                          onClick={() => window.open(uploadResult.secure_url, '_blank')}
+                          onClick={() =>
+                            window.open(uploadResult.secure_url, '_blank')
+                          }
                           size="sm"
                         >
                           <ExternalLink className="h-3.5 w-3.5" />
@@ -339,7 +373,8 @@ export function UploadFileToolView({
                       </h3>
                     </div>
                     <p className="text-sm text-red-700 dark:text-red-300">
-                      {uploadResult?.message || 'The file upload encountered an error.'}
+                      {uploadResult?.message ||
+                        'The file upload encountered an error.'}
                     </p>
                   </div>
                   {rawContent && (
@@ -365,4 +400,4 @@ export function UploadFileToolView({
       </CardContent>
     </Card>
   );
-} 
+}

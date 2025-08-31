@@ -1,18 +1,26 @@
 'use client';
 
 import * as React from 'react';
-import { 
+import {
   DocsHeader,
   DocsCard,
   DocsBody,
   DocsBullets,
   DocsBulletItem,
 } from '@/components/ui/docs-index';
-import { CodeBlock, CodeBlockBody, CodeBlockContent, CodeBlockHeader, CodeBlockFiles, CodeBlockFilename, CodeBlockCopyButton } from '@/components/ui/shadcn-io/code-block';
+import {
+  CodeBlock,
+  CodeBlockBody,
+  CodeBlockContent,
+  CodeBlockHeader,
+  CodeBlockFiles,
+  CodeBlockFilename,
+  CodeBlockCopyButton,
+} from '@/components/ui/shadcn-io/code-block';
 
 const breadcrumbs = [
-  { title: 'Docs', onClick: () => window.location.href = '/docs' },
-  { title: 'Contributing' }
+  { title: 'Docs', onClick: () => (window.location.href = '/docs') },
+  { title: 'Contributing' },
 ];
 
 export default function ContributingPage() {
@@ -32,7 +40,8 @@ export default function ContributingPage() {
         <DocsBody className="mb-8">
           <h2 id="getting-started">Getting Started</h2>
           <p className="text-lg mb-6">
-            Ready to contribute? Here's how to get your development environment set up:
+            Ready to contribute? Here's how to get your development environment
+            set up:
           </p>
         </DocsBody>
         <DocsBullets variant="check" spacing="default" className="mb-8">
@@ -95,7 +104,8 @@ export default function ContributingPage() {
         <DocsBody className="mb-8">
           <h2 id="development-setup">Development Setup</h2>
           <p className="text-lg mb-6">
-            To set up your local development environment, follow our comprehensive self-hosting guide:
+            To set up your local development environment, follow our
+            comprehensive self-hosting guide:
           </p>
         </DocsBody>
         <DocsCard
@@ -104,17 +114,18 @@ export default function ContributingPage() {
           className="mb-6"
           clickable
           actions={[
-            { 
-              label: 'View Setup Guide', 
+            {
+              label: 'View Setup Guide',
               variant: 'default',
-              onClick: () => window.location.href = '/docs/self-hosting'
-            }
+              onClick: () => (window.location.href = '/docs/self-hosting'),
+            },
           ]}
         />
         <DocsBody className="mb-8">
           <p className="text-muted-foreground">
-            The self-hosting guide covers all prerequisites, dependencies, and configuration needed for development. 
-            Once you've completed the setup, you can start contributing to the project.
+            The self-hosting guide covers all prerequisites, dependencies, and
+            configuration needed for development. Once you've completed the
+            setup, you can start contributing to the project.
           </p>
         </DocsBody>
       </section>
@@ -126,10 +137,12 @@ export default function ContributingPage() {
             Follow these guidelines to maintain code quality and consistency:
           </p>
         </DocsBody>
-        
+
         <div className="space-y-6">
           <div>
-            <h3 id="frontend-guidelines" className="text-lg font-semibold mb-4">Frontend (TypeScript/React)</h3>
+            <h3 id="frontend-guidelines" className="text-lg font-semibold mb-4">
+              Frontend (TypeScript/React)
+            </h3>
             <DocsBullets variant="default" spacing="default" className="mb-4">
               <DocsBulletItem
                 title="TypeScript Strict Mode"
@@ -147,7 +160,9 @@ export default function ContributingPage() {
           </div>
 
           <div>
-            <h3 id="backend-guidelines" className="text-lg font-semibold mb-4">Backend (Python)</h3>
+            <h3 id="backend-guidelines" className="text-lg font-semibold mb-4">
+              Backend (Python)
+            </h3>
             <DocsBullets variant="default" spacing="default" className="mb-4">
               <DocsBulletItem
                 title="Type Hints"
@@ -205,7 +220,8 @@ export default function ContributingPage() {
         <DocsBody className="mb-8">
           <h2 id="community">Join the Community</h2>
           <p className="text-lg mb-6">
-            Connect with other contributors and get help with your contributions:
+            Connect with other contributors and get help with your
+            contributions:
           </p>
         </DocsBody>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
@@ -214,11 +230,12 @@ export default function ContributingPage() {
             description="Join our Discord server for real-time discussions and support"
             clickable
             actions={[
-              { 
-                label: 'Join Discord', 
+              {
+                label: 'Join Discord',
                 variant: 'default',
-                onClick: () => window.open('https://discord.gg/Py6pCBUUPw', '_blank')
-              }
+                onClick: () =>
+                  window.open('https://discord.gg/Py6pCBUUPw', '_blank'),
+              },
             ]}
           />
           <DocsCard
@@ -226,15 +243,19 @@ export default function ContributingPage() {
             description="Report bugs, request features, and other issues"
             clickable
             actions={[
-              { 
-                label: 'View Discussions', 
+              {
+                label: 'View Discussions',
                 variant: 'default',
-                onClick: () => window.open('https://github.com/kortix-ai/suna/issues', '_blank')
-              }
+                onClick: () =>
+                  window.open(
+                    'https://github.com/kortix-ai/suna/issues',
+                    '_blank',
+                  ),
+              },
             ]}
           />
         </div>
       </section>
     </>
   );
-} 
+}

@@ -16,7 +16,9 @@ export default function PersonalAccountSettingsPage({
     // { name: "Teams", href: "/settings/teams" },
     { name: 'Billing', href: '/settings/billing' },
     { name: 'Usage Logs', href: '/settings/usage-logs' },
-    ...(isLocalMode() ? [{ name: 'Local .Env Manager', href: '/settings/env-manager' }] : []),
+    ...(isLocalMode()
+      ? [{ name: 'Local .Env Manager', href: '/settings/env-manager' }]
+      : []),
   ];
   return (
     <>
@@ -29,9 +31,11 @@ export default function PersonalAccountSettingsPage({
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${pathname === item.href
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    pathname === item.href
                       ? 'bg-accent text-accent-foreground'
-                      : 'text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground'}`}
+                      : 'text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground'
+                  }`}
                 >
                   {item.name}
                 </Link>

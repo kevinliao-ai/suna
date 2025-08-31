@@ -10,14 +10,14 @@ export const clearUserLocalStorage = () => {
     localStorage.removeItem('auth-tracking-storage');
     localStorage.removeItem('pendingAgentPrompt');
     localStorage.removeItem('suna_upgrade_dialog_displayed');
-    Object.keys(localStorage).forEach(key => {
+    Object.keys(localStorage).forEach((key) => {
       if (key.startsWith('maintenance-dismissed-')) {
         localStorage.removeItem(key);
       }
     });
-    
+
     console.log('✅ Local storage cleared on logout');
   } catch (error) {
     console.error('❌ Error clearing local storage:', error);
   }
-}; 
+};

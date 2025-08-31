@@ -4,7 +4,13 @@ import { persist } from 'zustand/middleware';
 export interface AnnouncementAction {
   id: string;
   label: string;
-  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
+  variant?:
+    | 'default'
+    | 'destructive'
+    | 'outline'
+    | 'secondary'
+    | 'ghost'
+    | 'link';
   onClick: () => void;
 }
 
@@ -25,11 +31,11 @@ export interface BaseAnnouncement {
   targetAudience?: string[];
 }
 
-export type AnnouncementType = 
-  | 'feature-launch' 
+export type AnnouncementType =
+  | 'feature-launch'
   | 'ai-agents-mcp'
-  | 'product-update' 
-  | 'maintenance' 
+  | 'product-update'
+  | 'maintenance'
   | 'celebration'
   | 'onboarding'
   | 'beta-access'
@@ -42,15 +48,17 @@ interface AnnouncementStore {
   dismissedAnnouncements: Set<string>;
   currentAnnouncement: BaseAnnouncement | null;
   isOpen: boolean;
-  
-  addAnnouncement: (announcement: Omit<BaseAnnouncement, 'id' | 'timestamp'>) => string;
+
+  addAnnouncement: (
+    announcement: Omit<BaseAnnouncement, 'id' | 'timestamp'>,
+  ) => string;
   showAnnouncement: (id: string) => void;
   dismissAnnouncement: (id: string) => void;
   closeDialog: () => void;
   openDialog: () => void;
   getActiveAnnouncements: () => BaseAnnouncement[];
   clearAllAnnouncements: () => void;
-  
+
   hasUnseenAnnouncements: () => boolean;
   getAnnouncementsByType: (type: AnnouncementType) => BaseAnnouncement[];
   markAllAsSeen: () => void;
@@ -63,96 +71,106 @@ export const useAnnouncementStore = create<AnnouncementStore>()(
       dismissedAnnouncements: new Set<string>(),
       currentAnnouncement: null,
       isOpen: false,
-      
+
       addAnnouncement: (announcement) => {
         const newAnnouncement: BaseAnnouncement = {
           ...announcement,
           id: `announcement_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          timestamp: Date.now()
+          timestamp: Date.now(),
         };
-        
+
         set((state) => ({
-          announcements: [...state.announcements, newAnnouncement]
+          announcements: [...state.announcements, newAnnouncement],
         }));
-        
-        if (announcement.priority === 'high' || announcement.priority === 'urgent') {
+
+        if (
+          announcement.priority === 'high' ||
+          announcement.priority === 'urgent'
+        ) {
           setTimeout(() => {
             get().showAnnouncement(newAnnouncement.id);
           }, 500);
         }
-        
+
         return newAnnouncement.id;
       },
-      
+
       showAnnouncement: (id) => {
-        const announcement = get().announcements.find(n => n.id === id);
+        const announcement = get().announcements.find((n) => n.id === id);
         if (announcement && !get().dismissedAnnouncements.has(id)) {
-          set({ 
+          set({
             currentAnnouncement: announcement,
-            isOpen: true 
+            isOpen: true,
           });
         }
       },
-      
+
       dismissAnnouncement: (id) => {
         set((state) => ({
-          dismissedAnnouncements: new Set([...state.dismissedAnnouncements, id])
+          dismissedAnnouncements: new Set([
+            ...state.dismissedAnnouncements,
+            id,
+          ]),
         }));
         const current = get().currentAnnouncement;
         if (current?.id === id) {
           get().closeDialog();
         }
       },
-      
-      closeDialog: () => set({ 
-        isOpen: false,
-        currentAnnouncement: null 
-      }),
-      
+
+      closeDialog: () =>
+        set({
+          isOpen: false,
+          currentAnnouncement: null,
+        }),
+
       openDialog: () => set({ isOpen: true }),
-      
+
       getActiveAnnouncements: () => {
         const { announcements, dismissedAnnouncements } = get();
         return announcements
-          .filter(a => !dismissedAnnouncements.has(a.id))
+          .filter((a) => !dismissedAnnouncements.has(a.id))
           .sort((a, b) => {
             const priorityOrder = { urgent: 4, high: 3, medium: 2, low: 1 };
             return priorityOrder[b.priority] - priorityOrder[a.priority];
           });
       },
-      
-      clearAllAnnouncements: () => set({ 
-        announcements: [],
-        currentAnnouncement: null,
-        isOpen: false
-      }),
-      
+
+      clearAllAnnouncements: () =>
+        set({
+          announcements: [],
+          currentAnnouncement: null,
+          isOpen: false,
+        }),
+
       hasUnseenAnnouncements: () => {
         return get().getActiveAnnouncements().length > 0;
       },
-      
+
       getAnnouncementsByType: (type) => {
-        return get().announcements.filter(a => a.type === type);
+        return get().announcements.filter((a) => a.type === type);
       },
-      
+
       markAllAsSeen: () => {
-        const allIds = get().announcements.map(a => a.id);
+        const allIds = get().announcements.map((a) => a.id);
         set({
-          dismissedAnnouncements: new Set(allIds)
+          dismissedAnnouncements: new Set(allIds),
         });
-      }
+      },
     }),
     {
       name: 'announcement-storage',
-      partialize: (state) => ({ 
+      partialize: (state) => ({
         dismissedAnnouncements: Array.from(state.dismissedAnnouncements),
-        announcements: state.announcements.filter(a => a.persistent)
+        announcements: state.announcements.filter((a) => a.persistent),
       }),
       onRehydrateStorage: () => (state) => {
         if (state) {
-          state.dismissedAnnouncements = new Set(state.dismissedAnnouncements || []);
+          state.dismissedAnnouncements = new Set(
+            state.dismissedAnnouncements || [],
+          );
         }
-      }
-    }
-  )
+      },
+    },
+  ),
 );

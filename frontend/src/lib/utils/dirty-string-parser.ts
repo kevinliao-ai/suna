@@ -31,10 +31,16 @@ interface LiteralNode {
 // ————————————————————————————————————————————————
 
 enum TokenType {
-  LBrace, RBrace, LBracket, RBracket,
-  Colon, Comma,
-  String, Number, Ident,
-  EOF
+  LBrace,
+  RBrace,
+  LBracket,
+  RBracket,
+  Colon,
+  Comma,
+  String,
+  Number,
+  Ident,
+  EOF,
 }
 
 interface Token {
@@ -52,36 +58,60 @@ class Tokenizer {
     this.tokens.push({ type: TokenType.EOF, value: '', pos: this.pos });
   }
   private tokenize() {
-    const re = /\s+|("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')|(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)|([{}[\]:,])|([A-Za-z_]\w*)|(.)/gy;
+    const re =
+      /\s+|("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')|(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)|([{}[\]:,])|([A-Za-z_]\w*)|(.)/gy;
     let m: RegExpExecArray | null;
     while ((m = re.exec(this.input)) !== null) {
       const [raw, str, num, punct, ident, bad] = m;
       if (raw.match(/^\s+$/)) continue;
       let type: TokenType;
       let val: string;
-      if (str)       { type = TokenType.String;  val = str; }
-      else if (num)  { type = TokenType.Number;  val = num; }
-      else if (punct){
+      if (str) {
+        type = TokenType.String;
+        val = str;
+      } else if (num) {
+        type = TokenType.Number;
+        val = num;
+      } else if (punct) {
         switch (punct) {
-          case '{': type = TokenType.LBrace;  break;
-          case '}': type = TokenType.RBrace;  break;
-          case '[': type = TokenType.LBracket;break;
-          case ']': type = TokenType.RBracket;break;
-          case ':': type = TokenType.Colon;   break;
-          case ',': type = TokenType.Comma;   break;
-          default:  continue;
+          case '{':
+            type = TokenType.LBrace;
+            break;
+          case '}':
+            type = TokenType.RBrace;
+            break;
+          case '[':
+            type = TokenType.LBracket;
+            break;
+          case ']':
+            type = TokenType.RBracket;
+            break;
+          case ':':
+            type = TokenType.Colon;
+            break;
+          case ',':
+            type = TokenType.Comma;
+            break;
+          default:
+            continue;
         }
         val = punct;
+      } else if (ident) {
+        type = TokenType.Ident;
+        val = ident;
+      } else if (bad) {
+        /* skip stray */ continue;
+      } else {
+        continue;
       }
-      else if (ident){ type = TokenType.Ident;   val = ident; }
-      else if (bad)  { /* skip stray */          continue; }
-      else           { continue; }
       this.tokens.push({ type, value: val, pos: m.index });
     }
   }
 
   peek(offset = 0): Token {
-    return this.tokens[this.pos + offset] || this.tokens[this.tokens.length - 1];
+    return (
+      this.tokens[this.pos + offset] || this.tokens[this.tokens.length - 1]
+    );
   }
   next(): Token {
     return this.tokens[this.pos++];
@@ -111,13 +141,20 @@ class Parser {
   private parseValue(): ASTNode {
     const tok = this.tz.peek();
     switch (tok.type) {
-      case TokenType.LBrace:   return this.parseObject();
-      case TokenType.LBracket: return this.parseArray();
-      case TokenType.String:   return this.parseString();
-      case TokenType.Number:   return this.parseNumber();
-      case TokenType.Ident:    return this.parseIdent();
+      case TokenType.LBrace:
+        return this.parseObject();
+      case TokenType.LBracket:
+        return this.parseArray();
+      case TokenType.String:
+        return this.parseString();
+      case TokenType.Number:
+        return this.parseNumber();
+      case TokenType.Ident:
+        return this.parseIdent();
       default:
-        this.warnings.push(`Unexpected token '${tok.value}' at pos ${tok.pos}, inserting null`);
+        this.warnings.push(
+          `Unexpected token '${tok.value}' at pos ${tok.pos}, inserting null`,
+        );
         this.tz.next();
         return { type: 'Literal', value: null };
     }
@@ -126,8 +163,10 @@ class Parser {
   private parseObject(): ObjectNode {
     this.tz.next(); // skip {
     const props: PropertyNode[] = [];
-    while (this.tz.peek().type !== TokenType.RBrace &&
-           this.tz.peek().type !== TokenType.EOF) {
+    while (
+      this.tz.peek().type !== TokenType.RBrace &&
+      this.tz.peek().type !== TokenType.EOF
+    ) {
       if (this.tz.peek().type === TokenType.Comma) {
         this.tz.next();
         continue;
@@ -140,7 +179,9 @@ class Parser {
       } else if (keyTok.type === TokenType.Ident) {
         key = this.tz.next().value;
       } else {
-        this.warnings.push(`Expected property name at pos ${keyTok.pos}, skipping token`);
+        this.warnings.push(
+          `Expected property name at pos ${keyTok.pos}, skipping token`,
+        );
         this.tz.next();
         continue;
       }
@@ -148,7 +189,9 @@ class Parser {
       if (this.tz.peek().type === TokenType.Colon) {
         this.tz.next();
       } else {
-        this.warnings.push(`Missing ':' after key "${key}" at pos ${keyTok.pos}`);
+        this.warnings.push(
+          `Missing ':' after key "${key}" at pos ${keyTok.pos}`,
+        );
       }
       // value
       const val = this.parseValue();
@@ -169,8 +212,10 @@ class Parser {
   private parseArray(): ArrayNode {
     this.tz.next(); // skip [
     const elems: ASTNode[] = [];
-    while (this.tz.peek().type !== TokenType.RBracket &&
-           this.tz.peek().type !== TokenType.EOF) {
+    while (
+      this.tz.peek().type !== TokenType.RBracket &&
+      this.tz.peek().type !== TokenType.EOF
+    ) {
       if (this.tz.peek().type === TokenType.Comma) {
         this.tz.next();
         continue;
@@ -199,9 +244,9 @@ class Parser {
 
   private parseIdent(): LiteralNode {
     const id = this.tz.next().value.toLowerCase();
-    if (id === 'true')  return { type: 'Literal', value: true };
+    if (id === 'true') return { type: 'Literal', value: true };
     if (id === 'false') return { type: 'Literal', value: false };
-    if (id === 'null')  return { type: 'Literal', value: null };
+    if (id === 'null') return { type: 'Literal', value: null };
     // fallback: treat as string
     return { type: 'Literal', value: id };
   }
@@ -210,14 +255,14 @@ class Parser {
     // strip leading+trailing quote and unescape
     return JSON.parse(
       '"' +
-      str
-        .slice(1, -1)
-        .replace(/\\/g, '\\\\')
-        .replace(/"/g, '\\"')
-        .replace(/\n/g, '\\n')
-        .replace(/\r/g, '\\r')
-        .replace(/\t/g, '\\t') +
-      '"'
+        str
+          .slice(1, -1)
+          .replace(/\\/g, '\\\\')
+          .replace(/"/g, '\\"')
+          .replace(/\n/g, '\\n')
+          .replace(/\r/g, '\\r')
+          .replace(/\t/g, '\\t') +
+        '"',
     );
   }
 }
@@ -247,8 +292,9 @@ function evalAST(node: ASTNode): any {
 
 export function parseDirtyJSON(raw: string): any {
   // 0) Strip literal backspaces/control-chars
-  raw = raw.replace(/[\u0000-\u001F]/g, c =>
-    `\\u${c.charCodeAt(0).toString(16).padStart(4, '0')}`
+  raw = raw.replace(
+    /[\u0000-\u001F]/g,
+    (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, '0')}`,
   );
 
   const tz = new Tokenizer(raw);

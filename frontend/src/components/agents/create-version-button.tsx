@@ -2,7 +2,12 @@
 
 import React, { useState } from 'react';
 import { Save, Loader2 } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -30,11 +35,11 @@ interface CreateVersionButtonProps {
   onVersionCreated?: () => void;
 }
 
-export function CreateVersionButton({ 
-  agentId, 
+export function CreateVersionButton({
+  agentId,
   currentFormData,
   hasChanges,
-  onVersionCreated 
+  onVersionCreated,
 }: CreateVersionButtonProps) {
   const [showDialog, setShowDialog] = useState(false);
   const [versionName, setVersionName] = useState('');
@@ -57,17 +62,17 @@ export function CreateVersionButton({
           agentpress_tools: currentFormData.agentpress_tools,
           version_name: versionName.trim(),
           description: description.trim() || undefined,
-        }
+        },
       });
 
       setShowDialog(false);
       setVersionName('');
       setDescription('');
-      
+
       if (onVersionCreated) {
         onVersionCreated();
       }
-      
+
       toast.success('New version created successfully');
     } catch (error) {
       console.error('Failed to create version:', error);
@@ -101,10 +106,11 @@ export function CreateVersionButton({
           <DialogHeader>
             <DialogTitle>Create New Version</DialogTitle>
             <DialogDescription>
-              Save the current agent configuration as a new version. This allows you to preserve different configurations and switch between them.
+              Save the current agent configuration as a new version. This allows
+              you to preserve different configurations and switch between them.
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="version-name">Version Name</Label>
@@ -116,7 +122,7 @@ export function CreateVersionButton({
                 autoFocus
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="description">Description (Optional)</Label>
               <Textarea
@@ -128,7 +134,7 @@ export function CreateVersionButton({
               />
             </div>
           </div>
-          
+
           <DialogFooter>
             <Button
               variant="outline"
@@ -155,4 +161,4 @@ export function CreateVersionButton({
       </Dialog>
     </>
   );
-} 
+}

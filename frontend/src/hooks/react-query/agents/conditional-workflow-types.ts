@@ -1,17 +1,17 @@
 // Conditional Workflow Types
 // Clean conditional workflow system - conditionals are just decision points between steps
 
-export type StepType = 
-  | 'instruction'    // Basic instruction step
-  | 'if'            // If condition branch
-  | 'sequence'      // Group of steps in sequence
-  | 'trigger';      // Trigger/schedule step
+export type StepType =
+  | 'instruction' // Basic instruction step
+  | 'if' // If condition branch
+  | 'sequence' // Group of steps in sequence
+  | 'trigger'; // Trigger/schedule step
 
 export interface Condition {
-  variable: string;           // What to check (e.g., "user_input", "previous_output")
+  variable: string; // What to check (e.g., "user_input", "previous_output")
   operation: 'contains' | 'equals' | 'not_equals' | 'is_empty' | 'is_not_empty';
-  value?: string;            // Value to compare against
-  description?: string;      // Human readable description
+  value?: string; // Value to compare against
+  description?: string; // Human readable description
 }
 
 export interface WorkflowStep {
@@ -20,22 +20,22 @@ export interface WorkflowStep {
   description?: string;
   type: StepType;
   order: number;
-  
+
   // For instruction steps
   instruction?: string;
   tool_name?: string;
-  
+
   // For conditional steps - just if/else
   condition?: Condition;
-  if_true_step_id?: string;    // Step ID to go to if condition is true
-  if_false_step_id?: string;   // Step ID to go to if condition is false
-  
+  if_true_step_id?: string; // Step ID to go to if condition is true
+  if_false_step_id?: string; // Step ID to go to if condition is false
+
   // For sequence steps
-  child_step_ids?: string[];   // Array of step IDs in this sequence
-  
+  child_step_ids?: string[]; // Array of step IDs in this sequence
+
   // Connection to next step
-  next_step_id?: string;       // Next step after this one completes
-  
+  next_step_id?: string; // Next step after this one completes
+
   // UI positioning
   position?: { x: number; y: number };
 }
@@ -48,14 +48,14 @@ export interface ConditionalWorkflow {
   status: 'draft' | 'active' | 'paused' | 'archived';
   trigger_phrase?: string;
   is_default: boolean;
-  
+
   // Just a flat array of steps with connections
   steps: WorkflowStep[];
-  root_step_id?: string;       // Starting step
-  
+  root_step_id?: string; // Starting step
+
   // Global variables
   variables?: Record<string, any>;
-  
+
   created_at: string;
   updated_at: string;
 }
@@ -63,7 +63,7 @@ export interface ConditionalWorkflow {
 // Execution context
 export interface ExecutionContext {
   variables: Record<string, any>;
-  previous_outputs: Record<string, any>;  // Step ID -> output
+  previous_outputs: Record<string, any>; // Step ID -> output
   user_input?: string;
   current_step_id?: string;
 }
@@ -137,11 +137,11 @@ export interface UpdateWorkflowRequest {
 
 // Condition evaluation
 export function evaluateCondition(
-  condition: Condition, 
-  context: ExecutionContext
+  condition: Condition,
+  context: ExecutionContext,
 ): boolean {
   let variableValue: any;
-  
+
   // Get variable value from context
   if (condition.variable === 'user_input') {
     variableValue = context.user_input;
@@ -152,7 +152,7 @@ export function evaluateCondition(
   } else {
     variableValue = context.variables[condition.variable];
   }
-  
+
   // Evaluate condition
   switch (condition.operation) {
     case 'equals':
@@ -160,7 +160,9 @@ export function evaluateCondition(
     case 'not_equals':
       return String(variableValue) !== String(condition.value);
     case 'contains':
-      return String(variableValue).toLowerCase().includes(String(condition.value).toLowerCase());
+      return String(variableValue)
+        .toLowerCase()
+        .includes(String(condition.value).toLowerCase());
     case 'is_empty':
       return !variableValue || String(variableValue).trim() === '';
     case 'is_not_empty':
@@ -173,35 +175,37 @@ export function evaluateCondition(
 // Workflow execution path builder
 export function buildExecutionPath(
   workflow: ConditionalWorkflow,
-  context: ExecutionContext
+  context: ExecutionContext,
 ): string[] {
   const path: string[] = [];
   const visited = new Set<string>();
-  
+
   let currentStepId = workflow.root_step_id;
   if (!currentStepId && workflow.steps.length > 0) {
     // Find first step by order
     currentStepId = workflow.steps.sort((a, b) => a.order - b.order)[0].id;
   }
-  
+
   while (currentStepId && !visited.has(currentStepId)) {
     visited.add(currentStepId);
     path.push(currentStepId);
-    
-    const step = workflow.steps.find(s => s.id === currentStepId);
+
+    const step = workflow.steps.find((s) => s.id === currentStepId);
     if (!step) break;
-    
+
     // Determine next step based on step type
     if (step.type === 'if' && step.condition) {
       const conditionResult = evaluateCondition(step.condition, context);
-      currentStepId = conditionResult ? step.if_true_step_id : step.if_false_step_id;
+      currentStepId = conditionResult
+        ? step.if_true_step_id
+        : step.if_false_step_id;
     } else if (step.type === 'sequence' && step.child_step_ids) {
       currentStepId = step.child_step_ids[0] || step.next_step_id;
     } else {
       currentStepId = step.next_step_id;
     }
   }
-  
+
   return path;
 }
 
@@ -217,13 +221,13 @@ export function workflowToJSON(workflow: ConditionalWorkflow): WorkflowJSON {
       trigger_phrase: workflow.trigger_phrase,
       is_default: workflow.is_default,
       created_at: workflow.created_at,
-      updated_at: workflow.updated_at
+      updated_at: workflow.updated_at,
     },
     flow: {
       root_step_id: workflow.root_step_id,
       steps: workflow.steps,
-      variables: workflow.variables
-    }
+      variables: workflow.variables,
+    },
   };
 }
 
@@ -240,7 +244,7 @@ export function createStep(
     if_true_step_id?: string;
     if_false_step_id?: string;
     next_step_id?: string;
-  } = {}
+  } = {},
 ): Omit<WorkflowStep, 'id'> {
   return {
     name,
@@ -252,7 +256,7 @@ export function createStep(
     condition: options.condition,
     if_true_step_id: options.if_true_step_id,
     if_false_step_id: options.if_false_step_id,
-    next_step_id: options.next_step_id
+    next_step_id: options.next_step_id,
   };
 }
 
@@ -261,26 +265,29 @@ export function createCondition(
   variable: string,
   operation: 'contains' | 'equals' | 'not_equals' | 'is_empty' | 'is_not_empty',
   value?: string,
-  description?: string
+  description?: string,
 ): Condition {
   return {
     variable,
     operation,
     value,
-    description
+    description,
   };
 }
 
 // Validation
-export function validateWorkflow(workflow: ConditionalWorkflow): { isValid: boolean; errors: string[] } {
+export function validateWorkflow(workflow: ConditionalWorkflow): {
+  isValid: boolean;
+  errors: string[];
+} {
   const errors: string[] = [];
-  
+
   // Check for steps
   if (!workflow.steps || workflow.steps.length === 0) {
     errors.push('Workflow must have at least one step');
     return { isValid: false, errors };
   }
-  
+
   // Check for valid step connections
   for (const step of workflow.steps) {
     if (step.type === 'if') {
@@ -292,27 +299,33 @@ export function validateWorkflow(workflow: ConditionalWorkflow): { isValid: bool
       }
     } else if (step.type === 'instruction') {
       if (!step.instruction && !step.tool_name) {
-        errors.push(`Instruction step "${step.name}" must have either instruction text or tool name`);
+        errors.push(
+          `Instruction step "${step.name}" must have either instruction text or tool name`,
+        );
       }
     }
   }
-  
+
   // Check for circular references (basic check)
-  const stepIds = new Set(workflow.steps.map(s => s.id));
+  const stepIds = new Set(workflow.steps.map((s) => s.id));
   for (const step of workflow.steps) {
     if (step.next_step_id && !stepIds.has(step.next_step_id)) {
       errors.push(`Step "${step.name}" references non-existent next step`);
     }
     if (step.if_true_step_id && !stepIds.has(step.if_true_step_id)) {
-      errors.push(`Step "${step.name}" references non-existent true branch step`);
+      errors.push(
+        `Step "${step.name}" references non-existent true branch step`,
+      );
     }
     if (step.if_false_step_id && !stepIds.has(step.if_false_step_id)) {
-      errors.push(`Step "${step.name}" references non-existent false branch step`);
+      errors.push(
+        `Step "${step.name}" references non-existent false branch step`,
+      );
     }
   }
-  
+
   return {
     isValid: errors.length === 0,
-    errors
+    errors,
   };
-} 
+}

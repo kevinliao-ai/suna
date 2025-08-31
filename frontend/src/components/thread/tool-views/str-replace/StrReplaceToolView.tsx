@@ -15,10 +15,15 @@ import {
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   LineDiff,
   DiffStats,
@@ -26,9 +31,15 @@ import {
   extractFromLegacyFormat,
   generateLineDiff,
   generateCharDiff,
-  calculateDiffStats
+  calculateDiffStats,
 } from './_utils';
-import { extractFilePath, extractStrReplaceContent, extractToolData, formatTimestamp, getToolTitle } from '../utils';
+import {
+  extractFilePath,
+  extractStrReplaceContent,
+  extractToolData,
+  formatTimestamp,
+  getToolTitle,
+} from '../utils';
 import { ToolViewProps } from '../types';
 import { LoadingState } from '../shared/LoadingState';
 
@@ -40,23 +51,39 @@ const UnifiedDiffView: React.FC<{ lineDiff: LineDiff[] }> = ({ lineDiff }) => (
           <tr
             key={i}
             className={cn(
-              "hover:bg-zinc-50 dark:hover:bg-zinc-900",
-              line.type === 'removed' && "bg-red-50 dark:bg-red-950/30",
-              line.type === 'added' && "bg-emerald-50 dark:bg-emerald-950/30",
+              'hover:bg-zinc-50 dark:hover:bg-zinc-900',
+              line.type === 'removed' && 'bg-red-50 dark:bg-red-950/30',
+              line.type === 'added' && 'bg-emerald-50 dark:bg-emerald-950/30',
             )}
           >
             <td className="w-10 text-right select-none py-0.5 pr-1 pl-4 text-xs text-zinc-500 dark:text-zinc-400 border-r border-zinc-200 dark:border-zinc-800">
               {line.lineNumber}
             </td>
             <td className="pl-2 py-0.5 w-6 select-none">
-              {line.type === 'removed' && <Minus className="h-3.5 w-3.5 text-red-500" />}
-              {line.type === 'added' && <Plus className="h-3.5 w-3.5 text-emerald-500" />}
+              {line.type === 'removed' && (
+                <Minus className="h-3.5 w-3.5 text-red-500" />
+              )}
+              {line.type === 'added' && (
+                <Plus className="h-3.5 w-3.5 text-emerald-500" />
+              )}
             </td>
             <td className="w-full px-3 py-0.5">
               <div className="overflow-x-auto max-w-full text-xs">
-                {line.type === 'removed' && <span className="text-red-700 dark:text-red-400">{line.oldLine}</span>}
-                {line.type === 'added' && <span className="text-emerald-700 dark:text-emerald-400">{line.newLine}</span>}
-                {line.type === 'unchanged' && <span className="text-zinc-700 dark:text-zinc-300">{line.oldLine}</span>}
+                {line.type === 'removed' && (
+                  <span className="text-red-700 dark:text-red-400">
+                    {line.oldLine}
+                  </span>
+                )}
+                {line.type === 'added' && (
+                  <span className="text-emerald-700 dark:text-emerald-400">
+                    {line.newLine}
+                  </span>
+                )}
+                {line.type === 'unchanged' && (
+                  <span className="text-zinc-700 dark:text-zinc-300">
+                    {line.oldLine}
+                  </span>
+                )}
               </div>
             </td>
           </tr>
@@ -71,8 +98,12 @@ const SplitDiffView: React.FC<{ lineDiff: LineDiff[] }> = ({ lineDiff }) => (
     <table className="w-full border-collapse">
       <thead>
         <tr className="border-b border-zinc-200 dark:border-zinc-800 text-xs">
-          <th className="p-2 text-left text-zinc-500 dark:text-zinc-400 w-1/2">Removed</th>
-          <th className="p-2 text-left text-zinc-500 dark:text-zinc-400 w-1/2">Added</th>
+          <th className="p-2 text-left text-zinc-500 dark:text-zinc-400 w-1/2">
+            Removed
+          </th>
+          <th className="p-2 text-left text-zinc-500 dark:text-zinc-400 w-1/2">
+            Added
+          </th>
         </tr>
       </thead>
       <tbody>
@@ -80,9 +111,11 @@ const SplitDiffView: React.FC<{ lineDiff: LineDiff[] }> = ({ lineDiff }) => (
           <tr key={i}>
             <td
               className={cn(
-                "p-2 align-top",
-                line.type === 'removed' ? 'bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400' : '',
-                line.oldLine === null ? 'bg-zinc-100 dark:bg-zinc-900' : ''
+                'p-2 align-top',
+                line.type === 'removed'
+                  ? 'bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400'
+                  : '',
+                line.oldLine === null ? 'bg-zinc-100 dark:bg-zinc-900' : '',
               )}
             >
               {line.oldLine !== null ? (
@@ -90,9 +123,9 @@ const SplitDiffView: React.FC<{ lineDiff: LineDiff[] }> = ({ lineDiff }) => (
                   <div className="w-8 text-right pr-2 select-none text-xs text-zinc-500 dark:text-zinc-400">
                     {line.lineNumber}
                   </div>
-                  {line.type === 'removed' &&
+                  {line.type === 'removed' && (
                     <Minus className="h-3.5 w-3.5 text-red-500 mt-0.5 mr-2 flex-shrink-0" />
-                  }
+                  )}
                   <div className="overflow-x-auto">
                     <span className="break-all">{line.oldLine}</span>
                   </div>
@@ -101,9 +134,11 @@ const SplitDiffView: React.FC<{ lineDiff: LineDiff[] }> = ({ lineDiff }) => (
             </td>
             <td
               className={cn(
-                "p-2 align-top",
-                line.type === 'added' ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400' : '',
-                line.newLine === null ? 'bg-zinc-100 dark:bg-zinc-900' : ''
+                'p-2 align-top',
+                line.type === 'added'
+                  ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400'
+                  : '',
+                line.newLine === null ? 'bg-zinc-100 dark:bg-zinc-900' : '',
               )}
             >
               {line.newLine !== null ? (
@@ -111,9 +146,9 @@ const SplitDiffView: React.FC<{ lineDiff: LineDiff[] }> = ({ lineDiff }) => (
                   <div className="w-8 text-right pr-2 select-none text-xs text-zinc-500 dark:text-zinc-400">
                     {line.lineNumber}
                   </div>
-                  {line.type === 'added' &&
+                  {line.type === 'added' && (
                     <Plus className="h-3.5 w-3.5 text-emerald-500 mt-0.5 mr-2 flex-shrink-0" />
-                  }
+                  )}
                   <div className="overflow-x-auto">
                     <span className="break-all">{line.newLine}</span>
                   </div>
@@ -163,7 +198,11 @@ export function StrReplaceToolView({
   const assistantNewFormat = extractFromNewFormat(assistantContent);
   const toolNewFormat = extractFromNewFormat(toolContent);
 
-  if (assistantNewFormat.filePath || assistantNewFormat.oldStr || assistantNewFormat.newStr) {
+  if (
+    assistantNewFormat.filePath ||
+    assistantNewFormat.oldStr ||
+    assistantNewFormat.newStr
+  ) {
     filePath = assistantNewFormat.filePath;
     oldStr = assistantNewFormat.oldStr;
     newStr = assistantNewFormat.newStr;
@@ -173,7 +212,11 @@ export function StrReplaceToolView({
     if (assistantNewFormat.timestamp) {
       actualAssistantTimestamp = assistantNewFormat.timestamp;
     }
-  } else if (toolNewFormat.filePath || toolNewFormat.oldStr || toolNewFormat.newStr) {
+  } else if (
+    toolNewFormat.filePath ||
+    toolNewFormat.oldStr ||
+    toolNewFormat.newStr
+  ) {
     filePath = toolNewFormat.filePath;
     oldStr = toolNewFormat.oldStr;
     newStr = toolNewFormat.newStr;
@@ -185,8 +228,18 @@ export function StrReplaceToolView({
     }
   } else {
     // Fall back to legacy format extraction
-    const assistantLegacy = extractFromLegacyFormat(assistantContent, extractToolData, extractFilePath, extractStrReplaceContent);
-    const toolLegacy = extractFromLegacyFormat(toolContent, extractToolData, extractFilePath, extractStrReplaceContent);
+    const assistantLegacy = extractFromLegacyFormat(
+      assistantContent,
+      extractToolData,
+      extractFilePath,
+      extractStrReplaceContent,
+    );
+    const toolLegacy = extractFromLegacyFormat(
+      toolContent,
+      extractToolData,
+      extractFilePath,
+      extractStrReplaceContent,
+    );
 
     // Use assistant content first, then tool content as fallback
     filePath = assistantLegacy.filePath || toolLegacy.filePath;
@@ -196,7 +249,8 @@ export function StrReplaceToolView({
 
   // Additional legacy extraction for edge cases
   if (!filePath) {
-    filePath = extractFilePath(assistantContent) || extractFilePath(toolContent);
+    filePath =
+      extractFilePath(assistantContent) || extractFilePath(toolContent);
   }
 
   if (!oldStr || !newStr) {
@@ -216,7 +270,8 @@ export function StrReplaceToolView({
   const stats: DiffStats = calculateDiffStats(lineDiff);
 
   // Check if we should show error state (only when not streaming and we have content but can't extract strings)
-  const shouldShowError = !isStreaming && (!oldStr || !newStr) && (assistantContent || toolContent);
+  const shouldShowError =
+    !isStreaming && (!oldStr || !newStr) && (assistantContent || toolContent);
 
   return (
     <Card className="gap-0 flex border shadow-none border-t border-b-0 border-x-0 p-0 rounded-none flex-col h-full overflow-hidden bg-card">
@@ -236,8 +291,8 @@ export function StrReplaceToolView({
               variant="secondary"
               className={
                 actualIsSuccess
-                  ? "bg-gradient-to-b from-emerald-200 to-emerald-100 text-emerald-700 dark:from-emerald-800/50 dark:to-emerald-900/60 dark:text-emerald-300"
-                  : "bg-gradient-to-b from-rose-200 to-rose-100 text-rose-700 dark:from-rose-800/50 dark:to-rose-900/60 dark:text-rose-300"
+                  ? 'bg-gradient-to-b from-emerald-200 to-emerald-100 text-emerald-700 dark:from-emerald-800/50 dark:to-emerald-900/60 dark:text-emerald-300'
+                  : 'bg-gradient-to-b from-rose-200 to-rose-100 text-rose-700 dark:from-rose-800/50 dark:to-rose-900/60 dark:text-rose-300'
               }
             >
               {actualIsSuccess ? (
@@ -304,7 +359,11 @@ export function StrReplaceToolView({
                             className="h-7 w-7 p-0"
                             onClick={() => setExpanded(!expanded)}
                           >
-                            {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                            {expanded ? (
+                              <ChevronUp className="h-4 w-4" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4" />
+                            )}
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>
@@ -317,11 +376,27 @@ export function StrReplaceToolView({
 
                 {expanded && (
                   <div>
-                    <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'unified' | 'split')} className="w-auto">
+                    <Tabs
+                      value={viewMode}
+                      onValueChange={(v) =>
+                        setViewMode(v as 'unified' | 'split')
+                      }
+                      className="w-auto"
+                    >
                       <div className="border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-2 flex justify-end">
                         <TabsList className="h-7 p-0.5">
-                          <TabsTrigger value="unified" className="text-xs h-6 px-2">Unified</TabsTrigger>
-                          <TabsTrigger value="split" className="text-xs h-6 px-2">Split</TabsTrigger>
+                          <TabsTrigger
+                            value="unified"
+                            className="text-xs h-6 px-2"
+                          >
+                            Unified
+                          </TabsTrigger>
+                          <TabsTrigger
+                            value="split"
+                            className="text-xs h-6 px-2"
+                          >
+                            Split
+                          </TabsTrigger>
                         </TabsList>
                       </div>
 

@@ -31,7 +31,7 @@ export function useImageContent(sandboxId?: string, filePath?: string) {
     // Define consistent cache keys
     const cacheKey = `${sandboxId}:${normalizedPath}:blob`;
     const loadKey = `${sandboxId}:${normalizedPath}`;
-    
+
     // Check if image is already in cache
     const cached = FileCache.get(cacheKey);
     if (cached) {
@@ -60,64 +60,69 @@ export function useImageContent(sandboxId?: string, filePath?: string) {
     // Check if this image is already being loaded by another component
     if (inProgressImageLoads.has(loadKey)) {
       setIsLoading(true);
-      
-      inProgressImageLoads.get(loadKey)!
-        .then(blobUrl => {
+
+      inProgressImageLoads
+        .get(loadKey)!
+        .then((blobUrl) => {
           setImageUrl(blobUrl);
           setIsLoading(false);
         })
-        .catch(err => {
+        .catch((err) => {
           console.error('[useImageContent] Error from in-progress load:', err);
           setError(err);
           setIsLoading(false);
         });
-      
+
       return;
     }
     setIsLoading(true);
-    
+
     // Create a URL for the fetch request
-    const url = new URL(`${process.env.NEXT_PUBLIC_BACKEND_URL}/sandboxes/${sandboxId}/files/content`);
+    const url = new URL(
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/sandboxes/${sandboxId}/files/content`,
+    );
     url.searchParams.append('path', normalizedPath);
-    
+
     // Create a promise for this load and track it
     const loadPromise = fetch(url.toString(), {
       headers: {
-        'Authorization': `Bearer ${session.access_token}`,
+        Authorization: `Bearer ${session.access_token}`,
       },
     })
-      .then(response => {
+      .then((response) => {
         if (!response.ok) {
-          throw new Error(`Failed to load image: ${response.status} ${response.statusText}`);
+          throw new Error(
+            `Failed to load image: ${response.status} ${response.statusText}`,
+          );
         }
         return response.blob();
       })
-      .then(blob => {
+      .then((blob) => {
         // Create a blob URL from the image data
         const blobUrl = URL.createObjectURL(blob);
         // Cache both the blob and the URL
         FileCache.set(cacheKey, blobUrl);
-        
+
         return blobUrl;
       });
-    
+
     // Store the promise in the in-progress map
     inProgressImageLoads.set(loadKey, loadPromise);
-    
+
     // Now use the promise for our state
     loadPromise
-      .then(blobUrl => {
+      .then((blobUrl) => {
         setImageUrl(blobUrl);
         setIsLoading(false);
       })
-      .catch(err => {
+      .catch((err) => {
         console.error('Failed to load image:', err);
-        console.error('Image loading details:', { 
-          sandboxId, 
-          filePath, 
+        console.error('Image loading details:', {
+          sandboxId,
+          filePath,
           normalizedPath,
           hasToken: !!session?.access_token,
-          backendUrl: process.env.NEXT_PUBLIC_BACKEND_URL 
+          backendUrl: process.env.NEXT_PUBLIC_BACKEND_URL,
         });
         setError(err);
         setIsLoading(false);
@@ -137,6 +142,6 @@ export function useImageContent(sandboxId?: string, filePath?: string) {
   return {
     data: imageUrl,
     isLoading,
-    error
+    error,
   };
 }

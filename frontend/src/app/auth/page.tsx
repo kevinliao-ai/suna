@@ -46,7 +46,8 @@ function LoginContent() {
   const isMobile = useMediaQuery('(max-width: 768px)');
   const [mounted, setMounted] = useState(false);
 
-  const { wasLastMethod: wasEmailLastMethod, markAsUsed: markEmailAsUsed } = useAuthMethodTracking('email');
+  const { wasLastMethod: wasEmailLastMethod, markAsUsed: markEmailAsUsed } =
+    useAuthMethodTracking('email');
 
   useEffect(() => {
     if (!isLoading && user) {
@@ -98,7 +99,7 @@ function LoginContent() {
       'success' in result &&
       result.success &&
       'redirectTo' in result
-      ) {
+    ) {
       window.location.href = result.redirectTo as string;
       return null;
     }
@@ -242,7 +243,8 @@ function LoginContent() {
 
             <div className="bg-green-50 dark:bg-green-950/20 border border-green-100 dark:border-green-900/50 rounded-lg p-4 mb-8">
               <p className="text-sm text-green-800 dark:text-green-400">
-                Click the link in the email to activate your account. If you don't see the email, check your spam folder.
+                Click the link in the email to activate your account. If you
+                don't see the email, check your spam folder.
               </p>
             </div>
 
@@ -267,36 +269,41 @@ function LoginContent() {
   }
 
   return (
-      <div className="min-h-screen bg-background relative">
-        <div className="absolute top-6 left-6 z-10">
-          <Link href="/" className="flex items-center">
-            <Image src="/anisora-logo.png"
-              alt="AniSora Logo"
-              width={120}
-              height={24}
-              className="h-6 w-auto"
-              priority
-            />
-          </Link>
-        </div>
-        <div className="flex min-h-screen">
-          <div className="relative flex-1 flex items-center justify-center p-4 lg:p-8">
-            <div className="absolute top-6 right-10 z-10">
-              <Link
-                href="/"
-                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back to home
-              </Link>
+    <div className="min-h-screen bg-background relative">
+      <div className="absolute top-6 left-6 z-10">
+        <Link href="/" className="flex items-center">
+          <Image
+            src="/anisora-logo.png"
+            alt="AniSora Logo"
+            width={120}
+            height={24}
+            className="h-6 w-auto"
+            priority
+          />
+        </Link>
+      </div>
+      <div className="flex min-h-screen">
+        <div className="relative flex-1 flex items-center justify-center p-4 lg:p-8">
+          <div className="absolute top-6 right-10 z-10">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to home
+            </Link>
+          </div>
+          <div className="w-full max-w-sm">
+            <div className="mb-4 flex items-center flex-col gap-3 sm:gap-4 justify-center">
+              <ReleaseBadge
+                className="mb-2 sm:mb-4"
+                text="🚀 Anisora V3 Released - Now Available!"
+                link="/changelog"
+              />
+              <h1 className="text-xl sm:text-2xl font-semibold text-foreground text-center leading-tight">
+                {isSignUp ? 'Create your account' : 'Log into your account'}
+              </h1>
             </div>
-            <div className="w-full max-w-sm">
-              <div className="mb-4 flex items-center flex-col gap-3 sm:gap-4 justify-center">
-                <ReleaseBadge className='mb-2 sm:mb-4' text="🚀 Anisora V3 Released - Now Available!" link="/changelog" />
-                <h1 className="text-xl sm:text-2xl font-semibold text-foreground text-center leading-tight">
-                  {isSignUp ? 'Create your account' : 'Log into your account'}
-                </h1>
-              </div>
             <div className="space-y-3 mb-4">
               <GoogleSignIn returnUrl={returnUrl || undefined} />
               <GitHubSignIn returnUrl={returnUrl || undefined} />
@@ -343,7 +350,9 @@ function LoginContent() {
                   <SubmitButton
                     formAction={isSignUp ? handleSignUp : handleSignIn}
                     className="w-full h-10 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors rounded-lg"
-                    pendingText={isSignUp ? "Creating account..." : "Signing in..."}
+                    pendingText={
+                      isSignUp ? 'Creating account...' : 'Signing in...'
+                    }
                   >
                     {isSignUp ? 'Create account' : 'Sign in'}
                   </SubmitButton>
@@ -355,7 +364,7 @@ function LoginContent() {
                 </div>
               </div>
             </form>
-            
+
             <div className="mt-4 space-y-3 text-center text-sm">
               {!isSignUp && (
                 <button
@@ -366,19 +375,19 @@ function LoginContent() {
                   Forgot password?
                 </button>
               )}
-              
+
               <div>
                 <Link
-                  href={isSignUp 
-                    ? `/auth${returnUrl ? `?returnUrl=${returnUrl}` : ''}`
-                    : `/auth?mode=signup${returnUrl ? `&returnUrl=${returnUrl}` : ''}`
+                  href={
+                    isSignUp
+                      ? `/auth${returnUrl ? `?returnUrl=${returnUrl}` : ''}`
+                      : `/auth?mode=signup${returnUrl ? `&returnUrl=${returnUrl}` : ''}`
                   }
                   className="text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  {isSignUp 
-                    ? 'Already have an account? Sign in' 
-                    : "Don't have an account? Sign up"
-                  }
+                  {isSignUp
+                    ? 'Already have an account? Sign in'
+                    : "Don't have an account? Sign up"}
                 </Link>
               </div>
             </div>
@@ -397,7 +406,8 @@ function LoginContent() {
               <DialogTitle>Reset Password</DialogTitle>
             </div>
             <DialogDescription>
-              Enter your email address and we'll send you a link to reset your password.
+              Enter your email address and we'll send you a link to reset your
+              password.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleForgotPassword} className="space-y-4">

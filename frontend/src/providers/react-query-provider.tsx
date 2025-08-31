@@ -25,7 +25,7 @@ export function ReactQueryProvider({
         defaultOptions: {
           queries: {
             staleTime: 20 * 1000,
-            gcTime: 2 * 60 * 1000, 
+            gcTime: 2 * 60 * 1000,
             retry: (failureCount, error: any) => {
               if (error?.status >= 400 && error?.status < 500) return false;
               if (error?.status === 404) return false;
@@ -42,7 +42,10 @@ export function ReactQueryProvider({
             },
             onError: (error: any, variables: any, context: any) => {
               // Don't globally handle errors that are expected to be handled by components
-              if (error instanceof BillingError || error instanceof AgentRunLimitError) {
+              if (
+                error instanceof BillingError ||
+                error instanceof AgentRunLimitError
+              ) {
                 return; // Let components handle these specific errors
               }
               handleApiError(error, {
@@ -61,9 +64,7 @@ export function ReactQueryProvider({
     <QueryClientProvider client={queryClient}>
       <HydrationBoundary state={dehydratedState}>
         {children}
-        {isLocal && (
-          <ReactQueryDevtools initialIsOpen={false} />
-        )}
+        {isLocal && <ReactQueryDevtools initialIsOpen={false} />}
       </HydrationBoundary>
     </QueryClientProvider>
   );

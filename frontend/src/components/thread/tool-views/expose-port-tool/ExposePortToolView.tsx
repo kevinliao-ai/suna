@@ -4,13 +4,10 @@ import {
   CheckCircle,
   AlertTriangle,
   Computer,
-  Clock
+  Clock,
 } from 'lucide-react';
 import { ToolViewProps } from '../types';
-import {
-  formatTimestamp,
-  getToolTitle
-} from '../utils';
+import { formatTimestamp, getToolTitle } from '../utils';
 import { extractExposePortData } from './_utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -26,20 +23,14 @@ export function ExposePortToolView({
   assistantTimestamp,
   toolTimestamp,
 }: ToolViewProps) {
-
-  const {
-    port,
-    url,
-    message,
-    actualIsSuccess,
-    actualToolTimestamp
-  } = extractExposePortData(
-    assistantContent,
-    toolContent,
-    isSuccess,
-    toolTimestamp,
-    assistantTimestamp
-  );
+  const { port, url, message, actualIsSuccess, actualToolTimestamp } =
+    extractExposePortData(
+      assistantContent,
+      toolContent,
+      isSuccess,
+      toolTimestamp,
+      assistantTimestamp,
+    );
 
   const toolTitle = getToolTitle(name);
 
@@ -57,24 +48,29 @@ export function ExposePortToolView({
               </CardTitle>
             </div>
           </div>
-          
-          <div className='flex items-center gap-2'>
+
+          <div className="flex items-center gap-2">
             {url && !isStreaming && (
-              <Button variant="outline" size="sm" className="h-8 text-xs bg-white dark:bg-muted/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 shadow-none" asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 text-xs bg-white dark:bg-muted/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 shadow-none"
+                asChild
+              >
                 <a href={url} target="_blank" rel="noopener noreferrer">
                   <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
                   Open in Browser
                 </a>
               </Button>
             )}
-            
+
             {!isStreaming && (
               <Badge
                 variant="secondary"
                 className={
                   actualIsSuccess
-                    ? "bg-gradient-to-b from-emerald-200 to-emerald-100 text-emerald-700 dark:from-emerald-800/50 dark:to-emerald-900/60 dark:text-emerald-300"
-                    : "bg-gradient-to-b from-rose-200 to-rose-100 text-rose-700 dark:from-rose-800/50 dark:to-rose-900/60 dark:text-rose-300"
+                    ? 'bg-gradient-to-b from-emerald-200 to-emerald-100 text-emerald-700 dark:from-emerald-800/50 dark:to-emerald-900/60 dark:text-emerald-300'
+                    : 'bg-gradient-to-b from-rose-200 to-rose-100 text-rose-700 dark:from-rose-800/50 dark:to-rose-900/60 dark:text-rose-300'
                 }
               >
                 {actualIsSuccess ? (
@@ -82,7 +78,9 @@ export function ExposePortToolView({
                 ) : (
                   <AlertTriangle className="h-3.5 w-3.5 mr-1" />
                 )}
-                {actualIsSuccess ? 'Port exposed successfully' : 'Port exposure failed'}
+                {actualIsSuccess
+                  ? 'Port exposed successfully'
+                  : 'Port exposure failed'}
               </Badge>
             )}
           </div>
@@ -126,16 +124,19 @@ export function ExposePortToolView({
                   </div>
                 )} */}
               </div>
-              
+
               {message && (
                 <div className="text-sm text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 rounded-md p-3 mt-3">
                   {message}
                 </div>
               )}
-              
+
               <div className="text-xs bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-md p-3 text-amber-700 dark:text-amber-300 flex items-start gap-2 mt-3">
                 <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" />
-                <span>This URL is temporarily available and may expire after some time.</span>
+                <span>
+                  This URL is temporarily available and may expire after some
+                  time.
+                </span>
               </div>
             </div>
             {/* Iframe Preview */}
@@ -157,7 +158,8 @@ export function ExposePortToolView({
               No Port Information
             </h3>
             <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center max-w-md">
-              No port exposure information is available yet. Use the expose-port command to share a local port.
+              No port exposure information is available yet. Use the expose-port
+              command to share a local port.
             </p>
           </div>
         )}
@@ -166,7 +168,10 @@ export function ExposePortToolView({
       <div className="px-4 py-2 h-10 bg-gradient-to-r from-zinc-50/90 to-zinc-100/90 dark:from-zinc-900/90 dark:to-zinc-800/90 backdrop-blur-sm border-t border-zinc-200 dark:border-zinc-800 flex justify-between items-center gap-4">
         <div className="h-full flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
           {!isStreaming && port && (
-            <Badge variant="outline" className="h-6 py-0.5 bg-zinc-50 dark:bg-zinc-900">
+            <Badge
+              variant="outline"
+              className="h-6 py-0.5 bg-zinc-50 dark:bg-zinc-900"
+            >
               <Computer className="h-3 w-3 mr-1" />
               Port {port}
             </Badge>

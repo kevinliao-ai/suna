@@ -1,6 +1,12 @@
-import { createMutationHook, createQueryHook } from "@/hooks/use-query";
-import { threadKeys } from "./keys";
-import { BillingError, AgentRunLimitError, getAgentRuns, startAgent, stopAgent } from "@/lib/api";
+import { createMutationHook, createQueryHook } from '@/hooks/use-query';
+import { threadKeys } from './keys';
+import {
+  BillingError,
+  AgentRunLimitError,
+  getAgentRuns,
+  startAgent,
+  stopAgent,
+} from '@/lib/api';
 
 export const useAgentRunsQuery = (threadId: string) =>
   createQueryHook(
@@ -9,7 +15,7 @@ export const useAgentRunsQuery = (threadId: string) =>
     {
       enabled: !!threadId,
       retry: 1,
-    }
+    },
   )();
 
 export const useStartAgentMutation = () =>
@@ -34,7 +40,7 @@ export const useStartAgentMutation = () =>
           throw error;
         }
       },
-    }
+    },
   )();
 
 export const useStopAgentMutation = () =>

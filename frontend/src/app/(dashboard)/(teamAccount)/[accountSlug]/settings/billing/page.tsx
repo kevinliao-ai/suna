@@ -25,11 +25,7 @@ export default function TeamBillingPage({
   const { accountSlug } = unwrappedParams;
   const [showBillingModal, setShowBillingModal] = useState(false);
 
-  const { 
-    data: teamAccount, 
-    isLoading, 
-    error 
-  } = useAccountBySlug(accountSlug);
+  const { data: teamAccount, isLoading, error } = useAccountBySlug(accountSlug);
 
   const {
     data: subscriptionData,
@@ -45,7 +41,9 @@ export default function TeamBillingPage({
       >
         <AlertTitle>Error</AlertTitle>
         <AlertDescription>
-          {error instanceof Error ? error.message : 'Failed to load account data'}
+          {error instanceof Error
+            ? error.message
+            : 'Failed to load account data'}
         </AlertDescription>
       </Alert>
     );
@@ -90,12 +88,12 @@ export default function TeamBillingPage({
 
   return (
     <div className="space-y-6">
-      <BillingModal 
-        open={showBillingModal} 
+      <BillingModal
+        open={showBillingModal}
         onOpenChange={setShowBillingModal}
         returnUrl={`${returnUrl}/${accountSlug}/settings/billing`}
       />
-      
+
       <div>
         <h3 className="text-lg font-medium text-card-title">Team Billing</h3>
         <p className="text-sm text-foreground/70">
@@ -137,28 +135,24 @@ export default function TeamBillingPage({
                       Agent Usage This Month
                     </span>
                     <span className="text-sm font-medium">
-                      ${subscriptionData.current_usage?.toFixed(2) || '0'} /{' '}
-                      ${subscriptionData.cost_limit || '0'}
+                      ${subscriptionData.current_usage?.toFixed(2) || '0'} / $
+                      {subscriptionData.cost_limit || '0'}
                     </span>
-                    <Button variant='outline' asChild className='text-sm'>
-                      <Link href="/settings/usage-logs">
-                        Usage logs
-                      </Link>
+                    <Button variant="outline" asChild className="text-sm">
+                      <Link href="/settings/usage-logs">Usage logs</Link>
                     </Button>
                   </div>
                 </div>
               </div>
             )}
 
-            <div className='flex justify-center items-center gap-4'>
+            <div className="flex justify-center items-center gap-4">
               <Button
                 variant="outline"
                 className="border-border hover:bg-muted/50 shadow-sm hover:shadow-md transition-all whitespace-nowrap flex items-center"
                 asChild
               >
-                <Link href="/model-pricing">
-                  View Model Pricing
-                </Link>
+                <Link href="/model-pricing">View Model Pricing</Link>
               </Button>
               <Button
                 onClick={() => setShowBillingModal(true)}

@@ -34,7 +34,9 @@ export const metadata: Metadata = {
   },
   description: siteConfig.description,
   keywords: siteConfig.keywords,
-  authors: [{ name: 'AniSora Team', url: 'https://github.com/bilibili/Index-anisora' }],
+  authors: [
+    { name: 'AniSora Team', url: 'https://github.com/bilibili/Index-anisora' },
+  ],
   creator: 'AniSora Team',
   publisher: 'Bilibili',
   applicationName: 'AniSora',
@@ -95,9 +97,7 @@ export const metadata: Metadata = {
   alternates: {
     canonical: siteConfig.url,
     types: {
-      'application/rss+xml': [
-        { url: '/rss.xml', title: 'AniSora RSS Feed' },
-      ],
+      'application/rss+xml': [{ url: '/rss.xml', title: 'AniSora RSS Feed' }],
     },
   },
 };
@@ -118,10 +118,14 @@ export default function RootLayout({
           'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
           })(window,document,'script','dataLayer','GTM-PCHSN4M2');`}
         </Script>
-        <Script async src="https://cdn.tolt.io/tolt.js" data-tolt={process.env.NEXT_PUBLIC_TOLT_REFERRAL_ID}></Script>
+        <Script
+          async
+          src="https://cdn.tolt.io/tolt.js"
+          data-tolt={process.env.NEXT_PUBLIC_TOLT_REFERRAL_ID}
+        ></Script>
         {/* Google AdSense */}
-        <Script 
-          id="google-adsense" 
+        <Script
+          id="google-adsense"
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4146045147843356"
           strategy="afterInteractive"
           crossOrigin="anonymous"
@@ -129,7 +133,7 @@ export default function RootLayout({
         />
         {/* End Google AdSense */}
         {/* Google AdSense */}
-        <Script 
+        <Script
           src="https://cdn.ampproject.org/v0/amp-auto-ads-0.1.js"
           async
           custom-element="amp-auto-ads"
@@ -140,11 +144,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased font-sans bg-background`}
       >
-       <noscript>
-          <iframe 
+        <noscript>
+          <iframe
             src="https://www.googletagmanager.com/ns.html?id=GTM-MPT74VX8"
-            height="0" 
-            width="0" 
+            height="0"
+            width="0"
             style={{ display: 'none', visibility: 'hidden' }}
           />
         </noscript>

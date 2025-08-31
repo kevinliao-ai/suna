@@ -1,7 +1,13 @@
 'use client';
 
 import React from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SearchBar } from './search-bar';
 import { MarketplaceSectionHeader } from './marketplace-section-header';
@@ -14,17 +20,22 @@ interface MarketplaceTabProps {
   marketplaceSearchQuery: string;
   setMarketplaceSearchQuery: (value: string) => void;
   marketplaceFilter: 'all' | 'kortix' | 'community' | 'mine';
-  setMarketplaceFilter: (value: 'all' | 'kortix' | 'community' | 'mine') => void;
+  setMarketplaceFilter: (
+    value: 'all' | 'kortix' | 'community' | 'mine',
+  ) => void;
   marketplaceLoading: boolean;
   allMarketplaceItems: MarketplaceTemplate[];
   mineItems: MarketplaceTemplate[];
   installingItemId: string | null;
   onInstallClick: (item: MarketplaceTemplate, e?: React.MouseEvent) => void;
   onDeleteTemplate?: (item: MarketplaceTemplate, e?: React.MouseEvent) => void;
-  getItemStyling: (item: MarketplaceTemplate) => { avatar: string; color: string };
+  getItemStyling: (item: MarketplaceTemplate) => {
+    avatar: string;
+    color: string;
+  };
   currentUserId?: string;
   onAgentPreview?: (agent: MarketplaceTemplate) => void;
-  
+
   marketplacePage: number;
   setMarketplacePage: (page: number) => void;
   marketplacePageSize: number;
@@ -57,7 +68,7 @@ export const MarketplaceTab = ({
   setMarketplacePage,
   marketplacePageSize,
   onMarketplacePageSizeChange,
-  marketplacePagination
+  marketplacePagination,
 }: MarketplaceTabProps) => {
   const handleAgentClick = (item: MarketplaceTemplate) => {
     if (onAgentPreview) {
@@ -74,15 +85,28 @@ export const MarketplaceTab = ({
           onChange={setMarketplaceSearchQuery}
         />
         <div className="flex items-center gap-3">
-          <Select value={marketplaceFilter} onValueChange={(value: 'all' | 'kortix' | 'community' | 'mine') => setMarketplaceFilter(value)}>
+          <Select
+            value={marketplaceFilter}
+            onValueChange={(value: 'all' | 'kortix' | 'community' | 'mine') =>
+              setMarketplaceFilter(value)
+            }
+          >
             <SelectTrigger className="w-[180px] h-12 rounded-xl">
               <SelectValue placeholder="Filter agents" />
             </SelectTrigger>
-            <SelectContent className='rounded-xl'>
-              <SelectItem className='rounded-xl' value="all">All Agents</SelectItem>
-              <SelectItem className='rounded-xl' value="mine">Mine</SelectItem>
-              <SelectItem className='rounded-xl' value="kortix">Kortix Verified</SelectItem>
-              <SelectItem className='rounded-xl' value="community">Community</SelectItem>
+            <SelectContent className="rounded-xl">
+              <SelectItem className="rounded-xl" value="all">
+                All Agents
+              </SelectItem>
+              <SelectItem className="rounded-xl" value="mine">
+                Mine
+              </SelectItem>
+              <SelectItem className="rounded-xl" value="kortix">
+                Kortix Verified
+              </SelectItem>
+              <SelectItem className="rounded-xl" value="community">
+                Community
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -92,7 +116,10 @@ export const MarketplaceTab = ({
         {marketplaceLoading ? (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="bg-card rounded-2xl overflow-hidden shadow-sm">
+              <div
+                key={i}
+                className="bg-card rounded-2xl overflow-hidden shadow-sm"
+              >
                 <Skeleton className="h-48" />
                 <div className="p-6 space-y-3">
                   <Skeleton className="h-5 rounded" />
@@ -108,9 +135,9 @@ export const MarketplaceTab = ({
         ) : allMarketplaceItems.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground">
-              {marketplaceSearchQuery 
-                ? "No templates found matching your criteria. Try adjusting your search or filters."
-                : "No agent templates are currently available in the marketplace."}
+              {marketplaceSearchQuery
+                ? 'No templates found matching your criteria. Try adjusting your search or filters.'
+                : 'No agent templates are currently available in the marketplace.'}
             </p>
           </div>
         ) : (
@@ -173,4 +200,4 @@ export const MarketplaceTab = ({
       </div>
     </div>
   );
-}; 
+};

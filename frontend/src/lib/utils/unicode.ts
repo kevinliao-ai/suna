@@ -2,7 +2,7 @@
  * Normalize filename to NFC (Normalized Form Composed) to ensure consistent
  * Unicode representation across different systems, especially macOS which
  * can use NFD (Normalized Form Decomposed).
- * 
+ *
  * @param filename The filename to normalize
  * @returns The filename normalized to NFC form
  */
@@ -19,7 +19,7 @@ export const normalizeFilenameToNFC = (filename: string): string => {
 /**
  * Normalize file path to NFC (Normalized Form Composed) to ensure consistent
  * Unicode representation across different systems.
- * 
+ *
  * @param path The file path to normalize
  * @returns The path with all components normalized to NFC form
  */
@@ -31,4 +31,4 @@ export const normalizePathToNFC = (path: string): string => {
     console.warn('Failed to normalize path to NFC:', path, error);
     return path;
   }
-}; 
+};

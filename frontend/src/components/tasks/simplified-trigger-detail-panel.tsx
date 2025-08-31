@@ -21,11 +21,15 @@ import {
   Target,
   Repeat,
   Play,
-  Pause
+  Pause,
 } from 'lucide-react';
 import Link from 'next/link';
 import { TriggerWithAgent } from '@/hooks/react-query/triggers/use-all-triggers';
-import { useDeleteTrigger, useToggleTrigger, useUpdateTrigger } from '@/hooks/react-query/triggers';
+import {
+  useDeleteTrigger,
+  useToggleTrigger,
+  useUpdateTrigger,
+} from '@/hooks/react-query/triggers';
 import { TriggerConfigDialog } from '@/components/agents/triggers/trigger-config-dialog';
 import { useAgentWorkflows } from '@/hooks/react-query/agents/use-agent-workflows';
 import { toast } from 'sonner';
@@ -48,25 +52,57 @@ interface SimplifiedTriggerDetailPanelProps {
 }
 
 const SCHEDULE_PRESETS = [
-  { cron: '*/15 * * * *', name: 'Every 15 minutes', icon: <Zap className="h-4 w-4" /> },
-  { cron: '*/30 * * * *', name: 'Every 30 minutes', icon: <Timer className="h-4 w-4" /> },
-  { cron: '0 * * * *', name: 'Every hour', icon: <Timer className="h-4 w-4" /> },
-  { cron: '0 9 * * *', name: 'Daily at 9 AM', icon: <Target className="h-4 w-4" /> },
-  { cron: '0 9 * * 1-5', name: 'Weekdays at 9 AM', icon: <CalendarIcon className="h-4 w-4" /> },
-  { cron: '0 9 * * 1', name: 'Weekly on Monday', icon: <Repeat className="h-4 w-4" /> },
-  { cron: '0 9 1 * *', name: 'Monthly on 1st', icon: <CalendarIcon className="h-4 w-4" /> },
+  {
+    cron: '*/15 * * * *',
+    name: 'Every 15 minutes',
+    icon: <Zap className="h-4 w-4" />,
+  },
+  {
+    cron: '*/30 * * * *',
+    name: 'Every 30 minutes',
+    icon: <Timer className="h-4 w-4" />,
+  },
+  {
+    cron: '0 * * * *',
+    name: 'Every hour',
+    icon: <Timer className="h-4 w-4" />,
+  },
+  {
+    cron: '0 9 * * *',
+    name: 'Daily at 9 AM',
+    icon: <Target className="h-4 w-4" />,
+  },
+  {
+    cron: '0 9 * * 1-5',
+    name: 'Weekdays at 9 AM',
+    icon: <CalendarIcon className="h-4 w-4" />,
+  },
+  {
+    cron: '0 9 * * 1',
+    name: 'Weekly on Monday',
+    icon: <Repeat className="h-4 w-4" />,
+  },
+  {
+    cron: '0 9 1 * *',
+    name: 'Monthly on 1st',
+    icon: <CalendarIcon className="h-4 w-4" />,
+  },
 ];
 
 const getScheduleDisplay = (cron?: string) => {
-  if (!cron) return { name: 'Not configured', icon: <Clock className="h-4 w-4" /> };
+  if (!cron)
+    return { name: 'Not configured', icon: <Clock className="h-4 w-4" /> };
 
-  const preset = SCHEDULE_PRESETS.find(p => p.cron === cron);
+  const preset = SCHEDULE_PRESETS.find((p) => p.cron === cron);
   if (preset) return preset;
 
   return { name: cron, icon: <Clock className="h-4 w-4" /> };
 };
 
-export function SimplifiedTriggerDetailPanel({ trigger, onClose }: SimplifiedTriggerDetailPanelProps) {
+export function SimplifiedTriggerDetailPanel({
+  trigger,
+  onClose,
+}: SimplifiedTriggerDetailPanelProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
 
@@ -75,9 +111,13 @@ export function SimplifiedTriggerDetailPanel({ trigger, onClose }: SimplifiedTri
   const updateMutation = useUpdateTrigger();
 
   const { data: workflows = [] } = useAgentWorkflows(trigger.agent_id);
-  const workflowName = workflows.find(w => w.id === trigger.config?.workflow_id)?.name;
+  const workflowName = workflows.find(
+    (w) => w.id === trigger.config?.workflow_id,
+  )?.name;
 
-  const isScheduled = trigger.trigger_type.toLowerCase() === 'schedule' || trigger.trigger_type.toLowerCase() === 'scheduled';
+  const isScheduled =
+    trigger.trigger_type.toLowerCase() === 'schedule' ||
+    trigger.trigger_type.toLowerCase() === 'scheduled';
   const scheduleDisplay = getScheduleDisplay(trigger.config?.cron_expression);
 
   const handleToggle = async () => {
@@ -97,7 +137,7 @@ export function SimplifiedTriggerDetailPanel({ trigger, onClose }: SimplifiedTri
     try {
       await deleteMutation.mutateAsync({
         triggerId: trigger.trigger_id,
-        agentId: trigger.agent_id
+        agentId: trigger.agent_id,
       });
       toast.success('Task deleted successfully');
       onClose();
@@ -124,7 +164,10 @@ export function SimplifiedTriggerDetailPanel({ trigger, onClose }: SimplifiedTri
     }
   };
 
-  const isLoading = deleteMutation.isPending || toggleMutation.isPending || updateMutation.isPending;
+  const isLoading =
+    deleteMutation.isPending ||
+    toggleMutation.isPending ||
+    updateMutation.isPending;
 
   const provider = {
     provider_id: isScheduled ? 'schedule' : trigger.provider_id,
@@ -132,7 +175,7 @@ export function SimplifiedTriggerDetailPanel({ trigger, onClose }: SimplifiedTri
     description: trigger.description || '',
     trigger_type: trigger.trigger_type,
     webhook_enabled: !!trigger.webhook_url,
-    config_schema: {}
+    config_schema: {},
   };
 
   const triggerConfig = {
@@ -146,26 +189,32 @@ export function SimplifiedTriggerDetailPanel({ trigger, onClose }: SimplifiedTri
     webhook_url: trigger.webhook_url,
     created_at: trigger.created_at,
     updated_at: trigger.updated_at,
-    config: trigger.config
+    config: trigger.config,
   };
 
   return (
-    <div className={"h-full bg-white flex flex-col w-full sm:w-[440px] xl:w-2xl"}>
+    <div
+      className={'h-full bg-white flex flex-col w-full sm:w-[440px] xl:w-2xl'}
+    >
       {/* Header */}
       <div className="px-8 py-6 border-b border-gray-200">
         <div className="flex items-start justify-between mb-6">
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-2xl font-medium text-black">{trigger.name}</h1>
+              <h1 className="text-2xl font-medium text-black">
+                {trigger.name}
+              </h1>
               <Badge
-                variant={trigger.is_active ? "highlight" : "secondary"}
+                variant={trigger.is_active ? 'highlight' : 'secondary'}
                 className="text-xs"
               >
-                {trigger.is_active ? "Active" : "Inactive"}
+                {trigger.is_active ? 'Active' : 'Inactive'}
               </Badge>
             </div>
             {trigger.description && (
-              <p className="text-gray-600 text-sm leading-relaxed">{trigger.description}</p>
+              <p className="text-gray-600 text-sm leading-relaxed">
+                {trigger.description}
+              </p>
             )}
           </div>
           <div className="flex items-center gap-2">
@@ -202,14 +251,14 @@ export function SimplifiedTriggerDetailPanel({ trigger, onClose }: SimplifiedTri
         <div className="flex gap-3">
           <Button
             size="sm"
-            variant={trigger.is_active ? "outline" : "default"}
+            variant={trigger.is_active ? 'outline' : 'default'}
             onClick={handleToggle}
             disabled={isLoading}
             className={cn(
-              "flex-1 border-gray-200",
+              'flex-1 border-gray-200',
               trigger.is_active
-                ? "hover:bg-gray-50"
-                : "bg-black hover:bg-gray-900 text-white"
+                ? 'hover:bg-gray-50'
+                : 'bg-black hover:bg-gray-900 text-white',
             )}
           >
             {trigger.is_active ? (
@@ -256,33 +305,38 @@ export function SimplifiedTriggerDetailPanel({ trigger, onClose }: SimplifiedTri
             </div>
             <div className="flex-1">
               <h3 className="font-medium text-black mb-1">
-                {trigger.config?.execution_type === 'agent' ? 'Agent Instructions' : 'Workflow Execution'}
+                {trigger.config?.execution_type === 'agent'
+                  ? 'Agent Instructions'
+                  : 'Workflow Execution'}
               </h3>
               <p className="text-sm text-gray-600">
                 {trigger.config?.execution_type === 'agent'
                   ? 'Custom prompt for the agent'
-                  : `Runs workflow: ${workflowName || 'Unknown'}`
-                }
+                  : `Runs workflow: ${workflowName || 'Unknown'}`}
               </p>
             </div>
           </div>
 
-          {trigger.config?.execution_type === 'agent' && trigger.config.agent_prompt && (
-            <div className="mt-4 p-4 rounded-lg bg-gray-50 border border-gray-200">
-              <p className="text-sm font-mono text-gray-800 whitespace-pre-wrap leading-relaxed">
-                {trigger.config.agent_prompt}
-              </p>
-            </div>
-          )}
+          {trigger.config?.execution_type === 'agent' &&
+            trigger.config.agent_prompt && (
+              <div className="mt-4 p-4 rounded-lg bg-gray-50 border border-gray-200">
+                <p className="text-sm font-mono text-gray-800 whitespace-pre-wrap leading-relaxed">
+                  {trigger.config.agent_prompt}
+                </p>
+              </div>
+            )}
 
-          {trigger.config?.execution_type === 'workflow' && trigger.config.workflow_input && (
-            <div className="mt-4 p-4 rounded-lg bg-gray-50 border border-gray-200">
-              <p className="text-xs text-gray-500 mb-2 font-medium">Workflow Input:</p>
-              <pre className="text-xs font-mono text-gray-800 overflow-x-auto">
-                {JSON.stringify(trigger.config.workflow_input, null, 2)}
-              </pre>
-            </div>
-          )}
+          {trigger.config?.execution_type === 'workflow' &&
+            trigger.config.workflow_input && (
+              <div className="mt-4 p-4 rounded-lg bg-gray-50 border border-gray-200">
+                <p className="text-xs text-gray-500 mb-2 font-medium">
+                  Workflow Input:
+                </p>
+                <pre className="text-xs font-mono text-gray-800 overflow-x-auto">
+                  {JSON.stringify(trigger.config.workflow_input, null, 2)}
+                </pre>
+              </div>
+            )}
         </div>
 
         {/* Agent Info */}
@@ -295,7 +349,9 @@ export function SimplifiedTriggerDetailPanel({ trigger, onClose }: SimplifiedTri
                 fallbackName={trigger.agent_name}
               />
               <div>
-                <h3 className="font-medium text-black">{trigger.agent_name || 'Unknown Agent'}</h3>
+                <h3 className="font-medium text-black">
+                  {trigger.agent_name || 'Unknown Agent'}
+                </h3>
                 <p className="text-sm text-gray-600">Assigned Agent</p>
               </div>
             </div>
@@ -314,19 +370,27 @@ export function SimplifiedTriggerDetailPanel({ trigger, onClose }: SimplifiedTri
           <div className="space-y-3">
             <div className="flex justify-between items-center py-2 border-b border-gray-100 last:border-b-0">
               <span className="text-sm text-gray-600">Type</span>
-              <span className="text-sm font-mono text-gray-900">{trigger.trigger_type}</span>
+              <span className="text-sm font-mono text-gray-900">
+                {trigger.trigger_type}
+              </span>
             </div>
             <div className="flex justify-between items-center py-2 border-b border-gray-100 last:border-b-0">
               <span className="text-sm text-gray-600">Provider</span>
-              <span className="text-sm font-mono text-gray-900">{trigger.provider_id}</span>
+              <span className="text-sm font-mono text-gray-900">
+                {trigger.provider_id}
+              </span>
             </div>
             <div className="flex justify-between items-center py-2 border-b border-gray-100 last:border-b-0">
               <span className="text-sm text-gray-600">Created</span>
-              <span className="text-sm text-gray-900">{new Date(trigger.created_at).toLocaleDateString()}</span>
+              <span className="text-sm text-gray-900">
+                {new Date(trigger.created_at).toLocaleDateString()}
+              </span>
             </div>
             <div className="flex justify-between items-center py-2">
               <span className="text-sm text-gray-600">Last Updated</span>
-              <span className="text-sm text-gray-900">{new Date(trigger.updated_at).toLocaleDateString()}</span>
+              <span className="text-sm text-gray-900">
+                {new Date(trigger.updated_at).toLocaleDateString()}
+              </span>
             </div>
           </div>
         </div>
@@ -350,13 +414,18 @@ export function SimplifiedTriggerDetailPanel({ trigger, onClose }: SimplifiedTri
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent className="bg-white border border-gray-200">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-black font-medium">Delete Task</AlertDialogTitle>
+            <AlertDialogTitle className="text-black font-medium">
+              Delete Task
+            </AlertDialogTitle>
             <AlertDialogDescription className="text-gray-600">
-              Are you sure you want to delete "{trigger.name}"? This action cannot be undone and will stop all automated runs from this task.
+              Are you sure you want to delete "{trigger.name}"? This action
+              cannot be undone and will stop all automated runs from this task.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="border-gray-200 hover:bg-gray-50">Cancel</AlertDialogCancel>
+            <AlertDialogCancel className="border-gray-200 hover:bg-gray-50">
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               className="bg-black hover:bg-gray-900 text-white"

@@ -16,18 +16,18 @@ export function KortixLogo({ size = 24 }: KortixLogoProps) {
     setMounted(true);
   }, []);
 
-  const shouldInvert = mounted && (
-    theme === 'dark' || (theme === 'system' && systemTheme === 'dark')
-  );
+  const shouldInvert =
+    mounted &&
+    (theme === 'dark' || (theme === 'system' && systemTheme === 'dark'));
 
   return (
     <Image
-        src="/anisora-logo.png"
-        alt="Anisora"
-        width={size}
-        height={size}
-        className={`${shouldInvert ? 'invert' : ''} flex-shrink-0`}
-        style={{ width: size, height: size, minWidth: size, minHeight: size }}
-      />
+      src="/anisora-logo.png"
+      alt="Anisora"
+      width={size}
+      height={size}
+      className={`${shouldInvert ? 'invert' : ''} flex-shrink-0`}
+      style={{ width: size, height: size, minWidth: size, minHeight: size }}
+    />
   );
 }

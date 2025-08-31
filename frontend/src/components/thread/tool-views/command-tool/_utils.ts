@@ -1,4 +1,10 @@
-import { extractToolData, extractCommand, extractCommandOutput, extractExitCode, extractSessionName } from '../utils';
+import {
+  extractToolData,
+  extractCommand,
+  extractCommandOutput,
+  extractExitCode,
+  extractSessionName,
+} from '../utils';
 
 export interface CommandData {
   command: string | null;
@@ -22,22 +28,33 @@ const parseContent = (content: any): any => {
   return content;
 };
 
-
 const extractFromNewFormat = (content: any): CommandData => {
   const parsedContent = parseContent(content);
-  
+
   if (!parsedContent || typeof parsedContent !== 'object') {
-    return { command: null, output: null, exitCode: null, sessionName: null, cwd: null, completed: null, success: undefined, timestamp: undefined };
+    return {
+      command: null,
+      output: null,
+      exitCode: null,
+      sessionName: null,
+      cwd: null,
+      completed: null,
+      success: undefined,
+      timestamp: undefined,
+    };
   }
 
-  if ('tool_execution' in parsedContent && typeof parsedContent.tool_execution === 'object') {
+  if (
+    'tool_execution' in parsedContent &&
+    typeof parsedContent.tool_execution === 'object'
+  ) {
     const toolExecution = parsedContent.tool_execution;
     const args = toolExecution.arguments || {};
-    
+
     // Handle the case where result.output is a string (like in your example)
     let output = toolExecution.result?.output;
     let parsedOutput: any = {};
-    
+
     if (typeof output === 'string') {
       // First try to parse it as JSON
       try {
@@ -45,7 +62,11 @@ const extractFromNewFormat = (content: any): CommandData => {
         // If parsing succeeds, extract the actual output from the nested structure
         if (parsedOutput && typeof parsedOutput === 'object') {
           // Look for output in common nested structures
-          output = parsedOutput.output || parsedOutput.message || parsedOutput.content || output;
+          output =
+            parsedOutput.output ||
+            parsedOutput.message ||
+            parsedOutput.content ||
+            output;
         }
       } catch (e) {
         // If it's not JSON, treat it as plain text output
@@ -54,7 +75,11 @@ const extractFromNewFormat = (content: any): CommandData => {
     } else if (typeof output === 'object' && output !== null) {
       parsedOutput = output;
       // Extract output from object structure
-      output = (output as any).output || (output as any).message || (output as any).content || null;
+      output =
+        (output as any).output ||
+        (output as any).message ||
+        (output as any).content ||
+        null;
     }
 
     const extractedData = {
@@ -65,7 +90,7 @@ const extractFromNewFormat = (content: any): CommandData => {
       cwd: parsedOutput?.cwd || null,
       completed: parsedOutput?.completed || null,
       success: toolExecution.result?.success,
-      timestamp: toolExecution.execution_details?.timestamp
+      timestamp: toolExecution.execution_details?.timestamp,
     };
 
     return extractedData;
@@ -75,35 +100,45 @@ const extractFromNewFormat = (content: any): CommandData => {
     return extractFromNewFormat(parsedContent.content);
   }
 
-  return { command: null, output: null, exitCode: null, sessionName: null, cwd: null, completed: null, success: undefined, timestamp: undefined };
+  return {
+    command: null,
+    output: null,
+    exitCode: null,
+    sessionName: null,
+    cwd: null,
+    completed: null,
+    success: undefined,
+    timestamp: undefined,
+  };
 };
 
-
-const extractFromLegacyFormat = (content: any): Omit<CommandData, 'success' | 'timestamp'> => {
+const extractFromLegacyFormat = (
+  content: any,
+): Omit<CommandData, 'success' | 'timestamp'> => {
   const toolData = extractToolData(content);
-  
+
   if (toolData.toolResult) {
     const args = toolData.arguments || {};
-    
+
     return {
       command: toolData.command || args.command || null,
       output: toolData.toolResult.toolOutput || null,
       exitCode: null,
       sessionName: args.session_name || null,
       cwd: null,
-      completed: null
+      completed: null,
     };
   }
 
   const legacyCommand = extractCommand(content);
-  
+
   return {
     command: legacyCommand,
     output: null,
     exitCode: null,
     sessionName: null,
     cwd: null,
-    completed: null
+    completed: null,
   };
 };
 
@@ -112,7 +147,7 @@ export function extractCommandData(
   toolContent: any,
   isSuccess: boolean,
   toolTimestamp?: string,
-  assistantTimestamp?: string
+  assistantTimestamp?: string,
 ): {
   command: string | null;
   output: string | null;
@@ -173,33 +208,40 @@ export function extractCommandData(
   }
 
   if (!command) {
-    const rawCommand = extractCommand(assistantContent) || extractCommand(toolContent);
-    command = rawCommand
-      ?.replace(/^suna@computer:~\$\s*/g, '')
-      ?.replace(/\\n/g, '')
-      ?.replace(/\n/g, '')
-      ?.trim() || null;
+    const rawCommand =
+      extractCommand(assistantContent) || extractCommand(toolContent);
+    command =
+      rawCommand
+        ?.replace(/^suna@computer:~\$\s*/g, '')
+        ?.replace(/\\n/g, '')
+        ?.replace(/\n/g, '')
+        ?.trim() || null;
   }
-  
+
   if (!output && toolContent) {
     output = extractCommandOutput(toolContent);
   }
-  
+
   if (exitCode === null && toolContent) {
     exitCode = extractExitCode(toolContent);
   }
 
   if (!sessionName) {
-    sessionName = extractSessionName(assistantContent) || extractSessionName(toolContent);
+    sessionName =
+      extractSessionName(assistantContent) || extractSessionName(toolContent);
   }
 
-  if (output && typeof output === 'string' && output.includes('exit_code=') && exitCode === null) {
+  if (
+    output &&
+    typeof output === 'string' &&
+    output.includes('exit_code=') &&
+    exitCode === null
+  ) {
     const exitCodeMatch = output.match(/exit_code=(\d+)/);
     if (exitCodeMatch) {
       exitCode = parseInt(exitCodeMatch[1], 10);
     }
   }
-
 
   return {
     command,
@@ -210,6 +252,6 @@ export function extractCommandData(
     completed,
     actualIsSuccess,
     actualToolTimestamp,
-    actualAssistantTimestamp
+    actualAssistantTimestamp,
   };
-} 
+}

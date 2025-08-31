@@ -9,29 +9,31 @@ import {
   Calendar,
   User,
   Palette,
-  Shield
+  Shield,
 } from 'lucide-react';
 import { ToolViewProps } from '../types';
 import { formatTimestamp, getToolTitle } from '../utils';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { LoadingState } from '../shared/LoadingState';
-import { Separator } from "@/components/ui/separator";
+import { Separator } from '@/components/ui/separator';
 import { extractCreateNewAgentData } from './_utils';
 import { DynamicIcon } from 'lucide-react/dynamic';
 
-function IconPreview({ 
-  iconName, 
-  iconColor, 
-  iconBackground 
-}: { 
-  iconName: string; 
-  iconColor: string; 
-  iconBackground: string; 
+function IconPreview({
+  iconName,
+  iconColor,
+  iconBackground,
+}: {
+  iconName: string;
+  iconColor: string;
+  iconBackground: string;
 }) {
-  const iconMap: { [key: string]: React.ComponentType<{ className?: string }> } = {
+  const iconMap: {
+    [key: string]: React.ComponentType<{ className?: string }>;
+  } = {
     bot: Bot,
     sparkles: Sparkles,
     zap: Zap,
@@ -40,11 +42,11 @@ function IconPreview({
     user: User,
     palette: Palette,
   };
-  
+
   const IconComponent = iconMap[iconName] || Bot;
-  
+
   return (
-    <div 
+    <div
       className="w-12 h-12 rounded-xl flex items-center justify-center border"
       style={{ backgroundColor: iconBackground }}
     >
@@ -62,7 +64,6 @@ export function CreateNewAgentToolView({
   isSuccess = true,
   isStreaming = false,
 }: ToolViewProps) {
-
   const {
     name: agentName,
     description,
@@ -77,13 +78,13 @@ export function CreateNewAgentToolView({
     agent_name,
     actualIsSuccess,
     actualToolTimestamp,
-    actualAssistantTimestamp
+    actualAssistantTimestamp,
   } = extractCreateNewAgentData(
     assistantContent,
     toolContent,
     isSuccess,
     toolTimestamp,
-    assistantTimestamp
+    assistantTimestamp,
   );
 
   const toolTitle = getToolTitle(name);
@@ -118,10 +119,10 @@ export function CreateNewAgentToolView({
             <Badge
               variant="secondary"
               className={cn(
-                "text-xs font-medium",
+                'text-xs font-medium',
                 actualIsSuccess
-                  ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800"
-                  : "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800"
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800'
+                  : 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800',
               )}
             >
               {actualIsSuccess ? (
@@ -151,10 +152,10 @@ export function CreateNewAgentToolView({
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
                     {icon_name && icon_color && icon_background ? (
-                      <IconPreview 
-                        iconName={icon_name} 
-                        iconColor={icon_color} 
-                        iconBackground={icon_background} 
+                      <IconPreview
+                        iconName={icon_name}
+                        iconColor={icon_color}
+                        iconBackground={icon_background}
                       />
                     ) : (
                       <div className="w-12 h-12 rounded-xl bg-muted/50 border flex items-center justify-center overflow-hidden">
@@ -177,14 +178,19 @@ export function CreateNewAgentToolView({
                         Default
                       </Badge>
                     )}
-                    <Badge variant="secondary" className="text-xs bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800">
+                    <Badge
+                      variant="secondary"
+                      className="text-xs bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800"
+                    >
                       Active
                     </Badge>
                   </div>
                 </div>
                 {description && (
                   <div>
-                    <h4 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 mb-2">Description</h4>
+                    <h4 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 mb-2">
+                      Description
+                    </h4>
                     <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
                       {description}
                     </p>

@@ -27,7 +27,7 @@ export function extractConfigureAgentIntegrationData(
   toolContent?: any,
   isSuccess?: boolean,
   toolTimestamp?: string,
-  assistantTimestamp?: string
+  assistantTimestamp?: string,
 ): ConfigureAgentIntegrationData & {
   actualIsSuccess: boolean;
   actualToolTimestamp: string | undefined;
@@ -46,15 +46,18 @@ export function extractConfigureAgentIntegrationData(
     enabled_tools_count: 0,
     actualIsSuccess: isSuccess || false,
     actualToolTimestamp: toolTimestamp,
-    actualAssistantTimestamp: assistantTimestamp
+    actualAssistantTimestamp: assistantTimestamp,
   };
 
   if (toolContent) {
     const parsedToolResult = parseToolResult(toolContent);
-    
-    if (parsedToolResult && parsedToolResult.functionName === 'configure_agent_integration') {
+
+    if (
+      parsedToolResult &&
+      parsedToolResult.functionName === 'configure_agent_integration'
+    ) {
       const args = parsedToolResult.arguments || {};
-      
+
       let output: any = {};
       try {
         if (typeof parsedToolResult.toolOutput === 'string') {
@@ -75,22 +78,26 @@ export function extractConfigureAgentIntegrationData(
         enabled_tools: args.enabled_tools || output.enabled_tools || null,
         display_name: args.display_name || output.display_name || null,
         integration_name: output.integration_name || null,
-        enabled_tools_count: output.enabled_tools_count || (args.enabled_tools?.length || 0),
+        enabled_tools_count:
+          output.enabled_tools_count || args.enabled_tools?.length || 0,
         success: parsedToolResult.isSuccess,
         timestamp: parsedToolResult.timestamp,
         actualIsSuccess: parsedToolResult.isSuccess,
         actualToolTimestamp: parsedToolResult.timestamp || toolTimestamp,
-        actualAssistantTimestamp: assistantTimestamp
+        actualAssistantTimestamp: assistantTimestamp,
       };
     }
   }
 
   if (assistantContent) {
     const parsedToolResult = parseToolResult(assistantContent);
-    
-    if (parsedToolResult && parsedToolResult.functionName === 'configure_agent_integration') {
+
+    if (
+      parsedToolResult &&
+      parsedToolResult.functionName === 'configure_agent_integration'
+    ) {
       const args = parsedToolResult.arguments || {};
-      
+
       let output: any = {};
       try {
         if (typeof parsedToolResult.toolOutput === 'string') {
@@ -111,15 +118,17 @@ export function extractConfigureAgentIntegrationData(
         enabled_tools: args.enabled_tools || output.enabled_tools || null,
         display_name: args.display_name || output.display_name || null,
         integration_name: output.integration_name || null,
-        enabled_tools_count: output.enabled_tools_count || (args.enabled_tools?.length || 0),
+        enabled_tools_count:
+          output.enabled_tools_count || args.enabled_tools?.length || 0,
         success: parsedToolResult.isSuccess,
         timestamp: parsedToolResult.timestamp,
         actualIsSuccess: parsedToolResult.isSuccess,
         actualToolTimestamp: toolTimestamp,
-        actualAssistantTimestamp: parsedToolResult.timestamp || assistantTimestamp
+        actualAssistantTimestamp:
+          parsedToolResult.timestamp || assistantTimestamp,
       };
     }
   }
 
   return defaultResult;
-} 
+}

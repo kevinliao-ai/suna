@@ -12,7 +12,7 @@ import {
   ChevronRight,
   Sparkles,
   Verified,
-  Tag
+  Tag,
 } from 'lucide-react';
 import { ToolViewProps } from '../types';
 import { formatTimestamp, getToolTitle } from '../utils';
@@ -21,9 +21,14 @@ import { extractSearchMcpServersData, McpServerResult } from './_utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { LoadingState } from '../shared/LoadingState';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 export function SearchMcpServersToolView({
   name = 'search-mcp-servers',
@@ -34,7 +39,9 @@ export function SearchMcpServersToolView({
   isSuccess = true,
   isStreaming = false,
 }: ToolViewProps) {
-  const [expandedResults, setExpandedResults] = useState<Record<number, boolean>>({});
+  const [expandedResults, setExpandedResults] = useState<
+    Record<number, boolean>
+  >({});
 
   const {
     query,
@@ -42,13 +49,13 @@ export function SearchMcpServersToolView({
     limit,
     actualIsSuccess,
     actualToolTimestamp,
-    actualAssistantTimestamp
+    actualAssistantTimestamp,
   } = extractSearchMcpServersData(
     assistantContent,
     toolContent,
     isSuccess,
     toolTimestamp,
-    assistantTimestamp
+    assistantTimestamp,
   );
 
   const toolTitle = getToolTitle(name);
@@ -99,10 +106,10 @@ export function SearchMcpServersToolView({
             <Badge
               variant="secondary"
               className={cn(
-                "text-xs font-medium",
+                'text-xs font-medium',
                 actualIsSuccess
-                  ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800"
-                  : "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800"
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800'
+                  : 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800',
               )}
             >
               {actualIsSuccess ? (
@@ -133,7 +140,7 @@ export function SearchMcpServersToolView({
                 const AuthIcon = getAuthSchemeIcon(result.auth_schemes);
                 const isExpanded = expandedResults[index];
                 const hasOAuth = result.auth_schemes?.includes('OAUTH2');
-                
+
                 return (
                   <div
                     key={index}
@@ -198,21 +205,25 @@ export function SearchMcpServersToolView({
                           <div className="flex items-center gap-2">
                             <Badge
                               variant="outline"
-                              className={cn("text-xs font-medium", getAuthSchemeColor(result.auth_schemes))}
+                              className={cn(
+                                'text-xs font-medium',
+                                getAuthSchemeColor(result.auth_schemes),
+                              )}
                             >
                               <AuthIcon className="w-3 h-3 " />
                               {getPrimaryAuthScheme(result.auth_schemes)}
                             </Badge>
                           </div>
                         </div>
-                        <p className={cn(
-                          "text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed mb-3",
-                        )}>
+                        <p
+                          className={cn(
+                            'text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed mb-3',
+                          )}
+                        >
                           {result.description}
                         </p>
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                          </div>
+                          <div className="flex items-center gap-2"></div>
                         </div>
                       </div>
                     </div>
@@ -231,7 +242,9 @@ export function SearchMcpServersToolView({
                 No MCP servers found
               </h3>
               <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                {query ? `No results found for "${query}"` : 'Try searching with different keywords'}
+                {query
+                  ? `No results found for "${query}"`
+                  : 'Try searching with different keywords'}
               </p>
             </div>
           </div>
@@ -239,4 +252,4 @@ export function SearchMcpServersToolView({
       </CardContent>
     </Card>
   );
-} 
+}

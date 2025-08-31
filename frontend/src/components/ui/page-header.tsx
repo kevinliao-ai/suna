@@ -9,7 +9,10 @@ interface PageHeaderProps {
   children: React.ReactNode;
 }
 
-export const PageHeader: React.FC<PageHeaderProps> = ({ icon: Icon, children }) => {
+export const PageHeader: React.FC<PageHeaderProps> = ({
+  icon: Icon,
+  children,
+}) => {
   return (
     <div className="relative overflow-hidden rounded-3xl flex items-center justify-center border bg-background">
       <div className="relative px-8 py-16 text-center">
@@ -22,7 +25,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({ icon: Icon, children }) 
           </h1>
         </div>
       </div>
-      <Ripple/>
+      <Ripple />
     </div>
   );
-}; 
+};

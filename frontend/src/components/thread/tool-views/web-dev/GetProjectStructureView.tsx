@@ -1,11 +1,11 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { 
-  FolderOpen, 
+import {
+  FolderOpen,
   Folder,
-  File, 
-  ChevronRight, 
-  ChevronDown, 
-  FileJson, 
+  File,
+  ChevronRight,
+  ChevronDown,
+  FileJson,
   FileText,
   FolderTree,
   Code2,
@@ -17,14 +17,18 @@ import {
   Copy,
   Check,
   Globe,
-  Play
+  Play,
 } from 'lucide-react';
 import { ToolViewProps } from '../types';
-import { getToolTitle, normalizeContentToString, extractToolData } from '../utils';
+import {
+  getToolTitle,
+  normalizeContentToString,
+  extractToolData,
+} from '../utils';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { LoadingState } from '../shared/LoadingState';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, AlertTriangle } from 'lucide-react';
@@ -36,14 +40,14 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from '@/components/ui/tooltip';
 
 interface FileNode {
   name: string;
@@ -69,17 +73,17 @@ function parseFileStructure(flatList: string[]): FileNode {
     path: '.',
     type: 'directory',
     children: [],
-    expanded: true
+    expanded: true,
   };
 
   const paths = flatList
-    .map(line => line.trim())
-    .filter(line => line && line !== '.')
-    .map(line => line.startsWith('./') ? line.substring(2) : line);
+    .map((line) => line.trim())
+    .filter((line) => line && line !== '.')
+    .map((line) => (line.startsWith('./') ? line.substring(2) : line));
 
   const pathSet = new Set(paths);
   const directories = new Set<string>();
-  paths.forEach(path => {
+  paths.forEach((path) => {
     const parts = path.split('/');
     for (let i = 1; i < parts.length; i++) {
       const parentPath = parts.slice(0, i).join('/');
@@ -92,29 +96,30 @@ function parseFileStructure(flatList: string[]): FileNode {
 
   paths.sort();
 
-  paths.forEach(path => {
+  paths.forEach((path) => {
     const parts = path.split('/');
     let currentPath = '';
     let parent = root;
 
     parts.forEach((part, index) => {
       currentPath = currentPath ? `${currentPath}/${part}` : part;
-      
+
       if (!nodeMap.has(currentPath)) {
-        const isDirectory = directories.has(currentPath) || index < parts.length - 1;
+        const isDirectory =
+          directories.has(currentPath) || index < parts.length - 1;
         const node: FileNode = {
           name: part,
           path: currentPath,
           type: isDirectory ? 'directory' : 'file',
           children: isDirectory ? [] : undefined,
-          expanded: false
+          expanded: false,
         };
-        
+
         if (!parent.children) parent.children = [];
         parent.children.push(node);
         nodeMap.set(currentPath, node);
       }
-      
+
       if (nodeMap.get(currentPath)?.type === 'directory') {
         parent = nodeMap.get(currentPath)!;
       }
@@ -139,18 +144,20 @@ function parseFileStructure(flatList: string[]): FileNode {
 
 function getFileIcon(fileName: string): React.ReactNode {
   const ext = fileName.split('.').pop()?.toLowerCase();
-  
+
   if (fileName === 'package.json') {
     return <FileJson className="w-4 h-4 text-green-600 dark:text-green-400" />;
   }
-  
+
   switch (ext) {
     case 'ts':
     case 'tsx':
       return <FileCode className="w-4 h-4 text-blue-600 dark:text-blue-400" />;
     case 'js':
     case 'jsx':
-      return <FileCode className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />;
+      return (
+        <FileCode className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
+      );
     case 'json':
       return <FileCode className="w-4 h-4 text-gray-600 dark:text-gray-400" />;
     case 'css':
@@ -159,7 +166,9 @@ function getFileIcon(fileName: string): React.ReactNode {
     case 'md':
       return <FileText className="w-4 h-4 text-gray-600 dark:text-gray-400" />;
     case 'html':
-      return <FileCode className="w-4 h-4 text-orange-600 dark:text-orange-400" />;
+      return (
+        <FileCode className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+      );
     default:
       return <File className="w-4 h-4 text-gray-500 dark:text-gray-400" />;
   }
@@ -203,31 +212,34 @@ const FileTreeNode: React.FC<{
     <>
       <div
         className={cn(
-          "flex items-center gap-1 px-2 py-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer transition-colors",
-          isSelected && "bg-muted",
+          'flex items-center gap-1 px-2 py-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer transition-colors',
+          isSelected && 'bg-muted',
         )}
         style={{ paddingLeft: `${level * 12 + 8}px` }}
         onClick={handleClick}
       >
-        {node.type === 'directory' && (
-          node.expanded ? 
-            <ChevronDown className="w-3 h-3 text-zinc-500" /> : 
+        {node.type === 'directory' &&
+          (node.expanded ? (
+            <ChevronDown className="w-3 h-3 text-zinc-500" />
+          ) : (
             <ChevronRight className="w-3 h-3 text-zinc-500" />
-        )}
-        
+          ))}
+
         {node.type === 'directory' ? (
-          node.expanded ? 
-            <FolderOpen className="w-4 h-4 text-zinc-600 dark:text-zinc-400" /> :
+          node.expanded ? (
+            <FolderOpen className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
+          ) : (
             <Folder className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
+          )
         ) : (
           getFileIcon(node.name)
         )}
-        
+
         <span className="text-sm text-zinc-700 dark:text-zinc-300 truncate">
           {node.name}
         </span>
       </div>
-      
+
       {node.type === 'directory' && node.expanded && node.children && (
         <>
           {node.children.map((child) => (
@@ -257,23 +269,23 @@ const FileExplorer: React.FC<{
   loadingFile: boolean;
   previewUrl?: string;
   language: string;
-}> = ({ 
-  fileTree, 
-  projectData, 
-  selectedFile, 
-  expandedNodes, 
-  onToggle, 
-  onFileClick, 
-  fileContent, 
+}> = ({
+  fileTree,
+  projectData,
+  selectedFile,
+  expandedNodes,
+  onToggle,
+  onFileClick,
+  fileContent,
   loadingFile,
   previewUrl,
-  language 
+  language,
 }) => {
   const [isCopying, setIsCopying] = useState(false);
 
   const handleCopyCode = async () => {
     if (!fileContent) return;
-    
+
     try {
       await navigator.clipboard.writeText(fileContent);
       setIsCopying(true);
@@ -349,7 +361,11 @@ const FileExplorer: React.FC<{
                     className="h-7 text-xs"
                     asChild
                   >
-                    <a href={previewUrl} target="_blank" rel="noopener noreferrer">
+                    <a
+                      href={previewUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
                       <ExternalLink className="w-3 h-3 mr-1" />
                       Preview
                     </a>
@@ -357,7 +373,7 @@ const FileExplorer: React.FC<{
                 )}
               </div>
             </div>
-            
+
             <div className="flex-1 overflow-hidden">
               {loadingFile ? (
                 <div className="flex items-center justify-center h-full p-8">
@@ -366,8 +382,8 @@ const FileExplorer: React.FC<{
               ) : fileContent ? (
                 <ScrollArea className="h-full w-full">
                   <div>
-                    <CodeBlockCode 
-                      code={fileContent} 
+                    <CodeBlockCode
+                      code={fileContent}
                       language={language}
                       className="text-xs h-full"
                     />
@@ -393,25 +409,32 @@ const FileExplorer: React.FC<{
   );
 };
 
-function extractProjectData(assistantContent: any, toolContent: any): ProjectData | null {
+function extractProjectData(
+  assistantContent: any,
+  toolContent: any,
+): ProjectData | null {
   const toolData = extractToolData(toolContent);
-  
+
   let outputStr: string | null = null;
   let projectName: string | null = null;
-  
+
   if (toolData.toolResult) {
     outputStr = toolData.toolResult.toolOutput;
     projectName = toolData.arguments?.project_name || null;
   }
-  
+
   if (!outputStr) {
-    outputStr = normalizeContentToString(toolContent) || normalizeContentToString(assistantContent);
+    outputStr =
+      normalizeContentToString(toolContent) ||
+      normalizeContentToString(assistantContent);
   }
-  
+
   if (!outputStr) return null;
 
   if (!projectName) {
-    const projectNameMatch = outputStr.match(/Project structure for '([^']+)':/);
+    const projectNameMatch = outputStr.match(
+      /Project structure for '([^']+)':/,
+    );
     projectName = projectNameMatch ? projectNameMatch[1] : 'Unknown Project';
   } else {
     projectName = projectName as string;
@@ -426,14 +449,17 @@ function extractProjectData(assistantContent: any, toolContent: any): ProjectDat
     if (line.includes('Project structure for')) {
       continue;
     }
-    if (line.includes('Package.json info:') || line.includes('📋 Package.json info:')) {
+    if (
+      line.includes('Package.json info:') ||
+      line.includes('📋 Package.json info:')
+    ) {
       inPackageInfo = true;
       continue;
     }
     if (line.includes('To run this project:')) {
       break;
     }
-    
+
     if (!inPackageInfo && line.trim() && !line.includes('📁')) {
       structureLines.push(line);
     }
@@ -446,7 +472,8 @@ function extractProjectData(assistantContent: any, toolContent: any): ProjectDat
 
   // Detect project type from package.json info
   const isNextJs = packageInfo.includes('"next"');
-  const isReact = packageInfo.includes('"react"') || packageInfo.includes('react-scripts');
+  const isReact =
+    packageInfo.includes('"react"') || packageInfo.includes('react-scripts');
   const isVite = packageInfo.includes('"vite"');
 
   return {
@@ -456,34 +483,37 @@ function extractProjectData(assistantContent: any, toolContent: any): ProjectDat
     rawStructure: structureLines.join('\n'),
     isNextJs,
     isReact,
-    isVite
+    isVite,
   };
 }
 
 // Helper function to construct preview URL
-function getProjectPreviewUrl(project: any, projectName: string): string | null {
+function getProjectPreviewUrl(
+  project: any,
+  projectName: string,
+): string | null {
   // Check if there's an exposed port for this project
   // This would typically come from the project's sandbox configuration
   // For now, we'll construct a URL based on common patterns
-  
+
   if (project?.sandbox?.exposed_ports) {
     // Look for common dev server ports (3000, 5173, 8080, etc.)
     const commonPorts = [3000, 3001, 5173, 5174, 8080, 8000, 4200];
-    const exposedPort = project.sandbox.exposed_ports.find((p: any) => 
-      commonPorts.includes(p.port)
+    const exposedPort = project.sandbox.exposed_ports.find((p: any) =>
+      commonPorts.includes(p.port),
     );
-    
+
     if (exposedPort) {
       return exposedPort.url;
     }
   }
-  
+
   // If sandbox has a base URL, construct preview URL
   if (project?.sandbox?.sandbox_url) {
     // Try common dev server ports
     return `${project.sandbox.sandbox_url}:3000`;
   }
-  
+
   return null;
 }
 
@@ -500,23 +530,28 @@ export function GetProjectStructureView({
   const [selectedFile, setSelectedFile] = useState<string | undefined>();
   const [fileContent, setFileContent] = useState<string>('');
   const [loadingFile, setLoadingFile] = useState(false);
-  const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set(['.', 'src']));
+  const [expandedNodes, setExpandedNodes] = useState<Set<string>>(
+    new Set(['.', 'src']),
+  );
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  
-  const projectData = useMemo(() => 
-    extractProjectData(assistantContent, toolContent), 
-    [assistantContent, toolContent]
+
+  const projectData = useMemo(
+    () => extractProjectData(assistantContent, toolContent),
+    [assistantContent, toolContent],
   );
 
   const toolTitle = getToolTitle(name);
 
-  const updateNodeExpanded = useCallback((node: FileNode): FileNode => {
-    return {
-      ...node,
-      expanded: expandedNodes.has(node.path),
-      children: node.children?.map(updateNodeExpanded)
-    };
-  }, [expandedNodes]);
+  const updateNodeExpanded = useCallback(
+    (node: FileNode): FileNode => {
+      return {
+        ...node,
+        expanded: expandedNodes.has(node.path),
+        children: node.children?.map(updateNodeExpanded),
+      };
+    },
+    [expandedNodes],
+  );
 
   const fileTree = useMemo(() => {
     if (!projectData) return null;
@@ -524,7 +559,7 @@ export function GetProjectStructureView({
   }, [projectData, updateNodeExpanded]);
 
   const handleToggle = useCallback((path: string) => {
-    setExpandedNodes(prev => {
+    setExpandedNodes((prev) => {
       const next = new Set(prev);
       if (next.has(path)) {
         next.delete(path);
@@ -535,50 +570,58 @@ export function GetProjectStructureView({
     });
   }, []);
 
-  const handleFileClick = useCallback(async (filePath: string) => {
-    if (!project?.sandbox?.sandbox_url || !projectData) return;
-    
-    setSelectedFile(filePath);
-    setLoadingFile(true);
-    setFileContent('');
+  const handleFileClick = useCallback(
+    async (filePath: string) => {
+      if (!project?.sandbox?.sandbox_url || !projectData) return;
 
-    try {
-      const fileUrl = constructHtmlPreviewUrl(
-        project.sandbox.sandbox_url,
-        `${projectData.projectName}/${filePath}`
-      );
+      setSelectedFile(filePath);
+      setLoadingFile(true);
+      setFileContent('');
 
-      if (fileUrl) {
-        const response = await fetch(fileUrl);
-        if (response.ok) {
-          const content = await response.text();
-          setFileContent(content);
+      try {
+        const fileUrl = constructHtmlPreviewUrl(
+          project.sandbox.sandbox_url,
+          `${projectData.projectName}/${filePath}`,
+        );
+
+        if (fileUrl) {
+          const response = await fetch(fileUrl);
+          if (response.ok) {
+            const content = await response.text();
+            setFileContent(content);
+          } else {
+            setFileContent('// Failed to load file content');
+          }
         } else {
-          setFileContent('// Failed to load file content');
+          setFileContent('// Unable to construct file URL');
         }
-      } else {
-        setFileContent('// Unable to construct file URL');
+      } catch (error) {
+        console.error('Error loading file:', error);
+        setFileContent('// Error loading file content');
+      } finally {
+        setLoadingFile(false);
       }
-    } catch (error) {
-      console.error('Error loading file:', error);
-      setFileContent('// Error loading file content');
-    } finally {
-      setLoadingFile(false);
-    }
-  }, [project, projectData]);
+    },
+    [project, projectData],
+  );
 
   const isHtmlFile = selectedFile?.endsWith('.html');
-  const previewUrl = isHtmlFile && project?.sandbox?.sandbox_url && projectData
-    ? constructHtmlPreviewUrl(
-        project.sandbox.sandbox_url,
-        `${projectData.projectName}/${selectedFile}`
-      )
-    : undefined;
+  const previewUrl =
+    isHtmlFile && project?.sandbox?.sandbox_url && projectData
+      ? constructHtmlPreviewUrl(
+          project.sandbox.sandbox_url,
+          `${projectData.projectName}/${selectedFile}`,
+        )
+      : undefined;
 
-  const language = selectedFile ? getLanguageFromFileName(selectedFile) : 'plaintext';
+  const language = selectedFile
+    ? getLanguageFromFileName(selectedFile)
+    : 'plaintext';
 
   // Get the project preview URL if available
-  const projectPreviewUrl = projectData ? getProjectPreviewUrl(project, projectData.projectName) : null;
+  const projectPreviewUrl = projectData
+    ? getProjectPreviewUrl(project, projectData.projectName)
+    : null;
 
   const handlePreview = () => {
     if (projectPreviewUrl) {
@@ -593,31 +636,46 @@ export function GetProjectStructureView({
           <div className="text-sm text-muted-foreground mt-1 space-y-1">
             {projectData?.isNextJs && (
               <>
-                <code className="bg-muted px-1 rounded block">npm run build</code>
-                <code className="bg-muted px-1 rounded block">npm run start</code>
+                <code className="bg-muted px-1 rounded block">
+                  npm run build
+                </code>
+                <code className="bg-muted px-1 rounded block">
+                  npm run start
+                </code>
               </>
             )}
             {projectData?.isVite && (
               <>
-                <code className="bg-muted px-1 rounded block">npm run build</code>
-                <code className="bg-muted px-1 rounded block">npm run preview</code>
+                <code className="bg-muted px-1 rounded block">
+                  npm run build
+                </code>
+                <code className="bg-muted px-1 rounded block">
+                  npm run preview
+                </code>
               </>
             )}
             {projectData?.isReact && !projectData?.isVite && (
               <>
-                <code className="bg-muted px-1 rounded block">npm run build</code>
-                <code className="bg-muted px-1 rounded block">npx serve -s build -l 3000</code>
+                <code className="bg-muted px-1 rounded block">
+                  npm run build
+                </code>
+                <code className="bg-muted px-1 rounded block">
+                  npx serve -s build -l 3000
+                </code>
               </>
             )}
-            {!projectData?.isNextJs && !projectData?.isReact && !projectData?.isVite && (
-              <code className="bg-muted px-1 rounded block">npm run dev</code>
-            )}
+            {!projectData?.isNextJs &&
+              !projectData?.isReact &&
+              !projectData?.isVite && (
+                <code className="bg-muted px-1 rounded block">npm run dev</code>
+              )}
           </div>
           <p className="text-sm text-muted-foreground mt-1">
-            Then use the <code className="bg-muted px-1 rounded">expose_port</code> tool
+            Then use the{' '}
+            <code className="bg-muted px-1 rounded">expose_port</code> tool
           </p>
         </div>,
-        { duration: 8000 }
+        { duration: 8000 },
       );
     }
   };
@@ -661,10 +719,9 @@ export function GetProjectStructureView({
                   </TooltipTrigger>
                   <TooltipContent>
                     <p className="text-xs">
-                      {projectPreviewUrl 
-                        ? "Open running application" 
-                        : "Build and start production server first"
-                      }
+                      {projectPreviewUrl
+                        ? 'Open running application'
+                        : 'Build and start production server first'}
                     </p>
                   </TooltipContent>
                 </Tooltip>
@@ -688,14 +745,14 @@ export function GetProjectStructureView({
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-              
+
               {!isStreaming && (
                 <Badge
                   variant="secondary"
                   className={
                     isSuccess
-                      ? "bg-gradient-to-b from-emerald-200 to-emerald-100 text-emerald-700 dark:from-emerald-800/50 dark:to-emerald-900/60 dark:text-emerald-300"
-                      : "bg-gradient-to-b from-rose-200 to-rose-100 text-rose-700 dark:from-rose-800/50 dark:to-rose-900/60 dark:text-rose-300"
+                      ? 'bg-gradient-to-b from-emerald-200 to-emerald-100 text-emerald-700 dark:from-emerald-800/50 dark:to-emerald-900/60 dark:text-emerald-300'
+                      : 'bg-gradient-to-b from-rose-200 to-rose-100 text-rose-700 dark:from-rose-800/50 dark:to-rose-900/60 dark:text-rose-300'
                   }
                 >
                   {isSuccess ? (
@@ -746,7 +803,9 @@ export function GetProjectStructureView({
           <DialogHeader className="px-6 py-4 border-b flex flex-row items-center justify-between">
             <DialogTitle className="flex items-center gap-2">
               <FolderTree className="w-5 h-5 text-blue-500 dark:text-blue-400" />
-              {projectData ? `Project Explorer - ${projectData.projectName}` : 'Project Explorer'}
+              {projectData
+                ? `Project Explorer - ${projectData.projectName}`
+                : 'Project Explorer'}
             </DialogTitle>
             {projectData && (
               <Button
@@ -784,4 +843,4 @@ export function GetProjectStructureView({
       </Dialog>
     </>
   );
-} 
+}

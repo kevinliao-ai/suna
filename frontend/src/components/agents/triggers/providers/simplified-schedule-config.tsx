@@ -22,13 +22,28 @@ import {
   Loader2,
   CheckCircle2,
   Settings,
-  Info
+  Info,
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { Separator } from '@/components/ui/separator';
 import { format } from 'date-fns';
@@ -53,7 +68,12 @@ interface SimplifiedScheduleConfigProps {
   onAgentSelect?: (agentId: string) => void;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave?: (data: { name: string; description: string; config: ScheduleTriggerConfig; is_active: boolean }) => void;
+  onSave?: (data: {
+    name: string;
+    description: string;
+    config: ScheduleTriggerConfig;
+    is_active: boolean;
+  }) => void;
 }
 
 interface SchedulePreset {
@@ -72,35 +92,35 @@ const QUICK_PRESETS: SchedulePreset[] = [
     name: 'Every minute',
     description: 'Maximum frequency',
     cron: '* * * * *',
-    icon: <Zap className="h-5 w-5" />
+    icon: <Zap className="h-5 w-5" />,
   },
   {
     id: 'every-5min',
     name: 'Every 5 minutes',
     description: 'Very frequent checks',
     cron: '*/5 * * * *',
-    icon: <Timer className="h-5 w-5" />
+    icon: <Timer className="h-5 w-5" />,
   },
   {
     id: 'every-15min',
     name: 'Every 15 minutes',
     description: 'High frequency monitoring',
     cron: '*/15 * * * *',
-    icon: <Zap className="h-5 w-5" />
+    icon: <Zap className="h-5 w-5" />,
   },
   {
     id: 'every-30min',
     name: 'Every 30 minutes',
     description: 'Regular monitoring',
     cron: '*/30 * * * *',
-    icon: <Timer className="h-5 w-5" />
+    icon: <Timer className="h-5 w-5" />,
   },
   {
     id: 'hourly',
     name: 'Every hour',
     description: 'Hourly check-ins',
     cron: '0 * * * *',
-    icon: <Clock className="h-5 w-5" />
+    icon: <Clock className="h-5 w-5" />,
   },
 
   // Daily Options
@@ -109,28 +129,28 @@ const QUICK_PRESETS: SchedulePreset[] = [
     name: 'Daily at 9 AM',
     description: 'Morning routine',
     cron: '0 9 * * *',
-    icon: <Target className="h-5 w-5" />
+    icon: <Target className="h-5 w-5" />,
   },
   {
     id: 'daily-12pm',
     name: 'Daily at 12 PM',
     description: 'Noon check',
     cron: '0 12 * * *',
-    icon: <Target className="h-5 w-5" />
+    icon: <Target className="h-5 w-5" />,
   },
   {
     id: 'daily-6pm',
     name: 'Daily at 6 PM',
     description: 'Evening routine',
     cron: '0 18 * * *',
-    icon: <Target className="h-5 w-5" />
+    icon: <Target className="h-5 w-5" />,
   },
   {
     id: 'twice-daily',
     name: 'Twice daily',
     description: '9 AM and 5 PM',
     cron: '0 9,17 * * *',
-    icon: <Repeat className="h-5 w-5" />
+    icon: <Repeat className="h-5 w-5" />,
   },
 
   // Weekly Options
@@ -139,28 +159,28 @@ const QUICK_PRESETS: SchedulePreset[] = [
     name: 'Weekdays at 9 AM',
     description: 'Monday-Friday mornings',
     cron: '0 9 * * 1-5',
-    icon: <CalendarIcon className="h-5 w-5" />
+    icon: <CalendarIcon className="h-5 w-5" />,
   },
   {
     id: 'monday-mornings',
     name: 'Monday mornings',
     description: 'Every Monday at 9 AM',
     cron: '0 9 * * 1',
-    icon: <CalendarIcon className="h-5 w-5" />
+    icon: <CalendarIcon className="h-5 w-5" />,
   },
   {
     id: 'friday-evenings',
     name: 'Friday evenings',
     description: 'Every Friday at 5 PM',
     cron: '0 17 * * 5',
-    icon: <CalendarIcon className="h-5 w-5" />
+    icon: <CalendarIcon className="h-5 w-5" />,
   },
   {
     id: 'weekend-mornings',
     name: 'Weekend mornings',
     description: 'Saturday & Sunday at 10 AM',
     cron: '0 10 * * 0,6',
-    icon: <CalendarIcon className="h-5 w-5" />
+    icon: <CalendarIcon className="h-5 w-5" />,
   },
 
   // Monthly Options
@@ -169,22 +189,22 @@ const QUICK_PRESETS: SchedulePreset[] = [
     name: 'Monthly on 1st',
     description: 'First day of month at 9 AM',
     cron: '0 9 1 * *',
-    icon: <CalendarIcon className="h-5 w-5" />
+    icon: <CalendarIcon className="h-5 w-5" />,
   },
   {
     id: 'monthly-15th',
     name: 'Monthly on 15th',
     description: 'Mid-month at 9 AM',
     cron: '0 9 15 * *',
-    icon: <CalendarIcon className="h-5 w-5" />
+    icon: <CalendarIcon className="h-5 w-5" />,
   },
   {
     id: 'end-of-month',
     name: 'End of month',
     description: 'Last few days at 9 AM',
     cron: '0 9 28-31 * *',
-    icon: <CalendarIcon className="h-5 w-5" />
-  }
+    icon: <CalendarIcon className="h-5 w-5" />,
+  },
 ];
 
 const RECURRING_PRESETS: SchedulePreset[] = [
@@ -193,22 +213,22 @@ const RECURRING_PRESETS: SchedulePreset[] = [
     name: 'Weekdays at 9 AM',
     description: 'Business hours only',
     cron: '0 9 * * 1-5',
-    icon: <CalendarIcon className="h-5 w-5" />
+    icon: <CalendarIcon className="h-5 w-5" />,
   },
   {
     id: 'weekly-monday',
     name: 'Weekly on Monday',
     description: 'Weekly summary',
     cron: '0 9 * * 1',
-    icon: <Repeat className="h-5 w-5" />
+    icon: <Repeat className="h-5 w-5" />,
   },
   {
     id: 'monthly-1st',
     name: 'Monthly on 1st',
     description: 'Monthly reports',
     cron: '0 9 1 * *',
-    icon: <CalendarIcon className="h-5 w-5" />
-  }
+    icon: <CalendarIcon className="h-5 w-5" />,
+  },
 ];
 
 const getTimezones = () => {
@@ -227,11 +247,11 @@ const getTimezones = () => {
   ];
 
   // Add user's timezone if not already in the list
-  const hasUserTimezone = baseTimezones.some(tz => tz.value === userTimezone);
+  const hasUserTimezone = baseTimezones.some((tz) => tz.value === userTimezone);
   if (!hasUserTimezone) {
     baseTimezones.unshift({
       value: userTimezone,
-      label: `${userTimezone} (Your timezone)`
+      label: `${userTimezone} (Your timezone)`,
     });
   }
 
@@ -250,14 +270,18 @@ const WEEKDAYS = [
   { value: '0', label: 'Sunday', short: 'Sun' },
 ];
 
-const ProgressStepper = ({ currentStep }: { currentStep: 'setup' | 'schedule' | 'execute' }) => {
+const ProgressStepper = ({
+  currentStep,
+}: {
+  currentStep: 'setup' | 'schedule' | 'execute';
+}) => {
   const steps = [
     { id: 'setup', name: 'Setup', icon: <Target className="h-4 w-4" /> },
     { id: 'schedule', name: 'Schedule', icon: <Clock className="h-4 w-4" /> },
-    { id: 'execute', name: 'Execute', icon: <Sparkles className="h-4 w-4" /> }
+    { id: 'execute', name: 'Execute', icon: <Sparkles className="h-4 w-4" /> },
   ];
 
-  const currentIndex = steps.findIndex(s => s.id === currentStep);
+  const currentIndex = steps.findIndex((s) => s.id === currentStep);
 
   return (
     <div className="px-6 py-3 border-b bg-muted/30">
@@ -265,24 +289,28 @@ const ProgressStepper = ({ currentStep }: { currentStep: 'setup' | 'schedule' | 
         {steps.map((step, index) => (
           <React.Fragment key={step.id}>
             <div className="flex items-center space-x-2">
-              <div className={cn(
-                "flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium",
-                index <= currentIndex
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground"
-              )}>
+              <div
+                className={cn(
+                  'flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium',
+                  index <= currentIndex
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted text-muted-foreground',
+                )}
+              >
                 {index < currentIndex ? (
                   <CheckCircle2 className="h-3 w-3" />
                 ) : (
                   <span>{index + 1}</span>
                 )}
               </div>
-              <span className={cn(
-                "text-sm font-medium",
-                index <= currentIndex
-                  ? "text-foreground"
-                  : "text-muted-foreground"
-              )}>
+              <span
+                className={cn(
+                  'text-sm font-medium',
+                  index <= currentIndex
+                    ? 'text-foreground'
+                    : 'text-muted-foreground',
+                )}
+              >
                 {step.name}
               </span>
             </div>
@@ -298,10 +326,12 @@ const ProgressStepper = ({ currentStep }: { currentStep: 'setup' | 'schedule' | 
 
 const MONTH_DAYS = Array.from({ length: 31 }, (_, i) => ({
   value: (i + 1).toString(),
-  label: (i + 1).toString()
+  label: (i + 1).toString(),
 }));
 
-export const SimplifiedScheduleConfig: React.FC<SimplifiedScheduleConfigProps> = ({
+export const SimplifiedScheduleConfig: React.FC<
+  SimplifiedScheduleConfigProps
+> = ({
   config,
   onChange,
   errors,
@@ -316,20 +346,32 @@ export const SimplifiedScheduleConfig: React.FC<SimplifiedScheduleConfigProps> =
   onAgentSelect,
   open,
   onOpenChange,
-  onSave
+  onSave,
 }) => {
-  const [currentStep, setCurrentStep] = useState<'setup' | 'schedule' | 'execute'>('setup');
+  const [currentStep, setCurrentStep] = useState<
+    'setup' | 'schedule' | 'execute'
+  >('setup');
   const [selectedPreset, setSelectedPreset] = useState<string>('');
   const [executionType, setExecutionType] = useState<'agent' | 'workflow'>(
-    config.execution_type || 'agent'
+    config.execution_type || 'agent',
   );
-  const [timezone, setTimezone] = useState<string>(config.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone);
+  const [timezone, setTimezone] = useState<string>(
+    config.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
+  );
 
   // Recurring schedule state
-  const [scheduleType, setScheduleType] = useState<'daily' | 'weekly' | 'monthly'>('daily');
+  const [scheduleType, setScheduleType] = useState<
+    'daily' | 'weekly' | 'monthly'
+  >('daily');
   const [selectedHour, setSelectedHour] = useState<string>('9');
   const [selectedMinute, setSelectedMinute] = useState<string>('0');
-  const [selectedWeekdays, setSelectedWeekdays] = useState<string[]>(['1', '2', '3', '4', '5']);
+  const [selectedWeekdays, setSelectedWeekdays] = useState<string[]>([
+    '1',
+    '2',
+    '3',
+    '4',
+    '5',
+  ]);
   const [selectedMonthDays, setSelectedMonthDays] = useState<string[]>(['1']);
 
   // One-time schedule state
@@ -342,33 +384,41 @@ export const SimplifiedScheduleConfig: React.FC<SimplifiedScheduleConfigProps> =
   // Find matching preset
   useEffect(() => {
     const allPresets = [...QUICK_PRESETS, ...RECURRING_PRESETS];
-    const preset = allPresets.find(p => p.cron === config.cron_expression);
+    const preset = allPresets.find((p) => p.cron === config.cron_expression);
     setSelectedPreset(preset?.id || '');
   }, [config.cron_expression]);
 
   // Update cron when recurring settings change
   useEffect(() => {
-    if (!selectedPreset) { // Only auto-generate if no preset is selected
+    if (!selectedPreset) {
+      // Only auto-generate if no preset is selected
       handleRecurringScheduleChange();
     }
-  }, [scheduleType, selectedHour, selectedMinute, selectedWeekdays, selectedMonthDays]);
+  }, [
+    scheduleType,
+    selectedHour,
+    selectedMinute,
+    selectedWeekdays,
+    selectedMonthDays,
+  ]);
 
   // Update cron when one-time settings change
   useEffect(() => {
-    if (!selectedPreset && oneTimeDate) { // Only auto-generate if no preset is selected
+    if (!selectedPreset && oneTimeDate) {
+      // Only auto-generate if no preset is selected
       handleOneTimeScheduleChange();
     }
   }, [oneTimeDate, oneTimeHour, oneTimeMinute]);
 
   const handlePresetSelect = (presetId: string) => {
     const allPresets = [...QUICK_PRESETS, ...RECURRING_PRESETS];
-    const preset = allPresets.find(p => p.id === presetId);
+    const preset = allPresets.find((p) => p.id === presetId);
     if (preset) {
       setSelectedPreset(presetId);
       onChange({
         ...config,
         cron_expression: preset.cron,
-        timezone: timezone
+        timezone: timezone,
       });
 
       // Auto-generate name if empty
@@ -382,7 +432,7 @@ export const SimplifiedScheduleConfig: React.FC<SimplifiedScheduleConfigProps> =
     setTimezone(newTimezone);
     onChange({
       ...config,
-      timezone: newTimezone
+      timezone: newTimezone,
     });
   };
 
@@ -409,21 +459,21 @@ export const SimplifiedScheduleConfig: React.FC<SimplifiedScheduleConfigProps> =
     onChange({
       ...config,
       cron_expression: cronExpression,
-      timezone: timezone
+      timezone: timezone,
     });
     setSelectedPreset(''); // Clear preset selection when using custom recurring
   };
 
   const handleWeekdayToggle = (weekday: string) => {
     const newWeekdays = selectedWeekdays.includes(weekday)
-      ? selectedWeekdays.filter(w => w !== weekday)
+      ? selectedWeekdays.filter((w) => w !== weekday)
       : [...selectedWeekdays, weekday].sort();
     setSelectedWeekdays(newWeekdays);
   };
 
   const handleMonthDayToggle = (day: string) => {
     const newDays = selectedMonthDays.includes(day)
-      ? selectedMonthDays.filter(d => d !== day)
+      ? selectedMonthDays.filter((d) => d !== day)
       : [...selectedMonthDays, day].sort((a, b) => parseInt(a) - parseInt(b));
     setSelectedMonthDays(newDays);
   };
@@ -444,7 +494,7 @@ export const SimplifiedScheduleConfig: React.FC<SimplifiedScheduleConfigProps> =
     onChange({
       ...config,
       cron_expression: cronExpression,
-      timezone: timezone
+      timezone: timezone,
     });
     setSelectedPreset(''); // Clear preset selection when using one-time
   };
@@ -457,7 +507,7 @@ export const SimplifiedScheduleConfig: React.FC<SimplifiedScheduleConfigProps> =
       // Clear the other type's config
       agent_prompt: type === 'agent' ? config.agent_prompt : undefined,
       workflow_id: type === 'workflow' ? config.workflow_id : undefined,
-      workflow_input: type === 'workflow' ? config.workflow_input : undefined
+      workflow_input: type === 'workflow' ? config.workflow_input : undefined,
     });
   };
 
@@ -465,14 +515,14 @@ export const SimplifiedScheduleConfig: React.FC<SimplifiedScheduleConfigProps> =
     onChange({
       ...config,
       execution_type: 'agent',
-      agent_prompt: prompt
+      agent_prompt: prompt,
     });
   };
 
   const handleWorkflowChange = (workflowId: string) => {
     onChange({
       ...config,
-      workflow_id: workflowId
+      workflow_id: workflowId,
     });
   };
 
@@ -501,14 +551,19 @@ export const SimplifiedScheduleConfig: React.FC<SimplifiedScheduleConfigProps> =
                   </div>
                 </div>
               </div>
-              <div className="flex-1 overflow-y-auto p-6" style={{ maxHeight: 'calc(90vh - 200px)' }}>
+              <div
+                className="flex-1 overflow-y-auto p-6"
+                style={{ maxHeight: 'calc(90vh - 200px)' }}
+              >
                 <div className="max-w-2xl mx-auto space-y-6">
                   {/* Agent Selection */}
                   {onAgentSelect && (
                     <div className="border rounded-lg p-4 space-y-4">
                       <div>
                         <h3 className="font-medium mb-1">Agent Selection</h3>
-                        <p className="text-sm text-muted-foreground">Choose which agent will handle this task</p>
+                        <p className="text-sm text-muted-foreground">
+                          Choose which agent will handle this task
+                        </p>
                       </div>
                       <div className="space-y-2">
                         <Label>Agent</Label>
@@ -526,7 +581,9 @@ export const SimplifiedScheduleConfig: React.FC<SimplifiedScheduleConfigProps> =
                   <div className="border rounded-lg p-4 space-y-4">
                     <div>
                       <h3 className="font-medium mb-1">Task Details</h3>
-                      <p className="text-sm text-muted-foreground">Configure basic information about your task</p>
+                      <p className="text-sm text-muted-foreground">
+                        Configure basic information about your task
+                      </p>
                     </div>
                     <div className="space-y-4">
                       <div className="space-y-2">
@@ -536,14 +593,18 @@ export const SimplifiedScheduleConfig: React.FC<SimplifiedScheduleConfigProps> =
                           value={name}
                           onChange={(e) => onNameChange(e.target.value)}
                           placeholder="e.g., Daily report generation"
-                          className={cn(errors.name && "border-destructive")}
+                          className={cn(errors.name && 'border-destructive')}
                         />
                         {errors.name && (
-                          <p className="text-sm text-destructive">{errors.name}</p>
+                          <p className="text-sm text-destructive">
+                            {errors.name}
+                          </p>
                         )}
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="task-description">Description (Optional)</Label>
+                        <Label htmlFor="task-description">
+                          Description (Optional)
+                        </Label>
                         <Textarea
                           id="task-description"
                           value={description}
@@ -562,9 +623,13 @@ export const SimplifiedScheduleConfig: React.FC<SimplifiedScheduleConfigProps> =
                         <Info className="h-3 w-3 text-blue-600 dark:text-blue-400" />
                       </div>
                       <div className="flex-1">
-                        <h4 className="font-medium text-sm text-blue-900 dark:text-blue-100 mb-1">Pro Tip</h4>
+                        <h4 className="font-medium text-sm text-blue-900 dark:text-blue-100 mb-1">
+                          Pro Tip
+                        </h4>
                         <p className="text-sm text-blue-700 dark:text-blue-300">
-                          Choose a descriptive name that clearly explains what this task will do. This helps you identify and manage your tasks later.
+                          Choose a descriptive name that clearly explains what
+                          this task will do. This helps you identify and manage
+                          your tasks later.
                         </p>
                       </div>
                     </div>
@@ -596,20 +661,27 @@ export const SimplifiedScheduleConfig: React.FC<SimplifiedScheduleConfigProps> =
                     <Clock className="h-4 w-4 text-primary" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold">Schedule Configuration</h2>
+                    <h2 className="text-xl font-semibold">
+                      Schedule Configuration
+                    </h2>
                     <p className="text-sm text-muted-foreground">
                       Set up when and how often this task should run
                     </p>
                   </div>
                 </div>
               </div>
-              <div className="flex-1 overflow-y-auto p-6" style={{ maxHeight: 'calc(90vh - 200px)' }}>
+              <div
+                className="flex-1 overflow-y-auto p-6"
+                style={{ maxHeight: 'calc(90vh - 200px)' }}
+              >
                 <div className="max-w-2xl mx-auto space-y-6">
                   {/* Frequency Selection */}
                   <div className="border rounded-lg p-4 space-y-4">
                     <div>
                       <h3 className="font-medium mb-1">Schedule Frequency</h3>
-                      <p className="text-sm text-muted-foreground">Choose how often this task should run</p>
+                      <p className="text-sm text-muted-foreground">
+                        Choose how often this task should run
+                      </p>
                     </div>
                     <Tabs defaultValue="quick" className="w-full">
                       <TabsList className="grid w-full grid-cols-4">
@@ -621,12 +693,18 @@ export const SimplifiedScheduleConfig: React.FC<SimplifiedScheduleConfigProps> =
 
                       <TabsContent value="quick" className="space-y-3">
                         <div className="space-y-2">
-                          <Label className="text-sm font-medium">Choose a common schedule</Label>
+                          <Label className="text-sm font-medium">
+                            Choose a common schedule
+                          </Label>
                           <div className="max-h-64 overflow-y-auto pr-2 space-y-2">
                             {QUICK_PRESETS.map((preset) => (
                               <Button
                                 key={preset.id}
-                                variant={selectedPreset === preset.id ? "default" : "outline"}
+                                variant={
+                                  selectedPreset === preset.id
+                                    ? 'default'
+                                    : 'outline'
+                                }
                                 size="sm"
                                 onClick={() => handlePresetSelect(preset.id)}
                                 className="w-full justify-start h-12 p-3"
@@ -636,7 +714,9 @@ export const SimplifiedScheduleConfig: React.FC<SimplifiedScheduleConfigProps> =
                                     {preset.icon}
                                   </div>
                                   <div className="flex-1 text-left min-w-0">
-                                    <div className="font-medium text-sm">{preset.name}</div>
+                                    <div className="font-medium text-sm">
+                                      {preset.name}
+                                    </div>
                                     <div className="text-xs text-muted-foreground truncate">
                                       {preset.description}
                                     </div>
@@ -646,35 +726,54 @@ export const SimplifiedScheduleConfig: React.FC<SimplifiedScheduleConfigProps> =
                             ))}
                           </div>
                           <p className="text-xs text-muted-foreground">
-                            Can't find what you need? Try the "Recurring" tab for custom schedules.
+                            Can't find what you need? Try the "Recurring" tab
+                            for custom schedules.
                           </p>
                         </div>
                       </TabsContent>
 
                       <TabsContent value="recurring" className="space-y-4">
                         <div className="space-y-4">
-                          <Label className="text-sm font-medium">Set up recurring schedule</Label>
+                          <Label className="text-sm font-medium">
+                            Set up recurring schedule
+                          </Label>
 
                           {/* Schedule Type */}
                           <div className="space-y-2">
-                            <Label className="text-sm">How often should this run?</Label>
-                            <Select value={scheduleType} onValueChange={(value: 'daily' | 'weekly' | 'monthly') => setScheduleType(value)}>
+                            <Label className="text-sm">
+                              How often should this run?
+                            </Label>
+                            <Select
+                              value={scheduleType}
+                              onValueChange={(
+                                value: 'daily' | 'weekly' | 'monthly',
+                              ) => setScheduleType(value)}
+                            >
                               <SelectTrigger>
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="daily">Every day</SelectItem>
-                                <SelectItem value="weekly">Specific days of the week</SelectItem>
-                                <SelectItem value="monthly">Specific days of the month</SelectItem>
+                                <SelectItem value="weekly">
+                                  Specific days of the week
+                                </SelectItem>
+                                <SelectItem value="monthly">
+                                  Specific days of the month
+                                </SelectItem>
                               </SelectContent>
                             </Select>
                           </div>
 
                           {/* Time Selection */}
                           <div className="space-y-2">
-                            <Label className="text-sm">What time should it run?</Label>
+                            <Label className="text-sm">
+                              What time should it run?
+                            </Label>
                             <div className="flex gap-2 items-center">
-                              <Select value={selectedHour} onValueChange={setSelectedHour}>
+                              <Select
+                                value={selectedHour}
+                                onValueChange={setSelectedHour}
+                              >
                                 <SelectTrigger className="w-20">
                                   <SelectValue />
                                 </SelectTrigger>
@@ -687,7 +786,10 @@ export const SimplifiedScheduleConfig: React.FC<SimplifiedScheduleConfigProps> =
                                 </SelectContent>
                               </Select>
                               <span className="text-muted-foreground">:</span>
-                              <Select value={selectedMinute} onValueChange={setSelectedMinute}>
+                              <Select
+                                value={selectedMinute}
+                                onValueChange={setSelectedMinute}
+                              >
                                 <SelectTrigger className="w-20">
                                   <SelectValue />
                                 </SelectTrigger>
@@ -700,7 +802,8 @@ export const SimplifiedScheduleConfig: React.FC<SimplifiedScheduleConfigProps> =
                                 </SelectContent>
                               </Select>
                               <span className="text-sm text-muted-foreground ml-2">
-                                ({selectedHour.padStart(2, '0')}:{selectedMinute} - 24h format)
+                                ({selectedHour.padStart(2, '0')}:
+                                {selectedMinute} - 24h format)
                               </span>
                             </div>
                           </div>
@@ -708,14 +811,22 @@ export const SimplifiedScheduleConfig: React.FC<SimplifiedScheduleConfigProps> =
                           {/* Weekly - Day Selection */}
                           {scheduleType === 'weekly' && (
                             <div className="space-y-3">
-                              <Label className="text-sm">Which days of the week?</Label>
+                              <Label className="text-sm">
+                                Which days of the week?
+                              </Label>
                               <div className="flex gap-1 flex-wrap">
                                 {WEEKDAYS.map((day) => (
                                   <Button
                                     key={day.value}
-                                    variant={selectedWeekdays.includes(day.value) ? "default" : "outline"}
+                                    variant={
+                                      selectedWeekdays.includes(day.value)
+                                        ? 'default'
+                                        : 'outline'
+                                    }
                                     size="sm"
-                                    onClick={() => handleWeekdayToggle(day.value)}
+                                    onClick={() =>
+                                      handleWeekdayToggle(day.value)
+                                    }
                                     className="h-9 w-14 p-0 text-xs"
                                   >
                                     {day.short}
@@ -723,7 +834,9 @@ export const SimplifiedScheduleConfig: React.FC<SimplifiedScheduleConfigProps> =
                                 ))}
                               </div>
                               <p className="text-xs text-muted-foreground">
-                                Click to select/deselect days. Currently selected: {selectedWeekdays.length} day{selectedWeekdays.length !== 1 ? 's' : ''}
+                                Click to select/deselect days. Currently
+                                selected: {selectedWeekdays.length} day
+                                {selectedWeekdays.length !== 1 ? 's' : ''}
                               </p>
                             </div>
                           )}
@@ -731,14 +844,22 @@ export const SimplifiedScheduleConfig: React.FC<SimplifiedScheduleConfigProps> =
                           {/* Monthly - Day Selection */}
                           {scheduleType === 'monthly' && (
                             <div className="space-y-3">
-                              <Label className="text-sm">Which days of the month?</Label>
+                              <Label className="text-sm">
+                                Which days of the month?
+                              </Label>
                               <div className="grid grid-cols-7 gap-1 max-h-32 overflow-y-auto">
                                 {MONTH_DAYS.map((day) => (
                                   <Button
                                     key={day.value}
-                                    variant={selectedMonthDays.includes(day.value) ? "default" : "outline"}
+                                    variant={
+                                      selectedMonthDays.includes(day.value)
+                                        ? 'default'
+                                        : 'outline'
+                                    }
                                     size="sm"
-                                    onClick={() => handleMonthDayToggle(day.value)}
+                                    onClick={() =>
+                                      handleMonthDayToggle(day.value)
+                                    }
                                     className="h-8 w-8 p-0 text-xs"
                                   >
                                     {day.label}
@@ -746,26 +867,40 @@ export const SimplifiedScheduleConfig: React.FC<SimplifiedScheduleConfigProps> =
                                 ))}
                               </div>
                               <p className="text-xs text-muted-foreground">
-                                Click to select/deselect days. Currently selected: {selectedMonthDays.length} day{selectedMonthDays.length !== 1 ? 's' : ''}
+                                Click to select/deselect days. Currently
+                                selected: {selectedMonthDays.length} day
+                                {selectedMonthDays.length !== 1 ? 's' : ''}
                               </p>
                             </div>
                           )}
 
                           {/* Preview */}
                           <div className="bg-muted/50 p-4 rounded-lg border">
-                            <div className="font-medium text-sm mb-2">Schedule Summary</div>
+                            <div className="font-medium text-sm mb-2">
+                              Schedule Summary
+                            </div>
                             <div className="space-y-2 text-sm">
                               <div className="text-foreground">
-                                {scheduleType === 'daily' && `Every day at ${selectedHour.padStart(2, '0')}:${selectedMinute}`}
-                                {scheduleType === 'weekly' && selectedWeekdays.length > 0 &&
-                                  `Every ${WEEKDAYS.filter(d => selectedWeekdays.includes(d.value)).map(d => d.label).join(', ')} at ${selectedHour.padStart(2, '0')}:${selectedMinute}`
-                                }
-                                {scheduleType === 'monthly' && selectedMonthDays.length > 0 &&
-                                  `On day${selectedMonthDays.length > 1 ? 's' : ''} ${selectedMonthDays.join(', ')} of each month at ${selectedHour.padStart(2, '0')}:${selectedMinute}`
-                                }
+                                {scheduleType === 'daily' &&
+                                  `Every day at ${selectedHour.padStart(2, '0')}:${selectedMinute}`}
+                                {scheduleType === 'weekly' &&
+                                  selectedWeekdays.length > 0 &&
+                                  `Every ${WEEKDAYS.filter((d) =>
+                                    selectedWeekdays.includes(d.value),
+                                  )
+                                    .map((d) => d.label)
+                                    .join(
+                                      ', ',
+                                    )} at ${selectedHour.padStart(2, '0')}:${selectedMinute}`}
+                                {scheduleType === 'monthly' &&
+                                  selectedMonthDays.length > 0 &&
+                                  `On day${selectedMonthDays.length > 1 ? 's' : ''} ${selectedMonthDays.join(', ')} of each month at ${selectedHour.padStart(2, '0')}:${selectedMinute}`}
                               </div>
                               <div className="text-muted-foreground">
-                                <strong>Cron:</strong> <code className="bg-background px-1 rounded font-mono text-xs">{generateCronFromRecurring()}</code>
+                                <strong>Cron:</strong>{' '}
+                                <code className="bg-background px-1 rounded font-mono text-xs">
+                                  {generateCronFromRecurring()}
+                                </code>
                               </div>
                             </div>
                           </div>
@@ -774,7 +909,9 @@ export const SimplifiedScheduleConfig: React.FC<SimplifiedScheduleConfigProps> =
 
                       <TabsContent value="one-time" className="space-y-4">
                         <div className="space-y-4">
-                          <Label className="text-sm font-medium">Schedule for specific date and time</Label>
+                          <Label className="text-sm font-medium">
+                            Schedule for specific date and time
+                          </Label>
 
                           {/* Date Selection */}
                           <div className="space-y-2">
@@ -784,15 +921,22 @@ export const SimplifiedScheduleConfig: React.FC<SimplifiedScheduleConfigProps> =
                                 <Button
                                   variant="outline"
                                   className={cn(
-                                    "w-full justify-start text-left font-normal",
-                                    !oneTimeDate && "text-muted-foreground"
+                                    'w-full justify-start text-left font-normal',
+                                    !oneTimeDate && 'text-muted-foreground',
                                   )}
                                 >
                                   <CalendarIcon className="mr-2 h-4 w-4" />
-                                  {oneTimeDate ? format(oneTimeDate, "PPP") : <span>Pick a date</span>}
+                                  {oneTimeDate ? (
+                                    format(oneTimeDate, 'PPP')
+                                  ) : (
+                                    <span>Pick a date</span>
+                                  )}
                                 </Button>
                               </PopoverTrigger>
-                              <PopoverContent className="w-auto p-0" align="start">
+                              <PopoverContent
+                                className="w-auto p-0"
+                                align="start"
+                              >
                                 <Calendar
                                   mode="single"
                                   selected={oneTimeDate}
@@ -808,7 +952,10 @@ export const SimplifiedScheduleConfig: React.FC<SimplifiedScheduleConfigProps> =
                           <div className="space-y-2">
                             <Label className="text-xs">Time</Label>
                             <div className="flex gap-2">
-                              <Select value={oneTimeHour} onValueChange={setOneTimeHour}>
+                              <Select
+                                value={oneTimeHour}
+                                onValueChange={setOneTimeHour}
+                              >
                                 <SelectTrigger className="w-20">
                                   <SelectValue />
                                 </SelectTrigger>
@@ -821,7 +968,10 @@ export const SimplifiedScheduleConfig: React.FC<SimplifiedScheduleConfigProps> =
                                 </SelectContent>
                               </Select>
                               <span className="flex items-center">:</span>
-                              <Select value={oneTimeMinute} onValueChange={setOneTimeMinute}>
+                              <Select
+                                value={oneTimeMinute}
+                                onValueChange={setOneTimeMinute}
+                              >
                                 <SelectTrigger className="w-20">
                                   <SelectValue />
                                 </SelectTrigger>
@@ -839,20 +989,29 @@ export const SimplifiedScheduleConfig: React.FC<SimplifiedScheduleConfigProps> =
                           {/* Preview */}
                           {oneTimeDate && (
                             <div className="bg-muted/50 p-4 rounded-lg border">
-                              <div className="font-medium text-sm mb-2">Schedule Summary</div>
+                              <div className="font-medium text-sm mb-2">
+                                Schedule Summary
+                              </div>
                               <div className="space-y-2 text-sm">
                                 <div className="text-foreground">
-                                  <strong>Scheduled for:</strong> {format(oneTimeDate, "PPP")} at {oneTimeHour.padStart(2, '0')}:{oneTimeMinute}
+                                  <strong>Scheduled for:</strong>{' '}
+                                  {format(oneTimeDate, 'PPP')} at{' '}
+                                  {oneTimeHour.padStart(2, '0')}:{oneTimeMinute}
                                 </div>
                                 <div className="text-muted-foreground">
-                                  <strong>Cron:</strong> <code className="bg-background px-1 rounded font-mono text-xs">{generateCronFromOneTime()}</code>
+                                  <strong>Cron:</strong>{' '}
+                                  <code className="bg-background px-1 rounded font-mono text-xs">
+                                    {generateCronFromOneTime()}
+                                  </code>
                                 </div>
                               </div>
                             </div>
                           )}
 
                           <div className="text-xs text-muted-foreground">
-                            <strong>Note:</strong> This task will run once at the specified date and time, then be automatically disabled.
+                            <strong>Note:</strong> This task will run once at
+                            the specified date and time, then be automatically
+                            disabled.
                           </div>
                         </div>
                       </TabsContent>
@@ -860,9 +1019,12 @@ export const SimplifiedScheduleConfig: React.FC<SimplifiedScheduleConfigProps> =
                       <TabsContent value="advanced" className="space-y-4">
                         <div className="space-y-4">
                           <div>
-                            <Label className="text-sm font-medium">Custom Cron Expression</Label>
+                            <Label className="text-sm font-medium">
+                              Custom Cron Expression
+                            </Label>
                             <p className="text-xs text-muted-foreground mt-1">
-                              For advanced users who need precise control over scheduling
+                              For advanced users who need precise control over
+                              scheduling
                             </p>
                           </div>
 
@@ -871,7 +1033,12 @@ export const SimplifiedScheduleConfig: React.FC<SimplifiedScheduleConfigProps> =
                             <Input
                               id="cron"
                               value={config.cron_expression || ''}
-                              onChange={(e) => onChange({ ...config, cron_expression: e.target.value })}
+                              onChange={(e) =>
+                                onChange({
+                                  ...config,
+                                  cron_expression: e.target.value,
+                                })
+                              }
                               placeholder="0 9 * * 1-5"
                               className="font-mono"
                             />
@@ -879,16 +1046,31 @@ export const SimplifiedScheduleConfig: React.FC<SimplifiedScheduleConfigProps> =
 
                           {/* Cron Format Info */}
                           <div className="bg-muted/50 p-4 rounded-lg border">
-                            <div className="font-medium text-sm mb-2">Cron Format</div>
+                            <div className="font-medium text-sm mb-2">
+                              Cron Format
+                            </div>
                             <div className="space-y-2 text-sm">
                               <div className="font-mono text-xs bg-background p-2 rounded border">
                                 Format: minute hour day month weekday
                               </div>
                               <div className="text-muted-foreground">
-                                <div><strong>Example:</strong> <code className="bg-background px-1 rounded">0 9 * * 1-5</code> = Weekdays at 9 AM</div>
+                                <div>
+                                  <strong>Example:</strong>{' '}
+                                  <code className="bg-background px-1 rounded">
+                                    0 9 * * 1-5
+                                  </code>{' '}
+                                  = Weekdays at 9 AM
+                                </div>
                                 <div className="mt-1">
-                                  Use <code className="bg-background px-1 rounded">*</code> for any value,
-                                  <code className="bg-background px-1 rounded">*/5</code> for every 5 units
+                                  Use{' '}
+                                  <code className="bg-background px-1 rounded">
+                                    *
+                                  </code>{' '}
+                                  for any value,
+                                  <code className="bg-background px-1 rounded">
+                                    */5
+                                  </code>{' '}
+                                  for every 5 units
                                 </div>
                               </div>
                             </div>
@@ -898,7 +1080,9 @@ export const SimplifiedScheduleConfig: React.FC<SimplifiedScheduleConfigProps> =
                     </Tabs>
 
                     {errors.cron_expression && (
-                      <p className="text-sm text-destructive">{errors.cron_expression}</p>
+                      <p className="text-sm text-destructive">
+                        {errors.cron_expression}
+                      </p>
                     )}
                   </div>
 
@@ -906,14 +1090,22 @@ export const SimplifiedScheduleConfig: React.FC<SimplifiedScheduleConfigProps> =
                   <div className="border rounded-lg p-4 space-y-4">
                     <div>
                       <h3 className="font-medium mb-1">Timezone</h3>
-                      <p className="text-sm text-muted-foreground">Choose the timezone for your schedule</p>
+                      <p className="text-sm text-muted-foreground">
+                        Choose the timezone for your schedule
+                      </p>
                     </div>
-                    <Select value={timezone} onValueChange={handleTimezoneChange}>
+                    <Select
+                      value={timezone}
+                      onValueChange={handleTimezoneChange}
+                    >
                       <SelectTrigger>
                         <SelectValue>
                           <div className="flex items-center gap-2">
                             <Globe className="h-4 w-4" />
-                            <span>{TIMEZONES.find(tz => tz.value === timezone)?.label || timezone}</span>
+                            <span>
+                              {TIMEZONES.find((tz) => tz.value === timezone)
+                                ?.label || timezone}
+                            </span>
                           </div>
                         </SelectValue>
                       </SelectTrigger>
@@ -934,9 +1126,13 @@ export const SimplifiedScheduleConfig: React.FC<SimplifiedScheduleConfigProps> =
                         <Clock className="h-3 w-3 text-amber-600 dark:text-amber-400" />
                       </div>
                       <div className="flex-1">
-                        <h4 className="font-medium text-sm text-amber-900 dark:text-amber-100 mb-1">Timezone Matters</h4>
+                        <h4 className="font-medium text-sm text-amber-900 dark:text-amber-100 mb-1">
+                          Timezone Matters
+                        </h4>
                         <p className="text-sm text-amber-700 dark:text-amber-300">
-                          Your schedule will run according to the timezone you select. Make sure it matches your location or preferred time zone.
+                          Your schedule will run according to the timezone you
+                          select. Make sure it matches your location or
+                          preferred time zone.
                         </p>
                       </div>
                     </div>
@@ -976,32 +1172,43 @@ export const SimplifiedScheduleConfig: React.FC<SimplifiedScheduleConfigProps> =
                     <Sparkles className="h-4 w-4 text-primary" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold">Execution Configuration</h2>
+                    <h2 className="text-xl font-semibold">
+                      Execution Configuration
+                    </h2>
                     <p className="text-sm text-muted-foreground">
                       Configure how your task should be executed
                     </p>
                   </div>
                 </div>
               </div>
-              <div className="flex-1 overflow-y-auto p-6" style={{ maxHeight: 'calc(90vh - 200px)' }}>
+              <div
+                className="flex-1 overflow-y-auto p-6"
+                style={{ maxHeight: 'calc(90vh - 200px)' }}
+              >
                 <div className="max-w-2xl mx-auto space-y-6">
-
                   {/* Execution Type Selection */}
                   <div className="border rounded-lg p-4 space-y-4">
                     <div>
                       <h3 className="font-medium mb-1">Execution Method</h3>
-                      <p className="text-sm text-muted-foreground">Choose how your task should be executed</p>
+                      <p className="text-sm text-muted-foreground">
+                        Choose how your task should be executed
+                      </p>
                     </div>
 
                     <RadioGroup
                       value={executionType}
-                      onValueChange={(value) => handleExecutionTypeChange(value as 'agent' | 'workflow')}
+                      onValueChange={(value) =>
+                        handleExecutionTypeChange(value as 'agent' | 'workflow')
+                      }
                       className="space-y-3"
                     >
                       <div className="flex items-center space-x-3">
                         <RadioGroupItem value="agent" id="agent-prompt" />
                         <div className="flex-1">
-                          <Label htmlFor="agent-prompt" className="font-medium cursor-pointer">
+                          <Label
+                            htmlFor="agent-prompt"
+                            className="font-medium cursor-pointer"
+                          >
                             Send Prompt to Agent
                           </Label>
                           <p className="text-sm text-muted-foreground">
@@ -1013,7 +1220,10 @@ export const SimplifiedScheduleConfig: React.FC<SimplifiedScheduleConfigProps> =
                       <div className="flex items-center space-x-3">
                         <RadioGroupItem value="workflow" id="playbook" />
                         <div className="flex-1">
-                          <Label htmlFor="playbook" className="font-medium cursor-pointer">
+                          <Label
+                            htmlFor="playbook"
+                            className="font-medium cursor-pointer"
+                          >
                             Run Playbook (Workflow)
                           </Label>
                           <p className="text-sm text-muted-foreground">
@@ -1022,7 +1232,6 @@ export const SimplifiedScheduleConfig: React.FC<SimplifiedScheduleConfigProps> =
                         </div>
                       </div>
                     </RadioGroup>
-
                   </div>
 
                   {/* Agent Instructions */}
@@ -1030,21 +1239,33 @@ export const SimplifiedScheduleConfig: React.FC<SimplifiedScheduleConfigProps> =
                     <div className="border rounded-lg p-4 space-y-4">
                       <div>
                         <h3 className="font-medium mb-1">Agent Instructions</h3>
-                        <p className="text-sm text-muted-foreground">Provide specific instructions for your agent</p>
+                        <p className="text-sm text-muted-foreground">
+                          Provide specific instructions for your agent
+                        </p>
                       </div>
                       <div className="space-y-2">
                         <Textarea
                           value={config.agent_prompt || ''}
-                          onChange={(e) => handleAgentPromptChange(e.target.value)}
+                          onChange={(e) =>
+                            handleAgentPromptChange(e.target.value)
+                          }
                           placeholder="Enter prompt here. Be specific about what you want your agent to do when this task runs."
                           rows={4}
-                          className={cn(errors.agent_prompt && "border-destructive")}
+                          className={cn(
+                            errors.agent_prompt && 'border-destructive',
+                          )}
                         />
                         {errors.agent_prompt && (
-                          <p className="text-sm text-destructive">{errors.agent_prompt}</p>
+                          <p className="text-sm text-destructive">
+                            {errors.agent_prompt}
+                          </p>
                         )}
                         <p className="text-xs text-muted-foreground">
-                          Use <code className="text-xs bg-muted px-1 rounded">payload</code> to include trigger data
+                          Use{' '}
+                          <code className="text-xs bg-muted px-1 rounded">
+                            payload
+                          </code>{' '}
+                          to include trigger data
                         </p>
                       </div>
                     </div>
@@ -1055,7 +1276,9 @@ export const SimplifiedScheduleConfig: React.FC<SimplifiedScheduleConfigProps> =
                     <div className="border rounded-lg p-4 space-y-4">
                       <div>
                         <h3 className="font-medium mb-1">Select Playbook</h3>
-                        <p className="text-sm text-muted-foreground">Choose a workflow to execute</p>
+                        <p className="text-sm text-muted-foreground">
+                          Choose a workflow to execute
+                        </p>
                       </div>
                       {workflows.length > 0 ? (
                         <div className="space-y-2">
@@ -1063,27 +1286,33 @@ export const SimplifiedScheduleConfig: React.FC<SimplifiedScheduleConfigProps> =
                             <Card
                               key={workflow.id}
                               className={cn(
-                                "cursor-pointer transition-all",
+                                'cursor-pointer transition-all',
                                 config.workflow_id === workflow.id
-                                  ? "ring-2 ring-primary border-primary/50 bg-primary/5"
-                                  : "hover:border-muted-foreground/20"
+                                  ? 'ring-2 ring-primary border-primary/50 bg-primary/5'
+                                  : 'hover:border-muted-foreground/20',
                               )}
                               onClick={() => handleWorkflowChange(workflow.id)}
                             >
                               <CardContent className="p-3">
                                 <div className="flex items-center gap-3">
-                                  <div className={cn(
-                                    "p-1.5 rounded-lg",
-                                    config.workflow_id === workflow.id
-                                      ? "bg-primary/10 text-primary"
-                                      : "bg-muted text-muted-foreground"
-                                  )}>
+                                  <div
+                                    className={cn(
+                                      'p-1.5 rounded-lg',
+                                      config.workflow_id === workflow.id
+                                        ? 'bg-primary/10 text-primary'
+                                        : 'bg-muted text-muted-foreground',
+                                    )}
+                                  >
                                     <Activity className="h-3.5 w-3.5" />
                                   </div>
                                   <div className="flex-1">
-                                    <h4 className="font-medium text-sm">{workflow.name}</h4>
+                                    <h4 className="font-medium text-sm">
+                                      {workflow.name}
+                                    </h4>
                                     {workflow.description && (
-                                      <p className="text-xs text-muted-foreground">{workflow.description}</p>
+                                      <p className="text-xs text-muted-foreground">
+                                        {workflow.description}
+                                      </p>
                                     )}
                                   </div>
                                 </div>
@@ -1095,11 +1324,15 @@ export const SimplifiedScheduleConfig: React.FC<SimplifiedScheduleConfigProps> =
                         <div className="text-center py-6 text-muted-foreground border rounded-lg">
                           <Activity className="h-6 w-6 mx-auto mb-2 opacity-50" />
                           <p className="text-sm">No playbooks available</p>
-                          <p className="text-xs">Create a workflow first to use this option</p>
+                          <p className="text-xs">
+                            Create a workflow first to use this option
+                          </p>
                         </div>
                       )}
                       {errors.workflow_id && (
-                        <p className="text-sm text-destructive">{errors.workflow_id}</p>
+                        <p className="text-sm text-destructive">
+                          {errors.workflow_id}
+                        </p>
                       )}
                     </div>
                   )}
@@ -1125,14 +1358,15 @@ export const SimplifiedScheduleConfig: React.FC<SimplifiedScheduleConfigProps> =
                           description,
                           config: {
                             ...config,
-                            execution_type: executionType
+                            execution_type: executionType,
                           },
-                          is_active: isActive
+                          is_active: isActive,
                         });
                       }
                     }}
                     disabled={
-                      (executionType === 'agent' && !config.agent_prompt?.trim()) ||
+                      (executionType === 'agent' &&
+                        !config.agent_prompt?.trim()) ||
                       (executionType === 'workflow' && !config.workflow_id)
                     }
                     size="sm"

@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   streamAgent,
@@ -90,34 +96,39 @@ export function useAgentStream(
   const [textContent, setTextContent] = useState<
     { content: string; sequence?: number }[]
   >([]);
-  
+
   // Add throttled state updates for smoother streaming
   const throttleRef = useRef<NodeJS.Timeout | null>(null);
-  const pendingContentRef = useRef<{ content: string; sequence?: number }[]>([]);
-  
+  const pendingContentRef = useRef<{ content: string; sequence?: number }[]>(
+    [],
+  );
+
   // Throttled content update function for smoother streaming
   const flushPendingContent = useCallback(() => {
     if (pendingContentRef.current.length > 0) {
       const newContent = [...pendingContentRef.current];
       pendingContentRef.current = [];
-      
+
       React.startTransition(() => {
         setTextContent((prev) => [...prev, ...newContent]);
       });
     }
   }, []);
-  
-  const addContentThrottled = useCallback((content: { content: string; sequence?: number }) => {
-    pendingContentRef.current.push(content);
-    
-    // Clear existing throttle
-    if (throttleRef.current) {
-      clearTimeout(throttleRef.current);
-    }
-    
-          // Set new throttle for smooth updates (16ms ≈ 60fps)
-    throttleRef.current = setTimeout(flushPendingContent, 16);
-  }, [flushPendingContent]);
+
+  const addContentThrottled = useCallback(
+    (content: { content: string; sequence?: number }) => {
+      pendingContentRef.current.push(content);
+
+      // Clear existing throttle
+      if (throttleRef.current) {
+        clearTimeout(throttleRef.current);
+      }
+
+      // Set new throttle for smooth updates (16ms ≈ 60fps)
+      throttleRef.current = setTimeout(flushPendingContent, 16);
+    },
+    [flushPendingContent],
+  );
   const [toolCall, setToolCall] = useState<ParsedContent | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [agentRunId, setAgentRunId] = useState<string | null>(null);
@@ -131,9 +142,11 @@ export function useAgentStream(
   const orderedTextContent = useMemo(() => {
     // Use a more efficient approach for streaming performance
     if (textContent.length === 0) return '';
-    
+
     // Sort once and concatenate efficiently
-    const sorted = textContent.slice().sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0));
+    const sorted = textContent
+      .slice()
+      .sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0));
     let result = '';
     for (let i = 0; i < sorted.length; i++) {
       result += sorted[i].content;
@@ -289,16 +302,20 @@ export function useAgentStream(
         });
 
         // Invalidate versioning queries for agent config page
-        queryClient.invalidateQueries({ queryKey: ['versions', 'list', agentId] });
+        queryClient.invalidateQueries({
+          queryKey: ['versions', 'list', agentId],
+        });
         // Invalidate current version details if available
-        queryClient.invalidateQueries({ 
-          queryKey: ['versions', 'detail'], 
+        queryClient.invalidateQueries({
+          queryKey: ['versions', 'detail'],
           predicate: (query) => {
             return query.queryKey.includes(agentId);
-          }
+          },
         });
-        
-        console.log(`[useAgentStream] Invalidated agent queries for refetch instead of page reload - Agent ID: ${agentId}`);
+
+        console.log(
+          `[useAgentStream] Invalidated agent queries for refetch instead of page reload - Agent ID: ${agentId}`,
+        );
       }
 
       if (
@@ -397,7 +414,7 @@ export function useAgentStream(
           } else if (parsedMetadata.stream_status === 'complete') {
             // Flush any pending content before completing
             flushPendingContent();
-            
+
             setTextContent([]);
             setToolCall(null);
             if (message.message_id) callbacks.onMessage(message);
@@ -608,7 +625,7 @@ export function useAgentStream(
         clearTimeout(throttleRef.current);
         throttleRef.current = null;
       }
-      
+
       // Flush any remaining pending content
       flushPendingContent();
 

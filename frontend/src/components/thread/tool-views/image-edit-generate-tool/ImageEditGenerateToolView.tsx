@@ -10,15 +10,12 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { ToolViewProps } from '../types';
-import {
-  formatTimestamp,
-  getToolTitle,
-} from '../utils';
+import { formatTimestamp, getToolTitle } from '../utils';
 import { extractImageEditGenerateData } from './_utils';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { FileAttachment } from '../../file-attachment';
 
 interface ImageEditGenerateToolViewProps extends ToolViewProps {
@@ -36,7 +33,6 @@ export function ImageEditGenerateToolView({
   onFileClick,
   project,
 }: ImageEditGenerateToolViewProps) {
-
   const {
     mode,
     prompt,
@@ -46,13 +42,13 @@ export function ImageEditGenerateToolView({
     error,
     actualIsSuccess,
     actualToolTimestamp,
-    actualAssistantTimestamp
+    actualAssistantTimestamp,
   } = extractImageEditGenerateData(
     assistantContent,
     toolContent,
     isSuccess,
     toolTimestamp,
-    assistantTimestamp
+    assistantTimestamp,
   );
 
   const toolTitle = getToolTitle(name) || 'Image Generation';
@@ -65,7 +61,9 @@ export function ImageEditGenerateToolView({
 
   const getModeIcon = () => {
     if (mode === 'generate') {
-      return <Sparkles className="w-5 h-5 text-purple-500 dark:text-purple-400" />;
+      return (
+        <Sparkles className="w-5 h-5 text-purple-500 dark:text-purple-400" />
+      );
     } else if (mode === 'edit') {
       return <Edit3 className="w-5 h-5 text-purple-500 dark:text-purple-400" />;
     }
@@ -113,8 +111,8 @@ export function ImageEditGenerateToolView({
               variant="secondary"
               className={
                 actualIsSuccess
-                  ? "bg-gradient-to-b from-emerald-200 to-emerald-100 text-emerald-700 dark:from-emerald-800/50 dark:to-emerald-900/60 dark:text-emerald-300"
-                  : "bg-gradient-to-b from-rose-200 to-rose-100 text-rose-700 dark:from-rose-800/50 dark:to-rose-900/60 dark:text-rose-300"
+                  ? 'bg-gradient-to-b from-emerald-200 to-emerald-100 text-emerald-700 dark:from-emerald-800/50 dark:to-emerald-900/60 dark:text-emerald-300'
+                  : 'bg-gradient-to-b from-rose-200 to-rose-100 text-rose-700 dark:from-rose-800/50 dark:to-rose-900/60 dark:text-rose-300'
               }
             >
               {actualIsSuccess ? (
@@ -145,7 +143,9 @@ export function ImageEditGenerateToolView({
                   <AlertTriangle className="h-4 w-4" />
                   <span className="font-medium">Error</span>
                 </div>
-                <p className="text-sm text-red-600 dark:text-red-300 mt-1">{error}</p>
+                <p className="text-sm text-red-600 dark:text-red-300 mt-1">
+                  {error}
+                </p>
               </div>
             )}
 
@@ -154,47 +154,56 @@ export function ImageEditGenerateToolView({
               <div className="space-y-4">
                 <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
                   <ImageIcon className="h-4 w-4" />
-                  {mode === 'generate' ? 'Generated Image' : 'Images'} ({imagesToDisplay.length})
+                  {mode === 'generate' ? 'Generated Image' : 'Images'} (
+                  {imagesToDisplay.length})
                 </div>
 
-                <div className={cn(
-                  "grid gap-3",
-                  imagesToDisplay.length === 1 ? "grid-cols-1" :
-                    imagesToDisplay.length > 4 ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3" :
-                      "grid-cols-1 sm:grid-cols-2"
-                )}>
+                <div
+                  className={cn(
+                    'grid gap-3',
+                    imagesToDisplay.length === 1
+                      ? 'grid-cols-1'
+                      : imagesToDisplay.length > 4
+                        ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3'
+                        : 'grid-cols-1 sm:grid-cols-2',
+                  )}
+                >
                   {imagesToDisplay.map((imagePath, index) => {
-                    const isInputImage = imagePath === imagePath && mode === 'edit' && index === 0;
+                    const isInputImage =
+                      imagePath === imagePath && mode === 'edit' && index === 0;
                     const isGeneratedImage = imagePath === generatedImagePath;
-                    
+
                     return (
-                      <div
-                        key={index}
-                        className="relative group"
-                      >
+                      <div key={index} className="relative group">
                         {/* Image Label */}
                         {imagesToDisplay.length > 1 && (
                           <div className="absolute top-2 left-2 z-10">
-                            <Badge 
-                              variant="secondary" 
+                            <Badge
+                              variant="secondary"
                               className="text-xs bg-black/70 text-white border-0"
                             >
-                              {isInputImage ? 'Input' : isGeneratedImage ? 'Generated' : `Image ${index + 1}`}
+                              {isInputImage
+                                ? 'Input'
+                                : isGeneratedImage
+                                  ? 'Generated'
+                                  : `Image ${index + 1}`}
                             </Badge>
                           </div>
                         )}
-                        
+
                         <FileAttachment
                           filepath={imagePath}
                           onClick={handleFileClick}
                           sandboxId={project?.sandbox?.id}
                           showPreview={true}
                           className="aspect-square w-full"
-                          customStyle={{
-                            width: '100%',
-                            height: '100%',
-                            '--attachment-height': '100%'
-                          } as React.CSSProperties}
+                          customStyle={
+                            {
+                              width: '100%',
+                              height: '100%',
+                              '--attachment-height': '100%',
+                            } as React.CSSProperties
+                          }
                           collapsed={false}
                           project={project}
                         />
@@ -216,7 +225,9 @@ export function ImageEditGenerateToolView({
                   {mode === 'generate' ? 'Image Generation' : 'Image Editing'}
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  {actualIsSuccess ? 'Processing completed' : 'No image generated'}
+                  {actualIsSuccess
+                    ? 'Processing completed'
+                    : 'No image generated'}
                 </p>
               </div>
             )}
@@ -229,7 +240,9 @@ export function ImageEditGenerateToolView({
                   Prompt
                 </div>
                 <div className="p-3 rounded-lg bg-muted/50 border">
-                  <p className="text-sm text-foreground break-words">{prompt}</p>
+                  <p className="text-sm text-foreground break-words">
+                    {prompt}
+                  </p>
                 </div>
               </div>
             )}
@@ -241,7 +254,9 @@ export function ImageEditGenerateToolView({
                   Status
                 </div>
                 <div className="p-3 rounded-lg bg-muted/50 border">
-                  <p className="text-sm text-foreground break-words">{status}</p>
+                  <p className="text-sm text-foreground break-words">
+                    {status}
+                  </p>
                 </div>
               </div>
             )}
@@ -258,7 +273,9 @@ export function ImageEditGenerateToolView({
         </div>
 
         <div className="text-xs text-zinc-500 dark:text-zinc-400">
-          {actualAssistantTimestamp ? formatTimestamp(actualAssistantTimestamp) : ''}
+          {actualAssistantTimestamp
+            ? formatTimestamp(actualAssistantTimestamp)
+            : ''}
         </div>
       </div>
     </Card>

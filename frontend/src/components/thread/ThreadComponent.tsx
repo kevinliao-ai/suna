@@ -1,11 +1,6 @@
 'use client';
 
-import React, {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { BillingError, AgentRunLimitError } from '@/lib/api';
 import { toast } from 'sonner';
@@ -25,19 +20,19 @@ import {
 import { useSharedSubscription } from '@/contexts/SubscriptionContext';
 import { SubscriptionStatus } from '@/components/thread/chat-input/_use-model-selection';
 
-import {
-  UnifiedMessage,
-} from '@/components/thread/types';
-import {
-  ApiMessageType,
-} from '@/app/(dashboard)/projects/[projectId]/thread/_types';
+import { UnifiedMessage } from '@/components/thread/types';
+import { ApiMessageType } from '@/app/(dashboard)/projects/[projectId]/thread/_types';
 import {
   useThreadData,
   useToolCalls,
   useBilling,
   useKeyboardShortcuts,
 } from '@/app/(dashboard)/projects/[projectId]/thread/_hooks';
-import { ThreadError, UpgradeDialog, ThreadLayout } from '@/app/(dashboard)/projects/[projectId]/thread/_components';
+import {
+  ThreadError,
+  UpgradeDialog,
+  ThreadLayout,
+} from '@/app/(dashboard)/projects/[projectId]/thread/_components';
 
 import {
   useThreadAgent,
@@ -57,7 +52,12 @@ interface ThreadComponentProps {
   configuredAgentId?: string; // When set, only allow selection of this specific agent
 }
 
-export function ThreadComponent({ projectId, threadId, compact = false, configuredAgentId }: ThreadComponentProps) {
+export function ThreadComponent({
+  projectId,
+  threadId,
+  compact = false,
+  configuredAgentId,
+}: ThreadComponentProps) {
   const isMobile = useIsMobile();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
@@ -175,31 +175,35 @@ export function ThreadComponent({ projectId, threadId, compact = false, configur
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    
+
     if (urlParams.get('google_auth') === 'success') {
       // Clean up the URL parameters first
       window.history.replaceState({}, '', window.location.pathname);
-      
+
       // Check if there was an intent to upload to Google Slides
-      const uploadIntent = sessionStorage.getItem('google_slides_upload_intent');
+      const uploadIntent = sessionStorage.getItem(
+        'google_slides_upload_intent',
+      );
       if (uploadIntent) {
         sessionStorage.removeItem('google_slides_upload_intent');
-        
+
         try {
           const uploadData = JSON.parse(uploadIntent);
           const { presentation_path, sandbox_url } = uploadData;
-          
+
           if (presentation_path && sandbox_url) {
             // Handle upload in async function
             (async () => {
               const uploadPromise = handleGoogleSlidesUpload(
                 sandbox_url,
-                presentation_path
+                presentation_path,
               );
-              
+
               // Show loading toast and handle upload
-              const loadingToast = toast.loading('Google authentication successful! Uploading presentation...');
-              
+              const loadingToast = toast.loading(
+                'Google authentication successful! Uploading presentation...',
+              );
+
               try {
                 await uploadPromise;
                 // Success toast is now handled universally by handleGoogleSlidesUpload
@@ -213,7 +217,10 @@ export function ThreadComponent({ projectId, threadId, compact = false, configur
             })();
           }
         } catch (error) {
-          console.error('Error processing Google Slides upload from session:', error);
+          console.error(
+            'Error processing Google Slides upload from session:',
+            error,
+          );
           // Error toast is handled universally by handleGoogleSlidesUpload, no need to duplicate
         }
       } else {
@@ -233,18 +240,29 @@ export function ThreadComponent({ projectId, threadId, compact = false, configur
       // Otherwise, fall back to threadAgentId (existing behavior)
       const threadAgentId = threadAgentData?.agent?.agent_id;
       const agentIdToUse = configuredAgentId || threadAgentId;
-      
-      console.log(`[ThreadComponent] Agent initialization - configuredAgentId: ${configuredAgentId}, threadAgentId: ${threadAgentId}, selectedAgentId: ${selectedAgentId}`);
-      
+
+      console.log(
+        `[ThreadComponent] Agent initialization - configuredAgentId: ${configuredAgentId}, threadAgentId: ${threadAgentId}, selectedAgentId: ${selectedAgentId}`,
+      );
+
       initializeFromAgents(agents, agentIdToUse);
-      
+
       // If configuredAgentId is provided, force selection and override any existing selection
       if (configuredAgentId && selectedAgentId !== configuredAgentId) {
-        console.log(`[ThreadComponent] Forcing selection to configured agent: ${configuredAgentId} (was: ${selectedAgentId})`);
+        console.log(
+          `[ThreadComponent] Forcing selection to configured agent: ${configuredAgentId} (was: ${selectedAgentId})`,
+        );
         setSelectedAgent(configuredAgentId);
       }
     }
-  }, [threadAgentData, agents, initializeFromAgents, configuredAgentId, selectedAgentId, setSelectedAgent]);
+  }, [
+    threadAgentData,
+    agents,
+    initializeFromAgents,
+    configuredAgentId,
+    selectedAgentId,
+    setSelectedAgent,
+  ]);
 
   const { data: subscriptionData } = useSharedSubscription();
   const subscriptionStatus: SubscriptionStatus =
@@ -256,23 +274,32 @@ export function ThreadComponent({ projectId, threadId, compact = false, configur
   const handleProjectRenamed = useCallback((newName: string) => {}, []);
 
   // Create restricted agent selection handler when configuredAgentId is provided
-  const handleAgentSelect = useCallback((agentId: string | undefined) => {
-    // If configuredAgentId is set, only allow selection of that specific agent
-    if (configuredAgentId) {
-      console.log(`[ThreadComponent] Configured agent mode: ${configuredAgentId}. Attempted selection: ${agentId}`);
-      if (agentId === configuredAgentId) {
-        setSelectedAgent(agentId);
-        console.log(`[ThreadComponent] Allowed selection of configured agent: ${agentId}`);
-      } else {
-        console.log(`[ThreadComponent] Blocked selection of non-configured agent: ${agentId}`);
+  const handleAgentSelect = useCallback(
+    (agentId: string | undefined) => {
+      // If configuredAgentId is set, only allow selection of that specific agent
+      if (configuredAgentId) {
+        console.log(
+          `[ThreadComponent] Configured agent mode: ${configuredAgentId}. Attempted selection: ${agentId}`,
+        );
+        if (agentId === configuredAgentId) {
+          setSelectedAgent(agentId);
+          console.log(
+            `[ThreadComponent] Allowed selection of configured agent: ${agentId}`,
+          );
+        } else {
+          console.log(
+            `[ThreadComponent] Blocked selection of non-configured agent: ${agentId}`,
+          );
+        }
+        // Ignore attempts to select other agents
+        return;
       }
-      // Ignore attempts to select other agents
-      return;
-    }
-    
-    // Normal agent selection behavior
-    setSelectedAgent(agentId);
-  }, [configuredAgentId, setSelectedAgent]);
+
+      // Normal agent selection behavior
+      setSelectedAgent(agentId);
+    },
+    [configuredAgentId, setSelectedAgent],
+  );
 
   // scrollToBottom for flex-column-reverse layout
   const scrollToBottom = useCallback(() => {
@@ -780,7 +807,9 @@ export function ThreadComponent({ projectId, threadId, compact = false, configur
   }, [messages, initialLoadCompleted]);
 
   if (!initialLoadCompleted || isLoading) {
-    return <ThreadSkeleton isSidePanelOpen={isSidePanelOpen} compact={compact} />;
+    return (
+      <ThreadSkeleton isSidePanelOpen={isSidePanelOpen} compact={compact} />
+    );
   }
 
   if (error) {
@@ -863,11 +892,13 @@ export function ThreadComponent({ projectId, threadId, compact = false, configur
           isMobile={isMobile}
           initialLoadCompleted={initialLoadCompleted}
           agentName={agent && agent.name}
-          disableInitialAnimation={!initialLoadCompleted && toolCalls.length > 0}
+          disableInitialAnimation={
+            !initialLoadCompleted && toolCalls.length > 0
+          }
           compact={true}
         >
           {/* Thread Content - Scrollable */}
-          <div 
+          <div
             ref={scrollContainerRef}
             className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col-reverse"
           >

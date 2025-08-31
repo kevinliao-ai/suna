@@ -13,37 +13,58 @@ interface PixelArtEditorProps {
 
 const GRID_SIZE = 16;
 const COLORS = [
-  '#000000', '#FFFFFF', '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF',
-  '#800000', '#008000', '#000080', '#808000', '#800080', '#008080', '#C0C0C0', '#808080',
-  '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FECA57', '#FF9FF3', '#54A0FF', '#48DBFB'
+  '#000000',
+  '#FFFFFF',
+  '#FF0000',
+  '#00FF00',
+  '#0000FF',
+  '#FFFF00',
+  '#FF00FF',
+  '#00FFFF',
+  '#800000',
+  '#008000',
+  '#000080',
+  '#808000',
+  '#800080',
+  '#008080',
+  '#C0C0C0',
+  '#808080',
+  '#FF6B6B',
+  '#4ECDC4',
+  '#45B7D1',
+  '#96CEB4',
+  '#FECA57',
+  '#FF9FF3',
+  '#54A0FF',
+  '#48DBFB',
 ];
 
 export const PixelArtEditor: React.FC<PixelArtEditorProps> = ({
   onSave,
   onCancel,
   initialPixelArt,
-  size = 400
+  size = 400,
 }) => {
   const [grid, setGrid] = useState<string[][]>(() => {
     // Initialize grid with transparent pixels
-    const initialGrid = Array(GRID_SIZE).fill(null).map(() => 
-      Array(GRID_SIZE).fill('transparent')
-    );
-    
+    const initialGrid = Array(GRID_SIZE)
+      .fill(null)
+      .map(() => Array(GRID_SIZE).fill('transparent'));
+
     // If there's initial pixel art, try to parse it
     if (initialPixelArt) {
       try {
         const parser = new DOMParser();
         const doc = parser.parseFromString(initialPixelArt, 'image/svg+xml');
         const rects = doc.querySelectorAll('rect');
-        
-        rects.forEach(rect => {
+
+        rects.forEach((rect) => {
           const x = parseInt(rect.getAttribute('x') || '0');
           const y = parseInt(rect.getAttribute('y') || '0');
           const width = parseInt(rect.getAttribute('width') || '1');
           const height = parseInt(rect.getAttribute('height') || '1');
           const fill = rect.getAttribute('fill') || 'currentColor';
-          
+
           // Fill the grid based on the rect
           for (let row = y; row < y + height && row < GRID_SIZE; row++) {
             for (let col = x; col < x + width && col < GRID_SIZE; col++) {
@@ -57,7 +78,7 @@ export const PixelArtEditor: React.FC<PixelArtEditorProps> = ({
         console.warn('Failed to parse initial pixel art:', error);
       }
     }
-    
+
     return initialGrid;
   });
 
@@ -65,47 +86,62 @@ export const PixelArtEditor: React.FC<PixelArtEditorProps> = ({
   const [isErasing, setIsErasing] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
 
-  const handlePixelClick = useCallback((row: number, col: number) => {
-    setGrid(prev => {
-      const newGrid = prev.map(r => [...r]);
-      newGrid[row][col] = isErasing ? 'transparent' : selectedColor;
-      return newGrid;
-    });
-  }, [selectedColor, isErasing]);
+  const handlePixelClick = useCallback(
+    (row: number, col: number) => {
+      setGrid((prev) => {
+        const newGrid = prev.map((r) => [...r]);
+        newGrid[row][col] = isErasing ? 'transparent' : selectedColor;
+        return newGrid;
+      });
+    },
+    [selectedColor, isErasing],
+  );
 
-  const handleMouseDown = useCallback((row: number, col: number) => {
-    setIsDrawing(true);
-    handlePixelClick(row, col);
-  }, [handlePixelClick]);
-
-  const handleMouseEnter = useCallback((row: number, col: number) => {
-    if (isDrawing) {
+  const handleMouseDown = useCallback(
+    (row: number, col: number) => {
+      setIsDrawing(true);
       handlePixelClick(row, col);
-    }
-  }, [isDrawing, handlePixelClick]);
+    },
+    [handlePixelClick],
+  );
+
+  const handleMouseEnter = useCallback(
+    (row: number, col: number) => {
+      if (isDrawing) {
+        handlePixelClick(row, col);
+      }
+    },
+    [isDrawing, handlePixelClick],
+  );
 
   const handleMouseUp = useCallback(() => {
     setIsDrawing(false);
   }, []);
 
   const clearGrid = useCallback(() => {
-    setGrid(Array(GRID_SIZE).fill(null).map(() => 
-      Array(GRID_SIZE).fill('transparent')
-    ));
+    setGrid(
+      Array(GRID_SIZE)
+        .fill(null)
+        .map(() => Array(GRID_SIZE).fill('transparent')),
+    );
   }, []);
 
   const generateSVG = useCallback(() => {
     const rects: string[] = [];
-    const visited = Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill(false));
+    const visited = Array(GRID_SIZE)
+      .fill(null)
+      .map(() => Array(GRID_SIZE).fill(false));
     for (let row = 0; row < GRID_SIZE; row++) {
       for (let col = 0; col < GRID_SIZE; col++) {
         if (!visited[row][col] && grid[row][col] !== 'transparent') {
           const color = grid[row][col];
           let width = 1;
           let height = 1;
-          while (col + width < GRID_SIZE && 
-                 grid[row][col + width] === color && 
-                 !visited[row][col + width]) {
+          while (
+            col + width < GRID_SIZE &&
+            grid[row][col + width] === color &&
+            !visited[row][col + width]
+          ) {
             width++;
           }
           let canExtendHeight = true;
@@ -124,7 +160,9 @@ export const PixelArtEditor: React.FC<PixelArtEditorProps> = ({
             }
           }
           const fill = color === 'currentColor' ? 'currentColor' : color;
-          rects.push(`<rect x="${col}" y="${row}" width="${width}" height="${height}" fill="${fill}"/>`);
+          rects.push(
+            `<rect x="${col}" y="${row}" width="${width}" height="${height}" fill="${fill}"/>`,
+          );
         }
       }
     }
@@ -151,21 +189,21 @@ export const PixelArtEditor: React.FC<PixelArtEditorProps> = ({
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium">Colors:</span>
             <Button
-              variant={isErasing ? "default" : "outline"}
+              variant={isErasing ? 'default' : 'outline'}
               size="sm"
               onClick={() => setIsErasing(!isErasing)}
             >
               <Eraser className="h-4 w-4" />
-              {isErasing ? "Erasing" : "Eraser"}
+              {isErasing ? 'Erasing' : 'Eraser'}
             </Button>
           </div>
           <div className="flex flex-wrap gap-2">
-            {COLORS.map(color => (
+            {COLORS.map((color) => (
               <button
                 key={color}
                 className={`w-8 h-8 rounded border-2 ${
                   selectedColor === color && !isErasing
-                    ? 'border-primary ring-2 ring-primary/20' 
+                    ? 'border-primary ring-2 ring-primary/20'
                     : 'border-border'
                 }`}
                 style={{ backgroundColor: color }}
@@ -179,7 +217,7 @@ export const PixelArtEditor: React.FC<PixelArtEditorProps> = ({
             <button
               className={`w-8 h-8 rounded border-2 ${
                 selectedColor === 'currentColor' && !isErasing
-                  ? 'border-primary ring-2 ring-primary/20' 
+                  ? 'border-primary ring-2 ring-primary/20'
                   : 'border-border'
               } bg-gradient-to-br from-blue-500 to-purple-500`}
               onClick={() => {
@@ -193,12 +231,12 @@ export const PixelArtEditor: React.FC<PixelArtEditorProps> = ({
           </div>
         </div>
         <div className="flex justify-center">
-          <div 
+          <div
             className="grid border-2 border-border bg-white dark:bg-gray-900 relative"
-            style={{ 
+            style={{
               gridTemplateColumns: `repeat(${GRID_SIZE}, 1fr)`,
               width: size,
-              height: size
+              height: size,
             }}
             onMouseLeave={handleMouseUp}
           >
@@ -208,33 +246,37 @@ export const PixelArtEditor: React.FC<PixelArtEditorProps> = ({
                   key={`${rowIndex}-${colIndex}`}
                   className="border border-gray-200 dark:border-gray-700 cursor-pointer hover:opacity-80"
                   style={{
-                    backgroundColor: pixel === 'transparent' ? 'transparent' : 
-                                   pixel === 'currentColor' ? '#3b82f6' : pixel,
+                    backgroundColor:
+                      pixel === 'transparent'
+                        ? 'transparent'
+                        : pixel === 'currentColor'
+                          ? '#3b82f6'
+                          : pixel,
                     width: pixelSize,
-                    height: pixelSize
+                    height: pixelSize,
                   }}
                   onMouseDown={() => handleMouseDown(rowIndex, colIndex)}
                   onMouseEnter={() => handleMouseEnter(rowIndex, colIndex)}
                   onMouseUp={handleMouseUp}
                 />
-              ))
+              )),
             )}
           </div>
         </div>
         <div className="space-y-2">
           <span className="text-sm font-medium">Preview:</span>
           <div className="flex items-center gap-4">
-            <div 
+            <div
               className="w-12 h-12 border rounded"
               style={{ backgroundColor: '#3b82f6', color: 'white' }}
               dangerouslySetInnerHTML={{ __html: generateSVG() }}
             />
-            <div 
+            <div
               className="w-12 h-12 border rounded"
               style={{ backgroundColor: '#ef4444', color: 'white' }}
               dangerouslySetInnerHTML={{ __html: generateSVG() }}
             />
-            <div 
+            <div
               className="w-12 h-12 border rounded"
               style={{ backgroundColor: '#10b981', color: 'white' }}
               dangerouslySetInnerHTML={{ __html: generateSVG() }}
@@ -259,4 +301,4 @@ export const PixelArtEditor: React.FC<PixelArtEditorProps> = ({
       </CardContent>
     </Card>
   );
-}; 
+};

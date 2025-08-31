@@ -7,7 +7,7 @@ import { FileCache, getCachedFile } from './use-cached-file';
 // Query keys for file content
 export const fileContentKeys = {
   all: ['file-content'] as const,
-  byPath: (sandboxId: string, path: string) => 
+  byPath: (sandboxId: string, path: string) =>
     [...fileContentKeys.all, sandboxId, path] as const,
 };
 
@@ -27,7 +27,7 @@ export function useFileContent(sandboxId?: string, filePath?: string) {
     }
 
     const cacheKey = `${sandboxId}:${filePath}:text`;
-    
+
     // Check if file content is already in cache
     const cached = FileCache.get(cacheKey);
     if (cached !== null) {
@@ -39,13 +39,13 @@ export function useFileContent(sandboxId?: string, filePath?: string) {
     setIsLoading(true);
     getCachedFile(sandboxId, filePath, {
       token: session?.access_token || '',
-      contentType: 'text'
+      contentType: 'text',
     })
-      .then(fileContent => {
+      .then((fileContent) => {
         setContent(fileContent);
         setIsLoading(false);
       })
-      .catch(err => {
+      .catch((err) => {
         console.error('Failed to load file content:', err);
         setError(err);
         setIsLoading(false);
@@ -55,6 +55,6 @@ export function useFileContent(sandboxId?: string, filePath?: string) {
   return {
     data: content,
     isLoading,
-    error
+    error,
   };
-} 
+}

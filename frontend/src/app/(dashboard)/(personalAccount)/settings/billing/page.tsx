@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import { BillingModal } from '@/components/billing/billing-modal';
 import {
   CreditBalanceDisplay,
-  CreditPurchaseModal
+  CreditPurchaseModal,
 } from '@/components/billing/credit-purchase';
 import { useAccounts } from '@/hooks/use-accounts';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -40,7 +40,9 @@ export default function PersonalAccountBillingPage() {
       >
         <AlertTitle>Error</AlertTitle>
         <AlertDescription>
-          {error instanceof Error ? error.message : 'Failed to load account data'}
+          {error instanceof Error
+            ? error.message
+            : 'Failed to load account data'}
         </AlertDescription>
       </Alert>
     );
@@ -71,12 +73,12 @@ export default function PersonalAccountBillingPage() {
 
   return (
     <div className="space-y-6">
-      <BillingModal 
-        open={showBillingModal} 
+      <BillingModal
+        open={showBillingModal}
         onOpenChange={setShowBillingModal}
         returnUrl={`${returnUrl}/settings/billing`}
       />
-      
+
       {/* Billing Status Card */}
       <div className="rounded-xl border shadow-sm bg-card p-6">
         <h2 className="text-xl font-semibold mb-4">Billing Status</h2>
@@ -111,13 +113,11 @@ export default function PersonalAccountBillingPage() {
                       Agent Usage This Month
                     </span>
                     <span className="text-sm font-medium">
-                      ${subscriptionData.current_usage?.toFixed(2) || '0'} /{' '}
-                      ${subscriptionData.cost_limit || '0'}
+                      ${subscriptionData.current_usage?.toFixed(2) || '0'} / $
+                      {subscriptionData.cost_limit || '0'}
                     </span>
-                    <Button variant='outline' asChild className='text-sm'>
-                      <Link href="/settings/usage-logs">
-                        Usage logs
-                      </Link>
+                    <Button variant="outline" asChild className="text-sm">
+                      <Link href="/settings/usage-logs">Usage logs</Link>
                     </Button>
                   </div>
                 </div>
@@ -127,7 +127,7 @@ export default function PersonalAccountBillingPage() {
             {/* Credit Balance Display - Only show for users who can purchase credits */}
             {subscriptionData?.can_purchase_credits && (
               <div className="mb-6">
-                <CreditBalanceDisplay 
+                <CreditBalanceDisplay
                   balance={subscriptionData.credit_balance || 0}
                   canPurchase={subscriptionData.can_purchase_credits}
                   onPurchaseClick={() => setShowCreditPurchaseModal(true)}
@@ -135,15 +135,13 @@ export default function PersonalAccountBillingPage() {
               </div>
             )}
 
-            <div className='flex justify-center items-center gap-4'>
+            <div className="flex justify-center items-center gap-4">
               <Button
                 variant="outline"
                 className="border-border hover:bg-muted/50 shadow-sm hover:shadow-md transition-all whitespace-nowrap flex items-center"
                 asChild
               >
-                <Link href="/model-pricing">
-                  View Model Pricing
-                </Link>
+                <Link href="/model-pricing">View Model Pricing</Link>
               </Button>
               <Button
                 onClick={() => setShowBillingModal(true)}
@@ -155,7 +153,7 @@ export default function PersonalAccountBillingPage() {
           </>
         )}
       </div>
-      
+
       {/* Credit Purchase Modal */}
       <CreditPurchaseModal
         open={showCreditPurchaseModal}

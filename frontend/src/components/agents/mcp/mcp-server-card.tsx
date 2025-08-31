@@ -8,7 +8,10 @@ interface McpServerCardProps {
   onClick: (server: any) => void;
 }
 
-export const McpServerCard: React.FC<McpServerCardProps> = ({ server, onClick }) => {
+export const McpServerCard: React.FC<McpServerCardProps> = ({
+  server,
+  onClick,
+}) => {
   return (
     <Card
       className="p-4 cursor-pointer hover:bg-muted/50 transition-colors"
@@ -16,7 +19,11 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({ server, onClick })
     >
       <div className="flex items-start gap-3 flex-shrink-0">
         {server.iconUrl ? (
-          <img src={server.iconUrl} alt={server.displayName || server.name} className="w-6 h-6 rounded" />
+          <img
+            src={server.iconUrl}
+            alt={server.displayName || server.name}
+            className="w-6 h-6 rounded"
+          />
         ) : (
           <div className="w-6 h-6 rounded bg-primary/10 flex items-center justify-center">
             <Sparkles className="h-3 w-3 text-primary" />
@@ -24,7 +31,9 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({ server, onClick })
         )}
         <div className="flex-1 w-auto">
           <div className="flex items-center gap-2">
-            <h4 className="font-medium text-sm">{server.displayName || server.name}</h4>
+            <h4 className="font-medium text-sm">
+              {server.displayName || server.name}
+            </h4>
             {server.security?.scanPassed && (
               <Shield className="h-3 w-3 text-green-500" />
             )}
@@ -34,9 +43,7 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({ server, onClick })
           </p>
           <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
             <span>Used {server.useCount} times</span>
-            {server.homepage && (
-              <ExternalLink className="h-3 w-3" />
-            )}
+            {server.homepage && <ExternalLink className="h-3 w-3" />}
           </div>
         </div>
         <ChevronRight className="h-4 w-4 text-muted-foreground" />

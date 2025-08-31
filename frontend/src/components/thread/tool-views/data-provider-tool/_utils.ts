@@ -27,31 +27,43 @@ const parseContent = (content: any): any => {
   return content;
 };
 
-const extractFromNewFormat = (content: any): { 
-  serviceName: string | null; 
-  route: string | null; 
-  payload: any; 
+const extractFromNewFormat = (
+  content: any,
+): {
+  serviceName: string | null;
+  route: string | null;
+  payload: any;
   endpoints: any;
-  success?: boolean; 
+  success?: boolean;
   timestamp?: string;
   output?: string;
 } => {
   const parsedContent = parseContent(content);
-  
+
   if (!parsedContent || typeof parsedContent !== 'object') {
-    return { serviceName: null, route: null, payload: null, endpoints: null, success: undefined, timestamp: undefined, output: undefined };
+    return {
+      serviceName: null,
+      route: null,
+      payload: null,
+      endpoints: null,
+      success: undefined,
+      timestamp: undefined,
+      output: undefined,
+    };
   }
 
-  if ('tool_execution' in parsedContent && typeof parsedContent.tool_execution === 'object') {
+  if (
+    'tool_execution' in parsedContent &&
+    typeof parsedContent.tool_execution === 'object'
+  ) {
     const toolExecution = parsedContent.tool_execution;
     const args = toolExecution.arguments || {};
-    
+
     let parsedOutput = toolExecution.result?.output;
     if (typeof parsedOutput === 'string') {
       try {
         parsedOutput = JSON.parse(parsedOutput);
-      } catch (e) {
-      }
+      } catch (e) {}
     }
 
     const extractedData = {
@@ -61,7 +73,10 @@ const extractFromNewFormat = (content: any): {
       endpoints: parsedOutput || null,
       success: toolExecution.result?.success,
       timestamp: toolExecution.execution_details?.timestamp,
-      output: typeof toolExecution.result?.output === 'string' ? toolExecution.result.output : null
+      output:
+        typeof toolExecution.result?.output === 'string'
+          ? toolExecution.result.output
+          : null,
     };
 
     return extractedData;
@@ -71,11 +86,20 @@ const extractFromNewFormat = (content: any): {
     return extractFromNewFormat(parsedContent.content);
   }
 
-  return { serviceName: null, route: null, payload: null, endpoints: null, success: undefined, timestamp: undefined, output: undefined };
+  return {
+    serviceName: null,
+    route: null,
+    payload: null,
+    endpoints: null,
+    success: undefined,
+    timestamp: undefined,
+    output: undefined,
+  };
 };
 
 const parseDataProviderCall = (message: string) => {
-  const tagRegex = /<execute-data-provider-call\b(?=[^>]*\bservice_name="([^"]+)")(?=[^>]*\broute="([^"]+)")[^>]*>/;
+  const tagRegex =
+    /<execute-data-provider-call\b(?=[^>]*\bservice_name="([^"]+)")(?=[^>]*\broute="([^"]+)")[^>]*>/;
   const tagMatch = message.match(tagRegex);
 
   let serviceName = null;
@@ -86,7 +110,8 @@ const parseDataProviderCall = (message: string) => {
     route = tagMatch[2];
   }
 
-  const contentRegex = /<execute-data-provider-call\b[^>]*>\s*(\{[\s\S]*?\})\s*<\/execute-data-provider-call>/;
+  const contentRegex =
+    /<execute-data-provider-call\b[^>]*>\s*(\{[\s\S]*?\})\s*<\/execute-data-provider-call>/;
   const contentMatch = message.match(contentRegex);
 
   let jsonContent = null;
@@ -111,20 +136,22 @@ const extractServiceName = (message: string): string | null => {
   return match ? match[1] : null;
 };
 
-const extractFromLegacyFormat = (content: any): { 
-  serviceName: string | null; 
-  route: string | null; 
-  payload: any; 
+const extractFromLegacyFormat = (
+  content: any,
+): {
+  serviceName: string | null;
+  route: string | null;
+  payload: any;
   endpoints: any;
 } => {
   const toolData = extractToolData(content);
-  
+
   if (toolData.toolResult && toolData.arguments) {
     return {
       serviceName: toolData.arguments.service_name || null,
       route: toolData.arguments.route || null,
       payload: toolData.arguments,
-      endpoints: null
+      endpoints: null,
     };
   }
 
@@ -139,7 +166,7 @@ const extractFromLegacyFormat = (content: any): {
       serviceName: parsed.serviceName,
       route: parsed.route,
       payload: parsed.jsonContent,
-      endpoints: null
+      endpoints: null,
     };
   }
 
@@ -149,7 +176,7 @@ const extractFromLegacyFormat = (content: any): {
       serviceName,
       route: null,
       payload: null,
-      endpoints: null
+      endpoints: null,
     };
   }
 
@@ -161,7 +188,7 @@ export function extractDataProviderCallData(
   toolContent: any,
   isSuccess: boolean,
   toolTimestamp?: string,
-  assistantTimestamp?: string
+  assistantTimestamp?: string,
 ): {
   serviceName: string | null;
   route: string | null;
@@ -220,7 +247,7 @@ export function extractDataProviderCallData(
     output,
     actualIsSuccess,
     actualToolTimestamp,
-    actualAssistantTimestamp
+    actualAssistantTimestamp,
   };
 }
 
@@ -229,7 +256,7 @@ export function extractDataProviderEndpointsData(
   toolContent: any,
   isSuccess: boolean,
   toolTimestamp?: string,
-  assistantTimestamp?: string
+  assistantTimestamp?: string,
 ): {
   serviceName: string | null;
   endpoints: any;
@@ -272,7 +299,9 @@ export function extractDataProviderEndpointsData(
     endpoints = assistantLegacy.endpoints || toolLegacy.endpoints;
 
     if (!serviceName) {
-      const extractProviderName = (content: string | object | undefined | null): string => {
+      const extractProviderName = (
+        content: string | object | undefined | null,
+      ): string => {
         const contentStr = normalizeContentToString(content);
         const detectedServiceName = extractServiceName(contentStr || '');
         if (detectedServiceName) {
@@ -282,14 +311,19 @@ export function extractDataProviderEndpointsData(
         if (!contentStr) return 'linkedin';
 
         const content_lower = contentStr.toLowerCase();
-        
+
         if (content_lower.includes('linkedin')) return 'linkedin';
         if (content_lower.includes('twitter')) return 'twitter';
         if (content_lower.includes('zillow')) return 'zillow';
         if (content_lower.includes('amazon')) return 'amazon';
-        if (content_lower.includes('yahoo') || content_lower.includes('finance')) return 'yahoo_finance';
-        if (content_lower.includes('jobs') || content_lower.includes('active')) return 'active_jobs';
-        
+        if (
+          content_lower.includes('yahoo') ||
+          content_lower.includes('finance')
+        )
+          return 'yahoo_finance';
+        if (content_lower.includes('jobs') || content_lower.includes('active'))
+          return 'active_jobs';
+
         return 'linkedin';
       };
 
@@ -302,6 +336,6 @@ export function extractDataProviderEndpointsData(
     endpoints,
     actualIsSuccess,
     actualToolTimestamp,
-    actualAssistantTimestamp
+    actualAssistantTimestamp,
   };
-} 
+}

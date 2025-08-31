@@ -12,7 +12,7 @@ import {
   User,
   Shield,
   Link2,
-  Globe
+  Globe,
 } from 'lucide-react';
 import { ToolViewProps } from '../types';
 import { formatTimestamp, getToolTitle } from '../utils';
@@ -20,10 +20,14 @@ import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { LoadingState } from '../shared/LoadingState';
-import { Separator } from "@/components/ui/separator";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Separator } from '@/components/ui/separator';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import { extractDiscoverMcpToolsData } from './_utils';
 import { useComposioToolkitIcon } from '@/hooks/react-query/composio/use-composio';
 
@@ -36,7 +40,6 @@ export function DiscoverMcpToolsForAgentToolView({
   isSuccess = true,
   isStreaming = false,
 }: ToolViewProps) {
-
   const [isToolsExpanded, setIsToolsExpanded] = useState(false);
 
   const {
@@ -49,18 +52,18 @@ export function DiscoverMcpToolsForAgentToolView({
     is_connected,
     actualIsSuccess,
     actualToolTimestamp,
-    actualAssistantTimestamp
+    actualAssistantTimestamp,
   } = extractDiscoverMcpToolsData(
     assistantContent,
     toolContent,
     isSuccess,
     toolTimestamp,
-    assistantTimestamp
+    assistantTimestamp,
   );
 
   const toolTitle = getToolTitle(name);
   const { data: iconData } = useComposioToolkitIcon(toolkit_slug || '', {
-    enabled: !!toolkit_slug
+    enabled: !!toolkit_slug,
   });
 
   return (
@@ -82,10 +85,10 @@ export function DiscoverMcpToolsForAgentToolView({
             <Badge
               variant="secondary"
               className={cn(
-                "text-xs font-medium",
+                'text-xs font-medium',
                 actualIsSuccess
-                  ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800"
-                  : "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800"
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800'
+                  : 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800',
               )}
             >
               {actualIsSuccess ? (
@@ -144,18 +147,21 @@ export function DiscoverMcpToolsForAgentToolView({
                       </p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center gap-2">
                     <Badge variant="outline" className="text-xs">
                       <Globe className="w-3 h-3 mr-1" />
                       {toolkit_slug}
                     </Badge>
-                    <Badge variant="secondary" className={cn(
-                      "text-xs",
-                      is_connected 
-                        ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800"
-                        : "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800"
-                    )}>
+                    <Badge
+                      variant="secondary"
+                      className={cn(
+                        'text-xs',
+                        is_connected
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800'
+                          : 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800',
+                      )}
+                    >
                       <Shield className="w-3 h-3 mr-1" />
                       {is_connected ? 'Connected' : 'Disconnected'}
                     </Badge>
@@ -174,7 +180,7 @@ export function DiscoverMcpToolsForAgentToolView({
                       <div>Profile: {profile_name}</div>
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <h4 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
                       <Shield className="w-4 h-4" />
@@ -189,9 +195,15 @@ export function DiscoverMcpToolsForAgentToolView({
               </div>
               {tools && tools.length > 0 && (
                 <div className="border rounded-xl p-4 space-y-4">
-                  <Collapsible open={isToolsExpanded} onOpenChange={setIsToolsExpanded}>
+                  <Collapsible
+                    open={isToolsExpanded}
+                    onOpenChange={setIsToolsExpanded}
+                  >
                     <CollapsibleTrigger asChild>
-                      <Button variant="ghost" className="w-full justify-between p-0 h-auto">
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-between p-0 h-auto"
+                      >
                         <div className="flex items-center gap-2 p-2">
                           <Zap className="w-4 h-4" />
                           <h4 className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
@@ -205,11 +217,14 @@ export function DiscoverMcpToolsForAgentToolView({
                         )}
                       </Button>
                     </CollapsibleTrigger>
-                    
+
                     <CollapsibleContent className="space-y-3 mt-3">
                       <div className="grid gap-2">
                         {tools.map((tool, index) => (
-                          <div key={index} className="bg-muted/30 rounded-lg p-3 space-y-2">
+                          <div
+                            key={index}
+                            className="bg-muted/30 rounded-lg p-3 space-y-2"
+                          >
                             <div className="flex items-center gap-2">
                               <Wrench className="w-4 h-4 text-purple-600 dark:text-purple-400" />
                               <h5 className="font-medium text-sm text-zinc-900 dark:text-zinc-100">
@@ -234,11 +249,12 @@ export function DiscoverMcpToolsForAgentToolView({
           <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg m-4">
             <p className="text-sm text-red-800 dark:text-red-200 flex items-center gap-2">
               <AlertTriangle className="h-4 w-4" />
-              Failed to discover tools. Please ensure the profile is authenticated and try again.
+              Failed to discover tools. Please ensure the profile is
+              authenticated and try again.
             </p>
           </div>
         )}
       </CardContent>
     </Card>
   );
-} 
+}

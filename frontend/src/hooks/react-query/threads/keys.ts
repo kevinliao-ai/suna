@@ -1,4 +1,4 @@
-import { createQueryKeys } from "@/hooks/use-query";
+import { createQueryKeys } from '@/hooks/use-query';
 
 export const threadKeys = createQueryKeys({
   all: ['threads'] as const,

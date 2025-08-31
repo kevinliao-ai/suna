@@ -1,10 +1,5 @@
 import React from 'react';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
   Trash2,
@@ -34,12 +29,16 @@ export function DeletePresentationToolView({
   project,
 }: ToolViewProps) {
   const { toolResult } = extractToolData(toolContent);
-  
+
   let deleteData: DeletePresentationData | null = null;
   let error: string | null = null;
 
   try {
-    if (toolResult && toolResult.toolOutput && toolResult.toolOutput !== 'STREAMING') {
+    if (
+      toolResult &&
+      toolResult.toolOutput &&
+      toolResult.toolOutput !== 'STREAMING'
+    ) {
       const output = toolResult.toolOutput;
       if (typeof output === 'string') {
         try {
@@ -57,7 +56,8 @@ export function DeletePresentationToolView({
     error = 'Failed to parse delete data';
   }
 
-  const presentationName = deleteData?.deleted_path?.split('/').pop() || 'Unknown';
+  const presentationName =
+    deleteData?.deleted_path?.split('/').pop() || 'Unknown';
 
   return (
     <Card className="gap-0 flex border shadow-none border-t border-b-0 border-x-0 p-0 rounded-none flex-col h-full overflow-hidden bg-card">
@@ -135,7 +135,7 @@ export function DeletePresentationToolView({
             <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center max-w-md mb-6">
               {deleteData.message}
             </p>
-            
+
             <Card className="p-6 w-full max-w-md">
               <div className="flex items-center gap-3">
                 <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-red-100 dark:bg-red-900/20">
@@ -151,7 +151,7 @@ export function DeletePresentationToolView({
                 </div>
               </div>
             </Card>
-            
+
             <p className="text-xs text-zinc-400 dark:text-zinc-500 text-center mt-4">
               All slides and metadata have been permanently removed
             </p>
@@ -162,9 +162,7 @@ export function DeletePresentationToolView({
       <div className="px-4 py-2 h-10 bg-gradient-to-r from-zinc-50/90 to-zinc-100/90 dark:from-zinc-900/90 dark:to-zinc-800/90 backdrop-blur-sm border-t border-zinc-200 dark:border-zinc-800 flex justify-end items-center">
         <div className="flex items-center gap-2 text-xs text-zinc-400 dark:text-zinc-500">
           <Clock className="h-3 w-3" />
-          <span>
-            {formatTimestamp(toolTimestamp)}
-          </span>
+          <span>{formatTimestamp(toolTimestamp)}</span>
         </div>
       </div>
     </Card>

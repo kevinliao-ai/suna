@@ -7,12 +7,12 @@ async function sendWelcomeEmail(email: string, name?: string) {
   try {
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
     const adminApiKey = process.env.KORTIX_ADMIN_API_KEY;
-    
+
     if (!adminApiKey) {
       console.error('KORTIX_ADMIN_API_KEY not configured');
       return;
     }
-    
+
     const response = await fetch(`${backendUrl}/api/send-welcome-email`, {
       method: 'POST',
       headers: {
@@ -96,12 +96,16 @@ export async function signUp(prevState: any, formData: FormData) {
     return { message: error.message || 'Could not create account' };
   }
 
-  const userName = email.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  const userName = email
+    .split('@')[0]
+    .replace(/[._-]/g, ' ')
+    .replace(/\b\w/g, (l) => l.toUpperCase());
 
-  const { error: signInError, data: signInData } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
+  const { error: signInError, data: signInData } =
+    await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
   if (signInData && signInData.user) {
     sendWelcomeEmail(email, userName);

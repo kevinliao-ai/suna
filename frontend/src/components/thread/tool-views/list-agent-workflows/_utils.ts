@@ -36,7 +36,7 @@ export function extractListAgentWorkflowsData(
   toolContent?: any,
   isSuccess?: boolean,
   toolTimestamp?: string,
-  assistantTimestamp?: string
+  assistantTimestamp?: string,
 ): ListAgentWorkflowsData & {
   actualIsSuccess: boolean;
   actualToolTimestamp: string | undefined;
@@ -52,13 +52,13 @@ export function extractListAgentWorkflowsData(
     total_count: 0,
     actualIsSuccess: isSuccess || false,
     actualToolTimestamp: toolTimestamp,
-    actualAssistantTimestamp: assistantTimestamp
+    actualAssistantTimestamp: assistantTimestamp,
   };
 
   try {
     if (toolContent) {
       let content = toolContent;
-      
+
       if (typeof toolContent === 'string') {
         try {
           content = JSON.parse(toolContent);
@@ -69,10 +69,12 @@ export function extractListAgentWorkflowsData(
 
       if (content && typeof content === 'object' && content.content) {
         try {
-          const nestedContent = typeof content.content === 'string' ? JSON.parse(content.content) : content.content;
+          const nestedContent =
+            typeof content.content === 'string'
+              ? JSON.parse(content.content)
+              : content.content;
           content = nestedContent;
-        } catch (e) {
-        }
+        } catch (e) {}
       }
 
       if (content && typeof content === 'object' && content.tool_execution) {
@@ -87,7 +89,7 @@ export function extractListAgentWorkflowsData(
               agent_id: args.agent_id || output.agent_id || null,
               workflows: output.workflows || [],
               total_count: output.total_count || 0,
-              actualIsSuccess: true
+              actualIsSuccess: true,
             };
           }
         }
@@ -106,7 +108,7 @@ export function extractListAgentWorkflowsData(
             agent_id: args.agent_id || toolOutput.agent_id || null,
             workflows: toolOutput.workflows || [],
             total_count: toolOutput.total_count || 0,
-            actualIsSuccess: true
+            actualIsSuccess: true,
           };
         }
       }
@@ -117,4 +119,4 @@ export function extractListAgentWorkflowsData(
     console.error('Error extracting list agent workflows data:', error);
     return defaultResult;
   }
-} 
+}

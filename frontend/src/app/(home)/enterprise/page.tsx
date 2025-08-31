@@ -4,19 +4,19 @@ import { useState } from 'react';
 import { SectionHeader } from '@/components/home/section-header';
 import { FooterSection } from '@/components/home/sections/footer-section';
 import { motion } from 'motion/react';
-import { 
-  ArrowRight, 
-  Check, 
-  Clock, 
-  Shield, 
-  Users, 
+import {
+  ArrowRight,
+  Check,
+  Clock,
+  Shield,
+  Users,
   Zap,
   Star,
   Calendar,
   Headphones,
   Settings,
   TrendingUp,
-  Sparkles
+  Sparkles,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -34,22 +34,26 @@ const CustomHeroSection = () => {
             <div className="mb-8">
               <KortixLogo size={48} />
             </div>
-            
+
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/20">
               <Sparkles className="w-4 h-4 text-primary" />
-              <span className="text-sm font-medium text-primary">Enterprise Implementation Services</span>
+              <span className="text-sm font-medium text-primary">
+                Enterprise Implementation Services
+              </span>
             </div>
-            
+
             <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-medium tracking-tighter text-balance text-center">
               <span className="text-primary">Enterprise AI Workers.</span>
               <br />
               <span className="text-secondary">Delivered in days.</span>
             </h1>
-            
+
             <p className="text-lg md:text-xl text-center text-muted-foreground font-medium text-balance leading-relaxed tracking-tight max-w-3xl">
-              Skip the learning curve. Our AI specialists design, develop and deploy enterprise-grade AI workers that integrate seamlessly with your operations.
+              Skip the learning curve. Our AI specialists design, develop and
+              deploy enterprise-grade AI workers that integrate seamlessly with
+              your operations.
             </p>
-            
+
             <div className="flex flex-col items-center gap-6 pt-6">
               <KortixEnterpriseModal>
                 <Button size="lg">
@@ -92,7 +96,8 @@ const ValuePropSection = () => {
               When Standard Solutions Fall Short
             </h2>
             <p className="text-muted-foreground text-center text-balance font-medium">
-              Professional implementation services designed for organizations with unique requirements and mission-critical automation needs.
+              Professional implementation services designed for organizations
+              with unique requirements and mission-critical automation needs.
             </p>
           </SectionHeader>
 
@@ -103,23 +108,32 @@ const ValuePropSection = () => {
                   <Clock className="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold mb-3">Accelerate Time-to-Value</h3>
+                  <h3 className="text-xl font-semibold mb-3">
+                    Accelerate Time-to-Value
+                  </h3>
                   <p className="text-muted-foreground leading-relaxed">
-                    Bypass months of development cycles. Our proven methodology delivers enterprise-ready AI workers in a fraction of the time, letting you focus on strategy instead of implementation.
+                    Bypass months of development cycles. Our proven methodology
+                    delivers enterprise-ready AI workers in a fraction of the
+                    time, letting you focus on strategy instead of
+                    implementation.
                   </p>
                 </div>
               </div>
             </div>
-            
+
             <div className="p-8">
               <div className="space-y-6">
                 <div className="w-12 h-12 rounded-full bg-secondary/10 flex items-center justify-center">
                   <Settings className="w-6 h-6 text-secondary" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold mb-3">Enterprise Integration</h3>
+                  <h3 className="text-xl font-semibold mb-3">
+                    Enterprise Integration
+                  </h3>
                   <p className="text-muted-foreground leading-relaxed">
-                    Designed for sophisticated business processes requiring seamless integration with legacy systems, compliance frameworks, and industry-specific requirements.
+                    Designed for sophisticated business processes requiring
+                    seamless integration with legacy systems, compliance
+                    frameworks, and industry-specific requirements.
                   </p>
                 </div>
               </div>
@@ -136,22 +150,25 @@ const ProcessSection = () => {
   const steps = [
     {
       icon: <Users className="w-8 h-8" />,
-      title: "Strategic Analysis",
-      description: "Solution architects conduct comprehensive business analysis, workflow mapping, and technical requirements gathering to design optimal AI worker architecture for your organization.",
-      phase: "Discovery"
+      title: 'Strategic Analysis',
+      description:
+        'Solution architects conduct comprehensive business analysis, workflow mapping, and technical requirements gathering to design optimal AI worker architecture for your organization.',
+      phase: 'Discovery',
     },
     {
       icon: <Zap className="w-8 h-8" />,
-      title: "Engineering Excellence", 
-      description: "Full-stack development with enterprise security, scalability design, comprehensive testing, performance optimization, and seamless integration with existing systems.",
-      phase: "Build"
+      title: 'Engineering Excellence',
+      description:
+        'Full-stack development with enterprise security, scalability design, comprehensive testing, performance optimization, and seamless integration with existing systems.',
+      phase: 'Build',
     },
     {
       icon: <Shield className="w-8 h-8" />,
-      title: "Enterprise Support",
-      description: "Dedicated success management, comprehensive training programs, continuous performance monitoring, optimization services, and satisfaction guarantee with full accountability.",
-      phase: "Scale"
-    }
+      title: 'Enterprise Support',
+      description:
+        'Dedicated success management, comprehensive training programs, continuous performance monitoring, optimization services, and satisfaction guarantee with full accountability.',
+      phase: 'Scale',
+    },
   ];
 
   return (
@@ -163,7 +180,8 @@ const ProcessSection = () => {
               Our Implementation Methodology
             </h2>
             <p className="text-muted-foreground text-center text-balance font-medium">
-              A proven three-phase approach that transforms your vision into production-ready AI workers
+              A proven three-phase approach that transforms your vision into
+              production-ready AI workers
             </p>
           </SectionHeader>
 
@@ -182,7 +200,7 @@ const ProcessSection = () => {
                     {step.icon}
                   </div>
                 </div>
-                
+
                 <div className="flex-1 space-y-3">
                   <div className="flex items-center gap-3">
                     <h3 className="text-xl font-semibold">{step.title}</h3>
@@ -206,12 +224,12 @@ const ProcessSection = () => {
 // Benefits Section
 const BenefitsSection = () => {
   const benefits = [
-    "Dedicated solution architect and technical lead for your project",
-    "Enterprise-grade AI worker design with scalability considerations",
-    "White-glove support with dedicated success manager", 
-    "Comprehensive team training and knowledge transfer",
-    "Quarterly business reviews and performance optimization",
-    "Deep integration with existing technology stack and workflows"
+    'Dedicated solution architect and technical lead for your project',
+    'Enterprise-grade AI worker design with scalability considerations',
+    'White-glove support with dedicated success manager',
+    'Comprehensive team training and knowledge transfer',
+    'Quarterly business reviews and performance optimization',
+    'Deep integration with existing technology stack and workflows',
   ];
 
   return (
@@ -223,7 +241,8 @@ const BenefitsSection = () => {
               Enterprise-Grade Implementation
             </h2>
             <p className="text-muted-foreground text-center text-balance font-medium">
-              Premium service tier with dedicated resources and tailored solutions for complex organizational needs
+              Premium service tier with dedicated resources and tailored
+              solutions for complex organizational needs
             </p>
           </SectionHeader>
 
@@ -241,7 +260,9 @@ const BenefitsSection = () => {
                   <div className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center mt-0.5">
                     <Check className="w-3 h-3 text-primary" />
                   </div>
-                  <p className="text-sm font-medium leading-relaxed">{benefit}</p>
+                  <p className="text-sm font-medium leading-relaxed">
+                    {benefit}
+                  </p>
                 </motion.div>
               ))}
             </div>
@@ -256,29 +277,33 @@ const BenefitsSection = () => {
 const TestimonialsSection = () => {
   const testimonials = [
     {
-      quote: "The implementation team transformed our entire workflow. Their expertise in enterprise AI deployment is unmatched.",
-      author: "Sarah Chen",
-      company: "TechFlow Industries",
-      avatar: "🚀"
+      quote:
+        'The implementation team transformed our entire workflow. Their expertise in enterprise AI deployment is unmatched.',
+      author: 'Sarah Chen',
+      company: 'TechFlow Industries',
+      avatar: '🚀',
     },
     {
-      quote: "ROI was evident within the first month. The AI workers handle our most complex processes flawlessly.",
-      author: "Marcus Rodriguez", 
-      company: "Global Manufacturing Corp",
-      avatar: "💡"
+      quote:
+        'ROI was evident within the first month. The AI workers handle our most complex processes flawlessly.',
+      author: 'Marcus Rodriguez',
+      company: 'Global Manufacturing Corp',
+      avatar: '💡',
     },
     {
-      quote: "Outstanding technical depth and business understanding. They delivered exactly what we envisioned.",
-      author: "Dr. Amanda Foster",
-      company: "Research Dynamics LLC",
-      avatar: "⭐"
+      quote:
+        'Outstanding technical depth and business understanding. They delivered exactly what we envisioned.',
+      author: 'Dr. Amanda Foster',
+      company: 'Research Dynamics LLC',
+      avatar: '⭐',
     },
     {
-      quote: "Professional, reliable, and innovative. The custom solution exceeded our expectations completely.",
-      author: "James Wellington",
-      company: "Strategic Ventures Group", 
-      avatar: "🎯"
-    }
+      quote:
+        'Professional, reliable, and innovative. The custom solution exceeded our expectations completely.',
+      author: 'James Wellington',
+      company: 'Strategic Ventures Group',
+      avatar: '🎯',
+    },
   ];
 
   return (
@@ -290,7 +315,8 @@ const TestimonialsSection = () => {
               Client Success Stories
             </h2>
             <p className="text-muted-foreground text-center text-balance font-medium">
-              Organizations that have transformed their operations with our enterprise implementation services
+              Organizations that have transformed their operations with our
+              enterprise implementation services
             </p>
           </SectionHeader>
 
@@ -308,21 +334,26 @@ const TestimonialsSection = () => {
                   <div className="space-y-4">
                     <div className="flex items-center gap-1">
                       {[...Array(5)].map((_, i) => (
-                        <Star key={i} className="w-4 h-4 fill-primary text-primary" />
+                        <Star
+                          key={i}
+                          className="w-4 h-4 fill-primary text-primary"
+                        />
                       ))}
                     </div>
-                    
+
                     <blockquote className="text-lg font-medium leading-relaxed">
                       "{testimonial.quote}"
                     </blockquote>
-                    
+
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center text-lg">
                         {testimonial.avatar}
                       </div>
                       <div>
                         <p className="font-semibold">{testimonial.author}</p>
-                        <p className="text-sm text-muted-foreground">{testimonial.company}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {testimonial.company}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -347,7 +378,8 @@ const SelfServiceSection = () => {
               Self-Service Alternative
             </h2>
             <p className="text-muted-foreground text-center text-balance font-medium">
-              Explore our platform independently with comprehensive resources and community support
+              Explore our platform independently with comprehensive resources
+              and community support
             </p>
           </SectionHeader>
 
@@ -359,7 +391,8 @@ const SelfServiceSection = () => {
               <div>
                 <h3 className="text-xl font-semibold mb-3">Learning Center</h3>
                 <p className="text-muted-foreground leading-relaxed mb-4">
-                  Master AI worker development through structured courses, detailed documentation, and hands-on tutorials.
+                  Master AI worker development through structured courses,
+                  detailed documentation, and hands-on tutorials.
                 </p>
                 <Button variant="outline" className="rounded-full">
                   Start Learning
@@ -367,15 +400,18 @@ const SelfServiceSection = () => {
                 </Button>
               </div>
             </div>
-            
+
             <div className="p-8 space-y-6">
               <div className="w-12 h-12 rounded-full bg-secondary/10 flex items-center justify-center">
                 <Headphones className="w-6 h-6 text-secondary" />
               </div>
               <div>
-                <h3 className="text-xl font-semibold mb-3">Developer Community</h3>
+                <h3 className="text-xl font-semibold mb-3">
+                  Developer Community
+                </h3>
                 <p className="text-muted-foreground leading-relaxed mb-4">
-                  Connect with engineers, solution architects, and other professionals building enterprise AI solutions.
+                  Connect with engineers, solution architects, and other
+                  professionals building enterprise AI solutions.
                 </p>
                 <Button variant="outline" className="rounded-full">
                   Join Community
@@ -401,7 +437,8 @@ const FinalCTASection = () => {
               Ready to Transform Your Operations?
             </h2>
             <p className="text-muted-foreground text-center text-balance font-medium">
-              Let's discuss your specific requirements and design a custom AI implementation strategy for your organization.
+              Let's discuss your specific requirements and design a custom AI
+              implementation strategy for your organization.
             </p>
           </SectionHeader>
 
@@ -419,18 +456,30 @@ const FinalCTASection = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center max-w-2xl mx-auto">
                     <div className="flex flex-col items-center gap-2 p-4 rounded-lg bg-accent/20">
                       <Shield className="w-6 h-6 text-primary" />
-                      <span className="text-sm font-medium">100% Satisfaction</span>
-                      <span className="text-xs text-muted-foreground">Guarantee</span>
+                      <span className="text-sm font-medium">
+                        100% Satisfaction
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        Guarantee
+                      </span>
                     </div>
                     <div className="flex flex-col items-center gap-2 p-4 rounded-lg bg-accent/20">
                       <Users className="w-6 h-6 text-primary" />
-                      <span className="text-sm font-medium">Enterprise Support</span>
-                      <span className="text-xs text-muted-foreground">Dedicated team</span>
+                      <span className="text-sm font-medium">
+                        Enterprise Support
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        Dedicated team
+                      </span>
                     </div>
                     <div className="flex flex-col items-center gap-2 p-4 rounded-lg bg-accent/20">
                       <Settings className="w-6 h-6 text-primary" />
-                      <span className="text-sm font-medium">Custom Pricing</span>
-                      <span className="text-xs text-muted-foreground">Tailored to needs</span>
+                      <span className="text-sm font-medium">
+                        Custom Pricing
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        Tailored to needs
+                      </span>
                     </div>
                   </div>
                 </div>

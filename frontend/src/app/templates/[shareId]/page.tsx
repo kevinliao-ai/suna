@@ -5,9 +5,9 @@ import { useParams, useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { motion, useScroll } from 'framer-motion';
 import { backendApi } from '@/lib/api-client';
-import { 
-  Download, 
-  Share2, 
+import {
+  Download,
+  Share2,
   Sparkles,
   Calendar,
   User,
@@ -25,11 +25,17 @@ import {
   Sun,
   FileText,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Markdown } from '@/components/ui/markdown';
 import { toast } from 'sonner';
 import { useAuth } from '@/components/AuthProvider';
@@ -66,9 +72,9 @@ interface MarketplaceTemplate {
   creator_name: string | null;
 }
 
-const IntegrationIcon: React.FC<{ 
-  qualifiedName: string; 
-  displayName: string; 
+const IntegrationIcon: React.FC<{
+  qualifiedName: string;
+  displayName: string;
   customType?: string;
   toolkitSlug?: string;
   size?: number;
@@ -76,29 +82,30 @@ const IntegrationIcon: React.FC<{
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [hasError, setHasError] = useState(false);
-  
+
   const extractedSlug = React.useMemo(() => {
     if (toolkitSlug) return toolkitSlug;
-    
+
     if (qualifiedName?.startsWith('composio.')) {
       return qualifiedName.substring(9);
     }
-    
+
     if (customType === 'composio' && qualifiedName) {
       const parts = qualifiedName.split('.');
       return parts[parts.length - 1];
     }
-    
+
     return null;
   }, [qualifiedName, customType, toolkitSlug]);
-  
+
   useEffect(() => {
     if (extractedSlug && !hasError) {
       setIsLoading(true);
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+      const backendUrl =
+        process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
       fetch(`${backendUrl}/composio/toolkits/${extractedSlug}/icon`)
-        .then(res => res.json())
-        .then(data => {
+        .then((res) => res.json())
+        .then((data) => {
           if (data.success && data.icon_url) {
             setLogoUrl(data.icon_url);
           }
@@ -110,22 +117,23 @@ const IntegrationIcon: React.FC<{
         });
     }
   }, [extractedSlug, hasError]);
-  
+
   const firstLetter = displayName.charAt(0).toUpperCase();
-  
+
   const iconMap: Record<string, JSX.Element> = {
-    'github': <GitBranch size={size} />,
-    'browser': <Globe size={size} />,
-    'terminal': <Terminal size={size} />,
-    'code': <Code size={size} />,
+    github: <GitBranch size={size} />,
+    browser: <Globe size={size} />,
+    terminal: <Terminal size={size} />,
+    code: <Code size={size} />,
   };
 
-  const fallbackIcon = iconMap[qualifiedName.toLowerCase()] || 
-                       iconMap[customType?.toLowerCase() || ''];
+  const fallbackIcon =
+    iconMap[qualifiedName.toLowerCase()] ||
+    iconMap[customType?.toLowerCase() || ''];
 
   if (isLoading) {
     return (
-      <div 
+      <div
         className="flex items-center justify-center rounded bg-muted animate-pulse"
         style={{ width: size, height: size }}
       />
@@ -152,7 +160,7 @@ const IntegrationIcon: React.FC<{
   }
 
   return (
-    <div 
+    <div
       className="flex items-center justify-center rounded text-xs font-medium bg-muted"
       style={{ width: size, height: size }}
     >
@@ -160,8 +168,6 @@ const IntegrationIcon: React.FC<{
     </div>
   );
 };
-
-
 
 export default function TemplateSharePage() {
   const params = useParams();
@@ -182,7 +188,8 @@ export default function TemplateSharePage() {
     const element = document.getElementById(sectionId);
     if (element) {
       const yOffset = -100;
-      const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+      const y =
+        element.getBoundingClientRect().top + window.pageYOffset + yOffset;
       window.scrollTo({ top: y, behavior: 'smooth' });
     }
   };
@@ -200,7 +207,7 @@ export default function TemplateSharePage() {
     const handleScroll = () => {
       const sections = ['system-prompt', 'integrations', 'triggers', 'tools'];
       let currentSection = '';
-      
+
       // Find the section that's currently in view
       for (const section of sections) {
         const element = document.getElementById(section);
@@ -212,7 +219,7 @@ export default function TemplateSharePage() {
           }
         }
       }
-      
+
       // If no section is in the main view area, find the closest one
       if (!currentSection) {
         let minDistance = Infinity;
@@ -228,7 +235,7 @@ export default function TemplateSharePage() {
           }
         }
       }
-      
+
       if (currentSection && currentSection !== activeSection) {
         setActiveSection(currentSection);
       }
@@ -239,11 +246,18 @@ export default function TemplateSharePage() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [activeSection]);
 
-  const { data: template, isLoading, error } = useQuery({
+  const {
+    data: template,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['template-public', templateId],
     queryFn: async () => {
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
-      const response = await fetch(`${backendUrl}/templates/public/${templateId}`);
+      const backendUrl =
+        process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+      const response = await fetch(
+        `${backendUrl}/templates/public/${templateId}`,
+      );
       if (!response.ok) {
         throw new Error('Template not found');
       }
@@ -253,10 +267,15 @@ export default function TemplateSharePage() {
   });
 
   const rgbToHex = (r: number, g: number, b: number) => {
-    return '#' + [r, g, b].map(x => {
-      const hex = x.toString(16);
-      return hex.length === 1 ? '0' + hex : hex;
-    }).join('');
+    return (
+      '#' +
+      [r, g, b]
+        .map((x) => {
+          const hex = x.toString(16);
+          return hex.length === 1 ? '0' + hex : hex;
+        })
+        .join('')
+    );
   };
 
   useEffect(() => {
@@ -271,29 +290,45 @@ export default function TemplateSharePage() {
         '#6366f1',
         '#8b5cf6',
         '#ec4899',
-        '#f43f5e'
+        '#f43f5e',
       ]);
     } else if (template?.profile_image_url && imageRef.current && imageLoaded) {
       const colorThief = new ColorThief();
       try {
         const palette = colorThief.getPalette(imageRef.current, 6);
-        const colors = palette.map((rgb: number[]) => rgbToHex(rgb[0], rgb[1], rgb[2]));
+        const colors = palette.map((rgb: number[]) =>
+          rgbToHex(rgb[0], rgb[1], rgb[2]),
+        );
         console.log('Extracted colors (hex):', colors);
         setColorPalette(colors);
       } catch (error) {
         console.error('Error extracting colors:', error);
         setColorPalette([
-          '#6366f1', '#8b5cf6', '#ec4899', 
-          '#f43f5e', '#f97316', '#facc15'
+          '#6366f1',
+          '#8b5cf6',
+          '#ec4899',
+          '#f43f5e',
+          '#f97316',
+          '#facc15',
         ]);
       }
     } else {
       setColorPalette([
-        '#6366f1', '#8b5cf6', '#ec4899', 
-        '#f43f5e', '#f97316', '#facc15'
+        '#6366f1',
+        '#8b5cf6',
+        '#ec4899',
+        '#f43f5e',
+        '#f97316',
+        '#facc15',
       ]);
     }
-  }, [template?.profile_image_url, template?.icon_name, template?.icon_background, template?.icon_color, imageLoaded]);
+  }, [
+    template?.profile_image_url,
+    template?.icon_name,
+    template?.icon_background,
+    template?.icon_color,
+    imageLoaded,
+  ]);
 
   const handleInstall = () => {
     if (!template) return;
@@ -314,7 +349,7 @@ export default function TemplateSharePage() {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
-      day: 'numeric'
+      day: 'numeric',
     });
   };
 
@@ -334,8 +369,13 @@ export default function TemplateSharePage() {
         <div className="flex items-center justify-center h-screen">
           <div className="text-center">
             <h2 className="text-2xl font-semibold mb-2">Template not found</h2>
-            <p className="text-muted-foreground mb-4">The template you're looking for doesn't exist or has been removed.</p>
-            <Button onClick={() => router.push('/agents?tab=marketplace')} className="rounded-lg">
+            <p className="text-muted-foreground mb-4">
+              The template you're looking for doesn't exist or has been removed.
+            </p>
+            <Button
+              onClick={() => router.push('/agents?tab=marketplace')}
+              className="rounded-lg"
+            >
               Browse Marketplace
             </Button>
           </div>
@@ -346,9 +386,15 @@ export default function TemplateSharePage() {
 
   const tools = template.mcp_requirements || [];
   const toolRequirements = tools.filter((req: any) => req.source === 'tool');
-  const triggerRequirements = tools.filter((req: any) => req.source === 'trigger');
-  const integrations = toolRequirements.filter((tool: any) => !tool.custom_type || tool.custom_type !== 'sse');
-  const customTools = toolRequirements.filter((tool: any) => tool.custom_type === 'sse');
+  const triggerRequirements = tools.filter(
+    (req: any) => req.source === 'trigger',
+  );
+  const integrations = toolRequirements.filter(
+    (tool: any) => !tool.custom_type || tool.custom_type !== 'sse',
+  );
+  const customTools = toolRequirements.filter(
+    (tool: any) => tool.custom_type === 'sse',
+  );
   const agentpressTools = Object.entries(template.agentpress_tools || {})
     .filter(([_, enabled]) => enabled)
     .map(([toolName]) => toolName);
@@ -359,10 +405,17 @@ export default function TemplateSharePage() {
   const hasTools = customTools.length > 0 || agentpressTools.length > 0;
 
   const getDefaultAvatar = () => {
-    const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD'];
+    const colors = [
+      '#FF6B6B',
+      '#4ECDC4',
+      '#45B7D1',
+      '#96CEB4',
+      '#FFEAA7',
+      '#DDA0DD',
+    ];
     const color = colors[Math.floor(Math.random() * colors.length)];
     return (
-      <div 
+      <div
         className="w-full h-full flex items-center justify-center text-6xl bg-muted rounded-2xl"
         style={{ backgroundColor: color + '10' }}
       >
@@ -371,9 +424,10 @@ export default function TemplateSharePage() {
     );
   };
 
-  const [color1, color2, color3, color4, color5, color6] = colorPalette.length >= 6 
-    ? colorPalette 
-    : ['#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#f97316', '#facc15'];
+  const [color1, color2, color3, color4, color5, color6] =
+    colorPalette.length >= 6
+      ? colorPalette
+      : ['#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#f97316', '#facc15'];
 
   const gradientStyle = {
     background: `
@@ -407,9 +461,13 @@ export default function TemplateSharePage() {
             <div className="flex h-14 items-center">
               <div className="flex items-center">
                 <Link href="/" className="flex items-center">
-                  <img 
-                    src={resolvedTheme === 'dark' ? '/kortix-logo-white.svg' : '/kortix-logo.svg'} 
-                    alt="anisora" 
+                  <img
+                    src={
+                      resolvedTheme === 'dark'
+                        ? '/kortix-logo-white.svg'
+                        : '/kortix-logo.svg'
+                    }
+                    alt="anisora"
                     className="h-6 opacity-70"
                   />
                 </Link>
@@ -425,7 +483,7 @@ export default function TemplateSharePage() {
                   <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
                   <span className="sr-only">Toggle theme</span>
                 </Button>
-                <Button 
+                <Button
                   variant="ghost"
                   size="icon"
                   onClick={handleShare}
@@ -434,7 +492,7 @@ export default function TemplateSharePage() {
                   <Share2 className="h-4 w-4" />
                   <span className="sr-only">Share</span>
                 </Button>
-                <Button 
+                <Button
                   onClick={handleInstall}
                   className="bg-secondary h-8 flex items-center justify-center text-sm font-normal tracking-wide rounded-full text-primary-foreground dark:text-secondary-foreground w-fit px-4 shadow-[inset_0_1px_2px_rgba(255,255,255,0.25),0_3px_3px_-1.5px_rgba(16,24,40,0.06),0_1px_1px_rgba(16,24,40,0.08)] border border-white/[0.12]"
                 >
@@ -452,8 +510,8 @@ export default function TemplateSharePage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           <div className="lg:col-span-4">
             <div className="lg:sticky lg:top-24 space-y-6">
-              <Link 
-                href="/agents?tab=marketplace" 
+              <Link
+                href="/agents?tab=marketplace"
                 className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
@@ -461,18 +519,20 @@ export default function TemplateSharePage() {
               </Link>
               <div className="relative">
                 {colorPalette.length > 0 && (
-                  <div 
+                  <div
                     className="absolute -inset-10 rounded-2xl opacity-0 dark:opacity-100 transition-all duration-1000 pointer-events-none"
                     style={gradientStyle}
                   />
                 )}
                 <div className="relative aspect-square w-full max-w-sm mx-auto lg:mx-0 rounded-2xl overflow-hidden bg-background">
                   {template.icon_name ? (
-                    <div 
+                    <div
                       className="w-full h-full flex items-center justify-center"
-                      style={{ backgroundColor: template.icon_background || '#e5e5e5' }}
+                      style={{
+                        backgroundColor: template.icon_background || '#e5e5e5',
+                      }}
                     >
-                      <DynamicIcon 
+                      <DynamicIcon
                         name={template.icon_name as any}
                         size={120}
                         color={template.icon_color || '#000000'}
@@ -480,9 +540,9 @@ export default function TemplateSharePage() {
                     </div>
                   ) : template.profile_image_url ? (
                     <>
-                      <img 
+                      <img
                         ref={imageRef}
-                        src={template.profile_image_url} 
+                        src={template.profile_image_url}
                         alt={template.name}
                         className="w-full h-full object-cover"
                         crossOrigin="anonymous"
@@ -496,9 +556,14 @@ export default function TemplateSharePage() {
               </div>
               <div className="space-y-4">
                 <div>
-                  <h1 className="text-3xl font-bold tracking-tight">{template.name}</h1>
+                  <h1 className="text-3xl font-bold tracking-tight">
+                    {template.name}
+                  </h1>
                   {template.is_kortix_team && (
-                    <Badge variant="secondary" className="mt-2 bg-primary/10 text-primary">
+                    <Badge
+                      variant="secondary"
+                      className="mt-2 bg-primary/10 text-primary"
+                    >
                       <Sparkles className="w-3 h-3 mr-1" />
                       Official Template
                     </Badge>
@@ -506,16 +571,27 @@ export default function TemplateSharePage() {
                 </div>
 
                 <p className="text-muted-foreground">
-                  {template.description || 'An AI agent template ready to be customized for your needs.'}
+                  {template.description ||
+                    'An AI agent template ready to be customized for your needs.'}
                 </p>
                 <div className="space-y-2 text-sm">
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <User className="w-4 h-4" />
-                    <span>Created by <span className="text-foreground font-medium">{template.creator_name || 'Anonymous'}</span></span>
+                    <span>
+                      Created by{' '}
+                      <span className="text-foreground font-medium">
+                        {template.creator_name || 'Anonymous'}
+                      </span>
+                    </span>
                   </div>
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Download className="w-4 h-4" />
-                    <span><span className="text-foreground font-medium">{template.download_count}</span> installs</span>
+                    <span>
+                      <span className="text-foreground font-medium">
+                        {template.download_count}
+                      </span>{' '}
+                      installs
+                    </span>
                   </div>
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Calendar className="w-4 h-4" />
@@ -531,12 +607,13 @@ export default function TemplateSharePage() {
                     ))}
                   </div>
                 )}
-
               </div>
 
               {/* Content Navigation */}
               <div className="space-y-2">
-                <h3 className="text-sm font-medium text-muted-foreground mb-3">Sections</h3>
+                <h3 className="text-sm font-medium text-muted-foreground mb-3">
+                  Sections
+                </h3>
                 <nav className="space-y-1">
                   <button
                     onClick={() => scrollToSection('system-prompt')}
@@ -563,14 +640,16 @@ export default function TemplateSharePage() {
                       Triggers
                     </button>
                   )}
-
                 </nav>
               </div>
             </div>
           </div>
 
           <div className="lg:col-span-8 space-y-6">
-            <Card id="system-prompt" className="bg-transparent border-0 shadow-none">
+            <Card
+              id="system-prompt"
+              className="bg-transparent border-0 shadow-none"
+            >
               <CardHeader className="px-0">
                 <CardTitle className="text-xl flex items-center gap-2">
                   <FileText className="w-5 h-5" />
@@ -583,41 +662,51 @@ export default function TemplateSharePage() {
               <CardContent className="px-0">
                 <div className="rounded-lg border bg-muted/10 p-6">
                   <div className="relative">
-                    <div className={cn(
-                      "transition-all duration-300 overflow-hidden",
-                      !isPromptExpanded && "max-h-[600px]"
-                    )}>
+                    <div
+                      className={cn(
+                        'transition-all duration-300 overflow-hidden',
+                        !isPromptExpanded && 'max-h-[600px]',
+                      )}
+                    >
                       <Markdown className="prose prose-sm dark:prose-invert max-w-none">
                         {template.system_prompt || 'No system prompt available'}
                       </Markdown>
-                      {!isPromptExpanded && template.system_prompt && template.system_prompt.length > 10000 && (
-                        <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-muted/10 to-transparent pointer-events-none" />
-                      )}
-                    </div>
-                    {template.system_prompt && template.system_prompt.length > 10000 && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setIsPromptExpanded(!isPromptExpanded)}
-                        className="mt-4 w-full justify-between text-muted-foreground hover:text-foreground"
-                      >
-                        <span>
-                          {isPromptExpanded ? 'Show less' : `Show more (${template.system_prompt.length.toLocaleString()} characters)`}
-                        </span>
-                        {isPromptExpanded ? (
-                          <ChevronUp className="h-4 w-4 ml-2" />
-                        ) : (
-                          <ChevronDown className="h-4 w-4 ml-2" />
+                      {!isPromptExpanded &&
+                        template.system_prompt &&
+                        template.system_prompt.length > 10000 && (
+                          <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-muted/10 to-transparent pointer-events-none" />
                         )}
-                      </Button>
-                    )}
+                    </div>
+                    {template.system_prompt &&
+                      template.system_prompt.length > 10000 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setIsPromptExpanded(!isPromptExpanded)}
+                          className="mt-4 w-full justify-between text-muted-foreground hover:text-foreground"
+                        >
+                          <span>
+                            {isPromptExpanded
+                              ? 'Show less'
+                              : `Show more (${template.system_prompt.length.toLocaleString()} characters)`}
+                          </span>
+                          {isPromptExpanded ? (
+                            <ChevronUp className="h-4 w-4 ml-2" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4 ml-2" />
+                          )}
+                        </Button>
+                      )}
                   </div>
                 </div>
               </CardContent>
             </Card>
 
             {integrations.length > 0 && (
-              <Card id="integrations" className="bg-transparent border-0 shadow-none">
+              <Card
+                id="integrations"
+                className="bg-transparent border-0 shadow-none"
+              >
                 <CardHeader className="px-0">
                   <CardTitle className="text-xl flex items-center gap-2">
                     <Plug className="w-5 h-5" />
@@ -636,13 +725,17 @@ export default function TemplateSharePage() {
                       >
                         <IntegrationIcon
                           qualifiedName={integration.qualified_name}
-                          displayName={integration.display_name || integration.qualified_name}
+                          displayName={
+                            integration.display_name ||
+                            integration.qualified_name
+                          }
                           customType={integration.custom_type}
                           toolkitSlug={integration.toolkit_slug}
                         />
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-sm truncate">
-                            {integration.display_name || integration.qualified_name}
+                            {integration.display_name ||
+                              integration.qualified_name}
                           </p>
                           {integration.enabled_tools?.length > 0 && (
                             <p className="text-xs text-muted-foreground">
@@ -657,51 +750,65 @@ export default function TemplateSharePage() {
               </Card>
             )}
             {triggerRequirements.length > 0 && (
-                <Card id="triggers" className="bg-transparent border-0 shadow-none">
-                  <CardHeader className="px-0">
-                    <CardTitle className="text-xl flex items-center gap-2">
-                      <Zap className="w-5 h-5" />
-                      Event Triggers
-                    </CardTitle>
-                    <CardDescription>
-                      Automated triggers that can activate this agent
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="px-0">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {triggerRequirements.map((trigger: any, index: number) => {
-                        const appName = trigger.display_name?.split(' (')[0] || trigger.display_name;
-                        const triggerName = trigger.display_name?.match(/\(([^)]+)\)/)?.[1] || trigger.display_name;
-                        
-                        return (
-                          <div
-                            key={index}
-                            className="flex items-center gap-3 p-3 rounded-lg border bg-background"
-                          >
-                            <IntegrationIcon
-                              qualifiedName={trigger.qualified_name}
-                              displayName={appName || trigger.qualified_name}
-                              customType={trigger.custom_type || (trigger.qualified_name?.startsWith('composio.') ? 'composio' : undefined)}
-                              toolkitSlug={trigger.toolkit_slug}
-                            />
-                            <div className="flex-1 min-w-0">
-                              <p className="font-medium text-sm truncate">
-                                {triggerName || trigger.display_name || trigger.qualified_name}
+              <Card
+                id="triggers"
+                className="bg-transparent border-0 shadow-none"
+              >
+                <CardHeader className="px-0">
+                  <CardTitle className="text-xl flex items-center gap-2">
+                    <Zap className="w-5 h-5" />
+                    Event Triggers
+                  </CardTitle>
+                  <CardDescription>
+                    Automated triggers that can activate this agent
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="px-0">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {triggerRequirements.map((trigger: any, index: number) => {
+                      const appName =
+                        trigger.display_name?.split(' (')[0] ||
+                        trigger.display_name;
+                      const triggerName =
+                        trigger.display_name?.match(/\(([^)]+)\)/)?.[1] ||
+                        trigger.display_name;
+
+                      return (
+                        <div
+                          key={index}
+                          className="flex items-center gap-3 p-3 rounded-lg border bg-background"
+                        >
+                          <IntegrationIcon
+                            qualifiedName={trigger.qualified_name}
+                            displayName={appName || trigger.qualified_name}
+                            customType={
+                              trigger.custom_type ||
+                              (trigger.qualified_name?.startsWith('composio.')
+                                ? 'composio'
+                                : undefined)
+                            }
+                            toolkitSlug={trigger.toolkit_slug}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm truncate">
+                              {triggerName ||
+                                trigger.display_name ||
+                                trigger.qualified_name}
+                            </p>
+                            {appName && triggerName && (
+                              <p className="text-xs text-muted-foreground">
+                                {appName}
                               </p>
-                              {appName && triggerName && (
-                                <p className="text-xs text-muted-foreground">
-                                  {appName}
-                                </p>
-                              )}
-                            </div>
-                            <Zap className="w-4 h-4 text-yellow-500 flex-shrink-0" />
+                            )}
                           </div>
-                        );
-                      })}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+                          <Zap className="w-4 h-4 text-yellow-500 flex-shrink-0" />
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
             {customTools.length > 0 && (
               <Card id="tools" className="bg-transparent border-0 shadow-none">
                 <CardHeader className="px-0">
@@ -771,4 +878,4 @@ export default function TemplateSharePage() {
       </div>
     </div>
   );
-} 
+}

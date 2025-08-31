@@ -15,7 +15,7 @@ interface UseBillingReturn {
 export function useBilling(
   projectAccountId: string | null | undefined,
   agentStatus: AgentStatus,
-  initialLoadCompleted: boolean
+  initialLoadCompleted: boolean,
 ): UseBillingReturn {
   const [showBillingAlert, setShowBillingAlert] = useState(false);
   const [billingData, setBillingData] = useState<BillingData>({});
@@ -60,7 +60,12 @@ export function useBilling(
     if (projectAccountId && initialLoadCompleted && !billingStatusQuery.data) {
       checkBillingLimits();
     }
-  }, [projectAccountId, checkBillingLimits, initialLoadCompleted, billingStatusQuery.data]);
+  }, [
+    projectAccountId,
+    checkBillingLimits,
+    initialLoadCompleted,
+    billingStatusQuery.data,
+  ]);
 
   return {
     showBillingAlert,
@@ -70,4 +75,4 @@ export function useBilling(
     checkBillingLimits,
     billingStatusQuery,
   };
-} 
+}

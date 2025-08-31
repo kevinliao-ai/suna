@@ -1,15 +1,11 @@
 'use client';
 
 import * as React from 'react';
-import { 
-  DocsHeader,
-  DocsCard,
-  DocsBody,
-} from '@/components/ui/docs-index';
+import { DocsHeader, DocsCard, DocsBody } from '@/components/ui/docs-index';
 
 const breadcrumbs = [
-  { title: 'Documentation', onClick: () => window.location.href = '/docs' },
-  { title: 'Platform Architecture' }
+  { title: 'Documentation', onClick: () => (window.location.href = '/docs') },
+  { title: 'Platform Architecture' },
 ];
 
 export default function ArchitecturePage() {
@@ -30,7 +26,8 @@ export default function ArchitecturePage() {
         <DocsBody className="mb-8">
           <h2>🏗️ Platform Architecture</h2>
           <p className="text-lg mb-6">
-            Kortix consists of four main components that work together to provide a complete AI agent development platform:
+            Kortix consists of four main components that work together to
+            provide a complete AI agent development platform:
           </p>
         </DocsBody>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
@@ -64,7 +61,7 @@ export default function ArchitecturePage() {
             Modern technologies powering the Kortix platform:
           </p>
         </DocsBody>
-        
+
         <div className="space-y-8">
           <div>
             <h3 className="text-lg font-semibold mb-4">Frontend</h3>
@@ -137,35 +134,52 @@ export default function ArchitecturePage() {
           <p className="text-lg mb-6">
             How information moves through the Kortix platform:
           </p>
-          
+
           <div className="bg-muted/50 border border-border rounded-lg p-6 mb-6">
             <div className="space-y-4">
               <div className="flex items-center gap-4">
-                <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-semibold">1</div>
+                <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-semibold">
+                  1
+                </div>
                 <div>
                   <h4 className="font-semibold">User Interaction</h4>
-                  <p className="text-sm text-muted-foreground">User sends request through frontend interface</p>
+                  <p className="text-sm text-muted-foreground">
+                    User sends request through frontend interface
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-4">
-                <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-semibold">2</div>
+                <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-semibold">
+                  2
+                </div>
                 <div>
                   <h4 className="font-semibold">API Processing</h4>
-                  <p className="text-sm text-muted-foreground">FastAPI backend processes request and authenticates user</p>
+                  <p className="text-sm text-muted-foreground">
+                    FastAPI backend processes request and authenticates user
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-4">
-                <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-semibold">3</div>
+                <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-semibold">
+                  3
+                </div>
                 <div>
                   <h4 className="font-semibold">Agent Execution</h4>
-                  <p className="text-sm text-muted-foreground">Agent runs in isolated Docker environment with access to tools</p>
+                  <p className="text-sm text-muted-foreground">
+                    Agent runs in isolated Docker environment with access to
+                    tools
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-4">
-                <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-semibold">4</div>
+                <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-semibold">
+                  4
+                </div>
                 <div>
                   <h4 className="font-semibold">Real-time Updates</h4>
-                  <p className="text-sm text-muted-foreground">Results streamed back to frontend via Supabase subscriptions</p>
+                  <p className="text-sm text-muted-foreground">
+                    Results streamed back to frontend via Supabase subscriptions
+                  </p>
                 </div>
               </div>
             </div>
@@ -176,9 +190,7 @@ export default function ArchitecturePage() {
       <section id="security" className="mb-16">
         <DocsBody className="mb-8">
           <h2>🔒 Security Architecture</h2>
-          <p className="text-lg mb-6">
-            Multi-layered security approach:
-          </p>
+          <p className="text-lg mb-6">Multi-layered security approach:</p>
         </DocsBody>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <DocsCard
@@ -231,4 +243,4 @@ export default function ArchitecturePage() {
       </section>
     </>
   );
-} 
+}

@@ -29,16 +29,11 @@ import { cn } from '@/lib/utils';
 import { useTheme } from 'next-themes';
 import { CodeBlockCode } from '@/components/ui/code-block';
 import { constructHtmlPreviewUrl } from '@/lib/utils/url';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 import {
   getLanguageFromFileName,
@@ -125,13 +120,21 @@ export function FileOperationToolView({
   if (!fileContent && operation !== 'delete') {
     fileContent = isStreaming
       ? extractStreamingFileContent(
-        assistantContent,
-        operation === 'create' ? 'create-file' : operation === 'edit' ? 'edit-file' : 'full-file-rewrite',
-      ) || ''
+          assistantContent,
+          operation === 'create'
+            ? 'create-file'
+            : operation === 'edit'
+              ? 'edit-file'
+              : 'full-file-rewrite',
+        ) || ''
       : extractFileContent(
-        assistantContent,
-        operation === 'create' ? 'create-file' : operation === 'edit' ? 'edit-file' : 'full-file-rewrite',
-      );
+          assistantContent,
+          operation === 'create'
+            ? 'create-file'
+            : operation === 'edit'
+              ? 'edit-file'
+              : 'full-file-rewrite',
+        );
   }
 
   const toolTitle = getToolTitle(name || `file-${operation}`);
@@ -175,7 +178,9 @@ export function FileOperationToolView({
         <div className="flex items-center justify-center h-full p-12">
           <div className="text-center">
             <FileIcon className="h-12 w-12 mx-auto mb-4 text-zinc-400" />
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">No content to preview</p>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              No content to preview
+            </p>
           </div>
         </div>
       );
@@ -219,7 +224,7 @@ export function FileOperationToolView({
       return (
         <div className="h-full w-full p-4 flex flex-col">
           <div className="flex-1 min-h-[400px] w-full bg-muted/20 border rounded-xl overflow-hidden">
-            <XlsxRenderer 
+            <XlsxRenderer
               content={fileContent}
               filePath={processedFilePath}
               fileName={fileName}
@@ -232,7 +237,7 @@ export function FileOperationToolView({
 
     return (
       <div className="p-4">
-        <div className='w-full h-full bg-muted/20 border rounded-xl px-4 py-2 pb-6'>
+        <div className="w-full h-full bg-muted/20 border rounded-xl px-4 py-2 pb-6">
           <pre className="text-sm font-mono text-zinc-800 dark:text-zinc-300 whitespace-pre-wrap break-words">
             {processUnicodeContent(fileContent)}
           </pre>
@@ -243,8 +248,13 @@ export function FileOperationToolView({
 
   const renderDeleteOperation = () => (
     <div className="flex flex-col items-center justify-center h-full py-12 px-6 bg-gradient-to-b from-white to-zinc-50 dark:from-zinc-950 dark:to-zinc-900">
-      <div className={cn("w-20 h-20 rounded-full flex items-center justify-center mb-6", config.bgColor)}>
-        <Icon className={cn("h-10 w-10", config.color)} />
+      <div
+        className={cn(
+          'w-20 h-20 rounded-full flex items-center justify-center mb-6',
+          config.bgColor,
+        )}
+      >
+        <Icon className={cn('h-10 w-10', config.color)} />
       </div>
       <h3 className="text-xl font-semibold mb-6 text-zinc-900 dark:text-zinc-100">
         File Deleted
@@ -266,7 +276,9 @@ export function FileOperationToolView({
         <div className="flex items-center justify-center h-full p-12">
           <div className="text-center">
             <FileIcon className="h-12 w-12 mx-auto mb-4 text-zinc-400" />
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">No source code to display</p>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              No source code to display
+            </p>
           </div>
         </div>
       );
@@ -301,7 +313,7 @@ export function FileOperationToolView({
         {contentLines.map((line, idx) => (
           <div
             key={idx}
-            className={cn("table-row transition-colors", config.hoverColor)}
+            className={cn('table-row transition-colors', config.hoverColor)}
           >
             <div className="table-cell text-right pr-3 pl-6 py-0.5 text-xs font-mono text-zinc-500 dark:text-zinc-500 select-none w-12 border-r border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900">
               {idx + 1}
@@ -318,12 +330,23 @@ export function FileOperationToolView({
 
   return (
     <Card className="flex border shadow-none border-t border-b-0 border-x-0 p-0 rounded-none flex-col h-full overflow-hidden bg-card">
-      <Tabs defaultValue={isMarkdown || isHtml || isCsv || isXlsx ? 'preview' : 'code'} className="w-full h-full">
+      <Tabs
+        defaultValue={
+          isMarkdown || isHtml || isCsv || isXlsx ? 'preview' : 'code'
+        }
+        className="w-full h-full"
+      >
         <CardHeader className="h-14 bg-zinc-50/80 dark:bg-zinc-900/80 backdrop-blur-sm border-b p-2 px-4 space-y-2 mb-0">
           <div className="flex flex-row items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className={cn("relative p-2 rounded-lg border", config.gradientBg, config.borderColor)}>
-                <Icon className={cn("h-5 w-5", config.color)} />
+              <div
+                className={cn(
+                  'relative p-2 rounded-lg border',
+                  config.gradientBg,
+                  config.borderColor,
+                )}
+              >
+                <Icon className={cn('h-5 w-5', config.color)} />
               </div>
               <div>
                 <CardTitle className="text-base font-medium text-zinc-900 dark:text-zinc-100">
@@ -331,10 +354,19 @@ export function FileOperationToolView({
                 </CardTitle>
               </div>
             </div>
-            <div className='flex items-center gap-2'>
+            <div className="flex items-center gap-2">
               {isHtml && htmlPreviewUrl && !isStreaming && (
-                <Button variant="outline" size="sm" className="h-8 text-xs bg-white dark:bg-muted/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 shadow-none" asChild>
-                  <a href={htmlPreviewUrl} target="_blank" rel="noopener noreferrer">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 text-xs bg-white dark:bg-muted/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 shadow-none"
+                  asChild
+                >
+                  <a
+                    href={htmlPreviewUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
                     <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
                     Open in Browser
                   </a>
@@ -379,7 +411,10 @@ export function FileOperationToolView({
         </CardHeader>
 
         <CardContent className="p-0 -my-2 h-full flex-1 overflow-hidden relative">
-          <TabsContent value="code" className="flex-1 h-full mt-0 p-0 overflow-hidden">
+          <TabsContent
+            value="code"
+            className="flex-1 h-full mt-0 p-0 overflow-hidden"
+          >
             <ScrollArea className="h-full w-full min-h-0">
               {isStreaming && !fileContent ? (
                 <LoadingState
@@ -393,8 +428,13 @@ export function FileOperationToolView({
                 />
               ) : operation === 'delete' ? (
                 <div className="flex flex-col items-center justify-center h-full py-12 px-6">
-                  <div className={cn("w-20 h-20 rounded-full flex items-center justify-center mb-6", config.bgColor)}>
-                    <Icon className={cn("h-10 w-10", config.color)} />
+                  <div
+                    className={cn(
+                      'w-20 h-20 rounded-full flex items-center justify-center mb-6',
+                      config.bgColor,
+                    )}
+                  >
+                    <Icon className={cn('h-10 w-10', config.color)} />
                   </div>
                   <h3 className="text-xl font-semibold mb-6 text-zinc-900 dark:text-zinc-100">
                     Delete Operation
@@ -411,7 +451,10 @@ export function FileOperationToolView({
             </ScrollArea>
           </TabsContent>
 
-          <TabsContent value="preview" className="w-full flex-1 h-full mt-0 p-0 overflow-hidden">
+          <TabsContent
+            value="preview"
+            className="w-full flex-1 h-full mt-0 p-0 overflow-hidden"
+          >
             {isHtml && htmlPreviewUrl ? (
               // For HTML files, render iframe directly without ScrollArea for full viewport
               <div className="w-full h-full relative">
@@ -460,7 +503,9 @@ export function FileOperationToolView({
           <div className="h-full flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
             <Badge variant="outline" className="py-0.5 h-6">
               <FileIcon className="h-3 w-3" />
-              {hasHighlighting ? language.toUpperCase() : fileExtension.toUpperCase() || 'TEXT'}
+              {hasHighlighting
+                ? language.toUpperCase()
+                : fileExtension.toUpperCase() || 'TEXT'}
             </Badge>
           </div>
 

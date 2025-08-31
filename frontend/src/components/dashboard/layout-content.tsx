@@ -1,7 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { SidebarLeft, FloatingMobileMenuButton } from '@/components/sidebar/sidebar-left';
+import {
+  SidebarLeft,
+  FloatingMobileMenuButton,
+} from '@/components/sidebar/sidebar-left';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 // import { PricingAlert } from "@/components/billing/pricing-alert"
 import { MaintenanceAlert } from '@/components/maintenance-alert';
@@ -17,7 +20,10 @@ import { StatusOverlay } from '@/components/ui/status-overlay';
 import { MaintenanceNotice } from './maintenance-notice';
 import { MaintenanceBanner } from './maintenance-banner';
 
-import { useProjects, useThreads } from '@/hooks/react-query/sidebar/use-sidebar';
+import {
+  useProjects,
+  useThreads,
+} from '@/hooks/react-query/sidebar/use-sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAgents } from '@/hooks/react-query/agents/use-agents';
 import { SubscriptionProvider } from '@/contexts/SubscriptionContext';
@@ -49,7 +55,7 @@ export default function DashboardLayoutContent({
   const { data: agentsResponse } = useAgents({
     limit: 100,
     sort_by: 'name',
-    sort_order: 'asc'
+    sort_order: 'asc',
   });
 
   useEffect(() => {
@@ -69,7 +75,7 @@ export default function DashboardLayoutContent({
         threads: threads?.length || 0,
         agents: agentsResponse?.agents?.length || 0,
         accounts: accounts?.length || 0,
-        user: !!user
+        user: !!user,
       });
     }
   }, [isMobile, projects, threads, agentsResponse, accounts, user]);
@@ -130,7 +136,7 @@ export default function DashboardLayoutContent({
 
           {/* Status overlay for deletion operations */}
           <StatusOverlay />
-          
+
           {/* Floating mobile menu button */}
           <FloatingMobileMenuButton />
         </SidebarProvider>

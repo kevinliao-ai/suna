@@ -1,7 +1,10 @@
-"use client";
+'use client';
 
 import React, { useMemo, useState, useEffect } from 'react';
-import { useAllTriggers, type TriggerWithAgent } from '@/hooks/react-query/triggers/use-all-triggers';
+import {
+  useAllTriggers,
+  type TriggerWithAgent,
+} from '@/hooks/react-query/triggers/use-all-triggers';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -26,7 +29,7 @@ import {
   ChevronDown,
   PlugZap,
   Webhook,
-  Repeat
+  Repeat,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TriggerCreationDialog } from './trigger-creation-dialog';
@@ -56,7 +59,9 @@ const getTriggerIcon = (triggerType: string) => {
 
 const getTriggerCategory = (triggerType: string): 'scheduled' | 'app' => {
   const scheduledTypes = ['schedule', 'scheduled'];
-  return scheduledTypes.includes(triggerType.toLowerCase()) ? 'scheduled' : 'app';
+  return scheduledTypes.includes(triggerType.toLowerCase())
+    ? 'scheduled'
+    : 'app';
 };
 
 const formatCronExpression = (cron?: string) => {
@@ -67,22 +72,58 @@ const formatCronExpression = (cron?: string) => {
 
   const [minute, hour, dayOfMonth, month, dayOfWeek] = parts;
 
-  if (minute === '0' && hour === '0' && dayOfMonth === '*' && month === '*' && dayOfWeek === '*') {
+  if (
+    minute === '0' &&
+    hour === '0' &&
+    dayOfMonth === '*' &&
+    month === '*' &&
+    dayOfWeek === '*'
+  ) {
     return 'Daily at midnight';
   }
-  if (minute === '0' && hour === '*/1' && dayOfMonth === '*' && month === '*' && dayOfWeek === '*') {
+  if (
+    minute === '0' &&
+    hour === '*/1' &&
+    dayOfMonth === '*' &&
+    month === '*' &&
+    dayOfWeek === '*'
+  ) {
     return 'Every hour';
   }
-  if (minute === '*/15' && hour === '*' && dayOfMonth === '*' && month === '*' && dayOfWeek === '*') {
+  if (
+    minute === '*/15' &&
+    hour === '*' &&
+    dayOfMonth === '*' &&
+    month === '*' &&
+    dayOfWeek === '*'
+  ) {
     return 'Every 15 minutes';
   }
-  if (minute === '*/30' && hour === '*' && dayOfMonth === '*' && month === '*' && dayOfWeek === '*') {
+  if (
+    minute === '*/30' &&
+    hour === '*' &&
+    dayOfMonth === '*' &&
+    month === '*' &&
+    dayOfWeek === '*'
+  ) {
     return 'Every 30 minutes';
   }
-  if (minute === '0' && hour === '9' && dayOfMonth === '*' && month === '*' && dayOfWeek === '1-5') {
+  if (
+    minute === '0' &&
+    hour === '9' &&
+    dayOfMonth === '*' &&
+    month === '*' &&
+    dayOfWeek === '1-5'
+  ) {
     return 'Weekdays at 9 AM';
   }
-  if (minute === '0' && hour === String(hour) && dayOfMonth === '*' && month === '*' && dayOfWeek === '*') {
+  if (
+    minute === '0' &&
+    hour === String(hour) &&
+    dayOfMonth === '*' &&
+    month === '*' &&
+    dayOfWeek === '*'
+  ) {
     return `Daily at ${hour}:${minute.padStart(2, '0')}`;
   }
 
@@ -92,7 +133,7 @@ const formatCronExpression = (cron?: string) => {
 const TriggerListItem = ({
   trigger,
   onClick,
-  isSelected
+  isSelected,
 }: {
   trigger: TriggerWithAgent;
   onClick: () => void;
@@ -105,8 +146,10 @@ const TriggerListItem = ({
     <div
       onClick={onClick}
       className={cn(
-        "rounded-xl border group flex items-center justify-between px-4 py-3 cursor-pointer transition-all",
-        isSelected ? "bg-muted border-foreground/20" : "dark:bg-card hover:bg-muted/50"
+        'rounded-xl border group flex items-center justify-between px-4 py-3 cursor-pointer transition-all',
+        isSelected
+          ? 'bg-muted border-foreground/20'
+          : 'dark:bg-card hover:bg-muted/50',
       )}
     >
       <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -115,10 +158,10 @@ const TriggerListItem = ({
           <div className="flex items-center gap-2">
             <span className="font-medium text-sm truncate">{trigger.name}</span>
             <Badge
-              variant={trigger.is_active ? "highlight" : "secondary"}
+              variant={trigger.is_active ? 'highlight' : 'secondary'}
               className="text-xs"
             >
-              {trigger.is_active ? "Active" : "Inactive"}
+              {trigger.is_active ? 'Active' : 'Inactive'}
             </Badge>
           </div>
           {trigger.description && (
@@ -130,7 +173,9 @@ const TriggerListItem = ({
       </div>
       <div className="flex items-center gap-4 text-xs text-muted-foreground">
         {isScheduled && trigger.config?.cron_expression && (
-          <span className="hidden sm:block">{formatCronExpression(trigger.config.cron_expression)}</span>
+          <span className="hidden sm:block">
+            {formatCronExpression(trigger.config.cron_expression)}
+          </span>
         )}
         <Repeat className="h-3 w-3" />
       </div>
@@ -143,7 +188,9 @@ const EmptyState = () => (
     <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center mb-4">
       <Zap className="h-6 w-6 text-muted-foreground" />
     </div>
-    <h3 className="text-base font-semibold text-foreground mb-2">Get started by adding a task</h3>
+    <h3 className="text-base font-semibold text-foreground mb-2">
+      Get started by adding a task
+    </h3>
     <p className="text-sm text-muted-foreground text-center max-w-sm mb-6">
       Schedule a task to automate actions and get reminders when they complete.
     </p>
@@ -169,8 +216,11 @@ const LoadingSkeleton = () => (
 
 export function TasksPage() {
   const { data: triggers = [], isLoading, error } = useAllTriggers();
-  const [selectedTrigger, setSelectedTrigger] = useState<TriggerWithAgent | null>(null);
-  const [triggerDialogType, setTriggerDialogType] = useState<'schedule' | 'event' | null>(null);
+  const [selectedTrigger, setSelectedTrigger] =
+    useState<TriggerWithAgent | null>(null);
+  const [triggerDialogType, setTriggerDialogType] = useState<
+    'schedule' | 'event' | null
+  >(null);
   const [pendingTriggerId, setPendingTriggerId] = useState<string | null>(null);
 
   const sortedTriggers = useMemo(() => {
@@ -178,13 +228,17 @@ export function TasksPage() {
       if (a.is_active !== b.is_active) {
         return a.is_active ? -1 : 1;
       }
-      return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+      return (
+        new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+      );
     });
   }, [triggers]);
 
   useEffect(() => {
     if (pendingTriggerId) {
-      const newTrigger = triggers.find(t => t.trigger_id === pendingTriggerId);
+      const newTrigger = triggers.find(
+        (t) => t.trigger_id === pendingTriggerId,
+      );
       if (newTrigger) {
         setSelectedTrigger(newTrigger);
         setPendingTriggerId(null);
@@ -194,7 +248,9 @@ export function TasksPage() {
 
   useEffect(() => {
     if (selectedTrigger) {
-      const updatedTrigger = triggers.find(t => t.trigger_id === selectedTrigger.trigger_id);
+      const updatedTrigger = triggers.find(
+        (t) => t.trigger_id === selectedTrigger.trigger_id,
+      );
       if (updatedTrigger) {
         setSelectedTrigger(updatedTrigger);
       } else {
@@ -231,10 +287,12 @@ export function TasksPage() {
     <div className="h-screen flex overflow-hidden">
       <div className="flex-1 flex flex-col overflow-hidden">
         <div className="flex justify-center">
-          <div className={cn(
-            "w-full px-4 transition-all duration-300 ease-in-out",
-            selectedTrigger ? "max-w-2xl" : "max-w-4xl"
-          )}>
+          <div
+            className={cn(
+              'w-full px-4 transition-all duration-300 ease-in-out',
+              selectedTrigger ? 'max-w-2xl' : 'max-w-4xl',
+            )}
+          >
             <div className="flex items-center justify-between py-10">
               <h1 className="text-xl font-semibold">Tasks</h1>
               <DropdownMenu>
@@ -245,7 +303,10 @@ export function TasksPage() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-72">
-                  <DropdownMenuItem onClick={() => setTriggerDialogType('schedule')} className='rounded-lg'>
+                  <DropdownMenuItem
+                    onClick={() => setTriggerDialogType('schedule')}
+                    className="rounded-lg"
+                  >
                     <Clock className="h-4 w-4 text-muted-foreground" />
                     <div className="flex flex-col">
                       <span>Scheduled Task</span>
@@ -254,7 +315,10 @@ export function TasksPage() {
                       </span>
                     </div>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setTriggerDialogType('event')} className='rounded-lg'>
+                  <DropdownMenuItem
+                    onClick={() => setTriggerDialogType('event')}
+                    className="rounded-lg"
+                  >
                     <PlugZap className="h-4 w-4 text-muted-foreground" />
                     <div className="flex flex-col">
                       <span>Event-based Task</span>
@@ -270,23 +334,29 @@ export function TasksPage() {
         </div>
         <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-700 scrollbar-track-transparent">
           <div className="flex justify-center">
-            <div className={cn(
-              "w-full px-4 pb-8 transition-all duration-300 ease-in-out",
-              selectedTrigger ? "max-w-2xl" : "max-w-4xl"
-            )}>
+            <div
+              className={cn(
+                'w-full px-4 pb-8 transition-all duration-300 ease-in-out',
+                selectedTrigger ? 'max-w-2xl' : 'max-w-4xl',
+              )}
+            >
               {isLoading ? (
                 <LoadingSkeleton />
               ) : sortedTriggers.length === 0 ? (
                 <EmptyState />
               ) : (
                 <div className="space-y-4">
-                  {sortedTriggers.map(trigger => (
+                  {sortedTriggers.map((trigger) => (
                     <TriggerListItem
                       key={trigger.trigger_id}
                       trigger={trigger}
-                      isSelected={selectedTrigger?.trigger_id === trigger.trigger_id}
+                      isSelected={
+                        selectedTrigger?.trigger_id === trigger.trigger_id
+                      }
                       onClick={() => {
-                        if (selectedTrigger?.trigger_id === trigger.trigger_id) {
+                        if (
+                          selectedTrigger?.trigger_id === trigger.trigger_id
+                        ) {
                           setSelectedTrigger(null);
                         } else {
                           setSelectedTrigger(trigger);
@@ -300,12 +370,12 @@ export function TasksPage() {
           </div>
         </div>
       </div>
-      <div className={cn(
-        "h-screen transition-all duration-300 ease-in-out overflow-hidden border-l",
-        selectedTrigger
-          ? "w-full sm:w-[440px] xl:w-2xl"
-          : "w-0"
-      )}>
+      <div
+        className={cn(
+          'h-screen transition-all duration-300 ease-in-out overflow-hidden border-l',
+          selectedTrigger ? 'w-full sm:w-[440px] xl:w-2xl' : 'w-0',
+        )}
+      >
         {selectedTrigger && (
           <SimplifiedTriggerDetailPanel
             trigger={selectedTrigger}
@@ -328,4 +398,4 @@ export function TasksPage() {
       )}
     </div>
   );
-} 
+}

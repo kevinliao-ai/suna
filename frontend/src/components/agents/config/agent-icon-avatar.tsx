@@ -25,14 +25,14 @@ export function AgentIconAvatar({
   agentName = 'Agent',
   size = 40,
   className,
-  isSunaDefault = false
+  isSunaDefault = false,
 }: AgentIconAvatarProps) {
   if (isSunaDefault) {
     return (
-      <div 
+      <div
         className={cn(
-          "flex items-center justify-center rounded-lg bg-muted border",
-          className
+          'flex items-center justify-center rounded-lg bg-muted border',
+          className,
         )}
         style={{ width: size, height: size }}
       >
@@ -40,66 +40,58 @@ export function AgentIconAvatar({
       </div>
     );
   }
-  
+
   if (iconName) {
     return (
-      <div 
+      <div
         className={cn(
-          "flex items-center justify-center rounded-lg transition-all",
-          className
+          'flex items-center justify-center rounded-lg transition-all',
+          className,
         )}
-        style={{ 
-          width: size, 
+        style={{
+          width: size,
           height: size,
-          backgroundColor
+          backgroundColor,
         }}
       >
-        <DynamicIcon 
-          name={iconName as any} 
-          size={size * 0.5} 
+        <DynamicIcon
+          name={iconName as any}
+          size={size * 0.5}
           color={iconColor}
         />
       </div>
     );
   }
-  
+
   if (profileImageUrl) {
     return (
-      <Avatar 
-        className={cn("rounded-lg", className)}
+      <Avatar
+        className={cn('rounded-lg', className)}
         style={{ width: size, height: size }}
       >
-        <AvatarImage 
-          src={profileImageUrl} 
+        <AvatarImage
+          src={profileImageUrl}
           alt={agentName}
           className="object-cover"
         />
         <AvatarFallback className="rounded-lg">
           <div className="w-full h-full flex items-center justify-center bg-muted">
-            <DynamicIcon 
-              name="bot" 
-              size={size * 0.5} 
-              color="#6B7280"
-            />
+            <DynamicIcon name="bot" size={size * 0.5} color="#6B7280" />
           </div>
         </AvatarFallback>
       </Avatar>
     );
   }
-  
+
   return (
-    <div 
+    <div
       className={cn(
-        "flex items-center justify-center rounded-lg bg-muted",
-        className
+        'flex items-center justify-center rounded-lg bg-muted',
+        className,
       )}
       style={{ width: size, height: size }}
     >
-      <DynamicIcon 
-        name="bot" 
-        size={size * 0.5} 
-        color="#6B7280"
-      />
+      <DynamicIcon name="bot" size={size * 0.5} color="#6B7280" />
     </div>
   );
 }
@@ -109,4 +101,4 @@ export function hasCustomProfile(agent: {
   icon_name?: string | null;
 }): boolean {
   return !!(agent.icon_name || agent.profile_image_url);
-} 
+}

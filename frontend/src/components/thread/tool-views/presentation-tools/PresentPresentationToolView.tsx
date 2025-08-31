@@ -13,16 +13,17 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { ToolViewProps } from '../types';
+import { getToolTitle, extractToolData } from '../utils';
 import {
-  getToolTitle,
-  extractToolData,
-} from '../utils';
-import { downloadPresentation, DownloadFormat, handleGoogleSlidesUpload } from '../utils/presentation-utils';
+  downloadPresentation,
+  DownloadFormat,
+  handleGoogleSlidesUpload,
+} from '../utils/presentation-utils';
 import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Markdown } from '@/components/ui/markdown';
 import { FileAttachment } from '../../file-attachment';
 import {
@@ -45,8 +46,9 @@ export function PresentPresentationToolView({
   project,
 }: PresentPresentationToolViewProps) {
   // Extract data using the standard utility function
-  const { toolResult, arguments: args } = useMemo(() => 
-    extractToolData(toolContent), [toolContent]
+  const { toolResult, arguments: args } = useMemo(
+    () => extractToolData(toolContent),
+    [toolContent],
   );
 
   // Extract the presentation data directly from tool arguments
@@ -56,16 +58,24 @@ export function PresentPresentationToolView({
     slideCount,
     summary,
     attachments,
-    presentationUrl
+    presentationUrl,
   } = {
-    presentationName: args.presentation_name || args.presentationName || undefined,
-    presentationPath: args.presentation_path || args.presentationPath || undefined,
-    slideCount: args.slide_count || args.slideCount ? parseInt(args.slide_count || args.slideCount, 10) : undefined,
+    presentationName:
+      args.presentation_name || args.presentationName || undefined,
+    presentationPath:
+      args.presentation_path || args.presentationPath || undefined,
+    slideCount:
+      args.slide_count || args.slideCount
+        ? parseInt(args.slide_count || args.slideCount, 10)
+        : undefined,
     summary: args.text || args.summary || undefined,
     attachments: (() => {
       if (args.attachments) {
         if (typeof args.attachments === 'string') {
-          return args.attachments.split(',').map((a: string) => a.trim()).filter((a: string) => a.length > 0);
+          return args.attachments
+            .split(',')
+            .map((a: string) => a.trim())
+            .filter((a: string) => a.length > 0);
         } else if (Array.isArray(args.attachments)) {
           return args.attachments;
         }
@@ -86,24 +96,27 @@ export function PresentPresentationToolView({
     try {
       if (format === DownloadFormat.GOOGLE_SLIDES) {
         const result = await handleGoogleSlidesUpload(
-          project.sandbox.sandbox_url, 
-          `/workspace/${presentationPath}`
+          project.sandbox.sandbox_url,
+          `/workspace/${presentationPath}`,
         );
         // If redirected to auth, don't show error
         if (result?.redirected_to_auth) {
           return; // Don't set loading false, user is being redirected
         }
       } else {
-        await downloadPresentation(format,
-          project.sandbox.sandbox_url, 
-          `/workspace/${presentationPath}`, 
-          presentationName
+        await downloadPresentation(
+          format,
+          project.sandbox.sandbox_url,
+          `/workspace/${presentationPath}`,
+          presentationName,
         );
       }
     } catch (error) {
       console.error(`Error downloading ${format}:`, error);
       if (format !== DownloadFormat.GOOGLE_SLIDES) {
-        toast.error(`Failed to download ${format}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        toast.error(
+          `Failed to download ${format}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        );
       }
     } finally {
       setIsDownloading(false);
@@ -130,8 +143,8 @@ export function PresentPresentationToolView({
               variant="secondary"
               className={
                 isSuccess
-                  ? "bg-gradient-to-b from-emerald-200 to-emerald-100 text-emerald-700 dark:from-emerald-800/50 dark:to-emerald-900/60 dark:text-emerald-300"
-                  : "bg-gradient-to-b from-rose-200 to-rose-100 text-rose-700 dark:from-rose-800/50 dark:to-rose-900/60 dark:text-rose-300"
+                  ? 'bg-gradient-to-b from-emerald-200 to-emerald-100 text-emerald-700 dark:from-emerald-800/50 dark:to-emerald-900/60 dark:text-emerald-300'
+                  : 'bg-gradient-to-b from-rose-200 to-rose-100 text-rose-700 dark:from-rose-800/50 dark:to-rose-900/60 dark:text-rose-300'
               }
             >
               {isSuccess ? (
@@ -160,19 +173,29 @@ export function PresentPresentationToolView({
               <div className="bg-white/50 dark:bg-gray-800/50 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
                 <div className="flex items-center space-x-2 mb-3">
                   <FileText className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-                  <h3 className="font-semibold text-gray-800 dark:text-gray-200">Presentation Details</h3>
+                  <h3 className="font-semibold text-gray-800 dark:text-gray-200">
+                    Presentation Details
+                  </h3>
                 </div>
                 <div className="space-y-2 text-sm">
                   {presentationName && (
                     <div className="flex items-center space-x-2">
-                      <span className="font-medium text-gray-700 dark:text-gray-300">Name:</span>
-                      <span className="text-gray-900 dark:text-gray-100">{presentationName}</span>
+                      <span className="font-medium text-gray-700 dark:text-gray-300">
+                        Name:
+                      </span>
+                      <span className="text-gray-900 dark:text-gray-100">
+                        {presentationName}
+                      </span>
                     </div>
                   )}
                   {slideCount && (
                     <div className="flex items-center space-x-2">
-                      <span className="font-medium text-gray-700 dark:text-gray-300">Slides:</span>
-                      <span className="text-gray-900 dark:text-gray-100">{slideCount} slide{slideCount !== 1 ? 's' : ''}</span>
+                      <span className="font-medium text-gray-700 dark:text-gray-300">
+                        Slides:
+                      </span>
+                      <span className="text-gray-900 dark:text-gray-100">
+                        {slideCount} slide{slideCount !== 1 ? 's' : ''}
+                      </span>
                     </div>
                   )}
                 </div>
@@ -193,8 +216,8 @@ export function PresentPresentationToolView({
             {/* Action Buttons */}
             <div className="flex flex-wrap gap-3">
               {presentationUrl && (
-                <Button 
-                  variant="default" 
+                <Button
+                  variant="default"
                   size="sm"
                   className="bg-gray-600 hover:bg-gray-700 text-white"
                   onClick={() => window.open(presentationUrl, '_blank')}
@@ -203,50 +226,50 @@ export function PresentPresentationToolView({
                   View Presentation
                 </Button>
               )}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      className="border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-950"
-                      disabled={isDownloading}
-                      title="Download presentation as PDF or PPTX"
-                    >
-                      {isDownloading ? (
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      ) : (
-                        <Download className="h-4 w-4 mr-2" />
-                      )}
-                      Download
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-32">
-                    <DropdownMenuItem 
-                      onClick={() => handleDownload(DownloadFormat.PDF)}
-                      className="cursor-pointer"
-                      disabled={isDownloading}
-                    >
-                      <FileText className="h-4 w-4 mr-2" />
-                      PDF
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => handleDownload(DownloadFormat.PPTX)}
-                      className="cursor-pointer"
-                      disabled={isDownloading}
-                    >
-                      <Presentation className="h-4 w-4 mr-2" />
-                      PPTX
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => handleDownload(DownloadFormat.GOOGLE_SLIDES)}
-                      className="cursor-pointer"
-                      disabled={isDownloading}
-                    >
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      Google Slides
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-950"
+                    disabled={isDownloading}
+                    title="Download presentation as PDF or PPTX"
+                  >
+                    {isDownloading ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Download className="h-4 w-4 mr-2" />
+                    )}
+                    Download
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-32">
+                  <DropdownMenuItem
+                    onClick={() => handleDownload(DownloadFormat.PDF)}
+                    className="cursor-pointer"
+                    disabled={isDownloading}
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    PDF
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleDownload(DownloadFormat.PPTX)}
+                    className="cursor-pointer"
+                    disabled={isDownloading}
+                  >
+                    <Presentation className="h-4 w-4 mr-2" />
+                    PPTX
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleDownload(DownloadFormat.GOOGLE_SLIDES)}
+                    className="cursor-pointer"
+                    disabled={isDownloading}
+                  >
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Google Slides
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
 
             {/* Attachments Section */}
@@ -254,7 +277,9 @@ export function PresentPresentationToolView({
               <div className="space-y-3">
                 <div className="flex items-center space-x-2">
                   <Paperclip className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-                  <h3 className="font-semibold text-gray-800 dark:text-gray-200">Presentation Files</h3>
+                  <h3 className="font-semibold text-gray-800 dark:text-gray-200">
+                    Presentation Files
+                  </h3>
                 </div>
                 <div className="grid gap-2">
                   {attachments.map((attachment, index) => (

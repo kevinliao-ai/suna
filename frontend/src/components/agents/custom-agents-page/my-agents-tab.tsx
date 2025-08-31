@@ -2,7 +2,13 @@
 
 import React, { useState, useMemo } from 'react';
 import { Globe } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { SearchBar } from './search-bar';
 import { EmptyState } from '../empty-state';
 import { AgentsGrid } from '../agents-grid';
@@ -93,7 +99,7 @@ export const MyAgentsTab = ({
   onUnpublish,
   getTemplateStyling,
   onPublishAgent,
-  publishingAgentId
+  publishingAgentId,
 }: MyAgentsTabProps) => {
   const [agentFilter, setAgentFilter] = useState<AgentFilter>('all');
 
@@ -120,16 +126,20 @@ export const MyAgentsTab = ({
             <div className="mx-auto w-20 h-20 bg-gradient-to-br from-primary/20 to-primary/10 rounded-3xl flex items-center justify-center mb-6">
               <Globe className="h-10 w-10 text-primary" />
             </div>
-            <h3 className="text-xl font-semibold mb-3">No published templates yet</h3>
+            <h3 className="text-xl font-semibold mb-3">
+              No published templates yet
+            </h3>
             <p className="text-muted-foreground mb-8 max-w-md mx-auto">
-              Publish your agents to the marketplace to share them with the community and track their usage.
+              Publish your agents to the marketplace to share them with the
+              community and track their usage.
             </p>
           </div>
         ) : (
           <>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {myTemplates.map((template) => {
-                const isActioning = templatesActioningId === template.template_id;
+                const isActioning =
+                  templatesActioningId === template.template_id;
                 return (
                   <AgentCard
                     key={template.template_id}
@@ -138,11 +148,13 @@ export const MyAgentsTab = ({
                     styling={getTemplateStyling(template)}
                     isActioning={isActioning}
                     onPrimaryAction={
-                      template.is_public 
+                      template.is_public
                         ? () => onUnpublish(template.template_id, template.name)
                         : () => onPublish(template)
                     }
-                    onSecondaryAction={template.is_public ? () => {} : undefined}
+                    onSecondaryAction={
+                      template.is_public ? () => {} : undefined
+                    }
                   />
                 );
               })}
@@ -176,13 +188,20 @@ export const MyAgentsTab = ({
           onChange={setAgentsSearchQuery}
         />
         <div className="flex items-center gap-3">
-          <Select value={agentFilter} onValueChange={(value: AgentFilter) => setAgentFilter(value)}>
+          <Select
+            value={agentFilter}
+            onValueChange={(value: AgentFilter) => setAgentFilter(value)}
+          >
             <SelectTrigger className="w-[180px] h-12 rounded-xl">
               <SelectValue placeholder="Filter agents" />
             </SelectTrigger>
-            <SelectContent className='rounded-xl'>
+            <SelectContent className="rounded-xl">
               {filterOptions.map((filter) => (
-                <SelectItem key={filter.value} className='rounded-xl' value={filter.value}>
+                <SelectItem
+                  key={filter.value}
+                  className="rounded-xl"
+                  value={filter.value}
+                >
                   {filter.label}
                 </SelectItem>
               ))}
@@ -215,7 +234,7 @@ export const MyAgentsTab = ({
                 publishingId={publishingAgentId}
               />
             )}
-            
+
             {agentsPagination && (
               <Pagination
                 currentPage={agentsPagination.current_page}
@@ -235,4 +254,4 @@ export const MyAgentsTab = ({
       </div>
     </div>
   );
-}; 
+};

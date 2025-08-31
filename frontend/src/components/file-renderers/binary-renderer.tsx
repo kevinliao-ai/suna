@@ -52,7 +52,9 @@ export function BinaryRenderer({
           </div>
         </div>
 
-        <h3 className="text-lg font-semibold mb-2">{fileName.split('/').pop()}</h3>
+        <h3 className="text-lg font-semibold mb-2">
+          {fileName.split('/').pop()}
+        </h3>
         <p className="text-sm text-muted-foreground mb-6">
           This binary file cannot be previewed in the browser
         </p>

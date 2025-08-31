@@ -1,4 +1,8 @@
-import { extractToolData, extractSearchQuery, extractSearchResults } from '../utils';
+import {
+  extractToolData,
+  extractSearchQuery,
+  extractSearchResults,
+} from '../utils';
 
 export interface WebSearchData {
   query: string | null;
@@ -14,7 +18,7 @@ const parseContent = (content: any): any => {
     try {
       return JSON.parse(content);
     } catch (e) {
-      return content; 
+      return content;
     }
   }
   return content;
@@ -22,35 +26,45 @@ const parseContent = (content: any): any => {
 
 const extractFromNewFormat = (content: any): WebSearchData => {
   const parsedContent = parseContent(content);
-  
+
   if (!parsedContent || typeof parsedContent !== 'object') {
-    return { query: null, results: [], answer: null, images: [], success: undefined, timestamp: undefined };
+    return {
+      query: null,
+      results: [],
+      answer: null,
+      images: [],
+      success: undefined,
+      timestamp: undefined,
+    };
   }
 
-  if ('tool_execution' in parsedContent && typeof parsedContent.tool_execution === 'object') {
+  if (
+    'tool_execution' in parsedContent &&
+    typeof parsedContent.tool_execution === 'object'
+  ) {
     const toolExecution = parsedContent.tool_execution;
     const args = toolExecution.arguments || {};
-    
+
     let parsedOutput = toolExecution.result?.output;
     if (typeof parsedOutput === 'string') {
       try {
         parsedOutput = JSON.parse(parsedOutput);
-      } catch (e) {
-      }
+      } catch (e) {}
     }
     parsedOutput = parsedOutput || {};
 
     const extractedData = {
       query: args.query || parsedOutput?.query || null,
-      results: parsedOutput?.results?.map((result: any) => ({
-        title: result.title || '',
-        url: result.url || '',
-        snippet: result.content || result.snippet || ''
-      })) || [],
+      results:
+        parsedOutput?.results?.map((result: any) => ({
+          title: result.title || '',
+          url: result.url || '',
+          snippet: result.content || result.snippet || '',
+        })) || [],
       answer: parsedOutput?.answer || null,
       images: parsedOutput?.images || [],
       success: toolExecution.result?.success,
-      timestamp: toolExecution.execution_details?.timestamp
+      timestamp: toolExecution.execution_details?.timestamp,
     };
     return extractedData;
   }
@@ -59,30 +73,38 @@ const extractFromNewFormat = (content: any): WebSearchData => {
     return extractFromNewFormat(parsedContent.content);
   }
 
-  return { query: null, results: [], answer: null, images: [], success: undefined, timestamp: undefined };
+  return {
+    query: null,
+    results: [],
+    answer: null,
+    images: [],
+    success: undefined,
+    timestamp: undefined,
+  };
 };
 
-
-const extractFromLegacyFormat = (content: any): Omit<WebSearchData, 'success' | 'timestamp'> => {
+const extractFromLegacyFormat = (
+  content: any,
+): Omit<WebSearchData, 'success' | 'timestamp'> => {
   const toolData = extractToolData(content);
-  
+
   if (toolData.toolResult) {
     const args = toolData.arguments || {};
     return {
       query: toolData.query || args.query || null,
-      results: [], 
+      results: [],
       answer: null,
-      images: []
+      images: [],
     };
   }
 
   const legacyQuery = extractSearchQuery(content);
-  
+
   return {
     query: legacyQuery,
     results: [],
     answer: null,
-    images: []
+    images: [],
   };
 };
 
@@ -91,7 +113,7 @@ export function extractWebSearchData(
   toolContent: any,
   isSuccess: boolean,
   toolTimestamp?: string,
-  assistantTimestamp?: string
+  assistantTimestamp?: string,
 ): {
   query: string | null;
   searchResults: Array<{ title: string; url: string; snippet?: string }>;
@@ -102,7 +124,8 @@ export function extractWebSearchData(
   actualAssistantTimestamp?: string;
 } {
   let query: string | null = null;
-  let searchResults: Array<{ title: string; url: string; snippet?: string }> = [];
+  let searchResults: Array<{ title: string; url: string; snippet?: string }> =
+    [];
   let answer: string | null = null;
   let images: string[] = [];
   let actualIsSuccess = isSuccess;
@@ -139,10 +162,10 @@ export function extractWebSearchData(
     const toolLegacy = extractFromLegacyFormat(toolContent);
 
     query = assistantLegacy.query || toolLegacy.query;
-    
+
     const legacyResults = extractSearchResults(toolContent);
     searchResults = legacyResults;
-    
+
     if (toolContent) {
       try {
         let parsedContent;
@@ -160,15 +183,15 @@ export function extractWebSearchData(
         if (parsedContent.images && Array.isArray(parsedContent.images)) {
           images = parsedContent.images;
         }
-      } catch (e) {
-      }
+      } catch (e) {}
     }
   }
 
   if (!query) {
-    query = extractSearchQuery(assistantContent) || extractSearchQuery(toolContent);
+    query =
+      extractSearchQuery(assistantContent) || extractSearchQuery(toolContent);
   }
-  
+
   if (searchResults.length === 0) {
     const fallbackResults = extractSearchResults(toolContent);
     searchResults = fallbackResults;
@@ -181,6 +204,6 @@ export function extractWebSearchData(
     images,
     actualIsSuccess,
     actualToolTimestamp,
-    actualAssistantTimestamp
+    actualAssistantTimestamp,
   };
-} 
+}

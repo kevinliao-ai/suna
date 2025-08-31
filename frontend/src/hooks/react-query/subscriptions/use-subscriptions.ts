@@ -35,7 +35,8 @@ export const useSubscriptionWithStreaming = (isStreaming: boolean = false) => {
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+    return () =>
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, []);
 
   return useQuery({
@@ -48,11 +49,11 @@ export const useSubscriptionWithStreaming = (isStreaming: boolean = false) => {
     refetchInterval: (data) => {
       // No refresh if tab is hidden
       if (!isVisible) return false;
-      
+
       // If actively streaming: refresh every 2 minutes instead of 5 seconds
       // Billing data doesn't need to be that real-time
       if (isStreaming) return 2 * 60 * 1000;
-      
+
       // If visible but not streaming: refresh every 10 minutes
       return 10 * 60 * 1000;
     },

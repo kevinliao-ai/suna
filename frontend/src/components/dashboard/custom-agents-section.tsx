@@ -5,7 +5,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Ripple } from '../ui/ripple';
-import { useKortixTeamTemplates, useInstallTemplate } from '@/hooks/react-query/secure-mcp/use-secure-mcp';
+import {
+  useKortixTeamTemplates,
+  useInstallTemplate,
+} from '@/hooks/react-query/secure-mcp/use-secure-mcp';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useRouter } from 'next/navigation';
 import { MarketplaceAgentPreviewDialog } from '@/components/agents/marketplace-agent-preview-dialog';
@@ -31,17 +34,22 @@ const TitleSection = () => (
   </div>
 );
 
-export function CustomAgentsSection({ onAgentSelect }: CustomAgentsSectionProps) {
+export function CustomAgentsSection({
+  onAgentSelect,
+}: CustomAgentsSectionProps) {
   const router = useRouter();
   const { data: templates, isLoading, error } = useKortixTeamTemplates();
   const installTemplate = useInstallTemplate();
-  
-  const [selectedTemplate, setSelectedTemplate] = React.useState<MarketplaceTemplate | null>(null);
+
+  const [selectedTemplate, setSelectedTemplate] =
+    React.useState<MarketplaceTemplate | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = React.useState(false);
   const [showInstallDialog, setShowInstallDialog] = React.useState(false);
   const [showAgentLimitDialog, setShowAgentLimitDialog] = React.useState(false);
   const [agentLimitError, setAgentLimitError] = React.useState<any>(null);
-  const [installingItemId, setInstallingItemId] = React.useState<string | null>(null);
+  const [installingItemId, setInstallingItemId] = React.useState<string | null>(
+    null,
+  );
 
   const handleCardClick = (template: any) => {
     const marketplaceTemplate: MarketplaceTemplate = {
@@ -66,7 +74,7 @@ export function CustomAgentsSection({ onAgentSelect }: CustomAgentsSectionProps)
       model: template.metadata?.model,
       marketplace_published_at: template.marketplace_published_at,
     };
-    
+
     setSelectedTemplate(marketplaceTemplate);
     setIsPreviewOpen(true);
   };
@@ -79,10 +87,10 @@ export function CustomAgentsSection({ onAgentSelect }: CustomAgentsSectionProps)
 
   // Handle the actual installation from the streamlined dialog
   const handleInstall = async (
-    item: MarketplaceTemplate, 
-    instanceName: string, 
-    profileMappings: Record<string, string>, 
-    customServerConfigs: Record<string, any>
+    item: MarketplaceTemplate,
+    instanceName: string,
+    profileMappings: Record<string, string>,
+    customServerConfigs: Record<string, any>,
   ) => {
     if (!item) return;
 
@@ -120,19 +128,29 @@ export function CustomAgentsSection({ onAgentSelect }: CustomAgentsSectionProps)
       if (error.message?.includes('already in your library')) {
         toast.error('This agent is already in your library');
       } else if (error.message?.includes('Credential profile not found')) {
-        toast.error('One or more selected credential profiles could not be found. Please refresh and try again.');
+        toast.error(
+          'One or more selected credential profiles could not be found. Please refresh and try again.',
+        );
       } else if (error.message?.includes('Missing credential profile')) {
-        toast.error('Please select credential profiles for all required services');
+        toast.error(
+          'Please select credential profiles for all required services',
+        );
       } else if (error.message?.includes('Invalid credential profile')) {
-        toast.error('One or more selected credential profiles are invalid. Please select valid profiles.');
+        toast.error(
+          'One or more selected credential profiles are invalid. Please select valid profiles.',
+        );
       } else if (error.message?.includes('inactive')) {
-        toast.error('One or more selected credential profiles are inactive. Please select active profiles.');
+        toast.error(
+          'One or more selected credential profiles are inactive. Please select active profiles.',
+        );
       } else if (error.message?.includes('Template not found')) {
         toast.error('This agent template is no longer available');
       } else if (error.message?.includes('Access denied')) {
         toast.error('You do not have permission to install this agent');
       } else {
-        toast.error(error.message || 'Failed to install agent. Please try again.');
+        toast.error(
+          error.message || 'Failed to install agent. Please try again.',
+        );
       }
     } finally {
       setInstallingItemId(null);
@@ -145,7 +163,10 @@ export function CustomAgentsSection({ onAgentSelect }: CustomAgentsSectionProps)
         <TitleSection />
         <div className="grid gap-4 pb-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-            <div key={i} className="bg-muted/30 rounded-3xl p-4 h-[180px] w-full">
+            <div
+              key={i}
+              className="bg-muted/30 rounded-3xl p-4 h-[180px] w-full"
+            >
               <Skeleton className="h-12 w-12 rounded-2xl mb-3" />
               <Skeleton className="h-5 w-3/4 mb-2" />
               <Skeleton className="h-10 w-full mb-3" />
@@ -175,7 +196,9 @@ export function CustomAgentsSection({ onAgentSelect }: CustomAgentsSectionProps)
       <div className="w-full">
         <TitleSection />
         <div className="text-center py-8">
-          <p className="text-muted-foreground">No custom agents available yet</p>
+          <p className="text-muted-foreground">
+            No custom agents available yet
+          </p>
         </div>
       </div>
     );
@@ -191,12 +214,12 @@ export function CustomAgentsSection({ onAgentSelect }: CustomAgentsSectionProps)
               key={template.template_id}
               className={cn(
                 'group relative bg-muted/30 rounded-3xl overflow-hidden transition-all duration-300 border cursor-pointer flex flex-col h-[180px] w-full border-border/50',
-                'hover:border-primary/20'
+                'hover:border-primary/20',
               )}
               onClick={() => handleCardClick(template)}
             >
               <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-              
+
               <div className="h-full relative flex flex-col overflow-hidden w-full p-4">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="flex-shrink-0">
@@ -256,4 +279,4 @@ export function CustomAgentsSection({ onAgentSelect }: CustomAgentsSectionProps)
       )}
     </>
   );
-} 
+}

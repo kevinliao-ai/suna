@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -13,17 +13,16 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import { Activity, Copy, ExternalLink, Loader2 } from 'lucide-react';
 import {
-  Activity,
-  Copy,
-  ExternalLink,
-  Loader2
-} from 'lucide-react';
-import { TriggerProvider, TriggerConfiguration, ScheduleTriggerConfig, EventTriggerConfig } from './types';
+  TriggerProvider,
+  TriggerConfiguration,
+  ScheduleTriggerConfig,
+  EventTriggerConfig,
+} from './types';
 import { SimplifiedScheduleConfig } from './providers/simplified-schedule-config';
 import { EventTriggerConfigForm } from './providers/event-config';
 import { getDialogIcon } from './utils';
-
 
 interface TriggerConfigDialogProps {
   provider: TriggerProvider;
@@ -48,10 +47,12 @@ export const TriggerConfigDialog: React.FC<TriggerConfigDialogProps> = ({
   selectedAgent,
   onAgentSelect,
   open = true,
-  onOpenChange
+  onOpenChange,
 }) => {
   const [name, setName] = useState(existingConfig?.name || '');
-  const [description, setDescription] = useState(existingConfig?.description || '');
+  const [description, setDescription] = useState(
+    existingConfig?.description || '',
+  );
   const [isActive, setIsActive] = useState(existingConfig?.is_active ?? true);
   const [config, setConfig] = useState(existingConfig?.config || {});
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -88,7 +89,10 @@ export const TriggerConfigDialog: React.FC<TriggerConfigDialogProps> = ({
           newErrors.agent_prompt = 'Agent prompt is required';
         }
       }
-    } else if (provider.trigger_type === 'webhook' || provider.provider_id === 'composio') {
+    } else if (
+      provider.trigger_type === 'webhook' ||
+      provider.provider_id === 'composio'
+    ) {
       // Validate event-based triggers
       if (config.execution_type === 'workflow') {
         if (!config.workflow_id) {
@@ -175,7 +179,9 @@ export const TriggerConfigDialog: React.FC<TriggerConfigDialogProps> = ({
         return (
           <div className="text-center py-8 text-muted-foreground">
             <Activity className="h-12 w-12 mx-auto mb-4" />
-            <p>Configuration form for {provider.name} is not yet implemented.</p>
+            <p>
+              Configuration form for {provider.name} is not yet implemented.
+            </p>
           </div>
         );
     }
@@ -200,14 +206,18 @@ export const TriggerConfigDialog: React.FC<TriggerConfigDialogProps> = ({
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => navigator.clipboard.writeText(existingConfig.webhook_url!)}
+                    onClick={() =>
+                      navigator.clipboard.writeText(existingConfig.webhook_url!)
+                    }
                   >
                     <Copy className="h-4 w-4" />
                   </Button>
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => window.open(existingConfig.webhook_url, '_blank')}
+                    onClick={() =>
+                      window.open(existingConfig.webhook_url, '_blank')
+                    }
                   >
                     <ExternalLink className="h-4 w-4" />
                   </Button>
@@ -222,17 +232,17 @@ export const TriggerConfigDialog: React.FC<TriggerConfigDialogProps> = ({
       </div>
       <div className="flex-shrink-0 px-6 py-6 border-t bg-muted/20">
         <div className="flex gap-3">
-          <Button 
-            variant="outline" 
-            onClick={onCancel} 
-            disabled={isLoading} 
+          <Button
+            variant="outline"
+            onClick={onCancel}
+            disabled={isLoading}
             className="px-8 h-11"
           >
             Cancel
           </Button>
-          <Button 
-            onClick={handleSave} 
-            disabled={isLoading} 
+          <Button
+            onClick={handleSave}
+            disabled={isLoading}
             className="flex-1 h-11 text-base font-medium"
           >
             {isLoading ? (
@@ -248,4 +258,4 @@ export const TriggerConfigDialog: React.FC<TriggerConfigDialogProps> = ({
       </div>
     </DialogContent>
   );
-}; 
+};

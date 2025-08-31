@@ -61,7 +61,10 @@ export function Navbar() {
   const { theme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const { user } = useAuth();
-  const { formattedStars, loading: starsLoading } = useGitHubStars('bilibili', 'Index-anisora');
+  const { formattedStars, loading: starsLoading } = useGitHubStars(
+    'bilibili',
+    'Index-anisora',
+  );
   const router = useRouter();
   const pathname = usePathname();
 
@@ -158,7 +161,9 @@ export function Navbar() {
                     aria-label="GitHub Repository"
                   >
                     <Github className="size-3.5" />
-                    <span className={`text-xs font-medium transition-opacity duration-200 ${starsLoading ? 'opacity-50' : 'opacity-100'}`}>
+                    <span
+                      className={`text-xs font-medium transition-opacity duration-200 ${starsLoading ? 'opacity-50' : 'opacity-100'}`}
+                    >
                       {formattedStars}
                     </span>
                   </Link>
@@ -258,16 +263,16 @@ export function Navbar() {
                               setIsDrawerOpen(false);
                               return;
                             }
-                            
+
                             e.preventDefault();
-                            
+
                             // If we're not on the homepage, redirect to homepage with the section
                             if (pathname !== '/') {
                               router.push(`/${item.href}`);
                               setIsDrawerOpen(false);
                               return;
                             }
-                            
+
                             const element = document.getElementById(
                               item.href.substring(1),
                             );
@@ -275,7 +280,10 @@ export function Navbar() {
                             setIsDrawerOpen(false);
                           }}
                           className={`underline-offset-4 hover:text-primary/80 transition-colors ${
-                            (item.href.startsWith('#') && pathname === '/' && activeSection === item.href.substring(1)) || (item.href === pathname)
+                            (item.href.startsWith('#') &&
+                              pathname === '/' &&
+                              activeSection === item.href.substring(1)) ||
+                            item.href === pathname
                               ? 'text-primary font-medium'
                               : 'text-primary/60'
                           }`}
@@ -296,7 +304,9 @@ export function Navbar() {
                   aria-label="GitHub Repository"
                 >
                   <Github className="size-3.5" />
-                  <span className={`text-xs font-medium transition-opacity duration-200 ${starsLoading ? 'opacity-50' : 'opacity-100'}`}>
+                  <span
+                    className={`text-xs font-medium transition-opacity duration-200 ${starsLoading ? 'opacity-50' : 'opacity-100'}`}
+                  >
                     ⭐ {formattedStars}
                   </span>
                 </Link>
@@ -328,5 +338,5 @@ export function Navbar() {
         )}
       </AnimatePresence>
     </header>
-  ); 
+  );
 }

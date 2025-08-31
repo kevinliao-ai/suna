@@ -8,7 +8,11 @@ interface EmptyStateProps {
   onClearFilters: () => void;
 }
 
-export const EmptyState = ({ hasAgents, onCreateAgent, onClearFilters }: EmptyStateProps) => {
+export const EmptyState = ({
+  hasAgents,
+  onCreateAgent,
+  onClearFilters,
+}: EmptyStateProps) => {
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4">
       <div className="flex flex-col items-center text-center max-w-md space-y-6">
@@ -24,32 +28,22 @@ export const EmptyState = ({ hasAgents, onCreateAgent, onClearFilters }: EmptySt
             {!hasAgents ? 'No agents yet' : 'No agents found'}
           </h2>
           <p className="text-muted-foreground leading-relaxed">
-            {!hasAgents ? (
-              'Create your first agent to start automating tasks with custom instructions and tools. Configure custom AgentPress capabilities to fine tune agent according to your needs.'
-            ) : (
-              'No agents match your current search and filter criteria. Try adjusting your filters or search terms.'
-            )}
+            {!hasAgents
+              ? 'Create your first agent to start automating tasks with custom instructions and tools. Configure custom AgentPress capabilities to fine tune agent according to your needs.'
+              : 'No agents match your current search and filter criteria. Try adjusting your filters or search terms.'}
           </p>
         </div>
         {!hasAgents ? (
-          <Button 
-            size="lg" 
-            onClick={onCreateAgent}
-            className="mt-4"
-          >
+          <Button size="lg" onClick={onCreateAgent} className="mt-4">
             <Plus className="h-5 w-5" />
             Create your first agent
           </Button>
         ) : (
-          <Button 
-            variant="outline"
-            onClick={onClearFilters}
-            className="mt-4"
-          >
+          <Button variant="outline" onClick={onClearFilters} className="mt-4">
             Clear filters
           </Button>
         )}
       </div>
     </div>
   );
-}
+};

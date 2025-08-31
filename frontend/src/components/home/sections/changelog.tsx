@@ -1,11 +1,11 @@
 'use client';
 
-import { ArrowUpRight } from "lucide-react";
-import Image from "next/image";
+import { ArrowUpRight } from 'lucide-react';
+import Image from 'next/image';
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { changeLogData } from "../data/changelog";
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { changeLogData } from '../data/changelog';
 
 export type ChangelogData = {
   version: string;
@@ -28,8 +28,8 @@ export interface Changelog1Props {
 }
 
 export const Changelog = ({
-  title = "Changelog",
-  description = "The latest updates and improvements to Suna.",
+  title = 'Changelog',
+  description = 'The latest updates and improvements to Suna.',
   data = changeLogData,
 }: Changelog1Props) => {
   return (
@@ -50,9 +50,7 @@ export const Changelog = ({
               className="relative flex flex-col gap-4 md:flex-row md:gap-16"
             >
               <div className="top-30 flex h-min w-64 shrink-0 items-center gap-4 md:sticky">
-                <Badge className="text-xs">
-                  {entry.version}
-                </Badge>
+                <Badge className="text-xs">{entry.version}</Badge>
                 <span className="text-xs font-medium text-muted-foreground">
                   {entry.date}
                 </span>

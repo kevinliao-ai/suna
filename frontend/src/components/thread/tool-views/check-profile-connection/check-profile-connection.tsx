@@ -11,16 +11,16 @@ import {
   Activity,
   Hash,
   Zap,
-  Server
+  Server,
 } from 'lucide-react';
 import { ToolViewProps } from '../types';
 import { formatTimestamp, getToolTitle } from '../utils';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { LoadingState } from '../shared/LoadingState';
-import { Separator } from "@/components/ui/separator";
+import { Separator } from '@/components/ui/separator';
 import { extractCheckProfileConnectionData, Connection } from './_utils';
 
 export function CheckProfileConnectionToolView({
@@ -32,7 +32,6 @@ export function CheckProfileConnectionToolView({
   isSuccess = true,
   isStreaming = false,
 }: ToolViewProps) {
-
   const {
     profile_name,
     app_name,
@@ -45,13 +44,13 @@ export function CheckProfileConnectionToolView({
     message,
     actualIsSuccess,
     actualToolTimestamp,
-    actualAssistantTimestamp
+    actualAssistantTimestamp,
   } = extractCheckProfileConnectionData(
     assistantContent,
     toolContent,
     isSuccess,
     toolTimestamp,
-    assistantTimestamp
+    assistantTimestamp,
   );
 
   const toolTitle = getToolTitle(name);
@@ -65,7 +64,7 @@ export function CheckProfileConnectionToolView({
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
-        timeZoneName: 'short'
+        timeZoneName: 'short',
       });
     } catch (e) {
       return dateString;
@@ -75,10 +74,10 @@ export function CheckProfileConnectionToolView({
   const getConnectionStatus = (isConnected: boolean) => {
     return {
       icon: isConnected ? Link2 : Link2Off,
-      color: isConnected 
+      color: isConnected
         ? 'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800'
         : 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800',
-      text: isConnected ? 'Connected' : 'Not Connected'
+      text: isConnected ? 'Connected' : 'Not Connected',
     };
   };
 
@@ -86,7 +85,7 @@ export function CheckProfileConnectionToolView({
     return toolName
       .replace(/^[A-Z_]+-/, '')
       .split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
       .join(' ');
   };
 
@@ -109,10 +108,10 @@ export function CheckProfileConnectionToolView({
             <Badge
               variant="outline"
               className={cn(
-                "text-xs font-medium",
+                'text-xs font-medium',
                 actualIsSuccess
-                  ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800"
-                  : "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800"
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800'
+                  : 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800',
               )}
             >
               {actualIsSuccess ? (
@@ -161,7 +160,7 @@ export function CheckProfileConnectionToolView({
                     return (
                       <Badge
                         variant="outline"
-                        className={cn("text-xs font-medium", status.color)}
+                        className={cn('text-xs font-medium', status.color)}
                       >
                         <StatusIcon className="w-3 h-3" />
                         {status.text}
@@ -203,7 +202,7 @@ export function CheckProfileConnectionToolView({
                       {tool_count}
                     </Badge>
                   </div>
-                  
+
                   <div className="space-y-2">
                     {available_tools.map((tool, index) => (
                       <div
@@ -238,7 +237,7 @@ export function CheckProfileConnectionToolView({
                       {connection_count}
                     </Badge>
                   </div>
-                  
+
                   <div className="space-y-2">
                     {connections.map((connection, index) => (
                       <div
@@ -252,31 +251,38 @@ export function CheckProfileConnectionToolView({
                               {connection.app_name}
                             </span>
                           </div>
-                          
+
                           <Badge
                             variant="outline"
                             className={cn(
-                              "text-xs font-medium",
+                              'text-xs font-medium',
                               connection.is_active
-                                ? "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800"
-                                : "bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-900/20 dark:text-gray-300 dark:border-gray-800"
+                                ? 'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800'
+                                : 'bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-900/20 dark:text-gray-300 dark:border-gray-800',
                             )}
                           >
                             {connection.is_active ? 'Active' : 'Inactive'}
                           </Badge>
                         </div>
-                        
+
                         <div className="text-xs text-zinc-500 dark:text-zinc-400 space-y-1">
                           <div className="flex items-center gap-2">
                             <Calendar className="w-3 h-3" />
-                            <span>Connected: {formatConnectionTime(connection.created_at)}</span>
+                            <span>
+                              Connected:{' '}
+                              {formatConnectionTime(connection.created_at)}
+                            </span>
                           </div>
-                          {connection.updated_at && connection.updated_at !== connection.created_at && (
-                            <div className="flex items-center gap-2">
-                              <Activity className="w-3 h-3" />
-                              <span>Updated: {formatConnectionTime(connection.updated_at)}</span>
-                            </div>
-                          )}
+                          {connection.updated_at &&
+                            connection.updated_at !== connection.created_at && (
+                              <div className="flex items-center gap-2">
+                                <Activity className="w-3 h-3" />
+                                <span>
+                                  Updated:{' '}
+                                  {formatConnectionTime(connection.updated_at)}
+                                </span>
+                              </div>
+                            )}
                         </div>
                       </div>
                     ))}
@@ -291,7 +297,8 @@ export function CheckProfileConnectionToolView({
                     No Tools Available
                   </h3>
                   <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                    This profile is connected but no tools are currently available for this integration.
+                    This profile is connected but no tools are currently
+                    available for this integration.
                   </p>
                 </div>
               )}
@@ -303,7 +310,8 @@ export function CheckProfileConnectionToolView({
                     Profile Not Connected
                   </h3>
                   <p className="text-sm text-red-700 dark:text-red-300">
-                    This credential profile needs to be connected before tools become available.
+                    This credential profile needs to be connected before tools
+                    become available.
                   </p>
                 </div>
               )}
@@ -327,4 +335,4 @@ export function CheckProfileConnectionToolView({
       </CardContent>
     </Card>
   );
-} 
+}

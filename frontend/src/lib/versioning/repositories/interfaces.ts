@@ -3,17 +3,28 @@ import {
   VersionResponse,
   CreateVersionRequest,
   UpdateVersionDetailsRequest,
-  VersionComparison
+  VersionComparison,
 } from '../types';
 
 export interface IVersionRepository {
   getAllVersions(agentId: string): Promise<AgentVersion[]>;
   getVersion(agentId: string, versionId: string): Promise<AgentVersion>;
-  createVersion(agentId: string, request: CreateVersionRequest): Promise<AgentVersion>;
+  createVersion(
+    agentId: string,
+    request: CreateVersionRequest,
+  ): Promise<AgentVersion>;
   activateVersion(agentId: string, versionId: string): Promise<void>;
-  compareVersions(agentId: string, version1Id: string, version2Id: string): Promise<VersionComparison>;
+  compareVersions(
+    agentId: string,
+    version1Id: string,
+    version2Id: string,
+  ): Promise<VersionComparison>;
   rollbackToVersion(agentId: string, versionId: string): Promise<AgentVersion>;
-  updateVersionDetails(agentId: string, versionId: string, request: UpdateVersionDetailsRequest): Promise<AgentVersion>;
+  updateVersionDetails(
+    agentId: string,
+    versionId: string,
+    request: UpdateVersionDetailsRequest,
+  ): Promise<AgentVersion>;
 }
 
 export interface IApiClient {
@@ -21,4 +32,4 @@ export interface IApiClient {
   post<T>(url: string, data?: any): Promise<T>;
   put<T>(url: string, data?: any): Promise<T>;
   delete(url: string): Promise<void>;
-} 
+}

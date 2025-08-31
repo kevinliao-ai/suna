@@ -12,9 +12,14 @@ interface SearchBarProps {
   className?: string;
 }
 
-export const SearchBar = ({ placeholder, value, onChange, className }: SearchBarProps) => {
+export const SearchBar = ({
+  placeholder,
+  value,
+  onChange,
+  className,
+}: SearchBarProps) => {
   return (
-    <div className={cn("relative flex-1 max-w-2xl", className)}>
+    <div className={cn('relative flex-1 max-w-2xl', className)}>
       <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
       <Input
         placeholder={placeholder}
@@ -24,4 +29,4 @@ export const SearchBar = ({ placeholder, value, onChange, className }: SearchBar
       />
     </div>
   );
-}; 
+};

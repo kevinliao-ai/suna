@@ -40,4 +40,4 @@ export const useAllTriggers = () => {
     staleTime: 1 * 60 * 1000,
     refetchInterval: 30 * 1000,
   });
-}; 
+};
