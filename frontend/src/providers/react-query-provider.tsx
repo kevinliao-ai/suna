@@ -10,13 +10,14 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { handleApiError } from '@/lib/error-handler';
 import { isLocalMode } from '@/lib/config';
 import { BillingError, AgentRunLimitError } from '@/lib/api';
+import { DehydratedState } from '@tanstack/react-query';
 
 export function ReactQueryProvider({
   children,
   dehydratedState,
 }: {
   children: React.ReactNode;
-  dehydratedState?: unknown;
+  dehydratedState?: DehydratedState;
 }) {
   const [queryClient] = useState(
     () =>
