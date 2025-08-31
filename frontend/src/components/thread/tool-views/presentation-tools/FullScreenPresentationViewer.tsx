@@ -12,6 +12,7 @@ import {
   SkipBack,
   SkipForward,
   Edit,
+  Loader2,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -20,6 +21,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { constructHtmlPreviewUrl } from '@/lib/utils/url';
+import { downloadPresentation, DownloadFormat, handleGoogleSlidesUpload } from '../utils/presentation-utils';
 
 interface SlideMetadata {
   title: string;
@@ -57,10 +59,16 @@ export function FullScreenPresentationViewer({
   const [currentSlide, setCurrentSlide] = useState(initialSlide);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [retryAttempt, setRetryAttempt] = useState(0);
+  const [backgroundRetryInterval, setBackgroundRetryInterval] = useState<NodeJS.Timeout | null>(null);
   const [showControls, setShowControls] = useState(true);
+  const [showEditor, setShowEditor] = useState(false);
+  const [isDownloadingPDF, setIsDownloadingPDF] = useState(false);
+  const [isDownloadingPPTX, setIsDownloadingPPTX] = useState(false);
+  const [isDownloadingGoogleSlides, setIsDownloadingGoogleSlides] = useState(false);
   
   // Create a stable refresh timestamp when metadata changes (like PresentationViewer)
-  const refreshTimestamp = useMemo(() => Date.now(), [metadata]);
+  const refreshTimestamp = useMemo(() => metadata?.updated_at || Date.now(), [metadata?.updated_at]);
 
   const slides = metadata ? Object.entries(metadata.slides)
     .map(([num, slide]) => ({ number: parseInt(num), ...slide }))
@@ -73,12 +81,13 @@ export function FullScreenPresentationViewer({
     return name.replace(/[^a-zA-Z0-9\-_]/g, '').toLowerCase();
   };
 
-  // Load metadata
-  const loadMetadata = useCallback(async () => {
+  // Load metadata with retry logic
+  const loadMetadata = useCallback(async (retryCount = 0, maxRetries = 5) => {
     if (!presentationName || !sandboxUrl) return;
     
     setIsLoading(true);
     setError(null);
+    setRetryAttempt(retryCount);
     
     try {
       // Sanitize the presentation name to match backend directory creation
@@ -89,7 +98,10 @@ export function FullScreenPresentationViewer({
         `presentations/${sanitizedPresentationName}/metadata.json`
       );
       
-      const response = await fetch(`${metadataUrl}?t=${Date.now()}`, {
+      const urlWithCacheBust = `${metadataUrl}?t=${Date.now()}`;
+      console.log(`Loading presentation metadata (attempt ${retryCount + 1}/${maxRetries + 1}):`, urlWithCacheBust);
+      
+      const response = await fetch(urlWithCacheBust, {
         cache: 'no-cache',
         headers: { 'Cache-Control': 'no-cache' }
       });
@@ -97,23 +109,93 @@ export function FullScreenPresentationViewer({
       if (response.ok) {
         const data = await response.json();
         setMetadata(data);
+        console.log('Successfully loaded presentation metadata:', data);
+        setIsLoading(false);
+        
+        // Clear background retry interval on success
+        if (backgroundRetryInterval) {
+          clearInterval(backgroundRetryInterval);
+          setBackgroundRetryInterval(null);
+        }
+        
+        return; // Success, exit early
       } else {
-        setError('Failed to load presentation metadata');
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
     } catch (err) {
-      console.error('Error loading metadata:', err);
-      setError('Failed to load presentation metadata');
-    } finally {
+      console.error(`Error loading metadata (attempt ${retryCount + 1}):`, err);
+      
+      // If we haven't reached max retries, try again with exponential backoff
+      if (retryCount < maxRetries) {
+        const delay = Math.min(1000 * Math.pow(2, retryCount), 10000); // Cap at 10 seconds
+        console.log(`Retrying in ${delay}ms...`);
+        
+        setTimeout(() => {
+          loadMetadata(retryCount + 1, maxRetries);
+        }, delay);
+        
+        return; // Don't set error state yet, we're retrying
+      }
+      
+      // All retries exhausted, set error and start background retry
+      setError('Failed to load presentation metadata after multiple attempts');
       setIsLoading(false);
+      
+      // Start background retry every 10 seconds
+      if (!backgroundRetryInterval) {
+        const interval = setInterval(() => {
+          console.log('Background retry attempt...');
+          loadMetadata(0, 2); // Fewer retries for background attempts
+        }, 10000);
+        setBackgroundRetryInterval(interval);
+      }
     }
-  }, [presentationName, sandboxUrl]);
+  }, [presentationName, sandboxUrl, backgroundRetryInterval]);
 
   useEffect(() => {
     if (isOpen) {
+      // Clear any existing background retry when opening
+      if (backgroundRetryInterval) {
+        clearInterval(backgroundRetryInterval);
+        setBackgroundRetryInterval(null);
+      }
       loadMetadata();
       setCurrentSlide(initialSlide);
+    } else {
+      // Clear background retry when closing
+      if (backgroundRetryInterval) {
+        clearInterval(backgroundRetryInterval);
+        setBackgroundRetryInterval(null);
+      }
     }
-  }, [isOpen, loadMetadata, initialSlide]);
+  }, [isOpen, loadMetadata, initialSlide, backgroundRetryInterval]);
+
+  // Cleanup background retry interval on unmount
+  useEffect(() => {
+    return () => {
+      if (backgroundRetryInterval) {
+        clearInterval(backgroundRetryInterval);
+      }
+    };
+  }, [backgroundRetryInterval]);
+
+  // Reload metadata when exiting editor mode to refresh with latest changes
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    
+    if (!showEditor) {
+      // Add a small delay to allow the editor to save changes
+      timeoutId = setTimeout(() => {
+        loadMetadata();
+      }, 300);
+    }
+    
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [showEditor, loadMetadata]);
 
   // Navigation functions
   const goToNextSlide = useCallback(() => {
@@ -133,6 +215,7 @@ export function FullScreenPresentationViewer({
     if (!isOpen) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      
       // Prevent default for all our handled keys
       const handledKeys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', ' ', 'Home', 'End', 'Escape'];
       if (handledKeys.includes(e.key)) {
@@ -157,7 +240,11 @@ export function FullScreenPresentationViewer({
           setCurrentSlide(totalSlides);
           break;
         case 'Escape':
-          onClose();
+          if (showEditor) {
+            setShowEditor(false);
+          } else {
+            onClose();
+          }
           break;
       }
     };
@@ -165,7 +252,7 @@ export function FullScreenPresentationViewer({
     // Add event listener to document with capture to ensure we get the events first
     document.addEventListener('keydown', handleKeyDown, true);
     return () => document.removeEventListener('keydown', handleKeyDown, true);
-  }, [isOpen, goToNextSlide, goToPreviousSlide, totalSlides, onClose]);
+  }, [isOpen, goToNextSlide, goToPreviousSlide, totalSlides, onClose, showEditor]);
 
 
 
@@ -175,6 +262,32 @@ export function FullScreenPresentationViewer({
       setShowControls(true);
     }
   }, [isOpen]);
+
+  // Download handlers
+  const handleDownload = async (format: DownloadFormat) => {
+    if (!sandboxUrl || !presentationName) return;
+
+    const setDownloadState = format === DownloadFormat.PDF ? setIsDownloadingPDF : 
+                           format === DownloadFormat.PPTX ? setIsDownloadingPPTX : 
+                           setIsDownloadingGoogleSlides;
+
+    setDownloadState(true);
+    try {
+      if (format === DownloadFormat.GOOGLE_SLIDES) {
+        const result = await handleGoogleSlidesUpload(sandboxUrl, `/workspace/presentations/${presentationName}`);
+        // If redirected to auth, don't show error
+        if (result?.redirected_to_auth) {
+          return; // Don't set loading false, user is being redirected
+        }
+      } else {
+        await downloadPresentation(format, sandboxUrl, `/workspace/presentations/${presentationName}`, presentationName);
+      }
+    } catch (error) {
+      console.error(`Error downloading ${format}:`, error);
+    } finally {
+      setDownloadState(false);
+    }
+  };
 
   const currentSlideData = slides.find(slide => slide.number === currentSlide);
 
@@ -236,7 +349,7 @@ export function FullScreenPresentationViewer({
         <div className="w-full h-full flex items-center justify-center bg-transparent">
           <div 
             ref={setContainerRef}
-            className="relative bg-white dark:bg-zinc-900 rounded-lg overflow-hidden border border-zinc-200/40 dark:border-zinc-800/40"
+            className="relative bg-transparent rounded-lg overflow-hidden"
             style={{
               width: '100%',
               maxWidth: '100%',
@@ -247,11 +360,11 @@ export function FullScreenPresentationViewer({
             }}
           >
             <iframe
-              key={`slide-${slide.number}-${refreshTimestamp}`} // Key with stable timestamp ensures iframe refreshes when metadata changes
-              src={slideUrlWithCacheBust}
+              key={`slide-${slide.number}-${refreshTimestamp}-${showEditor}`} // Key with stable timestamp ensures iframe refreshes when metadata changes
+              src={showEditor ? `${sandboxUrl}/api/html/${slide.file_path}/editor` : slideUrlWithCacheBust}
               title={`Slide ${slide.number}: ${slide.title}`}
               className="border-0 rounded-xl"
-              sandbox="allow-same-origin allow-scripts"
+              sandbox="allow-same-origin allow-scripts allow-modals"
               style={{
                 width: '1920px',
                 height: '1080px',
@@ -261,7 +374,7 @@ export function FullScreenPresentationViewer({
                 transformOrigin: '0 0',
                 position: 'absolute',
                 top: 0,
-                left: 0,
+                left: `calc((100% - ${1920 * scale}px) / 2)`,
                 willChange: 'transform',
                 backfaceVisibility: 'hidden',
                 WebkitBackfaceVisibility: 'hidden'
@@ -278,7 +391,7 @@ export function FullScreenPresentationViewer({
     
     SlideIframeComponent.displayName = 'SlideIframeComponent';
     return SlideIframeComponent;
-  }, [sandboxUrl, refreshTimestamp]);
+  }, [sandboxUrl, refreshTimestamp, showEditor]);
 
   // Render slide iframe with proper scaling
   const renderSlide = useMemo(() => {
@@ -317,9 +430,10 @@ export function FullScreenPresentationViewer({
               variant="ghost" 
               size="sm" 
               className="h-8 w-8 p-0"
-              title="Edit presentation"
+              title={showEditor ? "Close editor" : "Edit presentation"}
+              onClick={() => setShowEditor(!showEditor)}
             >
-              <Edit className="h-3.5 w-3.5" />
+              {showEditor ? <Presentation className="h-3.5 w-3.5" /> : <Edit className='h-3.5 w-3.5'/>}
             </Button>
 
             {/* Export dropdown */}
@@ -330,20 +444,37 @@ export function FullScreenPresentationViewer({
                   size="sm" 
                   className="h-8 w-8 p-0"
                   title="Export presentation"
+                  disabled={isDownloadingPDF || isDownloadingPPTX || isDownloadingGoogleSlides}
                 >
-                  <Download className="h-3.5 w-3.5" />
+                  {(isDownloadingPDF || isDownloadingPPTX || isDownloadingGoogleSlides) ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Download className="h-3.5 w-3.5" />
+                  )}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-32">
-                <DropdownMenuItem className="cursor-pointer">
+                <DropdownMenuItem 
+                  className="cursor-pointer" 
+                  onClick={() => handleDownload(DownloadFormat.PDF)} 
+                  disabled={isDownloadingPDF}
+                >
                   <FileText className="h-4 w-4 mr-2" />
                   PDF
                 </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer">
+                <DropdownMenuItem 
+                  className="cursor-pointer" 
+                  onClick={() => handleDownload(DownloadFormat.PPTX)} 
+                  disabled={isDownloadingPPTX}
+                >
                   <Presentation className="h-4 w-4 mr-2" />
                   PPTX
                 </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer">
+                <DropdownMenuItem 
+                  className="cursor-pointer" 
+                  onClick={() => handleDownload(DownloadFormat.GOOGLE_SLIDES)} 
+                  disabled={isDownloadingGoogleSlides}
+                >
                   <ExternalLink className="h-4 w-4 mr-2" />
                   Google Slides
                 </DropdownMenuItem>
@@ -365,28 +496,52 @@ export function FullScreenPresentationViewer({
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex items-center justify-center bg-zinc-100 dark:bg-zinc-900 p-8 min-h-0">
+      <div className="flex-1 flex items-center justify-center bg-zinc-100 dark:bg-zinc-900 p-2 min-h-0">
         {isLoading ? (
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-zinc-600 mx-auto mb-4"></div>
-            <p className="text-zinc-700 dark:text-zinc-300">Loading presentation...</p>
+            <p className="text-zinc-700 dark:text-zinc-300">
+              {retryAttempt > 0 ? `Retrying... (attempt ${retryAttempt + 1})` : 'Loading presentation...'}
+            </p>
           </div>
         ) : error ? (
           <div className="text-center">
             <p className="mb-4 text-zinc-700 dark:text-zinc-300">Error: {error}</p>
-            <Button onClick={loadMetadata} variant="outline">
-              Retry
+            {retryAttempt > 0 && (
+              <p className="text-xs text-zinc-400 dark:text-zinc-500 mb-4">
+                Attempted {retryAttempt + 1} times
+              </p>
+            )}
+            {backgroundRetryInterval && (
+              <p className="text-xs text-blue-500 dark:text-blue-400 mb-4 flex items-center gap-1">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Retrying in background...
+              </p>
+            )}
+            <Button 
+              onClick={() => loadMetadata()} 
+              variant="outline"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Retrying...
+                </>
+              ) : (
+                'Try Again'
+              )}
             </Button>
           </div>
         ) : currentSlideData ? (
-          <div className="w-full h-full max-w-7xl mx-auto flex flex-col">
+          <div className="w-full h-full flex flex-col">
             {/* Presentation Container */}
-            <div className="flex-1 bg-white dark:bg-zinc-900 rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-800" style={{ aspectRatio: '16 / 9' }}>
+            <div className="flex-1 bg-transparent rounded-xl overflow-hidden" style={{ aspectRatio: '16 / 9' }}>
               {renderSlide}
             </div>
             
             {/* Controls below presentation */}
-            <div className="flex items-center justify-between mt-6 px-4">
+            <div className="flex items-center justify-between mt-3 px-4">
               {/* Left Controls */}
               <div className="flex items-center gap-2">
                 <Button

@@ -39,6 +39,7 @@ import Image from 'next/image';
 import { useTheme } from 'next-themes';
 import ColorThief from 'colorthief';
 import { KortixLogo } from '@/components/sidebar/kortix-logo';
+import { DynamicIcon } from 'lucide-react/dynamic';
 
 interface MarketplaceTemplate {
   template_id: string;
@@ -58,6 +59,9 @@ interface MarketplaceTemplate {
   avatar: string | null;
   avatar_color: string | null;
   profile_image_url: string | null;
+  icon_name: string | null;
+  icon_color: string | null;
+  icon_background: string | null;
   metadata: Record<string, any>;
   creator_name: string | null;
 }
@@ -161,7 +165,7 @@ const IntegrationIcon: React.FC<{
 
 export default function TemplateSharePage() {
   const params = useParams();
-  const shareId = params.shareId as string;
+  const templateId = params.shareId as string; // Note: keeping shareId param name for URL compatibility
   const router = useRouter();
   const { user } = useAuth();
   const { theme, resolvedTheme, setTheme } = useTheme();
@@ -236,16 +240,16 @@ export default function TemplateSharePage() {
   }, [activeSection]);
 
   const { data: template, isLoading, error } = useQuery({
-    queryKey: ['template-share', shareId],
+    queryKey: ['template-public', templateId],
     queryFn: async () => {
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
-      const response = await fetch(`${backendUrl}/templates/share/${shareId}`);
+      const response = await fetch(`${backendUrl}/templates/public/${templateId}`);
       if (!response.ok) {
         throw new Error('Template not found');
       }
       return response.json() as Promise<MarketplaceTemplate>;
     },
-    enabled: !!shareId,
+    enabled: !!templateId,
   });
 
   const rgbToHex = (r: number, g: number, b: number) => {
@@ -256,7 +260,20 @@ export default function TemplateSharePage() {
   };
 
   useEffect(() => {
-    if (template?.profile_image_url && imageRef.current && imageLoaded) {
+    if (template?.icon_name && template?.icon_background) {
+      // For icons, use the icon background color as the primary color
+      const iconBg = template.icon_background || '#e5e5e5';
+      const iconColor = template.icon_color || '#000000';
+      // Create a palette based on the icon colors
+      setColorPalette([
+        iconBg,
+        iconColor,
+        '#6366f1',
+        '#8b5cf6',
+        '#ec4899',
+        '#f43f5e'
+      ]);
+    } else if (template?.profile_image_url && imageRef.current && imageLoaded) {
       const colorThief = new ColorThief();
       try {
         const palette = colorThief.getPalette(imageRef.current, 6);
@@ -270,13 +287,13 @@ export default function TemplateSharePage() {
           '#f43f5e', '#f97316', '#facc15'
         ]);
       }
-    } else if (!template?.profile_image_url) {
+    } else {
       setColorPalette([
         '#6366f1', '#8b5cf6', '#ec4899', 
         '#f43f5e', '#f97316', '#facc15'
       ]);
     }
-  }, [template?.profile_image_url, imageLoaded]);
+  }, [template?.profile_image_url, template?.icon_name, template?.icon_background, template?.icon_color, imageLoaded]);
 
   const handleInstall = () => {
     if (!template) return;
@@ -450,7 +467,18 @@ export default function TemplateSharePage() {
                   />
                 )}
                 <div className="relative aspect-square w-full max-w-sm mx-auto lg:mx-0 rounded-2xl overflow-hidden bg-background">
-                  {template.profile_image_url ? (
+                  {template.icon_name ? (
+                    <div 
+                      className="w-full h-full flex items-center justify-center"
+                      style={{ backgroundColor: template.icon_background || '#e5e5e5' }}
+                    >
+                      <DynamicIcon 
+                        name={template.icon_name as any}
+                        size={120}
+                        color={template.icon_color || '#000000'}
+                      />
+                    </div>
+                  ) : template.profile_image_url ? (
                     <>
                       <img 
                         ref={imageRef}
@@ -557,16 +585,16 @@ export default function TemplateSharePage() {
                   <div className="relative">
                     <div className={cn(
                       "transition-all duration-300 overflow-hidden",
-                      !isPromptExpanded && "max-h-[200px]"
+                      !isPromptExpanded && "max-h-[600px]"
                     )}>
                       <Markdown className="prose prose-sm dark:prose-invert max-w-none">
                         {template.system_prompt || 'No system prompt available'}
                       </Markdown>
-                      {!isPromptExpanded && template.system_prompt && template.system_prompt.length > 500 && (
+                      {!isPromptExpanded && template.system_prompt && template.system_prompt.length > 10000 && (
                         <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-muted/10 to-transparent pointer-events-none" />
                       )}
                     </div>
-                    {template.system_prompt && template.system_prompt.length > 500 && (
+                    {template.system_prompt && template.system_prompt.length > 10000 && (
                       <Button
                         variant="ghost"
                         size="sm"

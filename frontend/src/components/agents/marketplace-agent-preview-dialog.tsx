@@ -6,11 +6,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Bot, Download, Wrench, Plug, Tag, User, Calendar, Loader2, Share, Cpu, Eye, Zap } from 'lucide-react';
+import { DynamicIcon } from 'lucide-react/dynamic';
 import { toast } from 'sonner';
 import type { MarketplaceTemplate } from '@/components/agents/installation/types';
 import { useComposioToolkitIcon } from '@/hooks/react-query/composio/use-composio';
 import { useRouter } from 'next/navigation';
 import { backendApi } from '@/lib/api-client';
+import { AgentIconAvatar } from '@/components/agents/config/agent-icon-avatar';
 
 interface MarketplaceAgentPreviewDialogProps {
   agent: MarketplaceTemplate | null;
@@ -120,15 +122,14 @@ export const MarketplaceAgentPreviewDialog: React.FC<MarketplaceAgentPreviewDial
   const handleShare = async () => {
     setIsGeneratingShareLink(true);
     try {
-      const response = await backendApi.post(`/templates/${agent.template_id}/share`);
-      const data = response.data;
-      const shareUrl = `${window.location.origin}/templates/${data.share_id}`;
+      // Simple approach: use template ID directly in URL
+      const shareUrl = `${window.location.origin}/templates/${agent.template_id}`;
       
       await navigator.clipboard.writeText(shareUrl);
       toast.success('Share link copied to clipboard!');
-    } catch (error) {
-      console.error('Failed to generate share link:', error);
-      toast.error('Failed to generate share link');
+    } catch (error: any) {
+      console.error('Failed to copy share link:', error);
+      toast.error('Failed to copy share link to clipboard');
     } finally {
       setIsGeneratingShareLink(false);
     }
@@ -150,30 +151,24 @@ export const MarketplaceAgentPreviewDialog: React.FC<MarketplaceAgentPreviewDial
     return qualifiedName.replace(/\b\w/g, l => l.toUpperCase());
   };
 
+  console.log('agent', agent);
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] p-0 overflow-hidden">
         <DialogHeader className='p-6'>
           <DialogTitle className='sr-only'>Agent Preview</DialogTitle>
-          {agent.profile_image_url ? (
-            <img 
-              src={agent.profile_image_url} 
-              alt={agent.name}
-              className='h-20 w-20 aspect-square rounded-2xl object-cover shadow-lg'
+          <div className="flex-shrink-0">
+            <AgentIconAvatar
+              profileImageUrl={agent.profile_image_url}
+              iconName={agent.icon_name}
+              iconColor={agent.icon_color}
+              backgroundColor={agent.icon_background}
+              agentName={agent.name}
+              size={80}
+              className="shadow-lg"
             />
-          ) : (
-            <div className='relative h-20 w-20 aspect-square bg-muted rounded-2xl flex items-center justify-center' style={{ backgroundColor: avatar_color }}>
-              <div className="text-4xl drop-shadow-lg">
-                  {avatar || '🤖'}
-              </div>
-              <div
-                className="absolute inset-0 rounded-2xl pointer-events-none opacity-0 dark:opacity-100 transition-opacity"
-                style={{
-                  boxShadow: `0 16px 48px -8px ${avatar_color}70, 0 8px 24px -4px ${avatar_color}50`
-                }}
-              />
-            </div>
-          )}
+          </div>
         </DialogHeader>
         <div className="-mt-4 flex flex-col max-h-[calc(90vh-8rem)] overflow-hidden">
           <div className="p-6 py-0 pb-4">

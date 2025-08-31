@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import { AgentCountLimitDialog } from '@/components/agents/agent-count-limit-dialog';
 import type { MarketplaceTemplate } from '@/components/agents/installation/types';
 import { AgentCountLimitError } from '@/lib/api';
+import { AgentIconAvatar } from '@/components/agents/config/agent-icon-avatar';
 
 interface CustomAgentsSectionProps {
   onAgentSelect?: (templateId: string) => void;
@@ -43,7 +44,6 @@ export function CustomAgentsSection({ onAgentSelect }: CustomAgentsSectionProps)
   const [installingItemId, setInstallingItemId] = React.useState<string | null>(null);
 
   const handleCardClick = (template: any) => {
-    // Map the template to MarketplaceTemplate format
     const marketplaceTemplate: MarketplaceTemplate = {
       id: template.template_id,
       template_id: template.template_id,
@@ -58,6 +58,9 @@ export function CustomAgentsSection({ onAgentSelect }: CustomAgentsSectionProps)
       profile_image_url: template.profile_image_url,
       avatar: template.avatar,
       avatar_color: template.avatar_color,
+      icon_name: template.icon_name,
+      icon_color: template.icon_color,
+      icon_background: template.icon_background,
       mcp_requirements: template.mcp_requirements || [],
       agentpress_tools: template.agentpress_tools || {},
       model: template.metadata?.model,
@@ -68,7 +71,6 @@ export function CustomAgentsSection({ onAgentSelect }: CustomAgentsSectionProps)
     setIsPreviewOpen(true);
   };
 
-  // Handle clicking Install from the preview dialog - opens the streamlined install dialog
   const handlePreviewInstall = (agent: MarketplaceTemplate) => {
     setIsPreviewOpen(false);
     setSelectedTemplate(agent);
@@ -139,27 +141,15 @@ export function CustomAgentsSection({ onAgentSelect }: CustomAgentsSectionProps)
 
   if (isLoading) {
     return (
-      <div className="w-full max-w-6xl mx-auto px-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="relative col-span-1 sm:col-span-2 lg:col-span-2 overflow-hidden rounded-3xl flex items-center justify-center border bg-background">
-            <div className="relative px-8 py-16 text-start">
-              <div className="mx-auto max-w-3xl space-y-6">
-                <h2 className="text-4xl font-semibold text-foreground mb-2">
-                  Custom Agents
-                </h2>
-                <p className="text-muted-foreground text-sm">
-                  Specialized AI agents built by the Anisora team for specific tasks
-                </p>
-              </div>
-            </div>
-            <Ripple/>
-          </div>
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="bg-muted/30 rounded-3xl p-6 min-h-[280px]">
-              <Skeleton className="h-14 w-14 rounded-2xl mb-4" />
-              <Skeleton className="h-6 w-3/4 mb-2" />
-              <Skeleton className="h-12 w-full mb-4" />
-              <Skeleton className="h-9 w-full mt-auto" />
+      <div className="w-full">
+        <TitleSection />
+        <div className="grid gap-4 pb-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+            <div key={i} className="bg-muted/30 rounded-3xl p-4 h-[180px] w-full">
+              <Skeleton className="h-12 w-12 rounded-2xl mb-3" />
+              <Skeleton className="h-5 w-3/4 mb-2" />
+              <Skeleton className="h-10 w-full mb-3" />
+              <Skeleton className="h-8 w-full mt-auto" />
             </div>
           ))}
         </div>
@@ -180,7 +170,7 @@ export function CustomAgentsSection({ onAgentSelect }: CustomAgentsSectionProps)
   }
 
   // No agents found
-  if (!templates || templates.length === 0) {
+  if (!templates || !templates.templates || templates.templates.length === 0) {
     return (
       <div className="w-full">
         <TitleSection />
@@ -193,22 +183,10 @@ export function CustomAgentsSection({ onAgentSelect }: CustomAgentsSectionProps)
 
   return (
     <>
-      <div className="w-full max-w-4xl mx-auto px-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          <div className="max-h-[180px] relative col-span-1 overflow-hidden rounded-3xl flex items-center justify-center border bg-background">
-            <div className="relative px-8 py-16 text-start">
-              <div className="mx-auto max-w-3xl space-y-6">
-                <h2 className="text-3xl font-semibold text-foreground mb-2">
-                  Featured Agents
-                </h2>
-                <p className="text-muted-foreground text-sm">
-                  Specialized AI agents built by the Anisora team for specific tasks
-                </p>
-              </div>
-            </div>
-            <Ripple/>
-          </div>
-          {templates.slice(0, 6).map((template) => (
+      <div className="w-full">
+        <TitleSection />
+        <div className="grid gap-4 pb-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {templates.templates.slice(0, 4).map((template) => (
             <div
               key={template.template_id}
               className={cn(
@@ -221,29 +199,18 @@ export function CustomAgentsSection({ onAgentSelect }: CustomAgentsSectionProps)
               
               <div className="h-full relative flex flex-col overflow-hidden w-full p-4">
                 <div className="flex items-center gap-3 mb-3">
-                  {template.profile_image_url ? (
-                    <img 
-                      src={template.profile_image_url}
-                      alt={template.name}
-                      className="h-10 w-10 object-cover rounded-xl flex-shrink-0"
+                  <div className="flex-shrink-0">
+                    <AgentIconAvatar
+                      profileImageUrl={template.profile_image_url}
+                      iconName={template.icon_name}
+                      iconColor={template.icon_color}
+                      backgroundColor={template.icon_background}
+                      agentName={template.name}
+                      size={40}
+                      className="shadow-md"
                     />
-                  ) : (
-                    <div 
-                      className="relative h-10 w-10 flex items-center justify-center rounded-xl text-lg shadow-md flex-shrink-0"
-                      style={{ 
-                        backgroundColor: template.avatar_color || '#3b82f6',
-                      }}
-                    >
-                      <span>{template.avatar || '🤖'}</span>
-                      <div
-                        className="absolute inset-0 rounded-xl pointer-events-none opacity-0 dark:opacity-100 transition-opacity"
-                        style={{
-                          boxShadow: `0 12px 36px -6px ${template.avatar_color || '#3b82f6'}70, 0 6px 18px -3px ${template.avatar_color || '#3b82f6'}50`
-                        }}
-                      />
-                    </div>
-                  )}
-                  <h3 className="text-base font-semibold text-foreground line-clamp-1 flex-1">
+                  </div>
+                  <h3 className="text-base font-semibold text-foreground line-clamp-1 flex-1 min-w-0">
                     {template.name}
                   </h3>
                 </div>
