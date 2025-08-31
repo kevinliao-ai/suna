@@ -1,6 +1,7 @@
 'use client';
 
 import { ArrowUpRight } from "lucide-react";
+import Image from "next/image";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -73,11 +74,15 @@ export const Changelog = ({
                   </ul>
                 )}
                 {entry.image && (
-                  <img
-                    src={entry.image}
-                    alt={`${entry.version} visual`}
-                    className="mt-8 w-[100px] rounded-lg object-cover"
-                  />
+                  <div className="mt-8">
+                    <Image
+                      src={entry.image}
+                      alt={`${entry.version} visual`}
+                      width={100}
+                      height={100}
+                      className="rounded-lg object-cover"
+                    />
+                  </div>
                 )}
                 {entry.button && (
                   <Button variant="link" className="mt-4 self-end" asChild>
