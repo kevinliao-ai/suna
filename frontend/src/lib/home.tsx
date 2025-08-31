@@ -1218,7 +1218,7 @@ export const siteConfig = {
       text: 'Get Started for free',
       href: '/auth',
     },
-    subtext: 'Build, manage and train your AI Workforce',
+    subtext: 'Create, enhance, and animate your AI-powered videos',
   },
   footerLinks: [
     {
