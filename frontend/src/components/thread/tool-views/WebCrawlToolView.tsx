@@ -8,7 +8,7 @@ import {
   Copy,
   Check,
   ArrowUpRight,
-  BookOpen
+  BookOpen,
 } from 'lucide-react';
 import { ToolViewProps } from './types';
 import {
@@ -24,8 +24,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 export function WebCrawlToolView({
   name = 'crawl-webpage',
@@ -123,7 +128,9 @@ export function WebCrawlToolView({
     return { wordCount, charCount, lineCount };
   };
 
-  const contentStats = webpageContent?.text ? getContentStats(webpageContent.text) : null;
+  const contentStats = webpageContent?.text
+    ? getContentStats(webpageContent.text)
+    : null;
 
   return (
     <Card className="gap-0 flex border shadow-none border-t border-b-0 border-x-0 p-0 rounded-none flex-col h-full overflow-hidden bg-card">
@@ -146,8 +153,8 @@ export function WebCrawlToolView({
               variant="secondary"
               className={
                 isSuccess
-                  ? "bg-gradient-to-b from-emerald-200 to-emerald-100 text-emerald-700 dark:from-emerald-800/50 dark:to-emerald-900/60 dark:text-emerald-300"
-                  : "bg-gradient-to-b from-rose-200 to-rose-100 text-rose-700 dark:from-rose-800/50 dark:to-rose-900/60 dark:text-rose-300"
+                  ? 'bg-gradient-to-b from-emerald-200 to-emerald-100 text-emerald-700 dark:from-emerald-800/50 dark:to-emerald-900/60 dark:text-emerald-300'
+                  : 'bg-gradient-to-b from-rose-200 to-rose-100 text-rose-700 dark:from-rose-800/50 dark:to-rose-900/60 dark:text-rose-300'
               }
             >
               {isSuccess ? (
@@ -172,10 +179,13 @@ export function WebCrawlToolView({
                 Crawling Webpage
               </h3>
               <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6">
-                Fetching content from <span className="font-mono text-xs break-all">{domain}</span>
+                Fetching content from{' '}
+                <span className="font-mono text-xs break-all">{domain}</span>
               </p>
               <Progress value={progress} className="w-full h-1" />
-              <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-2">{progress}% complete</p>
+              <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-2">
+                {progress}% complete
+              </p>
             </div>
           </div>
         ) : url ? (
@@ -201,8 +211,12 @@ export function WebCrawlToolView({
                       />
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="font-mono text-sm text-zinc-900 dark:text-zinc-100 truncate">{truncateString(url, 70)}</p>
-                      <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">{domain}</p>
+                      <p className="font-mono text-sm text-zinc-900 dark:text-zinc-100 truncate">
+                        {truncateString(url, 70)}
+                      </p>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                        {domain}
+                      </p>
                     </div>
                     <Button
                       variant="ghost"
@@ -265,8 +279,8 @@ export function WebCrawlToolView({
                                 variant="ghost"
                                 size="sm"
                                 className={cn(
-                                  "opacity-70 group-hover:opacity-100 transition-all duration-200",
-                                  copiedContent && "opacity-100"
+                                  'opacity-70 group-hover:opacity-100 transition-all duration-200',
+                                  copiedContent && 'opacity-100',
                                 )}
                                 onClick={copyContent}
                               >
@@ -278,7 +292,9 @@ export function WebCrawlToolView({
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p>{copiedContent ? 'Copied!' : 'Copy content'}</p>
+                              <p>
+                                {copiedContent ? 'Copied!' : 'Copy content'}
+                              </p>
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
@@ -301,7 +317,8 @@ export function WebCrawlToolView({
                       No Content Extracted
                     </h3>
                     <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-sm mx-auto">
-                      The webpage might be restricted, empty, or require JavaScript to load content
+                      The webpage might be restricted, empty, or require
+                      JavaScript to load content
                     </p>
                   </div>
                 )}

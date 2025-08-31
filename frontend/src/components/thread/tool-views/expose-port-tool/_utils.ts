@@ -19,39 +19,53 @@ const parseContent = (content: any): any => {
   return content;
 };
 
-const extractFromNewFormat = (content: any): { 
-  port: number | null; 
+const extractFromNewFormat = (
+  content: any,
+): {
+  port: number | null;
   url: string | null;
   message: string | null;
-  success?: boolean; 
+  success?: boolean;
   timestamp?: string;
 } => {
   const parsedContent = parseContent(content);
-  
+
   if (!parsedContent || typeof parsedContent !== 'object') {
-    return { port: null, url: null, message: null, success: undefined, timestamp: undefined };
+    return {
+      port: null,
+      url: null,
+      message: null,
+      success: undefined,
+      timestamp: undefined,
+    };
   }
 
-  if ('tool_execution' in parsedContent && typeof parsedContent.tool_execution === 'object') {
+  if (
+    'tool_execution' in parsedContent &&
+    typeof parsedContent.tool_execution === 'object'
+  ) {
     const toolExecution = parsedContent.tool_execution;
     const args = toolExecution.arguments || {};
-    
+
     let parsedOutput = toolExecution.result?.output;
     if (typeof parsedOutput === 'string') {
       try {
         parsedOutput = JSON.parse(parsedOutput);
-      } catch (e) {
-      }
+      } catch (e) {}
     }
 
     const extractedData = {
-      port: args.port ? parseInt(args.port, 10) : (parsedOutput?.port ? parseInt(parsedOutput.port, 10) : null),
+      port: args.port
+        ? parseInt(args.port, 10)
+        : parsedOutput?.port
+          ? parseInt(parsedOutput.port, 10)
+          : null,
       url: parsedOutput?.url || null,
       message: parsedOutput?.message || parsedContent.summary || null,
       success: toolExecution.result?.success,
-      timestamp: toolExecution.execution_details?.timestamp
+      timestamp: toolExecution.execution_details?.timestamp,
     };
-    
+
     return extractedData;
   }
 
@@ -59,13 +73,21 @@ const extractFromNewFormat = (content: any): {
     return extractFromNewFormat(parsedContent.content);
   }
 
-  return { port: null, url: null, message: null, success: undefined, timestamp: undefined };
+  return {
+    port: null,
+    url: null,
+    message: null,
+    success: undefined,
+    timestamp: undefined,
+  };
 };
 
-const extractPortFromAssistantContent = (content: string | object | undefined | null): number | null => {
+const extractPortFromAssistantContent = (
+  content: string | object | undefined | null,
+): number | null => {
   const contentStr = normalizeContentToString(content);
   if (!contentStr) return null;
-  
+
   try {
     const match = contentStr.match(/<expose-port>\s*(\d+)\s*<\/expose-port>/);
     return match ? parseInt(match[1], 10) : null;
@@ -75,18 +97,22 @@ const extractPortFromAssistantContent = (content: string | object | undefined | 
   }
 };
 
-const extractFromLegacyFormat = (content: any): { 
-  port: number | null; 
+const extractFromLegacyFormat = (
+  content: any,
+): {
+  port: number | null;
   url: string | null;
   message: string | null;
 } => {
   const toolData = extractToolData(content);
-  
+
   if (toolData.toolResult && toolData.arguments) {
     return {
-      port: toolData.arguments.port ? parseInt(toolData.arguments.port, 10) : null,
+      port: toolData.arguments.port
+        ? parseInt(toolData.arguments.port, 10)
+        : null,
       url: null,
-      message: null
+      message: null,
     };
   }
 
@@ -100,17 +126,18 @@ const extractFromLegacyFormat = (content: any): {
       return {
         port: parseInt(parsed.port, 10),
         url: parsed.url,
-        message: parsed.message || null
+        message: parsed.message || null,
       };
     }
-  } catch (e) {
-  }
-  
+  } catch (e) {}
+
   try {
-    const toolResultMatch = contentStr.match(/ToolResult\(success=(?:True|true),\s*output='((?:[^'\\]|\\.)*)'\)/);
+    const toolResultMatch = contentStr.match(
+      /ToolResult\(success=(?:True|true),\s*output='((?:[^'\\]|\\.)*)'\)/,
+    );
     if (toolResultMatch) {
       let jsonStr = toolResultMatch[1];
-      
+
       jsonStr = jsonStr
         .replace(/\\\\n/g, '\n')
         .replace(/\\\\"/g, '"')
@@ -118,28 +145,26 @@ const extractFromLegacyFormat = (content: any): {
         .replace(/\\"/g, '"')
         .replace(/\\'/g, "'")
         .replace(/\\\\/g, '\\');
-      
+
       const result = JSON.parse(jsonStr);
       return {
         port: result.port ? parseInt(result.port, 10) : null,
         url: result.url || null,
-        message: result.message || null
+        message: result.message || null,
       };
     }
-    
+
     const simpleMatch = contentStr.match(/output='([^']+)'/);
     if (simpleMatch) {
-      const jsonStr = simpleMatch[1]
-        .replace(/\\n/g, '\n')
-        .replace(/\\"/g, '"');
+      const jsonStr = simpleMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"');
       const result = JSON.parse(jsonStr);
       return {
         port: result.port ? parseInt(result.port, 10) : null,
         url: result.url || null,
-        message: result.message || null
+        message: result.message || null,
       };
     }
-    
+
     return { port: null, url: null, message: null };
   } catch (e) {
     console.error('Failed to parse tool content:', e);
@@ -153,7 +178,7 @@ export function extractExposePortData(
   toolContent: any,
   isSuccess: boolean,
   toolTimestamp?: string,
-  assistantTimestamp?: string
+  assistantTimestamp?: string,
 ): {
   port: number | null;
   url: string | null;
@@ -172,7 +197,11 @@ export function extractExposePortData(
   const assistantNewFormat = extractFromNewFormat(assistantContent);
   const toolNewFormat = extractFromNewFormat(toolContent);
 
-  if (assistantNewFormat.port || assistantNewFormat.url || assistantNewFormat.message) {
+  if (
+    assistantNewFormat.port ||
+    assistantNewFormat.url ||
+    assistantNewFormat.message
+  ) {
     port = assistantNewFormat.port;
     url = assistantNewFormat.url;
     message = assistantNewFormat.message;
@@ -199,7 +228,7 @@ export function extractExposePortData(
     port = assistantLegacy.port || toolLegacy.port;
     url = assistantLegacy.url || toolLegacy.url;
     message = assistantLegacy.message || toolLegacy.message;
-    
+
     if (!port) {
       const assistantPort = extractPortFromAssistantContent(assistantContent);
       if (assistantPort) {
@@ -214,6 +243,6 @@ export function extractExposePortData(
     message,
     actualIsSuccess,
     actualToolTimestamp,
-    actualAssistantTimestamp
+    actualAssistantTimestamp,
   };
-} 
+}

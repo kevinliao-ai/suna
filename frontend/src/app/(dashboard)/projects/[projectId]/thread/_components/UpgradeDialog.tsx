@@ -9,7 +9,11 @@ interface UpgradeDialogProps {
   onDismiss: () => void;
 }
 
-export function UpgradeDialog({ open, onOpenChange, onDismiss }: UpgradeDialogProps) {
+export function UpgradeDialog({
+  open,
+  onOpenChange,
+  onDismiss,
+}: UpgradeDialogProps) {
   const [showBillingModal, setShowBillingModal] = useState(false);
 
   const handleUpgradeClick = () => {
@@ -40,19 +44,21 @@ export function UpgradeDialog({ open, onOpenChange, onDismiss }: UpgradeDialogPr
         preventOutsideClick={true}
         actions={[
           {
-            label: "Maybe Later",
+            label: 'Maybe Later',
             onClick: onDismiss,
-            variant: "outline"
+            variant: 'outline',
           },
           {
-            label: "Upgrade Now",
+            label: 'Upgrade Now',
             onClick: handleUpgradeClick,
-            icon: Sparkles
-          }
+            icon: Sparkles,
+          },
         ]}
       >
         <div className="py-4">
-          <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">Pro Benefits</h3>
+          <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
+            Pro Benefits
+          </h3>
 
           <div className="space-y-3">
             <div className="flex items-start">
@@ -60,8 +66,12 @@ export function UpgradeDialog({ open, onOpenChange, onDismiss }: UpgradeDialogPr
                 <Brain className="h-4 w-4 text-secondary" />
               </div>
               <div className="ml-3">
-                <h4 className="text-sm font-medium text-slate-900 dark:text-slate-100">Advanced AI Models</h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Get access to advanced models suited for complex tasks</p>
+                <h4 className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                  Advanced AI Models
+                </h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Get access to advanced models suited for complex tasks
+                </p>
               </div>
             </div>
 
@@ -70,8 +80,12 @@ export function UpgradeDialog({ open, onOpenChange, onDismiss }: UpgradeDialogPr
                 <Zap className="h-4 w-4 text-secondary" />
               </div>
               <div className="ml-3">
-                <h4 className="text-sm font-medium text-slate-900 dark:text-slate-100">Faster Responses</h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Get access to faster models that breeze through your tasks</p>
+                <h4 className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                  Faster Responses
+                </h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Get access to faster models that breeze through your tasks
+                </p>
               </div>
             </div>
 
@@ -80,8 +94,12 @@ export function UpgradeDialog({ open, onOpenChange, onDismiss }: UpgradeDialogPr
                 <Clock className="h-4 w-4 text-secondary" />
               </div>
               <div className="ml-3">
-                <h4 className="text-sm font-medium text-slate-900 dark:text-slate-100">Higher Usage Limits</h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Enjoy more conversations and longer run durations</p>
+                <h4 className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                  Higher Usage Limits
+                </h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Enjoy more conversations and longer run durations
+                </p>
               </div>
             </div>
           </div>
@@ -92,9 +110,11 @@ export function UpgradeDialog({ open, onOpenChange, onDismiss }: UpgradeDialogPr
       <BillingModal
         open={showBillingModal}
         onOpenChange={handleBillingModalClose}
-        returnUrl={typeof window !== 'undefined' ? window?.location?.href || '/' : '/'}
+        returnUrl={
+          typeof window !== 'undefined' ? window?.location?.href || '/' : '/'
+        }
         showUsageLimitAlert={true}
       />
     </>
   );
-} 
+}

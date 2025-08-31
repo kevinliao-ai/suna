@@ -35,21 +35,31 @@ const parseContent = (content: any): any => {
 
 const extractFromNewFormat = (content: any): CreateCredentialProfileData => {
   const parsedContent = parseContent(content);
-  
+
   if (!parsedContent || typeof parsedContent !== 'object') {
-    return { toolkit_slug: null, profile_name: null, display_name: null, message: null, profile: null, success: undefined, timestamp: undefined };
+    return {
+      toolkit_slug: null,
+      profile_name: null,
+      display_name: null,
+      message: null,
+      profile: null,
+      success: undefined,
+      timestamp: undefined,
+    };
   }
 
-  if ('tool_execution' in parsedContent && typeof parsedContent.tool_execution === 'object') {
+  if (
+    'tool_execution' in parsedContent &&
+    typeof parsedContent.tool_execution === 'object'
+  ) {
     const toolExecution = parsedContent.tool_execution;
     const args = toolExecution.arguments || {};
-    
+
     let parsedOutput = toolExecution.result?.output;
     if (typeof parsedOutput === 'string') {
       try {
         parsedOutput = JSON.parse(parsedOutput);
-      } catch (e) {
-      }
+      } catch (e) {}
     }
     parsedOutput = parsedOutput || {};
 
@@ -60,9 +70,9 @@ const extractFromNewFormat = (content: any): CreateCredentialProfileData => {
       message: parsedOutput.message || null,
       profile: parsedOutput.profile || null,
       success: toolExecution.result?.success,
-      timestamp: toolExecution.execution_details?.timestamp
+      timestamp: toolExecution.execution_details?.timestamp,
     };
-    
+
     return extractedData;
   }
 
@@ -74,7 +84,7 @@ const extractFromNewFormat = (content: any): CreateCredentialProfileData => {
       message: parsedContent.output?.message || null,
       profile: parsedContent.output?.profile || null,
       success: parsedContent.success,
-      timestamp: undefined
+      timestamp: undefined,
     };
 
     return extractedData;
@@ -84,12 +94,22 @@ const extractFromNewFormat = (content: any): CreateCredentialProfileData => {
     return extractFromNewFormat(parsedContent.content);
   }
 
-  return { toolkit_slug: null, profile_name: null, display_name: null, message: null, profile: null, success: undefined, timestamp: undefined };
+  return {
+    toolkit_slug: null,
+    profile_name: null,
+    display_name: null,
+    message: null,
+    profile: null,
+    success: undefined,
+    timestamp: undefined,
+  };
 };
 
-const extractFromLegacyFormat = (content: any): Omit<CreateCredentialProfileData, 'success' | 'timestamp'> => {
+const extractFromLegacyFormat = (
+  content: any,
+): Omit<CreateCredentialProfileData, 'success' | 'timestamp'> => {
   const toolData = extractToolData(content);
-  
+
   if (toolData.toolResult) {
     const args = toolData.arguments || {};
 
@@ -98,7 +118,7 @@ const extractFromLegacyFormat = (content: any): Omit<CreateCredentialProfileData
       profile_name: args.profile_name || null,
       display_name: args.display_name || null,
       message: null,
-      profile: null
+      profile: null,
     };
   }
 
@@ -107,7 +127,7 @@ const extractFromLegacyFormat = (content: any): Omit<CreateCredentialProfileData
     profile_name: null,
     display_name: null,
     message: null,
-    profile: null
+    profile: null,
   };
 };
 
@@ -116,7 +136,7 @@ export function extractCreateCredentialProfileData(
   toolContent: any,
   isSuccess: boolean,
   toolTimestamp?: string,
-  assistantTimestamp?: string
+  assistantTimestamp?: string,
 ): {
   toolkit_slug: string | null;
   profile_name: string | null;
@@ -128,7 +148,7 @@ export function extractCreateCredentialProfileData(
   actualAssistantTimestamp?: string;
 } {
   let data: CreateCredentialProfileData;
-  
+
   if (toolContent) {
     data = extractFromNewFormat(toolContent);
     if (data.success !== undefined || data.profile) {
@@ -136,7 +156,7 @@ export function extractCreateCredentialProfileData(
         ...data,
         actualIsSuccess: data.success !== undefined ? data.success : isSuccess,
         actualToolTimestamp: data.timestamp || toolTimestamp,
-        actualAssistantTimestamp: assistantTimestamp
+        actualAssistantTimestamp: assistantTimestamp,
       };
     }
   }
@@ -148,7 +168,7 @@ export function extractCreateCredentialProfileData(
         ...data,
         actualIsSuccess: data.success !== undefined ? data.success : isSuccess,
         actualToolTimestamp: toolTimestamp,
-        actualAssistantTimestamp: data.timestamp || assistantTimestamp
+        actualAssistantTimestamp: data.timestamp || assistantTimestamp,
       };
     }
   }
@@ -164,8 +184,8 @@ export function extractCreateCredentialProfileData(
     profile: toolLegacy.profile || assistantLegacy.profile,
     actualIsSuccess: isSuccess,
     actualToolTimestamp: toolTimestamp,
-    actualAssistantTimestamp: assistantTimestamp
+    actualAssistantTimestamp: assistantTimestamp,
   };
 
   return combinedData;
-} 
+}

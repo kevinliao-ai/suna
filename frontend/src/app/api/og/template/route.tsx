@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     }
 
     const templateResponse = await fetch(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'}/api/templates/public/${shareId}`
+      `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'}/api/templates/public/${shareId}`,
     );
 
     if (!templateResponse.ok) {
@@ -32,7 +32,8 @@ export async function GET(request: NextRequest) {
             alignItems: 'center',
             justifyContent: 'center',
             backgroundColor: '#0a0a0a',
-            backgroundImage: 'linear-gradient(to bottom right, #1e1b4b, #0a0a0a)',
+            backgroundImage:
+              'linear-gradient(to bottom right, #1e1b4b, #0a0a0a)',
           }}
         >
           <div
@@ -68,7 +69,13 @@ export async function GET(request: NextRequest) {
                   border: '1px solid #3b82f640',
                 }}
               >
-                <span style={{ color: '#93c5fd', fontSize: '14px', fontWeight: 600 }}>
+                <span
+                  style={{
+                    color: '#93c5fd',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                  }}
+                >
                   ✨ Official Template
                 </span>
               </div>
@@ -110,7 +117,8 @@ export async function GET(request: NextRequest) {
                 lineHeight: 1.4,
               }}
             >
-              {template.description || 'An AI agent template ready to be customized for your needs.'}
+              {template.description ||
+                'An AI agent template ready to be customized for your needs.'}
             </p>
             <div
               style={{
@@ -120,29 +128,69 @@ export async function GET(request: NextRequest) {
                 marginBottom: '40px',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div
+                style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+              >
                 <span style={{ color: '#64748b', fontSize: '18px' }}>by</span>
-                <span style={{ color: '#e2e8f0', fontSize: '18px', fontWeight: 600 }}>
+                <span
+                  style={{
+                    color: '#e2e8f0',
+                    fontSize: '18px',
+                    fontWeight: 600,
+                  }}
+                >
                   {template.creator_name || 'Anonymous'}
                 </span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ color: '#e2e8f0', fontSize: '18px', fontWeight: 600 }}>
+              <div
+                style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+              >
+                <span
+                  style={{
+                    color: '#e2e8f0',
+                    fontSize: '18px',
+                    fontWeight: 600,
+                  }}
+                >
                   {template.download_count}
                 </span>
-                <span style={{ color: '#64748b', fontSize: '18px' }}>installs</span>
+                <span style={{ color: '#64748b', fontSize: '18px' }}>
+                  installs
+                </span>
               </div>
-              {template.mcp_requirements && template.mcp_requirements.length > 0 && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ color: '#e2e8f0', fontSize: '18px', fontWeight: 600 }}>
-                    {template.mcp_requirements.length}
-                  </span>
-                  <span style={{ color: '#64748b', fontSize: '18px' }}>integrations</span>
-                </div>
-              )}
+              {template.mcp_requirements &&
+                template.mcp_requirements.length > 0 && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                    }}
+                  >
+                    <span
+                      style={{
+                        color: '#e2e8f0',
+                        fontSize: '18px',
+                        fontWeight: 600,
+                      }}
+                    >
+                      {template.mcp_requirements.length}
+                    </span>
+                    <span style={{ color: '#64748b', fontSize: '18px' }}>
+                      integrations
+                    </span>
+                  </div>
+                )}
             </div>
             {template.tags && template.tags.length > 0 && (
-              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '40px' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '12px',
+                  flexWrap: 'wrap',
+                  marginBottom: '40px',
+                }}
+              >
                 {template.tags.slice(0, 5).map((tag: string, index: number) => (
                   <div
                     key={index}
@@ -169,9 +217,13 @@ export async function GET(request: NextRequest) {
                 bottom: '40px',
               }}
             >
-              <span style={{ color: '#64748b', fontSize: '20px' }}>Kortix Suna</span>
+              <span style={{ color: '#64748b', fontSize: '20px' }}>
+                Kortix Suna
+              </span>
               <span style={{ color: '#334155', fontSize: '20px' }}>•</span>
-              <span style={{ color: '#64748b', fontSize: '20px' }}>AI Agent Marketplace</span>
+              <span style={{ color: '#64748b', fontSize: '20px' }}>
+                AI Agent Marketplace
+              </span>
             </div>
           </div>
         </div>
@@ -179,7 +231,7 @@ export async function GET(request: NextRequest) {
       {
         width: 1200,
         height: 630,
-      }
+      },
     );
   } catch (error) {
     console.error('OG Image generation error:', error);
@@ -194,7 +246,8 @@ export async function GET(request: NextRequest) {
             alignItems: 'center',
             justifyContent: 'center',
             backgroundColor: '#0a0a0a',
-            backgroundImage: 'linear-gradient(to bottom right, #1e1b4b, #0a0a0a)',
+            backgroundImage:
+              'linear-gradient(to bottom right, #1e1b4b, #0a0a0a)',
           }}
         >
           <div
@@ -238,7 +291,7 @@ export async function GET(request: NextRequest) {
       {
         width: 1200,
         height: 630,
-      }
+      },
     );
   }
-} 
+}

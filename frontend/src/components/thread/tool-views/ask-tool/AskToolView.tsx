@@ -9,15 +9,12 @@ import {
   Paperclip,
 } from 'lucide-react';
 import { ToolViewProps } from '../types';
-import {
-  formatTimestamp,
-  getToolTitle,
-} from '../utils';
+import { formatTimestamp, getToolTitle } from '../utils';
 import { extractAskData } from './_utils';
 import { cn, truncateString } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { FileAttachment } from '../../file-attachment';
 
 interface AskToolViewProps extends ToolViewProps {
@@ -35,23 +32,20 @@ export function AskToolView({
   onFileClick,
   project,
 }: AskToolViewProps) {
-
   const {
     text,
     attachments,
     status,
     actualIsSuccess,
     actualToolTimestamp,
-    actualAssistantTimestamp
+    actualAssistantTimestamp,
   } = extractAskData(
     assistantContent,
     toolContent,
     isSuccess,
     toolTimestamp,
-    assistantTimestamp
+    assistantTimestamp,
   );
-
-
 
   const isImageFile = (filePath: string): boolean => {
     const filename = filePath.split('/').pop() || '';
@@ -60,7 +54,17 @@ export function AskToolView({
 
   const isPreviewableFile = (filePath: string): boolean => {
     const ext = filePath.split('.').pop()?.toLowerCase() || '';
-    return ext === 'html' || ext === 'htm' || ext === 'md' || ext === 'markdown' || ext === 'csv' || ext === 'tsv' || ext === 'pdf' || ext === 'xlsx' || ext === 'xls';
+    return (
+      ext === 'html' ||
+      ext === 'htm' ||
+      ext === 'md' ||
+      ext === 'markdown' ||
+      ext === 'csv' ||
+      ext === 'tsv' ||
+      ext === 'pdf' ||
+      ext === 'xlsx' ||
+      ext === 'xls'
+    );
   };
 
   const toolTitle = getToolTitle(name) || 'Ask User';
@@ -91,8 +95,8 @@ export function AskToolView({
               variant="secondary"
               className={
                 actualIsSuccess
-                  ? "bg-gradient-to-b from-emerald-200 to-emerald-100 text-emerald-700 dark:from-emerald-800/50 dark:to-emerald-900/60 dark:text-emerald-300"
-                  : "bg-gradient-to-b from-rose-200 to-rose-100 text-rose-700 dark:from-rose-800/50 dark:to-rose-900/60 dark:text-rose-300"
+                  ? 'bg-gradient-to-b from-emerald-200 to-emerald-100 text-emerald-700 dark:from-emerald-800/50 dark:to-emerald-900/60 dark:text-emerald-300'
+                  : 'bg-gradient-to-b from-rose-200 to-rose-100 text-rose-700 dark:from-rose-800/50 dark:to-rose-900/60 dark:text-rose-300'
               }
             >
               {actualIsSuccess ? (
@@ -123,12 +127,16 @@ export function AskToolView({
                   Files ({attachments.length})
                 </div>
 
-                <div className={cn(
-                  "grid gap-3",
-                  attachments.length === 1 ? "grid-cols-1" :
-                    attachments.length > 4 ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3" :
-                      "grid-cols-1 sm:grid-cols-2"
-                )}>
+                <div
+                  className={cn(
+                    'grid gap-3',
+                    attachments.length === 1
+                      ? 'grid-cols-1'
+                      : attachments.length > 4
+                        ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3'
+                        : 'grid-cols-1 sm:grid-cols-2',
+                  )}
+                >
                   {attachments
                     .sort((a, b) => {
                       const aIsImage = isImageFile(a);
@@ -145,19 +153,26 @@ export function AskToolView({
                     .map((attachment, index) => {
                       const isImage = isImageFile(attachment);
                       const isPreviewable = isPreviewableFile(attachment);
-                      const shouldSpanFull = (attachments!.length % 2 === 1 &&
+                      const shouldSpanFull =
+                        attachments!.length % 2 === 1 &&
                         attachments!.length > 1 &&
-                        index === attachments!.length - 1);
+                        index === attachments!.length - 1;
 
                       return (
                         <div
                           key={index}
                           className={cn(
-                            "relative group",
-                            isImage ? "flex items-center justify-center h-full" : "",
-                            isPreviewable ? "w-full" : ""
+                            'relative group',
+                            isImage
+                              ? 'flex items-center justify-center h-full'
+                              : '',
+                            isPreviewable ? 'w-full' : '',
                           )}
-                          style={(shouldSpanFull || isPreviewable) ? { gridColumn: '1 / -1' } : undefined}
+                          style={
+                            shouldSpanFull || isPreviewable
+                              ? { gridColumn: '1 / -1' }
+                              : undefined
+                          }
                         >
                           <FileAttachment
                             filepath={attachment}
@@ -165,24 +180,31 @@ export function AskToolView({
                             sandboxId={project?.sandbox?.id}
                             showPreview={true}
                             className={cn(
-                              isImage ? "aspect-square w-full" : "w-full",
-                              isImage ? "" :
-                                isPreviewable ? "min-h-full max-h-[400px] overflow-auto" : "h-[54px]"
+                              isImage ? 'aspect-square w-full' : 'w-full',
+                              isImage
+                                ? ''
+                                : isPreviewable
+                                  ? 'min-h-full max-h-[400px] overflow-auto'
+                                  : 'h-[54px]',
                             )}
                             customStyle={
-                              isImage ? {
-                                width: '100%',
-                                height: '100%',
-                                '--attachment-height': '100%'
-                              } as React.CSSProperties :
-                                isPreviewable ? {
-                                  gridColumn: '1 / -1'
-                                } :
-                                  shouldSpanFull ? {
-                                    gridColumn: '1 / -1'
-                                  } : {
-                                    width: '100%'
-                                  }
+                              isImage
+                                ? ({
+                                    width: '100%',
+                                    height: '100%',
+                                    '--attachment-height': '100%',
+                                  } as React.CSSProperties)
+                                : isPreviewable
+                                  ? {
+                                      gridColumn: '1 / -1',
+                                    }
+                                  : shouldSpanFull
+                                    ? {
+                                        gridColumn: '1 / -1',
+                                      }
+                                    : {
+                                        width: '100%',
+                                      }
                             }
                             collapsed={false}
                             project={project}
@@ -191,8 +213,6 @@ export function AskToolView({
                       );
                     })}
                 </div>
-
-
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-8 text-center">
@@ -220,9 +240,11 @@ export function AskToolView({
         </div>
 
         <div className="text-xs text-zinc-500 dark:text-zinc-400">
-          {actualAssistantTimestamp ? formatTimestamp(actualAssistantTimestamp) : ''}
+          {actualAssistantTimestamp
+            ? formatTimestamp(actualAssistantTimestamp)
+            : ''}
         </div>
       </div>
     </Card>
   );
-} 
+}

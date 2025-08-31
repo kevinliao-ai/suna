@@ -208,12 +208,12 @@ function getEnvironmentMode(): EnvMode {
       return EnvMode.STAGING;
     case 'PRODUCTION':
       return EnvMode.PRODUCTION;
-  //   default:
-  //     if (process.env.NODE_ENV === 'development') {
-  //       return EnvMode.LOCAL;
-  //     } else {
-  //       return EnvMode.PRODUCTION;
-  //     }
+    //   default:
+    //     if (process.env.NODE_ENV === 'development') {
+    //       return EnvMode.LOCAL;
+    //     } else {
+    //       return EnvMode.PRODUCTION;
+    //     }
   }
 }
 
@@ -235,22 +235,40 @@ export const isStagingMode = (): boolean => {
   return config.IS_STAGING;
 };
 
-
 const PROD_YEARLY_COMMITMENT_PLANS = {
-  [PROD_TIERS.TIER_2_17_YEARLY_COMMITMENT.priceId]: { tier: 1, name: '2h/$17/month (yearly)' },
-  [PROD_TIERS.TIER_6_42_YEARLY_COMMITMENT.priceId]: { tier: 2, name: '6h/$42.50/month (yearly)' },
-  [PROD_TIERS.TIER_25_170_YEARLY_COMMITMENT.priceId]: { tier: 3, name: '25h/$170/month (yearly)' },
+  [PROD_TIERS.TIER_2_17_YEARLY_COMMITMENT.priceId]: {
+    tier: 1,
+    name: '2h/$17/month (yearly)',
+  },
+  [PROD_TIERS.TIER_6_42_YEARLY_COMMITMENT.priceId]: {
+    tier: 2,
+    name: '6h/$42.50/month (yearly)',
+  },
+  [PROD_TIERS.TIER_25_170_YEARLY_COMMITMENT.priceId]: {
+    tier: 3,
+    name: '25h/$170/month (yearly)',
+  },
 } as const;
 
 const STAGING_YEARLY_COMMITMENT_PLANS = {
-  [STAGING_TIERS.TIER_2_17_YEARLY_COMMITMENT.priceId]: { tier: 1, name: '2h/$17/month (yearly)' },
-  [STAGING_TIERS.TIER_6_42_YEARLY_COMMITMENT.priceId]: { tier: 2, name: '6h/$42.50/month (yearly)' },
-  [STAGING_TIERS.TIER_25_170_YEARLY_COMMITMENT.priceId]: { tier: 3, name: '25h/$170/month (yearly)' },
+  [STAGING_TIERS.TIER_2_17_YEARLY_COMMITMENT.priceId]: {
+    tier: 1,
+    name: '2h/$17/month (yearly)',
+  },
+  [STAGING_TIERS.TIER_6_42_YEARLY_COMMITMENT.priceId]: {
+    tier: 2,
+    name: '6h/$42.50/month (yearly)',
+  },
+  [STAGING_TIERS.TIER_25_170_YEARLY_COMMITMENT.priceId]: {
+    tier: 3,
+    name: '25h/$170/month (yearly)',
+  },
 } as const;
 
-const YEARLY_COMMITMENT_PLANS = currentEnvMode === EnvMode.STAGING 
-  ? STAGING_YEARLY_COMMITMENT_PLANS 
-  : PROD_YEARLY_COMMITMENT_PLANS;
+const YEARLY_COMMITMENT_PLANS =
+  currentEnvMode === EnvMode.STAGING
+    ? STAGING_YEARLY_COMMITMENT_PLANS
+    : PROD_YEARLY_COMMITMENT_PLANS;
 
 // Helper functions for yearly commitment plans
 export const isYearlyCommitmentPlan = (priceId: string): boolean => {
@@ -258,18 +276,27 @@ export const isYearlyCommitmentPlan = (priceId: string): boolean => {
 };
 
 export const getYearlyCommitmentTier = (priceId: string): number => {
-  return YEARLY_COMMITMENT_PLANS[priceId as keyof typeof YEARLY_COMMITMENT_PLANS]?.tier ?? 0;
+  return (
+    YEARLY_COMMITMENT_PLANS[priceId as keyof typeof YEARLY_COMMITMENT_PLANS]
+      ?.tier ?? 0
+  );
 };
 
-export const isYearlyCommitmentDowngrade = (currentPriceId: string, newPriceId: string): boolean => {
+export const isYearlyCommitmentDowngrade = (
+  currentPriceId: string,
+  newPriceId: string,
+): boolean => {
   // Check if both are yearly commitment plans
-  if (!isYearlyCommitmentPlan(currentPriceId) || !isYearlyCommitmentPlan(newPriceId)) {
+  if (
+    !isYearlyCommitmentPlan(currentPriceId) ||
+    !isYearlyCommitmentPlan(newPriceId)
+  ) {
     return false;
   }
-  
+
   const currentTier = getYearlyCommitmentTier(currentPriceId);
   const newTier = getYearlyCommitmentTier(newPriceId);
-  
+
   return newTier < currentTier;
 };
 
@@ -277,21 +304,29 @@ export const isYearlyCommitmentDowngrade = (currentPriceId: string, newPriceId: 
 export const isMonthlyPlan = (priceId: string): boolean => {
   const allTiers = config.SUBSCRIPTION_TIERS;
   const monthlyTiers = [
-    allTiers.TIER_2_20, allTiers.TIER_6_50, allTiers.TIER_12_100,
-    allTiers.TIER_25_200, allTiers.TIER_50_400, allTiers.TIER_125_800,
-    allTiers.TIER_200_1000
+    allTiers.TIER_2_20,
+    allTiers.TIER_6_50,
+    allTiers.TIER_12_100,
+    allTiers.TIER_25_200,
+    allTiers.TIER_50_400,
+    allTiers.TIER_125_800,
+    allTiers.TIER_200_1000,
   ];
-  return monthlyTiers.some(tier => tier.priceId === priceId);
+  return monthlyTiers.some((tier) => tier.priceId === priceId);
 };
 
 export const isYearlyPlan = (priceId: string): boolean => {
   const allTiers = config.SUBSCRIPTION_TIERS;
   const yearlyTiers = [
-    allTiers.TIER_2_20_YEARLY, allTiers.TIER_6_50_YEARLY, allTiers.TIER_12_100_YEARLY,
-    allTiers.TIER_25_200_YEARLY, allTiers.TIER_50_400_YEARLY, allTiers.TIER_125_800_YEARLY,
-    allTiers.TIER_200_1000_YEARLY
+    allTiers.TIER_2_20_YEARLY,
+    allTiers.TIER_6_50_YEARLY,
+    allTiers.TIER_12_100_YEARLY,
+    allTiers.TIER_25_200_YEARLY,
+    allTiers.TIER_50_400_YEARLY,
+    allTiers.TIER_125_800_YEARLY,
+    allTiers.TIER_200_1000_YEARLY,
   ];
-  return yearlyTiers.some(tier => tier.priceId === priceId);
+  return yearlyTiers.some((tier) => tier.priceId === priceId);
 };
 
 // Tier level mappings for all plan types
@@ -299,54 +334,191 @@ const PLAN_TIERS = {
   // Monthly plans
   [PROD_TIERS.TIER_2_20.priceId]: { tier: 1, type: 'monthly', name: '2h/$20' },
   [PROD_TIERS.TIER_6_50.priceId]: { tier: 2, type: 'monthly', name: '6h/$50' },
-  [PROD_TIERS.TIER_12_100.priceId]: { tier: 3, type: 'monthly', name: '12h/$100' },
-  [PROD_TIERS.TIER_25_200.priceId]: { tier: 4, type: 'monthly', name: '25h/$200' },
-  [PROD_TIERS.TIER_50_400.priceId]: { tier: 5, type: 'monthly', name: '50h/$400' },
-  [PROD_TIERS.TIER_125_800.priceId]: { tier: 6, type: 'monthly', name: '125h/$800' },
-  [PROD_TIERS.TIER_200_1000.priceId]: { tier: 7, type: 'monthly', name: '200h/$1000' },
-  
-  // Yearly plans  
-  [PROD_TIERS.TIER_2_20_YEARLY.priceId]: { tier: 1, type: 'yearly', name: '2h/$204/year' },
-  [PROD_TIERS.TIER_6_50_YEARLY.priceId]: { tier: 2, type: 'yearly', name: '6h/$510/year' },
-  [PROD_TIERS.TIER_12_100_YEARLY.priceId]: { tier: 3, type: 'yearly', name: '12h/$1020/year' },
-  [PROD_TIERS.TIER_25_200_YEARLY.priceId]: { tier: 4, type: 'yearly', name: '25h/$2040/year' },
-  [PROD_TIERS.TIER_50_400_YEARLY.priceId]: { tier: 5, type: 'yearly', name: '50h/$4080/year' },
-  [PROD_TIERS.TIER_125_800_YEARLY.priceId]: { tier: 6, type: 'yearly', name: '125h/$8160/year' },
-  [PROD_TIERS.TIER_200_1000_YEARLY.priceId]: { tier: 7, type: 'yearly', name: '200h/$10200/year' },
-  
+  [PROD_TIERS.TIER_12_100.priceId]: {
+    tier: 3,
+    type: 'monthly',
+    name: '12h/$100',
+  },
+  [PROD_TIERS.TIER_25_200.priceId]: {
+    tier: 4,
+    type: 'monthly',
+    name: '25h/$200',
+  },
+  [PROD_TIERS.TIER_50_400.priceId]: {
+    tier: 5,
+    type: 'monthly',
+    name: '50h/$400',
+  },
+  [PROD_TIERS.TIER_125_800.priceId]: {
+    tier: 6,
+    type: 'monthly',
+    name: '125h/$800',
+  },
+  [PROD_TIERS.TIER_200_1000.priceId]: {
+    tier: 7,
+    type: 'monthly',
+    name: '200h/$1000',
+  },
+
+  // Yearly plans
+  [PROD_TIERS.TIER_2_20_YEARLY.priceId]: {
+    tier: 1,
+    type: 'yearly',
+    name: '2h/$204/year',
+  },
+  [PROD_TIERS.TIER_6_50_YEARLY.priceId]: {
+    tier: 2,
+    type: 'yearly',
+    name: '6h/$510/year',
+  },
+  [PROD_TIERS.TIER_12_100_YEARLY.priceId]: {
+    tier: 3,
+    type: 'yearly',
+    name: '12h/$1020/year',
+  },
+  [PROD_TIERS.TIER_25_200_YEARLY.priceId]: {
+    tier: 4,
+    type: 'yearly',
+    name: '25h/$2040/year',
+  },
+  [PROD_TIERS.TIER_50_400_YEARLY.priceId]: {
+    tier: 5,
+    type: 'yearly',
+    name: '50h/$4080/year',
+  },
+  [PROD_TIERS.TIER_125_800_YEARLY.priceId]: {
+    tier: 6,
+    type: 'yearly',
+    name: '125h/$8160/year',
+  },
+  [PROD_TIERS.TIER_200_1000_YEARLY.priceId]: {
+    tier: 7,
+    type: 'yearly',
+    name: '200h/$10200/year',
+  },
+
   // Yearly commitment plans
-  [PROD_TIERS.TIER_2_17_YEARLY_COMMITMENT.priceId]: { tier: 1, type: 'yearly_commitment', name: '2h/$17/month' },
-  [PROD_TIERS.TIER_6_42_YEARLY_COMMITMENT.priceId]: { tier: 2, type: 'yearly_commitment', name: '6h/$42.50/month' },
-  [PROD_TIERS.TIER_25_170_YEARLY_COMMITMENT.priceId]: { tier: 4, type: 'yearly_commitment', name: '25h/$170/month' },
+  [PROD_TIERS.TIER_2_17_YEARLY_COMMITMENT.priceId]: {
+    tier: 1,
+    type: 'yearly_commitment',
+    name: '2h/$17/month',
+  },
+  [PROD_TIERS.TIER_6_42_YEARLY_COMMITMENT.priceId]: {
+    tier: 2,
+    type: 'yearly_commitment',
+    name: '6h/$42.50/month',
+  },
+  [PROD_TIERS.TIER_25_170_YEARLY_COMMITMENT.priceId]: {
+    tier: 4,
+    type: 'yearly_commitment',
+    name: '25h/$170/month',
+  },
 
   // Staging plans
-  [STAGING_TIERS.TIER_2_20.priceId]: { tier: 1, type: 'monthly', name: '2h/$20' },
-  [STAGING_TIERS.TIER_6_50.priceId]: { tier: 2, type: 'monthly', name: '6h/$50' },
-  [STAGING_TIERS.TIER_12_100.priceId]: { tier: 3, type: 'monthly', name: '12h/$100' },
-  [STAGING_TIERS.TIER_25_200.priceId]: { tier: 4, type: 'monthly', name: '25h/$200' },
-  [STAGING_TIERS.TIER_50_400.priceId]: { tier: 5, type: 'monthly', name: '50h/$400' },
-  [STAGING_TIERS.TIER_125_800.priceId]: { tier: 6, type: 'monthly', name: '125h/$800' },
-  [STAGING_TIERS.TIER_200_1000.priceId]: { tier: 7, type: 'monthly', name: '200h/$1000' },
-  
-  [STAGING_TIERS.TIER_2_20_YEARLY.priceId]: { tier: 1, type: 'yearly', name: '2h/$204/year' },
-  [STAGING_TIERS.TIER_6_50_YEARLY.priceId]: { tier: 2, type: 'yearly', name: '6h/$510/year' },
-  [STAGING_TIERS.TIER_12_100_YEARLY.priceId]: { tier: 3, type: 'yearly', name: '12h/$1020/year' },
-  [STAGING_TIERS.TIER_25_200_YEARLY.priceId]: { tier: 4, type: 'yearly', name: '25h/$2040/year' },
-  [STAGING_TIERS.TIER_50_400_YEARLY.priceId]: { tier: 5, type: 'yearly', name: '50h/$4080/year' },
-  [STAGING_TIERS.TIER_125_800_YEARLY.priceId]: { tier: 6, type: 'yearly', name: '125h/$8160/year' },
-  [STAGING_TIERS.TIER_200_1000_YEARLY.priceId]: { tier: 7, type: 'yearly', name: '200h/$10200/year' },
-  
-  [STAGING_TIERS.TIER_2_17_YEARLY_COMMITMENT.priceId]: { tier: 1, type: 'yearly_commitment', name: '2h/$17/month' },
-  [STAGING_TIERS.TIER_6_42_YEARLY_COMMITMENT.priceId]: { tier: 2, type: 'yearly_commitment', name: '6h/$42.50/month' },
-  [STAGING_TIERS.TIER_25_170_YEARLY_COMMITMENT.priceId]: { tier: 4, type: 'yearly_commitment', name: '25h/$170/month' },
+  [STAGING_TIERS.TIER_2_20.priceId]: {
+    tier: 1,
+    type: 'monthly',
+    name: '2h/$20',
+  },
+  [STAGING_TIERS.TIER_6_50.priceId]: {
+    tier: 2,
+    type: 'monthly',
+    name: '6h/$50',
+  },
+  [STAGING_TIERS.TIER_12_100.priceId]: {
+    tier: 3,
+    type: 'monthly',
+    name: '12h/$100',
+  },
+  [STAGING_TIERS.TIER_25_200.priceId]: {
+    tier: 4,
+    type: 'monthly',
+    name: '25h/$200',
+  },
+  [STAGING_TIERS.TIER_50_400.priceId]: {
+    tier: 5,
+    type: 'monthly',
+    name: '50h/$400',
+  },
+  [STAGING_TIERS.TIER_125_800.priceId]: {
+    tier: 6,
+    type: 'monthly',
+    name: '125h/$800',
+  },
+  [STAGING_TIERS.TIER_200_1000.priceId]: {
+    tier: 7,
+    type: 'monthly',
+    name: '200h/$1000',
+  },
+
+  [STAGING_TIERS.TIER_2_20_YEARLY.priceId]: {
+    tier: 1,
+    type: 'yearly',
+    name: '2h/$204/year',
+  },
+  [STAGING_TIERS.TIER_6_50_YEARLY.priceId]: {
+    tier: 2,
+    type: 'yearly',
+    name: '6h/$510/year',
+  },
+  [STAGING_TIERS.TIER_12_100_YEARLY.priceId]: {
+    tier: 3,
+    type: 'yearly',
+    name: '12h/$1020/year',
+  },
+  [STAGING_TIERS.TIER_25_200_YEARLY.priceId]: {
+    tier: 4,
+    type: 'yearly',
+    name: '25h/$2040/year',
+  },
+  [STAGING_TIERS.TIER_50_400_YEARLY.priceId]: {
+    tier: 5,
+    type: 'yearly',
+    name: '50h/$4080/year',
+  },
+  [STAGING_TIERS.TIER_125_800_YEARLY.priceId]: {
+    tier: 6,
+    type: 'yearly',
+    name: '125h/$8160/year',
+  },
+  [STAGING_TIERS.TIER_200_1000_YEARLY.priceId]: {
+    tier: 7,
+    type: 'yearly',
+    name: '200h/$10200/year',
+  },
+
+  [STAGING_TIERS.TIER_2_17_YEARLY_COMMITMENT.priceId]: {
+    tier: 1,
+    type: 'yearly_commitment',
+    name: '2h/$17/month',
+  },
+  [STAGING_TIERS.TIER_6_42_YEARLY_COMMITMENT.priceId]: {
+    tier: 2,
+    type: 'yearly_commitment',
+    name: '6h/$42.50/month',
+  },
+  [STAGING_TIERS.TIER_25_170_YEARLY_COMMITMENT.priceId]: {
+    tier: 4,
+    type: 'yearly_commitment',
+    name: '25h/$170/month',
+  },
 } as const;
 
 export const getPlanInfo = (priceId: string) => {
-  return PLAN_TIERS[priceId as keyof typeof PLAN_TIERS] || { tier: 0, type: 'unknown', name: 'Unknown' };
+  return (
+    PLAN_TIERS[priceId as keyof typeof PLAN_TIERS] || {
+      tier: 0,
+      type: 'unknown',
+      name: 'Unknown',
+    }
+  );
 };
 
 // Plan change validation function
-export const isPlanChangeAllowed = (currentPriceId: string, newPriceId: string): { allowed: boolean; reason?: string } => {
+export const isPlanChangeAllowed = (
+  currentPriceId: string,
+  newPriceId: string,
+): { allowed: boolean; reason?: string } => {
   const currentPlan = getPlanInfo(currentPriceId);
   const newPlan = getPlanInfo(newPriceId);
 
@@ -356,34 +528,50 @@ export const isPlanChangeAllowed = (currentPriceId: string, newPriceId: string):
   }
 
   // Restriction 1: Don't allow downgrade from monthly to lower monthly
-  if (currentPlan.type === 'monthly' && newPlan.type === 'monthly' && newPlan.tier < currentPlan.tier) {
-    return { 
-      allowed: false, 
-      reason: 'Downgrading to a lower monthly plan is not allowed. You can only upgrade to a higher tier or switch to yearly billing.' 
+  if (
+    currentPlan.type === 'monthly' &&
+    newPlan.type === 'monthly' &&
+    newPlan.tier < currentPlan.tier
+  ) {
+    return {
+      allowed: false,
+      reason:
+        'Downgrading to a lower monthly plan is not allowed. You can only upgrade to a higher tier or switch to yearly billing.',
     };
   }
 
   // Restriction 2: Don't allow downgrade from yearly commitment to monthly
   if (currentPlan.type === 'yearly_commitment' && newPlan.type === 'monthly') {
-    return { 
-      allowed: false, 
-      reason: 'Downgrading from yearly commitment to monthly is not allowed. You can only upgrade within yearly commitment plans.' 
+    return {
+      allowed: false,
+      reason:
+        'Downgrading from yearly commitment to monthly is not allowed. You can only upgrade within yearly commitment plans.',
     };
   }
 
   // Restriction 2b: Don't allow downgrade within yearly commitment plans
-  if (currentPlan.type === 'yearly_commitment' && newPlan.type === 'yearly_commitment' && newPlan.tier < currentPlan.tier) {
-    return { 
-      allowed: false, 
-      reason: 'Downgrading to a lower yearly commitment plan is not allowed. You can only upgrade to higher commitment tiers.' 
+  if (
+    currentPlan.type === 'yearly_commitment' &&
+    newPlan.type === 'yearly_commitment' &&
+    newPlan.tier < currentPlan.tier
+  ) {
+    return {
+      allowed: false,
+      reason:
+        'Downgrading to a lower yearly commitment plan is not allowed. You can only upgrade to higher commitment tiers.',
     };
   }
 
   // Restriction 3: Only allow upgrade from monthly to yearly commitment on same level or above
-  if (currentPlan.type === 'monthly' && newPlan.type === 'yearly_commitment' && newPlan.tier < currentPlan.tier) {
-    return { 
-      allowed: false, 
-      reason: 'You can only upgrade to yearly commitment plans at the same tier level or higher.' 
+  if (
+    currentPlan.type === 'monthly' &&
+    newPlan.type === 'yearly_commitment' &&
+    newPlan.tier < currentPlan.tier
+  ) {
+    return {
+      allowed: false,
+      reason:
+        'You can only upgrade to yearly commitment plans at the same tier level or higher.',
     };
   }
 

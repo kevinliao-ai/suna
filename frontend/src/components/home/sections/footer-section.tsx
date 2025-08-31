@@ -9,7 +9,11 @@ import Image from 'next/image';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
 
-export function FooterSection({ showMaintenanceQulckLink }: { showMaintenanceQulckLink?: boolean }) {
+export function FooterSection({
+  showMaintenanceQulckLink,
+}: {
+  showMaintenanceQulckLink?: boolean;
+}) {
   const tablet = useMediaQuery('(max-width: 1024px)');
   const { theme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -116,7 +120,9 @@ export function FooterSection({ showMaintenanceQulckLink }: { showMaintenanceQul
                 </li>
                 {column.links.map((link) => {
                   // 如果链接是锚点链接（以#开头），则添加完整路径
-                  const href = link.url.startsWith('#') ? `/${link.url}` : link.url;
+                  const href = link.url.startsWith('#')
+                    ? `/${link.url}`
+                    : link.url;
                   return (
                     <li
                       key={link.id}

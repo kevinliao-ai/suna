@@ -49,7 +49,10 @@ export const ComposioAppCard: React.FC<ComposioAppCardProps> = ({
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <span className="truncate">by Composio</span>
               {isConnected && (
-                <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200 dark:border-green-900 dark:bg-green-900/20 dark:text-green-400">
+                <Badge
+                  variant="secondary"
+                  className="bg-green-50 text-green-700 border-green-200 dark:border-green-900 dark:bg-green-900/20 dark:text-green-400"
+                >
                   Connected
                 </Badge>
               )}
@@ -59,9 +62,10 @@ export const ComposioAppCard: React.FC<ComposioAppCardProps> = ({
 
         <div className="space-y-3 mb-4">
           <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
-            {app.description || `Connect to ${app.name} and access its tools and capabilities.`}
+            {app.description ||
+              `Connect to ${app.name} and access its tools and capabilities.`}
           </p>
-          
+
           {app.tags && app.tags.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
               {app.tags.slice(0, 3).map((tag, index) => (
@@ -107,4 +111,4 @@ export const ComposioAppCard: React.FC<ComposioAppCardProps> = ({
       </div>
     </div>
   );
-}; 
+};

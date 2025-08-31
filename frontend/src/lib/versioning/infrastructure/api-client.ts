@@ -6,7 +6,9 @@ const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || '';
 export class SupabaseApiClient implements IApiClient {
   private async getAuthHeaders(): Promise<Record<string, string>> {
     const supabase = createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
 
     if (!session) {
       throw new Error('You must be logged in');
@@ -14,7 +16,7 @@ export class SupabaseApiClient implements IApiClient {
 
     return {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${session.access_token}`,
+      Authorization: `Bearer ${session.access_token}`,
     };
   }
 
@@ -26,8 +28,12 @@ export class SupabaseApiClient implements IApiClient {
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-      throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+      const errorData = await response
+        .json()
+        .catch(() => ({ message: 'Unknown error' }));
+      throw new Error(
+        errorData.message || `HTTP ${response.status}: ${response.statusText}`,
+      );
     }
 
     return response.json();
@@ -42,8 +48,12 @@ export class SupabaseApiClient implements IApiClient {
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-      throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+      const errorData = await response
+        .json()
+        .catch(() => ({ message: 'Unknown error' }));
+      throw new Error(
+        errorData.message || `HTTP ${response.status}: ${response.statusText}`,
+      );
     }
 
     return response.json();
@@ -58,8 +68,12 @@ export class SupabaseApiClient implements IApiClient {
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-      throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+      const errorData = await response
+        .json()
+        .catch(() => ({ message: 'Unknown error' }));
+      throw new Error(
+        errorData.message || `HTTP ${response.status}: ${response.statusText}`,
+      );
     }
 
     return response.json();
@@ -73,8 +87,12 @@ export class SupabaseApiClient implements IApiClient {
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-      throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+      const errorData = await response
+        .json()
+        .catch(() => ({ message: 'Unknown error' }));
+      throw new Error(
+        errorData.message || `HTTP ${response.status}: ${response.statusText}`,
+      );
     }
   }
-} 
+}

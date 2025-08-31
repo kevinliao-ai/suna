@@ -13,9 +13,8 @@ export const ResultsInfo = ({
   totalAgents,
   filteredCount,
   currentPage,
-  totalPages
+  totalPages,
 }: ResultsInfoProps) => {
-
   if (isLoading || totalAgents === 0) {
     return null;
   }
@@ -29,9 +28,7 @@ export const ResultsInfo = ({
 
   return (
     <div className="flex items-center justify-between text-sm text-muted-foreground">
-      <span>
-        {showingText()}
-      </span>
+      <span>{showingText()}</span>
     </div>
   );
-}
+};

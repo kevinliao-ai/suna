@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/client";
+import { createClient } from '@/lib/supabase/client';
 
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || '';
 
@@ -107,7 +107,7 @@ export type AgentCreateRequest = {
 
 export type AgentVersionCreateRequest = {
   system_prompt: string;
-  model?: string;  // Add model field
+  model?: string; // Add model field
   configured_mcps?: Array<{
     name: string;
     config: Record<string, any>;
@@ -129,7 +129,7 @@ export type AgentVersion = {
   version_number: number;
   version_name: string;
   system_prompt: string;
-  model?: string;  // Add model field
+  model?: string; // Add model field
   configured_mcps: Array<any>;
   custom_mcps: Array<any>;
   agentpress_tools: Record<string, any>;
@@ -166,10 +166,14 @@ export type AgentUpdateRequest = {
   replace_mcps?: boolean;
 };
 
-export const getAgents = async (params: AgentsParams = {}): Promise<AgentsResponse> => {
+export const getAgents = async (
+  params: AgentsParams = {},
+): Promise<AgentsResponse> => {
   try {
     const supabase = createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
 
     if (!session) {
       throw new Error('You must be logged in to get agents');
@@ -181,11 +185,18 @@ export const getAgents = async (params: AgentsParams = {}): Promise<AgentsRespon
     if (params.search) queryParams.append('search', params.search);
     if (params.sort_by) queryParams.append('sort_by', params.sort_by);
     if (params.sort_order) queryParams.append('sort_order', params.sort_order);
-    if (params.has_default !== undefined) queryParams.append('has_default', params.has_default.toString());
-    if (params.has_mcp_tools !== undefined) queryParams.append('has_mcp_tools', params.has_mcp_tools.toString());
-    if (params.has_agentpress_tools !== undefined) queryParams.append('has_agentpress_tools', params.has_agentpress_tools.toString());
+    if (params.has_default !== undefined)
+      queryParams.append('has_default', params.has_default.toString());
+    if (params.has_mcp_tools !== undefined)
+      queryParams.append('has_mcp_tools', params.has_mcp_tools.toString());
+    if (params.has_agentpress_tools !== undefined)
+      queryParams.append(
+        'has_agentpress_tools',
+        params.has_agentpress_tools.toString(),
+      );
     if (params.tools) queryParams.append('tools', params.tools);
-    if (params.content_type) queryParams.append('content_type', params.content_type);
+    if (params.content_type)
+      queryParams.append('content_type', params.content_type);
 
     const url = `${API_URL}/agents${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
 
@@ -193,13 +204,17 @@ export const getAgents = async (params: AgentsParams = {}): Promise<AgentsRespon
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`,
+        Authorization: `Bearer ${session.access_token}`,
       },
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-      throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+      const errorData = await response
+        .json()
+        .catch(() => ({ message: 'Unknown error' }));
+      throw new Error(
+        errorData.message || `HTTP ${response.status}: ${response.statusText}`,
+      );
     }
 
     const result = await response.json();
@@ -213,7 +228,9 @@ export const getAgents = async (params: AgentsParams = {}): Promise<AgentsRespon
 export const getAgent = async (agentId: string): Promise<Agent> => {
   try {
     const supabase = createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
 
     if (!session) {
       throw new Error('You must be logged in to get agent details');
@@ -223,13 +240,17 @@ export const getAgent = async (agentId: string): Promise<Agent> => {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`,
+        Authorization: `Bearer ${session.access_token}`,
       },
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-      throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+      const errorData = await response
+        .json()
+        .catch(() => ({ message: 'Unknown error' }));
+      throw new Error(
+        errorData.message || `HTTP ${response.status}: ${response.statusText}`,
+      );
     }
 
     const agent = await response.json();
@@ -240,10 +261,14 @@ export const getAgent = async (agentId: string): Promise<Agent> => {
   }
 };
 
-export const createAgent = async (agentData: AgentCreateRequest): Promise<Agent> => {
+export const createAgent = async (
+  agentData: AgentCreateRequest,
+): Promise<Agent> => {
   try {
     const supabase = createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
 
     if (!session) {
       throw new Error('You must be logged in to create an agent');
@@ -253,25 +278,29 @@ export const createAgent = async (agentData: AgentCreateRequest): Promise<Agent>
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`,
+        Authorization: `Bearer ${session.access_token}`,
       },
       body: JSON.stringify(agentData),
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-      const isAgentLimitError = (response.status === 402) && (
-        errorData.error_code === 'AGENT_LIMIT_EXCEEDED' || 
-        errorData.detail?.error_code === 'AGENT_LIMIT_EXCEEDED'
-      );
-      
+      const errorData = await response
+        .json()
+        .catch(() => ({ message: 'Unknown error' }));
+      const isAgentLimitError =
+        response.status === 402 &&
+        (errorData.error_code === 'AGENT_LIMIT_EXCEEDED' ||
+          errorData.detail?.error_code === 'AGENT_LIMIT_EXCEEDED');
+
       if (isAgentLimitError) {
         const { AgentCountLimitError } = await import('@/lib/api');
         const errorDetail = errorData.detail || errorData;
         throw new AgentCountLimitError(response.status, errorDetail);
       }
-      
-      throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+
+      throw new Error(
+        errorData.message || `HTTP ${response.status}: ${response.statusText}`,
+      );
     }
 
     const agent = await response.json();
@@ -282,10 +311,15 @@ export const createAgent = async (agentData: AgentCreateRequest): Promise<Agent>
   }
 };
 
-export const updateAgent = async (agentId: string, agentData: AgentUpdateRequest): Promise<Agent> => {
+export const updateAgent = async (
+  agentId: string,
+  agentData: AgentUpdateRequest,
+): Promise<Agent> => {
   try {
     const supabase = createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
 
     if (!session) {
       throw new Error('You must be logged in to update an agent');
@@ -295,14 +329,18 @@ export const updateAgent = async (agentId: string, agentData: AgentUpdateRequest
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`,
+        Authorization: `Bearer ${session.access_token}`,
       },
       body: JSON.stringify(agentData),
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-      throw new Error(errorData.message || `HTTP ${response.status}: {response.statusText}`);
+      const errorData = await response
+        .json()
+        .catch(() => ({ message: 'Unknown error' }));
+      throw new Error(
+        errorData.message || `HTTP ${response.status}: {response.statusText}`,
+      );
     }
 
     const agent = await response.json();
@@ -316,7 +354,9 @@ export const updateAgent = async (agentId: string, agentData: AgentUpdateRequest
 export const deleteAgent = async (agentId: string): Promise<void> => {
   try {
     const supabase = createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
 
     if (!session) {
       throw new Error('You must be logged in to delete an agent');
@@ -326,13 +366,17 @@ export const deleteAgent = async (agentId: string): Promise<void> => {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`,
+        Authorization: `Bearer ${session.access_token}`,
       },
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-      throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+      const errorData = await response
+        .json()
+        .catch(() => ({ message: 'Unknown error' }));
+      throw new Error(
+        errorData.message || `HTTP ${response.status}: ${response.statusText}`,
+      );
     }
   } catch (err) {
     console.error('Error deleting agent:', err);
@@ -340,10 +384,14 @@ export const deleteAgent = async (agentId: string): Promise<void> => {
   }
 };
 
-export const getThreadAgent = async (threadId: string): Promise<ThreadAgentResponse> => {
+export const getThreadAgent = async (
+  threadId: string,
+): Promise<ThreadAgentResponse> => {
   try {
     const supabase = createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
 
     if (!session) {
       throw new Error('You must be logged in to get thread agent');
@@ -353,13 +401,17 @@ export const getThreadAgent = async (threadId: string): Promise<ThreadAgentRespo
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`,
+        Authorization: `Bearer ${session.access_token}`,
       },
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-      throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+      const errorData = await response
+        .json()
+        .catch(() => ({ message: 'Unknown error' }));
+      throw new Error(
+        errorData.message || `HTTP ${response.status}: ${response.statusText}`,
+      );
     }
 
     const agent = await response.json();
@@ -370,12 +422,14 @@ export const getThreadAgent = async (threadId: string): Promise<ThreadAgentRespo
   }
 };
 
-
-
-export const getAgentVersions = async (agentId: string): Promise<AgentVersion[]> => {
+export const getAgentVersions = async (
+  agentId: string,
+): Promise<AgentVersion[]> => {
   try {
     const supabase = createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
 
     if (!session) {
       throw new Error('You must be logged in to get agent versions');
@@ -383,13 +437,17 @@ export const getAgentVersions = async (agentId: string): Promise<AgentVersion[]>
 
     const response = await fetch(`${API_URL}/agents/${agentId}/versions`, {
       headers: {
-        'Authorization': `Bearer ${session.access_token}`,
+        Authorization: `Bearer ${session.access_token}`,
       },
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-      throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+      const errorData = await response
+        .json()
+        .catch(() => ({ message: 'Unknown error' }));
+      throw new Error(
+        errorData.message || `HTTP ${response.status}: ${response.statusText}`,
+      );
     }
 
     const versions = await response.json();
@@ -402,11 +460,13 @@ export const getAgentVersions = async (agentId: string): Promise<AgentVersion[]>
 
 export const createAgentVersion = async (
   agentId: string,
-  data: AgentVersionCreateRequest
+  data: AgentVersionCreateRequest,
 ): Promise<AgentVersion> => {
   try {
     const supabase = createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
 
     if (!session) {
       throw new Error('You must be logged in to create agent version');
@@ -416,14 +476,18 @@ export const createAgentVersion = async (
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`,
+        Authorization: `Bearer ${session.access_token}`,
       },
       body: JSON.stringify(data),
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-      throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+      const errorData = await response
+        .json()
+        .catch(() => ({ message: 'Unknown error' }));
+      throw new Error(
+        errorData.message || `HTTP ${response.status}: ${response.statusText}`,
+      );
     }
 
     const version = await response.json();
@@ -436,11 +500,13 @@ export const createAgentVersion = async (
 
 export const activateAgentVersion = async (
   agentId: string,
-  versionId: string
+  versionId: string,
 ): Promise<void> => {
   try {
     const supabase = createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
 
     if (!session) {
       throw new Error('You must be logged in to activate agent version');
@@ -451,14 +517,18 @@ export const activateAgentVersion = async (
       {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${session.access_token}`,
+          Authorization: `Bearer ${session.access_token}`,
         },
-      }
+      },
     );
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-      throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+      const errorData = await response
+        .json()
+        .catch(() => ({ message: 'Unknown error' }));
+      throw new Error(
+        errorData.message || `HTTP ${response.status}: ${response.statusText}`,
+      );
     }
   } catch (err) {
     console.error('Error activating agent version:', err);
@@ -468,11 +538,13 @@ export const activateAgentVersion = async (
 
 export const getAgentVersion = async (
   agentId: string,
-  versionId: string
+  versionId: string,
 ): Promise<AgentVersion> => {
   try {
     const supabase = createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
 
     if (!session) {
       throw new Error('You must be logged in to get agent version');
@@ -482,14 +554,18 @@ export const getAgentVersion = async (
       `${API_URL}/agents/${agentId}/versions/${versionId}`,
       {
         headers: {
-          'Authorization': `Bearer ${session.access_token}`,
+          Authorization: `Bearer ${session.access_token}`,
         },
-      }
+      },
     );
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-      throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+      const errorData = await response
+        .json()
+        .catch(() => ({ message: 'Unknown error' }));
+      throw new Error(
+        errorData.message || `HTTP ${response.status}: ${response.statusText}`,
+      );
     }
 
     const version = await response.json();
@@ -499,4 +575,3 @@ export const getAgentVersion = async (
     throw err;
   }
 };
-  

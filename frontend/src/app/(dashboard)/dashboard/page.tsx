@@ -7,8 +7,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 // Dynamically import the BilibiliEmbed component with no SSR
 const BilibiliEmbed = dynamic(
-  () => import('@/components/bilibili-embed').then(mod => mod.BilibiliEmbed),
-  { 
+  () => import('@/components/bilibili-embed').then((mod) => mod.BilibiliEmbed),
+  {
     ssr: false,
     loading: () => (
       <div className="flex items-center justify-center h-full">
@@ -16,8 +16,8 @@ const BilibiliEmbed = dynamic(
           Loading Bilibili content...
         </div>
       </div>
-    )
-  }
+    ),
+  },
 );
 
 export default function DashboardPage() {
@@ -51,14 +51,16 @@ export default function DashboardPage() {
           </Link>
         </div>
       </header>
-      
+
       {/* Content */}
       <div className="flex-1 w-full overflow-hidden">
-        <Suspense fallback={
-          <div className="flex-1 flex items-center justify-center h-full">
-            <div className="animate-pulse">Loading Bilibili content...</div>
-          </div>
-        }>
+        <Suspense
+          fallback={
+            <div className="flex-1 flex items-center justify-center h-full">
+              <div className="animate-pulse">Loading Bilibili content...</div>
+            </div>
+          }
+        >
           <div className="h-[calc(100vh-58px)] w-full">
             <BilibiliEmbed url="https://bilibili-index-anisora.ms.show/" />
           </div>

@@ -19,7 +19,6 @@ import { QuoteSection } from '@/components/home/sections/quote-section';
 import { TestimonialSection } from '@/components/home/sections/testimonial-section';
 import { AgentShowcaseSection } from '@/components/home/sections/agent-showcase-section';
 
-
 export default function Home() {
   return (
     <>
@@ -35,7 +34,7 @@ export default function Home() {
             {/* <div className='flex flex-col items-center px-4'>
               <PricingSection />
             </div> */}
-           
+
             <TestimonialSection />
             <FAQSection />
             <CTASection />

@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 import React from 'react';
 import {
@@ -13,7 +13,7 @@ import { ToolViewProps } from './types';
 import { formatTimestamp, getToolTitle, extractToolData } from './utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { LoadingState } from './shared/LoadingState';
 import { toast } from 'sonner';
@@ -41,7 +41,10 @@ export function GenericToolView({
         tool: toolResult.xmlTagName || toolResult.functionName,
       };
 
-      if (toolResult.arguments && Object.keys(toolResult.arguments).length > 0) {
+      if (
+        toolResult.arguments &&
+        Object.keys(toolResult.arguments).length > 0
+      ) {
         formatted.parameters = toolResult.arguments;
       }
 
@@ -80,10 +83,14 @@ export function GenericToolView({
         const innerContent = content.content;
         if ('tool_name' in innerContent || 'xml_tag_name' in innerContent) {
           const formatted: any = {
-            tool: innerContent.tool_name || innerContent.xml_tag_name || 'unknown',
+            tool:
+              innerContent.tool_name || innerContent.xml_tag_name || 'unknown',
           };
 
-          if (innerContent.parameters && Object.keys(innerContent.parameters).length > 0) {
+          if (
+            innerContent.parameters &&
+            Object.keys(innerContent.parameters).length > 0
+          ) {
             formatted.parameters = innerContent.parameters;
           }
 
@@ -184,8 +191,8 @@ export function GenericToolView({
               variant="secondary"
               className={
                 isSuccess
-                  ? "bg-gradient-to-b from-emerald-200 to-emerald-100 text-emerald-700 dark:from-emerald-800/50 dark:to-emerald-900/60 dark:text-emerald-300"
-                  : "bg-gradient-to-b from-rose-200 to-rose-100 text-rose-700 dark:from-rose-800/50 dark:to-rose-900/60 dark:text-rose-300"
+                  ? 'bg-gradient-to-b from-emerald-200 to-emerald-100 text-emerald-700 dark:from-emerald-800/50 dark:to-emerald-900/60 dark:text-emerald-300'
+                  : 'bg-gradient-to-b from-rose-200 to-rose-100 text-rose-700 dark:from-rose-800/50 dark:to-rose-900/60 dark:text-rose-300'
               }
             >
               {isSuccess ? (
@@ -193,7 +200,9 @@ export function GenericToolView({
               ) : (
                 <AlertTriangle className="h-3.5 w-3.5" />
               )}
-              {isSuccess ? 'Tool executed successfully' : 'Tool execution failed'}
+              {isSuccess
+                ? 'Tool executed successfully'
+                : 'Tool execution failed'}
             </Badge>
           )}
         </div>
@@ -215,9 +224,7 @@ export function GenericToolView({
               {formattedAssistantContent && (
                 <div className="space-y-2">
                   <div className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center justify-between">
-                    <div className="flex items-center">
-                      Input
-                    </div>
+                    <div className="flex items-center">Input</div>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -246,9 +253,7 @@ export function GenericToolView({
               {formattedToolContent && (
                 <div className="space-y-2">
                   <div className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center justify-between">
-                    <div className="flex items-center">
-                      Output
-                    </div>
+                    <div className="flex items-center">Output</div>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -284,7 +289,8 @@ export function GenericToolView({
               No Content Available
             </h3>
             <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center max-w-md">
-              This tool execution did not produce any input or output content to display.
+              This tool execution did not produce any input or output content to
+              display.
             </p>
           </div>
         )}
@@ -292,12 +298,16 @@ export function GenericToolView({
 
       <div className="px-4 py-2 h-10 bg-gradient-to-r from-zinc-50/90 to-zinc-100/90 dark:from-zinc-900/90 dark:to-zinc-800/90 backdrop-blur-sm border-t border-zinc-200 dark:border-zinc-800 flex justify-between items-center gap-4">
         <div className="h-full flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
-          {!isStreaming && (formattedAssistantContent || formattedToolContent) && (
-            <Badge variant="outline" className="h-6 py-0.5 bg-zinc-50 dark:bg-zinc-900">
-              <Wrench className="h-3 w-3" />
-              Tool
-            </Badge>
-          )}
+          {!isStreaming &&
+            (formattedAssistantContent || formattedToolContent) && (
+              <Badge
+                variant="outline"
+                className="h-6 py-0.5 bg-zinc-50 dark:bg-zinc-900"
+              >
+                <Wrench className="h-3 w-3" />
+                Tool
+              </Badge>
+            )}
         </div>
 
         <div className="text-xs text-zinc-500 dark:text-zinc-400 flex items-center gap-2">

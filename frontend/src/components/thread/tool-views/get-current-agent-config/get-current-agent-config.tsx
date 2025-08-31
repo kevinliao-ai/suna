@@ -10,17 +10,22 @@ import {
   Clock,
   Activity,
   Zap,
-  Link2
+  Link2,
 } from 'lucide-react';
 import { ToolViewProps } from '../types';
 import { formatTimestamp, getToolTitle } from '../utils';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { LoadingState } from '../shared/LoadingState';
-import { Separator } from "@/components/ui/separator";
-import { extractGetCurrentAgentConfigData, AgentConfiguration, CustomMcp, AgentpressTool } from './_utils';
+import { Separator } from '@/components/ui/separator';
+import {
+  extractGetCurrentAgentConfigData,
+  AgentConfiguration,
+  CustomMcp,
+  AgentpressTool,
+} from './_utils';
 
 export function GetCurrentAgentConfigToolView({
   name = 'get-current-agent-config',
@@ -31,19 +36,18 @@ export function GetCurrentAgentConfigToolView({
   isSuccess = true,
   isStreaming = false,
 }: ToolViewProps) {
-
   const {
     summary,
     configuration,
     actualIsSuccess,
     actualToolTimestamp,
-    actualAssistantTimestamp
+    actualAssistantTimestamp,
   } = extractGetCurrentAgentConfigData(
     assistantContent,
     toolContent,
     isSuccess,
     toolTimestamp,
-    assistantTimestamp
+    assistantTimestamp,
   );
 
   const toolTitle = getToolTitle(name);
@@ -57,7 +61,7 @@ export function GetCurrentAgentConfigToolView({
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
-        timeZoneName: 'short'
+        timeZoneName: 'short',
       });
     } catch (e) {
       return dateString;
@@ -68,18 +72,18 @@ export function GetCurrentAgentConfigToolView({
     return toolKey
       .replace(/sb_|_tool/g, '')
       .replace(/_/g, ' ')
-      .replace(/\b\w/g, l => l.toUpperCase());
+      .replace(/\b\w/g, (l) => l.toUpperCase());
   };
 
   const formatMcpToolName = (toolName: string) => {
     return toolName
       .split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
       .join(' ');
   };
 
   const getEnabledToolsCount = (tools: Record<string, AgentpressTool>) => {
-    return Object.values(tools).filter(tool => tool.enabled).length;
+    return Object.values(tools).filter((tool) => tool.enabled).length;
   };
 
   const getTotalMcpToolsCount = (mcps: CustomMcp[]) => {
@@ -108,10 +112,10 @@ export function GetCurrentAgentConfigToolView({
             <Badge
               variant="outline"
               className={cn(
-                "text-xs font-medium",
+                'text-xs font-medium',
                 actualIsSuccess
-                  ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800"
-                  : "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800"
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800'
+                  : 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800',
               )}
             >
               {actualIsSuccess ? (
@@ -193,37 +197,43 @@ export function GetCurrentAgentConfigToolView({
                       </div>
                     </div>
                     <Badge variant="outline" className="text-xs">
-                      {getEnabledToolsCount(configuration.agentpress_tools)} enabled
+                      {getEnabledToolsCount(configuration.agentpress_tools)}{' '}
+                      enabled
                     </Badge>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {Object.entries(configuration.agentpress_tools).map(([key, tool]) => (
-                      <div key={key} className="flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg">
-                        <div className="flex items-center gap-2">
-                          <Activity className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
-                          <div>
-                            <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                              {formatToolName(key)}
-                            </p>
-                            <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                              {tool.description}
-                            </p>
-                          </div>
-                        </div>
-                        <Badge
-                          variant={tool.enabled ? "default" : "secondary"}
-                          className={cn(
-                            "text-xs",
-                            tool.enabled 
-                              ? "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800"
-                              : "bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-900/20 dark:text-gray-300 dark:border-gray-800"
-                          )}
+                    {Object.entries(configuration.agentpress_tools).map(
+                      ([key, tool]) => (
+                        <div
+                          key={key}
+                          className="flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg"
                         >
-                          {tool.enabled ? 'Enabled' : 'Disabled'}
-                        </Badge>
-                      </div>
-                    ))}
+                          <div className="flex items-center gap-2">
+                            <Activity className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
+                            <div>
+                              <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                                {formatToolName(key)}
+                              </p>
+                              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                                {tool.description}
+                              </p>
+                            </div>
+                          </div>
+                          <Badge
+                            variant={tool.enabled ? 'default' : 'secondary'}
+                            className={cn(
+                              'text-xs',
+                              tool.enabled
+                                ? 'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800'
+                                : 'bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-900/20 dark:text-gray-300 dark:border-gray-800',
+                            )}
+                          >
+                            {tool.enabled ? 'Enabled' : 'Disabled'}
+                          </Badge>
+                        </div>
+                      ),
+                    )}
                   </div>
                 </div>
 
@@ -245,17 +255,24 @@ export function GetCurrentAgentConfigToolView({
                       </div>
                       <div className="flex items-center gap-2">
                         <Badge variant="outline" className="text-xs">
-                          {configuration.custom_mcps.length} {configuration.custom_mcps.length === 1 ? 'integration' : 'integrations'}
+                          {configuration.custom_mcps.length}{' '}
+                          {configuration.custom_mcps.length === 1
+                            ? 'integration'
+                            : 'integrations'}
                         </Badge>
                         <Badge variant="outline" className="text-xs">
-                          {getTotalMcpToolsCount(configuration.custom_mcps)} tools
+                          {getTotalMcpToolsCount(configuration.custom_mcps)}{' '}
+                          tools
                         </Badge>
                       </div>
                     </div>
 
                     <div className="space-y-3">
                       {configuration.custom_mcps.map((mcp, index) => (
-                        <div key={index} className="border rounded-lg p-4 space-y-3">
+                        <div
+                          key={index}
+                          className="border rounded-lg p-4 space-y-3"
+                        >
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
                               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-green-100 to-green-50 dark:from-green-900/40 dark:to-green-800/20 border border-green-200 dark:border-green-800 flex items-center justify-center">
@@ -277,7 +294,10 @@ export function GetCurrentAgentConfigToolView({
 
                           <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                             {mcp.enabledTools.map((tool, toolIndex) => (
-                              <div key={toolIndex} className="flex items-center gap-1 p-2 bg-zinc-50 dark:bg-zinc-800/50 rounded text-xs">
+                              <div
+                                key={toolIndex}
+                                className="flex items-center gap-1 p-2 bg-zinc-50 dark:bg-zinc-800/50 rounded text-xs"
+                              >
                                 <Zap className="w-3 h-3 text-zinc-500 dark:text-zinc-400" />
                                 <span className="text-zinc-700 dark:text-zinc-300 truncate">
                                   {formatMcpToolName(tool)}
@@ -311,4 +331,4 @@ export function GetCurrentAgentConfigToolView({
       </CardContent>
     </Card>
   );
-} 
+}

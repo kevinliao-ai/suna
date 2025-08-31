@@ -2,18 +2,24 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { 
-  Clock, 
-  GitBranch, 
-  CheckCircle2, 
+import {
+  Clock,
+  GitBranch,
+  CheckCircle2,
   ArrowUpRight,
   History,
-  Plus
+  Plus,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useAgentVersions, useActivateAgentVersion } from '@/lib/versioning';
@@ -26,7 +32,10 @@ interface AgentVersionManagerProps {
   onCreateVersion?: () => void;
 }
 
-export function AgentVersionManager({ agent, onCreateVersion }: AgentVersionManagerProps) {
+export function AgentVersionManager({
+  agent,
+  onCreateVersion,
+}: AgentVersionManagerProps) {
   const { data: versions, isLoading } = useAgentVersions(agent.agent_id);
   const activateVersion = useActivateAgentVersion();
   const [selectedVersion, setSelectedVersion] = useState<string | null>(null);
@@ -43,13 +52,15 @@ export function AgentVersionManager({ agent, onCreateVersion }: AgentVersionMana
     );
   }
 
-  const currentVersion = versions?.find(v => v.isActive);
-  const versionHistory = versions?.sort((a, b) => b.versionNumber.value - a.versionNumber.value) || [];
+  const currentVersion = versions?.find((v) => v.isActive);
+  const versionHistory =
+    versions?.sort((a, b) => b.versionNumber.value - a.versionNumber.value) ||
+    [];
 
   const handleActivateVersion = (versionId: string) => {
-    activateVersion.mutate({ 
-      agentId: agent.agent_id, 
-      versionId 
+    activateVersion.mutate({
+      agentId: agent.agent_id,
+      versionId,
     });
   };
 
@@ -80,7 +91,7 @@ export function AgentVersionManager({ agent, onCreateVersion }: AgentVersionMana
             <TabsTrigger value="current">Current Version</TabsTrigger>
             <TabsTrigger value="history">Version History</TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="current" className="space-y-4">
             {currentVersion ? (
               <div className="space-y-4">
@@ -95,19 +106,33 @@ export function AgentVersionManager({ agent, onCreateVersion }: AgentVersionMana
                   </div>
                   <CheckCircle2 className="h-5 w-5 text-green-500" />
                 </div>
-                
+
                 <div className="grid gap-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Created</span>
-                    <span>{formatDistanceToNow(currentVersion.createdAt, { addSuffix: true })}</span>
+                    <span>
+                      {formatDistanceToNow(currentVersion.createdAt, {
+                        addSuffix: true,
+                      })}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Tools</span>
-                    <span>{Object.keys(currentVersion.toolConfiguration.tools || {}).length} enabled</span>
+                    <span>
+                      {
+                        Object.keys(
+                          currentVersion.toolConfiguration.tools || {},
+                        ).length
+                      }{' '}
+                      enabled
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">MCP Servers</span>
-                    <span>{(currentVersion.configuredMcps?.length || 0) + (currentVersion.customMcps?.length || 0)}</span>
+                    <span>
+                      {(currentVersion.configuredMcps?.length || 0) +
+                        (currentVersion.customMcps?.length || 0)}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -117,29 +142,32 @@ export function AgentVersionManager({ agent, onCreateVersion }: AgentVersionMana
               </div>
             )}
           </TabsContent>
-          
+
           <TabsContent value="history" className="space-y-4">
             <ScrollArea className="h-[400px] pr-4">
               <div className="space-y-3">
                 {versionHistory.map((version, index) => {
                   const isActive = version.isActive;
-                  const isSelected = version.versionId.value === selectedVersion;
-                  
+                  const isSelected =
+                    version.versionId.value === selectedVersion;
+
                   return (
                     <div
                       key={version.versionId.value}
                       className={cn(
-                        "p-4 rounded-lg border cursor-pointer transition-colors",
-                        isActive && "border-primary bg-primary/5",
-                        !isActive && "hover:bg-muted/50",
-                        isSelected && !isActive && "bg-muted"
+                        'p-4 rounded-lg border cursor-pointer transition-colors',
+                        isActive && 'border-primary bg-primary/5',
+                        !isActive && 'hover:bg-muted/50',
+                        isSelected && !isActive && 'bg-muted',
                       )}
-                      onClick={() => setSelectedVersion(version.versionId.value)}
+                      onClick={() =>
+                        setSelectedVersion(version.versionId.value)
+                      }
                     >
                       <div className="flex items-start justify-between">
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
-                            <Badge variant={isActive ? "default" : "secondary"}>
+                            <Badge variant={isActive ? 'default' : 'secondary'}>
                               {version.versionName}
                             </Badge>
                             {isActive && (
@@ -149,10 +177,13 @@ export function AgentVersionManager({ agent, onCreateVersion }: AgentVersionMana
                             )}
                           </div>
                           <p className="text-sm text-muted-foreground">
-                            Created {formatDistanceToNow(new Date(version.createdAt), { addSuffix: true })}
+                            Created{' '}
+                            {formatDistanceToNow(new Date(version.createdAt), {
+                              addSuffix: true,
+                            })}
                           </p>
                         </div>
-                        
+
                         {!isActive && (
                           <Button
                             size="sm"
@@ -168,17 +199,30 @@ export function AgentVersionManager({ agent, onCreateVersion }: AgentVersionMana
                           </Button>
                         )}
                       </div>
-                      
+
                       {isSelected && (
                         <div className="mt-3 pt-3 border-t space-y-2">
                           <div className="grid gap-1 text-sm">
                             <div className="flex justify-between">
-                              <span className="text-muted-foreground">Tools</span>
-                              <span>{Object.keys(version.agentpress_tools || {}).length} enabled</span>
+                              <span className="text-muted-foreground">
+                                Tools
+                              </span>
+                              <span>
+                                {
+                                  Object.keys(version.agentpress_tools || {})
+                                    .length
+                                }{' '}
+                                enabled
+                              </span>
                             </div>
                             <div className="flex justify-between">
-                              <span className="text-muted-foreground">MCP Servers</span>
-                              <span>{(version.configuredMcps?.length || 0) + (version.customMcps?.length || 0)}</span>
+                              <span className="text-muted-foreground">
+                                MCP Servers
+                              </span>
+                              <span>
+                                {(version.configuredMcps?.length || 0) +
+                                  (version.customMcps?.length || 0)}
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -186,7 +230,7 @@ export function AgentVersionManager({ agent, onCreateVersion }: AgentVersionMana
                     </div>
                   );
                 })}
-                
+
                 {versionHistory.length === 0 && (
                   <div className="text-center py-8 text-muted-foreground">
                     <History className="h-12 w-12 mx-auto mb-3 opacity-50" />
@@ -200,4 +244,4 @@ export function AgentVersionManager({ agent, onCreateVersion }: AgentVersionMana
       </CardContent>
     </Card>
   );
-} 
+}

@@ -39,11 +39,17 @@ interface AuthenticatedImageProps {
   project?: FileRendererProject;
 }
 
-function AuthenticatedImage({ src, alt, className, project }: AuthenticatedImageProps) {
+function AuthenticatedImage({
+  src,
+  alt,
+  className,
+  project,
+}: AuthenticatedImageProps) {
   // For sandbox files, use the existing useImageContent hook
-  const sandboxId = typeof project?.sandbox === 'string' 
-    ? project.sandbox 
-    : project?.sandbox?.id;
+  const sandboxId =
+    typeof project?.sandbox === 'string'
+      ? project.sandbox
+      : project?.sandbox?.id;
 
   const { data: imageUrl, isLoading, error } = useImageContent(sandboxId, src);
 
@@ -54,7 +60,12 @@ function AuthenticatedImage({ src, alt, className, project }: AuthenticatedImage
 
   if (isLoading) {
     return (
-      <span className={cn("inline-block p-2 bg-muted/30 rounded text-xs text-muted-foreground", className)}>
+      <span
+        className={cn(
+          'inline-block p-2 bg-muted/30 rounded text-xs text-muted-foreground',
+          className,
+        )}
+      >
         Loading image...
       </span>
     );
@@ -62,19 +73,18 @@ function AuthenticatedImage({ src, alt, className, project }: AuthenticatedImage
 
   if (error || !imageUrl) {
     return (
-      <span className={cn("inline-block p-2 bg-muted/30 rounded border border-dashed text-xs text-muted-foreground", className)}>
+      <span
+        className={cn(
+          'inline-block p-2 bg-muted/30 rounded border border-dashed text-xs text-muted-foreground',
+          className,
+        )}
+      >
         Failed to load: {alt || src}
       </span>
     );
   }
 
-  return (
-    <img
-      src={imageUrl}
-      alt={alt || ''}
-      className={className}
-    />
-  );
+  return <img src={imageUrl} alt={alt || ''} className={className} />;
 }
 
 interface MarkdownRendererProps {

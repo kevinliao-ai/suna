@@ -85,7 +85,7 @@ export function HeroVideoDialog({
       if (videoSrc.startsWith('/') || !videoSrc.startsWith('http')) {
         return videoSrc;
       }
-      
+
       // 处理完整 URL
       const url = new URL(videoSrc);
       // 保留现有查询参数并添加 autoplay=1

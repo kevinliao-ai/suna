@@ -14,9 +14,7 @@ export const DocsLayout = ({ children }: DocsLayoutProps) => {
       <div className="fixed inset-0 bg-gradient-to-b from-primary/5 via-primary/3 to-background/10" />
       <div className="fixed inset-0 backdrop-blur-[2px] bg-background/40" />
       <DocsMobileHeader />
-      <div className="relative z-10 flex min-h-screen">
-        {children}
-      </div>
+      <div className="relative z-10 flex min-h-screen">{children}</div>
     </div>
   );
-}; 
+};

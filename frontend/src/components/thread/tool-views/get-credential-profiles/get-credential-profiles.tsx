@@ -9,16 +9,16 @@ import {
   Calendar,
   Clock,
   Wrench,
-  Crown
+  Crown,
 } from 'lucide-react';
 import { ToolViewProps } from '../types';
 import { getToolTitle } from '../utils';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { LoadingState } from '../shared/LoadingState';
-import { Separator } from "@/components/ui/separator";
+import { Separator } from '@/components/ui/separator';
 import { extractGetCredentialProfilesData } from './_utils';
 
 export function GetCredentialProfilesToolView({
@@ -30,7 +30,6 @@ export function GetCredentialProfilesToolView({
   isSuccess = true,
   isStreaming = false,
 }: ToolViewProps) {
-
   const {
     toolkit_slug,
     message,
@@ -38,13 +37,13 @@ export function GetCredentialProfilesToolView({
     total_count,
     actualIsSuccess,
     actualToolTimestamp,
-    actualAssistantTimestamp
+    actualAssistantTimestamp,
   } = extractGetCredentialProfilesData(
     assistantContent,
     toolContent,
     isSuccess,
     toolTimestamp,
-    assistantTimestamp
+    assistantTimestamp,
   );
 
   const toolTitle = getToolTitle(name);
@@ -52,14 +51,12 @@ export function GetCredentialProfilesToolView({
   const getConnectionStatus = (isConnected: boolean) => {
     return {
       icon: isConnected ? Link2 : Link2Off,
-      color: isConnected 
+      color: isConnected
         ? 'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800'
         : 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800',
-      text: isConnected ? 'Connected' : 'Not Connected'
+      text: isConnected ? 'Connected' : 'Not Connected',
     };
   };
-
-
 
   return (
     <Card className="gap-0 flex border shadow-none border-t border-b-0 border-x-0 p-0 rounded-none flex-col h-full overflow-hidden bg-card">
@@ -85,10 +82,10 @@ export function GetCredentialProfilesToolView({
             <Badge
               variant="outline"
               className={cn(
-                "text-xs font-medium",
+                'text-xs font-medium',
                 actualIsSuccess
-                  ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800"
-                  : "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800"
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800'
+                  : 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800',
               )}
             >
               {actualIsSuccess ? (
@@ -117,10 +114,7 @@ export function GetCredentialProfilesToolView({
             <div className="p-4 space-y-4">
               <div className="space-y-3">
                 {profiles.map((profile, index) => (
-                  <div
-                    key={index}
-                    className="border rounded-xl p-4 space-y-4"
-                  >
+                  <div key={index} className="border rounded-xl p-4 space-y-4">
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-100 to-blue-50 dark:from-blue-900/40 dark:to-blue-800/20 border border-blue-200 dark:border-blue-800 flex items-center justify-center relative">
@@ -139,8 +133,8 @@ export function GetCredentialProfilesToolView({
                               {profile.display_name}
                             </h3>
                             {profile.is_default && (
-                              <Badge 
-                                variant="secondary" 
+                              <Badge
+                                variant="secondary"
                                 className="text-xs border border-yellow-300 dark:border-yellow-800 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300"
                               >
                                 <Crown className="w-2.5 h-2.5" />
@@ -161,14 +155,19 @@ export function GetCredentialProfilesToolView({
 
                       <div className="flex items-center gap-2">
                         {(() => {
-                          const connectionStatus = getConnectionStatus(profile.is_connected);
+                          const connectionStatus = getConnectionStatus(
+                            profile.is_connected,
+                          );
                           const ConnectionIcon = connectionStatus.icon;
-                          
+
                           return (
                             <>
                               <Badge
                                 variant="outline"
-                                className={cn("text-xs font-medium", connectionStatus.color)}
+                                className={cn(
+                                  'text-xs font-medium',
+                                  connectionStatus.color,
+                                )}
                               >
                                 <ConnectionIcon className="w-3 h-3" />
                                 {connectionStatus.text}
@@ -193,7 +192,9 @@ export function GetCredentialProfilesToolView({
                 No profiles found
               </h3>
               <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                {toolkit_slug ? `No credential profiles found for "${toolkit_slug}"` : 'No credential profiles available'}
+                {toolkit_slug
+                  ? `No credential profiles found for "${toolkit_slug}"`
+                  : 'No credential profiles available'}
               </p>
             </div>
           </div>
@@ -201,4 +202,4 @@ export function GetCredentialProfilesToolView({
       </CardContent>
     </Card>
   );
-} 
+}

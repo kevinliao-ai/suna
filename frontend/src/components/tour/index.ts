@@ -1,1 +1,1 @@
-export { TourConfirmationDialog } from './TourConfirmationDialog'; 
+export { TourConfirmationDialog } from './TourConfirmationDialog';

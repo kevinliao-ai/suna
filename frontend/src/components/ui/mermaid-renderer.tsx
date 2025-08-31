@@ -18,7 +18,7 @@ function cleanupCache() {
     const entries = Array.from(mermaidCache.entries());
     const toDelete = entries.slice(0, entries.length - MAX_CACHE_SIZE);
     toDelete.forEach(([key]) => mermaidCache.delete(key));
-    
+
     console.log(`Mermaid cache cleaned up: removed ${toDelete.length} entries`);
   }
 }
@@ -90,7 +90,7 @@ function generateCacheKey(code: string): string {
   let hash = 0;
   for (let i = 0; i < code.length; i++) {
     const char = code.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
+    hash = (hash << 5) - hash + char;
     hash = hash & hash; // Convert to 32-bit integer
   }
   return `mermaid_${hash.toString(36)}`;
@@ -102,7 +102,11 @@ export interface MermaidRendererProps {
   onRenderFailed?: () => void;
 }
 
-export function MermaidRenderer({ code, className, onRenderFailed }: MermaidRendererProps) {
+export function MermaidRenderer({
+  code,
+  className,
+  onRenderFailed,
+}: MermaidRendererProps) {
   const [mermaidSvg, setMermaidSvg] = useState<string | null>(null);
   const [mermaidFailed, setMermaidFailed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -125,7 +129,7 @@ export function MermaidRenderer({ code, className, onRenderFailed }: MermaidRend
       {
         rootMargin: '100px', // Start loading 100px before entering viewport
         threshold: 0.1,
-      }
+      },
     );
 
     observer.observe(containerRef.current);
@@ -162,7 +166,10 @@ export function MermaidRenderer({ code, className, onRenderFailed }: MermaidRend
 
       return svg;
     } catch (error) {
-      console.error('Mermaid rendering failed, falling back to code display:', error);
+      console.error(
+        'Mermaid rendering failed, falling back to code display:',
+        error,
+      );
       throw error;
     }
   }, []);
@@ -204,9 +211,12 @@ export function MermaidRenderer({ code, className, onRenderFailed }: MermaidRend
   // Show placeholder before intersection
   if (!isVisible) {
     return (
-      <div 
+      <div
         ref={containerRef}
-        className={cn('flex justify-center items-center p-8 text-muted-foreground border border-dashed border-gray-300 dark:border-gray-600 rounded-md', className)}
+        className={cn(
+          'flex justify-center items-center p-8 text-muted-foreground border border-dashed border-gray-300 dark:border-gray-600 rounded-md',
+          className,
+        )}
       >
         <div className="text-sm">Loading Mermaid diagram...</div>
       </div>
@@ -216,9 +226,12 @@ export function MermaidRenderer({ code, className, onRenderFailed }: MermaidRend
   // Show loading state
   if (isLoading) {
     return (
-      <div 
+      <div
         ref={containerRef}
-        className={cn('flex justify-center items-center p-8 text-muted-foreground', className)}
+        className={cn(
+          'flex justify-center items-center p-8 text-muted-foreground',
+          className,
+        )}
       >
         <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-current mr-2"></div>
         Rendering Mermaid diagram...
@@ -229,7 +242,7 @@ export function MermaidRenderer({ code, className, onRenderFailed }: MermaidRend
   // Show rendered Mermaid diagram
   if (mermaidSvg && !mermaidFailed) {
     return (
-      <div 
+      <div
         ref={containerRef}
         className={cn('flex justify-center my-4', className)}
       >

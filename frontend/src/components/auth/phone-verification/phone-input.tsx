@@ -1,12 +1,18 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, Phone } from "lucide-react";
-import { PhoneInput as PhoneInputComponent } from "@/components/ui/phone-input";
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Loader2, Phone } from 'lucide-react';
+import { PhoneInput as PhoneInputComponent } from '@/components/ui/phone-input';
 
 interface PhoneInputFormProps {
   onSubmit: (phoneNumber: string) => Promise<void>;
@@ -14,8 +20,12 @@ interface PhoneInputFormProps {
   error?: string | null;
 }
 
-export function PhoneInput({ onSubmit, isLoading = false, error = null }: PhoneInputFormProps) {
-  const [phoneNumber, setPhoneNumber] = useState("");
+export function PhoneInput({
+  onSubmit,
+  isLoading = false,
+  error = null,
+}: PhoneInputFormProps) {
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [localError, setLocalError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -24,14 +34,14 @@ export function PhoneInput({ onSubmit, isLoading = false, error = null }: PhoneI
 
     // Basic validation
     if (!phoneNumber.trim()) {
-      setLocalError("Please enter a phone number");
+      setLocalError('Please enter a phone number');
       return;
     }
 
     // Simple phone number validation (international format)
     const phoneRegex = /^\+?[1-9]\d{1,14}$/;
-    if (!phoneRegex.test(phoneNumber.replace(/\s/g, ""))) {
-      setLocalError("Please enter a valid phone number");
+    if (!phoneRegex.test(phoneNumber.replace(/\s/g, ''))) {
+      setLocalError('Please enter a valid phone number');
       return;
     }
 
@@ -52,7 +62,7 @@ export function PhoneInput({ onSubmit, isLoading = false, error = null }: PhoneI
             <Label htmlFor="phone">Phone Number</Label>
             <PhoneInputComponent
               value={phoneNumber}
-              onChange={(value) => setPhoneNumber(value || "")}
+              onChange={(value) => setPhoneNumber(value || '')}
               defaultCountry="US"
               placeholder="Enter your phone number"
               disabled={isLoading}
@@ -64,15 +74,13 @@ export function PhoneInput({ onSubmit, isLoading = false, error = null }: PhoneI
 
           {(error || localError) && (
             <Alert variant="destructive">
-              <AlertDescription>
-                {error || localError}
-              </AlertDescription>
+              <AlertDescription>{error || localError}</AlertDescription>
             </Alert>
           )}
 
-          <Button 
-            type="submit" 
-            className="w-full" 
+          <Button
+            type="submit"
+            className="w-full"
             disabled={isLoading || !phoneNumber.trim()}
           >
             {isLoading ? (

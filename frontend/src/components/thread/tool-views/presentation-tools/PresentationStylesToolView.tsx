@@ -1,10 +1,16 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Palette, CheckCircle, AlertTriangle, Loader2, Info } from 'lucide-react';
+import {
+  Palette,
+  CheckCircle,
+  AlertTriangle,
+  Loader2,
+  Info,
+} from 'lucide-react';
 import { ToolViewProps } from '../types';
 import { extractToolData, getToolTitle, formatTimestamp } from '../utils';
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { LoadingState } from '../shared/LoadingState';
 
 interface StyleInfo {
@@ -25,62 +31,71 @@ interface PresentationStylesData {
 }
 
 // Style preview component that renders a display-only slide preview
-const StylePreview: React.FC<{ style: StyleInfo; styleName: string }> = ({ style, styleName }) => {
-  const isDark = style.background.startsWith('#0') || style.background.startsWith('#1') || 
-                style.background.includes('gradient') || style.background === '#164E63' || 
-                style.background === '#451A03' || style.background === '#78350F' || 
-                style.background === '#064E3B';
+const StylePreview: React.FC<{ style: StyleInfo; styleName: string }> = ({
+  style,
+  styleName,
+}) => {
+  const isDark =
+    style.background.startsWith('#0') ||
+    style.background.startsWith('#1') ||
+    style.background.includes('gradient') ||
+    style.background === '#164E63' ||
+    style.background === '#451A03' ||
+    style.background === '#78350F' ||
+    style.background === '#064E3B';
 
   return (
     <div className="group rounded-lg cursor-pointer transition-all duration-200 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm hover:shadow-lg hover:scale-[1.01]">
       {/* Style Preview */}
       <div className="relative h-48 rounded-t-lg overflow-hidden">
-        <div 
+        <div
           className="w-full h-full relative"
           style={{
             background: style.background,
-            color: style.text_color
+            color: style.text_color,
           }}
         >
           {/* Slide content */}
           <div className="absolute inset-0 p-4 flex flex-col justify-center">
-            <div 
+            <div
               className="text-lg font-bold mb-2 truncate"
               style={{ color: style.primary_color }}
             >
               {style.name}
             </div>
-            <div 
+            <div
               className="w-8 h-1 mb-3 rounded"
               style={{ backgroundColor: style.accent_color }}
             />
-            <div 
+            <div
               className="text-sm opacity-80 mb-2"
               style={{ color: style.text_color }}
             >
               Sample Content
             </div>
-            
+
             {/* Visual elements based on style characteristics */}
-            {style.characteristics.includes('Charts') || style.characteristics.includes('data') ? (
+            {style.characteristics.includes('Charts') ||
+            style.characteristics.includes('data') ? (
               <div className="flex items-center gap-2 mt-auto">
-                <div 
+                <div
                   className="w-4 h-4 rounded"
                   style={{ backgroundColor: style.primary_color }}
                 />
-                <div 
+                <div
                   className="w-5 h-4 rounded"
                   style={{ backgroundColor: style.accent_color }}
                 />
-                <div 
+                <div
                   className="w-3 h-4 rounded opacity-60"
                   style={{ backgroundColor: style.primary_color }}
                 />
               </div>
-            ) : style.characteristics.includes('Magazine') || style.characteristics.includes('editorial') ? (
+            ) : style.characteristics.includes('Magazine') ||
+              style.characteristics.includes('editorial') ? (
               <div className="flex items-center justify-between mt-auto">
                 <div className="flex flex-col">
-                  <div 
+                  <div
                     className="text-xs font-medium"
                     style={{ color: style.primary_color }}
                   >
@@ -88,26 +103,27 @@ const StylePreview: React.FC<{ style: StyleInfo; styleName: string }> = ({ style
                   </div>
                   <div className="text-xs opacity-60">Detail</div>
                 </div>
-                <div 
+                <div
                   className="w-6 h-6 rounded-full flex items-center justify-center text-xs"
-                  style={{ 
+                  style={{
                     backgroundColor: style.accent_color,
-                    color: isDark ? '#FFFFFF' : style.text_color
+                    color: isDark ? '#FFFFFF' : style.text_color,
                   }}
                 >
                   📖
                 </div>
               </div>
-            ) : style.characteristics.includes('Embedded image') || style.characteristics.includes('image') ? (
-              <div 
+            ) : style.characteristics.includes('Embedded image') ||
+              style.characteristics.includes('image') ? (
+              <div
                 className="absolute inset-0 bg-center bg-cover opacity-20"
                 style={{
-                  backgroundImage: `linear-gradient(45deg, ${style.primary_color}33, ${style.accent_color}33)`
+                  backgroundImage: `linear-gradient(45deg, ${style.primary_color}33, ${style.accent_color}33)`,
                 }}
               />
             ) : (
               <div className="flex items-center gap-2 mt-auto">
-                <div 
+                <div
                   className="w-2 h-2 rounded-full"
                   style={{ backgroundColor: style.accent_color }}
                 />
@@ -117,7 +133,7 @@ const StylePreview: React.FC<{ style: StyleInfo; styleName: string }> = ({ style
           </div>
         </div>
       </div>
-      
+
       {/* Style info footer */}
       <div className="px-4 py-3 border-t border-zinc-100 dark:border-zinc-800">
         <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100 capitalize">
@@ -139,20 +155,26 @@ export const PresentationStylesToolView: React.FC<ToolViewProps> = ({
 }) => {
   const toolTitle = getToolTitle(name);
   const extractedData = extractToolData(toolContent);
-  
+
   // Parse the tool result to get our specific data
   let data: PresentationStylesData | null = null;
-  if (extractedData.toolResult?.toolOutput && extractedData.toolResult.toolOutput !== 'STREAMING') {
+  if (
+    extractedData.toolResult?.toolOutput &&
+    extractedData.toolResult.toolOutput !== 'STREAMING'
+  ) {
     try {
-      data = typeof extractedData.toolResult.toolOutput === 'string' 
-        ? JSON.parse(extractedData.toolResult.toolOutput)
-        : extractedData.toolResult.toolOutput;
+      data =
+        typeof extractedData.toolResult.toolOutput === 'string'
+          ? JSON.parse(extractedData.toolResult.toolOutput)
+          : extractedData.toolResult.toolOutput;
     } catch (e) {
       console.error('Failed to parse presentation styles data:', e);
     }
   }
 
-  const styles = data?.styles ? Object.entries(data.styles) as Array<[string, StyleInfo]> : [];
+  const styles = data?.styles
+    ? (Object.entries(data.styles) as Array<[string, StyleInfo]>)
+    : [];
 
   return (
     <Card className="gap-0 flex border shadow-none border-t border-b-0 border-x-0 p-0 rounded-none flex-col h-full overflow-hidden bg-card">
@@ -218,9 +240,9 @@ export const PresentationStylesToolView: React.FC<ToolViewProps> = ({
               {/* Styles Grid - 2 per row */}
               <div className="grid grid-cols-2 gap-6">
                 {styles.map(([styleName, styleInfo]) => (
-                  <StylePreview 
-                    key={styleName} 
-                    style={styleInfo} 
+                  <StylePreview
+                    key={styleName}
+                    style={styleInfo}
                     styleName={styleName}
                   />
                 ))}
@@ -233,9 +255,7 @@ export const PresentationStylesToolView: React.FC<ToolViewProps> = ({
       <div className="px-4 py-2 h-9 bg-zinc-50/30 dark:bg-zinc-900/30 border-t border-zinc-200/30 dark:border-zinc-800/30 flex justify-between items-center">
         <div className="text-xs text-zinc-400 dark:text-zinc-500">
           {styles.length > 0 && !isStreaming && (
-            <span className="font-mono">
-              {styles.length} styles
-            </span>
+            <span className="font-mono">{styles.length} styles</span>
           )}
         </div>
         <div className="text-xs text-zinc-400 dark:text-zinc-500">

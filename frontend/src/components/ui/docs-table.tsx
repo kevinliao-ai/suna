@@ -1,7 +1,14 @@
 'use client';
 
 import * as React from 'react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
@@ -29,28 +36,32 @@ export interface DocsTableProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 export const DocsTable = React.forwardRef<HTMLDivElement, DocsTableProps>(
-  ({
-    columns,
-    data,
-    size = 'default',
-    variant = 'default',
-    caption,
-    showHeader = true,
-    stickyHeader = false,
-    maxHeight,
-    className,
-    ...props
-  }, ref) => {
+  (
+    {
+      columns,
+      data,
+      size = 'default',
+      variant = 'default',
+      caption,
+      showHeader = true,
+      stickyHeader = false,
+      maxHeight,
+      className,
+      ...props
+    },
+    ref,
+  ) => {
     const sizeClasses = {
       sm: '[&_th]:px-3 [&_th]:py-2 [&_td]:px-3 [&_td]:py-2 [&_th]:text-xs [&_td]:text-sm',
-      default: '[&_th]:px-4 [&_th]:py-3 [&_td]:px-4 [&_td]:py-2 [&_th]:text-sm [&_td]:text-sm',
-      lg: '[&_th]:px-6 [&_th]:py-4 [&_td]:px-6 [&_td]:py-3 [&_th]:text-base [&_td]:text-base'
+      default:
+        '[&_th]:px-4 [&_th]:py-3 [&_td]:px-4 [&_td]:py-2 [&_th]:text-sm [&_td]:text-sm',
+      lg: '[&_th]:px-6 [&_th]:py-4 [&_td]:px-6 [&_td]:py-3 [&_th]:text-base [&_td]:text-base',
     };
 
     const variantClasses = {
       default: '',
       striped: '[&_tbody_tr:nth-child(even)]:bg-muted/20',
-      bordered: 'border [&_th]:border [&_td]:border'
+      bordered: 'border [&_th]:border [&_td]:border',
     };
 
     const getAlignmentClass = (align?: string) => {
@@ -64,9 +75,13 @@ export const DocsTable = React.forwardRef<HTMLDivElement, DocsTableProps>(
       }
     };
 
-    const renderCellContent = (column: DocsTableColumn, row: DocsTableRow, rowIndex: number) => {
+    const renderCellContent = (
+      column: DocsTableColumn,
+      row: DocsTableRow,
+      rowIndex: number,
+    ) => {
       const value = row[column.key];
-      
+
       if (column.render) {
         return column.render(value, row, rowIndex);
       }
@@ -102,32 +117,28 @@ export const DocsTable = React.forwardRef<HTMLDivElement, DocsTableProps>(
     return (
       <div
         ref={ref}
-        className={cn("relative overflow-hidden rounded-lg border", className)}
+        className={cn('relative overflow-hidden rounded-lg border', className)}
         {...props}
       >
-        <div 
-          className="overflow-auto"
-          style={{ maxHeight }}
-        >
-          <Table className={cn(
-            sizeClasses[size],
-            variantClasses[variant]
-          )}>
+        <div className="overflow-auto" style={{ maxHeight }}>
+          <Table className={cn(sizeClasses[size], variantClasses[variant])}>
             {caption && (
               <caption className="mt-4 text-sm text-muted-foreground">
                 {caption}
               </caption>
             )}
-            
+
             {showHeader && (
-              <TableHeader className={stickyHeader ? 'sticky top-0 bg-background' : ''}>
+              <TableHeader
+                className={stickyHeader ? 'sticky top-0 bg-background' : ''}
+              >
                 <TableRow>
                   {columns.map((column) => (
                     <TableHead
                       key={column.key}
                       className={cn(
-                        "font-medium",
-                        getAlignmentClass(column.align)
+                        'font-medium',
+                        getAlignmentClass(column.align),
                       )}
                       style={{ width: column.width }}
                     >
@@ -137,12 +148,12 @@ export const DocsTable = React.forwardRef<HTMLDivElement, DocsTableProps>(
                 </TableRow>
               </TableHeader>
             )}
-            
+
             <TableBody>
               {data.length === 0 ? (
                 <TableRow>
-                  <TableCell 
-                    colSpan={columns.length} 
+                  <TableCell
+                    colSpan={columns.length}
                     className="text-center text-muted-foreground py-8"
                   >
                     No data available
@@ -167,7 +178,7 @@ export const DocsTable = React.forwardRef<HTMLDivElement, DocsTableProps>(
         </div>
       </div>
     );
-  }
+  },
 );
 
 DocsTable.displayName = 'DocsTable';
@@ -176,9 +187,9 @@ DocsTable.displayName = 'DocsTable';
 export const createDocsTableColumn = (
   key: string,
   title: string,
-  options?: Omit<DocsTableColumn, 'key' | 'title'>
+  options?: Omit<DocsTableColumn, 'key' | 'title'>,
 ): DocsTableColumn => ({
   key,
   title,
-  ...options
-}); 
+  ...options,
+});

@@ -168,7 +168,8 @@ export default function PricingPage() {
         ...v,
         display_name: allModels.find((m) => m.id === v.short_name)?.label,
         priority: allModels.find((m) => m.id === v.short_name)?.priority,
-        requiresSubscription: allModels.find((m) => m.id === v.short_name)?.requiresSubscription,
+        requiresSubscription: allModels.find((m) => m.id === v.short_name)
+          ?.requiresSubscription,
       }))
       .sort((a, b) => {
         // First by free/premium status (premium first)
@@ -180,7 +181,7 @@ export default function PricingPage() {
         if ((a.priority ?? 0) !== (b.priority ?? 0)) {
           return (b.priority ?? 0) - (a.priority ?? 0);
         }
-        
+
         // Finally by name (alphabetical)
         return (a.display_name ?? a.id).localeCompare(b.display_name ?? b.id);
       });

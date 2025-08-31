@@ -286,7 +286,8 @@ export function OpenSourceSection() {
         </div>
       ),
       title: 'Open Source Security',
-      description: 'Benefit from the security of open source code that thousands of eyes can review, audit, and improve.',
+      description:
+        'Benefit from the security of open source code that thousands of eyes can review, audit, and improve.',
       showGitHubInfo: true,
     },
     {
@@ -297,7 +298,8 @@ export function OpenSourceSection() {
         </div>
       ),
       title: 'Transparency & Trust',
-      description: 'We believe AI should be open and accessible to everyone. Our open source approach ensures accountability, innovation, and community collaboration.',
+      description:
+        'We believe AI should be open and accessible to everyone. Our open source approach ensures accountability, innovation, and community collaboration.',
       showFeatures: true,
     },
   ];
@@ -380,9 +382,9 @@ export function OpenSourceSection() {
                 Transparency & Community-Driven
               </h3>
               <p className="text-muted-foreground">
-                Index-AniSora is committed to open-source principles, building a transparent
-                and trustworthy AI video generation ecosystem where open collaboration
-                drives technological innovation.
+                Index-AniSora is committed to open-source principles, building a
+                transparent and trustworthy AI video generation ecosystem where
+                open collaboration drives technological innovation.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="flex items-start gap-3">
@@ -480,7 +482,8 @@ export function OpenSourceSection() {
                   <div>
                     <h4 className="font-medium">Community Collaboration</h4>
                     <p className="text-muted-foreground text-sm">
-                      Join our community to contribute and shape the future of AI
+                      Join our community to contribute and shape the future of
+                      AI
                     </p>
                   </div>
                 </div>

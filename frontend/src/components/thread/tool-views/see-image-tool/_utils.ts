@@ -19,23 +19,34 @@ const parseContent = (content: any): any => {
   return content;
 };
 
-const extractFromNewFormat = (content: any): { 
-  filePath: string | null; 
+const extractFromNewFormat = (
+  content: any,
+): {
+  filePath: string | null;
   description: string | null;
-  success?: boolean; 
+  success?: boolean;
   timestamp?: string;
   output?: string;
 } => {
   const parsedContent = parseContent(content);
-  
+
   if (!parsedContent || typeof parsedContent !== 'object') {
-    return { filePath: null, description: null, success: undefined, timestamp: undefined, output: undefined };
+    return {
+      filePath: null,
+      description: null,
+      success: undefined,
+      timestamp: undefined,
+      output: undefined,
+    };
   }
 
-  if ('tool_execution' in parsedContent && typeof parsedContent.tool_execution === 'object') {
+  if (
+    'tool_execution' in parsedContent &&
+    typeof parsedContent.tool_execution === 'object'
+  ) {
     const toolExecution = parsedContent.tool_execution;
     const args = toolExecution.arguments || {};
-    
+
     let parsedOutput = toolExecution.result?.output;
     if (typeof parsedOutput === 'string') {
       try {
@@ -50,9 +61,12 @@ const extractFromNewFormat = (content: any): {
       description: parsedContent.summary || null,
       success: toolExecution.result?.success,
       timestamp: toolExecution.execution_details?.timestamp,
-      output: typeof toolExecution.result?.output === 'string' ? toolExecution.result.output : null
+      output:
+        typeof toolExecution.result?.output === 'string'
+          ? toolExecution.result.output
+          : null,
     };
-    
+
     return extractedData;
   }
 
@@ -60,7 +74,13 @@ const extractFromNewFormat = (content: any): {
     return extractFromNewFormat(parsedContent.content);
   }
 
-  return { filePath: null, description: null, success: undefined, timestamp: undefined, output: undefined };
+  return {
+    filePath: null,
+    description: null,
+    success: undefined,
+    timestamp: undefined,
+    output: undefined,
+  };
 };
 
 function cleanImagePath(path: string): string {
@@ -77,27 +97,34 @@ function cleanImagePath(path: string): string {
     .trim();
 }
 
-function extractImageFilePath(content: string | object | undefined | null): string | null {
+function extractImageFilePath(
+  content: string | object | undefined | null,
+): string | null {
   const contentStr = normalizeContentToString(content);
   if (!contentStr) return null;
-  
+
   try {
     const parsedContent = JSON.parse(contentStr);
     if (parsedContent.content && typeof parsedContent.content === 'string') {
       const nestedContentStr = parsedContent.content;
-      let filePathMatch = nestedContentStr.match(/<see-image\s+file_path=["']([^"']+)["'][^>]*><\/see-image>/i);
+      let filePathMatch = nestedContentStr.match(
+        /<see-image\s+file_path=["']([^"']+)["'][^>]*><\/see-image>/i,
+      );
       if (filePathMatch) {
         return cleanImagePath(filePathMatch[1]);
       }
-      filePathMatch = nestedContentStr.match(/<see-image[^>]*>([^<]+)<\/see-image>/i);
+      filePathMatch = nestedContentStr.match(
+        /<see-image[^>]*>([^<]+)<\/see-image>/i,
+      );
       if (filePathMatch) {
         return cleanImagePath(filePathMatch[1]);
       }
     }
-  } catch (e) {
-  }
-  
-  let filePathMatch = contentStr.match(/<see-image\s+file_path=["']([^"']+)["'][^>]*><\/see-image>/i);
+  } catch (e) {}
+
+  let filePathMatch = contentStr.match(
+    /<see-image\s+file_path=["']([^"']+)["'][^>]*><\/see-image>/i,
+  );
   if (filePathMatch) {
     return cleanImagePath(filePathMatch[1]);
   }
@@ -106,22 +133,28 @@ function extractImageFilePath(content: string | object | undefined | null): stri
     return cleanImagePath(filePathMatch[1]);
   }
 
-  const embeddedFileMatch = contentStr.match(/image\s*:\s*["']?([^,"'\s]+\.(jpg|jpeg|png|gif|svg|webp))["']?/i);
+  const embeddedFileMatch = contentStr.match(
+    /image\s*:\s*["']?([^,"'\s]+\.(jpg|jpeg|png|gif|svg|webp))["']?/i,
+  );
   if (embeddedFileMatch) {
     return cleanImagePath(embeddedFileMatch[1]);
   }
 
-  const extensionMatch = contentStr.match(/["']?([^,"'\s]+\.(jpg|jpeg|png|gif|svg|webp))["']?/i);
+  const extensionMatch = contentStr.match(
+    /["']?([^,"'\s]+\.(jpg|jpeg|png|gif|svg|webp))["']?/i,
+  );
   if (extensionMatch) {
     return cleanImagePath(extensionMatch[1]);
   }
   return null;
 }
 
-function extractImageDescription(content: string | object | undefined | null): string | null {
+function extractImageDescription(
+  content: string | object | undefined | null,
+): string | null {
   const contentStr = normalizeContentToString(content);
   if (!contentStr) return null;
-  
+
   try {
     const parsedContent = JSON.parse(contentStr);
     if (parsedContent.content && typeof parsedContent.content === 'string') {
@@ -130,8 +163,7 @@ function extractImageDescription(content: string | object | undefined | null): s
         return parts[0].trim();
       }
     }
-  } catch (e) {
-  }
+  } catch (e) {}
 
   const parts = contentStr.split(/<see-image/i);
   if (parts.length > 1) {
@@ -141,67 +173,87 @@ function extractImageDescription(content: string | object | undefined | null): s
   return null;
 }
 
-function parseToolResult(content: string | object | undefined | null): { success: boolean; message: string; filePath?: string } {
+function parseToolResult(content: string | object | undefined | null): {
+  success: boolean;
+  message: string;
+  filePath?: string;
+} {
   const contentStr = normalizeContentToString(content);
-  if (!contentStr) return { success: false, message: 'No tool result available' };
-  
+  if (!contentStr)
+    return { success: false, message: 'No tool result available' };
+
   try {
     let contentToProcess = contentStr;
-    
+
     try {
       const parsedContent = JSON.parse(contentStr);
       if (parsedContent.content && typeof parsedContent.content === 'string') {
         contentToProcess = parsedContent.content;
       }
-    } catch (e) {
-    }
+    } catch (e) {}
 
-    const toolResultPattern = /<tool_result>\s*<see-image>\s*ToolResult\(([^)]+)\)\s*<\/see-image>\s*<\/tool_result>/;
+    const toolResultPattern =
+      /<tool_result>\s*<see-image>\s*ToolResult\(([^)]+)\)\s*<\/see-image>\s*<\/tool_result>/;
     const toolResultMatch = contentToProcess.match(toolResultPattern);
-    
+
     if (toolResultMatch) {
       const resultStr = toolResultMatch[1];
       const success = resultStr.includes('success=True');
-      
+
       const outputMatch = resultStr.match(/output="([^"]+)"/);
       const message = outputMatch ? outputMatch[1] : '';
 
       let filePath;
       if (success && message) {
-        const filePathMatch = message.match(/Successfully loaded the image ['"]([^'"]+)['"]/i);
+        const filePathMatch = message.match(
+          /Successfully loaded the image ['"]([^'"]+)['"]/i,
+        );
         if (filePathMatch && filePathMatch[1]) {
           filePath = filePathMatch[1];
         }
       }
-      
+
       return { success, message, filePath };
     }
-    
-    const directToolResultMatch = contentToProcess.match(/<tool_result>\s*<see-image>\s*([^<]+)<\/see-image>\s*<\/tool_result>/);
+
+    const directToolResultMatch = contentToProcess.match(
+      /<tool_result>\s*<see-image>\s*([^<]+)<\/see-image>\s*<\/tool_result>/,
+    );
     if (directToolResultMatch) {
       const resultContent = directToolResultMatch[1];
-      const success = resultContent.includes('success=True') || resultContent.includes('Successfully');
-      
-      const filePathMatch = resultContent.match(/['"]([^'"]+\.(jpg|jpeg|png|gif|webp|svg))['"]/) ||
-                           resultContent.match(/Successfully loaded the image ['"]([^'"]+)['"]/i);
-      
+      const success =
+        resultContent.includes('success=True') ||
+        resultContent.includes('Successfully');
+
+      const filePathMatch =
+        resultContent.match(/['"]([^'"]+\.(jpg|jpeg|png|gif|webp|svg))['"]/) ||
+        resultContent.match(/Successfully loaded the image ['"]([^'"]+)['"]/i);
+
       const filePath = filePathMatch ? filePathMatch[1] : undefined;
-      
-      return { 
-        success, 
+
+      return {
+        success,
         message: success ? 'Image loaded successfully' : 'Failed to load image',
-        filePath 
+        filePath,
       };
     }
-    
-    if (contentToProcess.includes('success=True') || contentToProcess.includes('Successfully')) {
-      const filePathMatch = contentToProcess.match(/Successfully loaded the image ['"]([^'"]+)['"]/i);
+
+    if (
+      contentToProcess.includes('success=True') ||
+      contentToProcess.includes('Successfully')
+    ) {
+      const filePathMatch = contentToProcess.match(
+        /Successfully loaded the image ['"]([^'"]+)['"]/i,
+      );
       const filePath = filePathMatch ? filePathMatch[1] : undefined;
-      
+
       return { success: true, message: 'Image loaded successfully', filePath };
     }
-    
-    if (contentToProcess.includes('success=False') || contentToProcess.includes('Failed')) {
+
+    if (
+      contentToProcess.includes('success=False') ||
+      contentToProcess.includes('Failed')
+    ) {
       return { success: false, message: 'Failed to load image' };
     }
   } catch (e) {
@@ -211,16 +263,18 @@ function parseToolResult(content: string | object | undefined | null): { success
   return { success: true, message: 'Image loaded' };
 }
 
-const extractFromLegacyFormat = (content: any): { 
-  filePath: string | null; 
+const extractFromLegacyFormat = (
+  content: any,
+): {
+  filePath: string | null;
   description: string | null;
 } => {
   const toolData = extractToolData(content);
-  
+
   if (toolData.toolResult && toolData.arguments) {
     return {
       filePath: toolData.arguments.file_path || null,
-      description: null
+      description: null,
     };
   }
 
@@ -231,7 +285,7 @@ const extractFromLegacyFormat = (content: any): {
 
   const filePath = extractImageFilePath(contentStr);
   const description = extractImageDescription(contentStr);
-  
+
   return { filePath, description };
 };
 
@@ -240,7 +294,7 @@ export function extractSeeImageData(
   toolContent: any,
   isSuccess: boolean,
   toolTimestamp?: string,
-  assistantTimestamp?: string
+  assistantTimestamp?: string,
 ): {
   filePath: string | null;
   description: string | null;
@@ -258,7 +312,6 @@ export function extractSeeImageData(
 
   const assistantNewFormat = extractFromNewFormat(assistantContent);
   const toolNewFormat = extractFromNewFormat(toolContent);
-
 
   if (assistantNewFormat.filePath || assistantNewFormat.description) {
     filePath = assistantNewFormat.filePath;
@@ -287,7 +340,7 @@ export function extractSeeImageData(
 
     filePath = assistantLegacy.filePath || toolLegacy.filePath;
     description = assistantLegacy.description || toolLegacy.description;
-    
+
     // Also try the existing parseToolResult function for legacy compatibility
     const toolResult = parseToolResult(toolContent);
     if (toolResult.filePath && !filePath) {
@@ -304,39 +357,44 @@ export function extractSeeImageData(
     output,
     actualIsSuccess,
     actualToolTimestamp,
-    actualAssistantTimestamp
+    actualAssistantTimestamp,
   };
-} 
+}
 
-
-export function constructImageUrl(filePath: string, project?: { sandbox?: { sandbox_url?: string; workspace_path?: string; id?: string } }): string {
+export function constructImageUrl(
+  filePath: string,
+  project?: {
+    sandbox?: { sandbox_url?: string; workspace_path?: string; id?: string };
+  },
+): string {
   if (!filePath || filePath === 'STREAMING') {
     console.error('Invalid image path:', filePath);
     return '';
   }
 
   const cleanPath = filePath.replace(/^['"](.*)['"]$/, '$1');
-  
+
   // Check if it's a URL first, before trying to construct sandbox paths
   if (cleanPath.startsWith('http')) {
     return cleanPath;
   }
-  
+
   // PREFER backend API (requires authentication but more reliable)
-  const sandboxId = typeof project?.sandbox === 'string' 
-    ? project.sandbox 
-    : project?.sandbox?.id;
-  
+  const sandboxId =
+    typeof project?.sandbox === 'string'
+      ? project.sandbox
+      : project?.sandbox?.id;
+
   if (sandboxId) {
     let normalizedPath = cleanPath;
     if (!normalizedPath.startsWith('/workspace')) {
       normalizedPath = `/workspace/${normalizedPath.startsWith('/') ? normalizedPath.substring(1) : normalizedPath}`;
     }
-    
+
     const apiEndpoint = `${process.env.NEXT_PUBLIC_BACKEND_URL}/sandboxes/${sandboxId}/files/content?path=${encodeURIComponent(normalizedPath)}`;
     return apiEndpoint;
   }
-  
+
   // Fallback to sandbox_url for direct access
   if (project?.sandbox?.sandbox_url) {
     const sandboxUrl = project.sandbox.sandbox_url.replace(/\/$/, '');
@@ -344,11 +402,11 @@ export function constructImageUrl(filePath: string, project?: { sandbox?: { sand
     if (!normalizedPath.startsWith('/workspace')) {
       normalizedPath = `/workspace/${normalizedPath.startsWith('/') ? normalizedPath.substring(1) : normalizedPath}`;
     }
-    
+
     const fullUrl = `${sandboxUrl}${normalizedPath}`;
     return fullUrl;
   }
-  
+
   console.warn('No sandbox URL or ID available, using path as-is:', cleanPath);
   return cleanPath;
 }

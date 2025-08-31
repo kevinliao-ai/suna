@@ -29,11 +29,11 @@ interface AgentSelectionDropdownProps {
 export const AgentSelectionDropdown: React.FC<AgentSelectionDropdownProps> = ({
   selectedAgentId,
   onAgentSelect,
-  placeholder = "Choose an agent",
+  placeholder = 'Choose an agent',
   className,
   disabled = false,
   showCreateOption = true,
-  variant = 'default'
+  variant = 'default',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -44,17 +44,22 @@ export const AgentSelectionDropdown: React.FC<AgentSelectionDropdownProps> = ({
   const agents = agentsResponse?.agents || [];
 
   // Filter agents based on search query
-  const filteredAgents = agents.filter((agent: any) =>
-    agent.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    agent.description?.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredAgents = agents.filter(
+    (agent: any) =>
+      agent.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      agent.description?.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   // Sort agents with selected first
   const sortedAgents = React.useMemo(() => {
     if (!selectedAgentId) return filteredAgents;
 
-    const selectedAgent = filteredAgents.find((agent: any) => agent.agent_id === selectedAgentId);
-    const otherAgents = filteredAgents.filter((agent: any) => agent.agent_id !== selectedAgentId);
+    const selectedAgent = filteredAgents.find(
+      (agent: any) => agent.agent_id === selectedAgentId,
+    );
+    const otherAgents = filteredAgents.filter(
+      (agent: any) => agent.agent_id !== selectedAgentId,
+    );
 
     return selectedAgent ? [selectedAgent, ...otherAgents] : filteredAgents;
   }, [filteredAgents, selectedAgentId]);
@@ -77,7 +82,9 @@ export const AgentSelectionDropdown: React.FC<AgentSelectionDropdownProps> = ({
     setShowNewAgentDialog(true);
   };
 
-  const selectedAgent = agents.find((agent: any) => agent.agent_id === selectedAgentId);
+  const selectedAgent = agents.find(
+    (agent: any) => agent.agent_id === selectedAgentId,
+  );
 
   const renderTriggerContent = () => {
     if (selectedAgent) {
@@ -89,9 +96,7 @@ export const AgentSelectionDropdown: React.FC<AgentSelectionDropdownProps> = ({
             className="flex-shrink-0"
             fallbackName={selectedAgent.name}
           />
-          <span className="truncate font-medium">
-            {selectedAgent.name}
-          </span>
+          <span className="truncate font-medium">{selectedAgent.name}</span>
           <ChevronDown size={12} className="opacity-60 flex-shrink-0" />
         </div>
       );
@@ -112,9 +117,9 @@ export const AgentSelectionDropdown: React.FC<AgentSelectionDropdownProps> = ({
           <Button
             variant="outline"
             className={cn(
-              "w-full justify-start h-10 px-3 py-2 border-input bg-background hover:bg-accent hover:text-accent-foreground",
-              !selectedAgent && "text-muted-foreground",
-              className
+              'w-full justify-start h-10 px-3 py-2 border-input bg-background hover:bg-accent hover:text-accent-foreground',
+              !selectedAgent && 'text-muted-foreground',
+              className,
             )}
             disabled={disabled}
           >
@@ -122,11 +127,7 @@ export const AgentSelectionDropdown: React.FC<AgentSelectionDropdownProps> = ({
           </Button>
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent
-          className="w-80 p-0"
-          align="start"
-          sideOffset={4}
-        >
+        <DropdownMenuContent className="w-80 p-0" align="start" sideOffset={4}>
           {/* Search */}
           <div className="p-3 pb-2">
             <div className="relative">
@@ -158,7 +159,9 @@ export const AgentSelectionDropdown: React.FC<AgentSelectionDropdownProps> = ({
                 <Search className="h-6 w-6 mx-auto mb-2 opacity-40" />
                 <p>No agents found</p>
                 {searchQuery && (
-                  <p className="text-xs mt-1 opacity-60">Try adjusting your search</p>
+                  <p className="text-xs mt-1 opacity-60">
+                    Try adjusting your search
+                  </p>
                 )}
               </div>
             ) : (

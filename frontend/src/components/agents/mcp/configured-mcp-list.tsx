@@ -2,7 +2,14 @@ import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Settings, X, Sparkles, Key, AlertTriangle, Trash2 } from 'lucide-react';
+import {
+  Settings,
+  X,
+  Sparkles,
+  Key,
+  AlertTriangle,
+  Trash2,
+} from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,13 +32,16 @@ interface ConfiguredMcpListProps {
   onConfigureTools?: (index: number) => void;
 }
 
-const extractAppSlug = (mcp: MCPConfiguration): { type: 'composio', slug: string } | null => {
+const extractAppSlug = (
+  mcp: MCPConfiguration,
+): { type: 'composio'; slug: string } | null => {
   if (mcp.customType === 'composio' || mcp.isComposio) {
-    const slug = mcp.toolkitSlug || (mcp as any).toolkit_slug || mcp.config?.toolkit_slug;
+    const slug =
+      mcp.toolkitSlug || (mcp as any).toolkit_slug || mcp.config?.toolkit_slug;
     if (slug) {
       return { type: 'composio', slug };
     }
-    
+
     const qualifiedName = mcp.mcp_qualified_name || mcp.qualifiedName;
     if (qualifiedName && qualifiedName.startsWith('composio.')) {
       const extractedSlug = qualifiedName.substring(9);
@@ -40,18 +50,18 @@ const extractAppSlug = (mcp: MCPConfiguration): { type: 'composio', slug: string
       }
     }
   }
-  
+
   return null;
 };
 
 const MCPLogo: React.FC<{ mcp: MCPConfiguration }> = ({ mcp }) => {
   const appInfo = extractAppSlug(mcp);
-  
+
   const { data: composioToolkits } = useComposioToolkits(
     appInfo?.type === 'composio' ? appInfo.slug : undefined,
-    undefined
+    undefined,
   );
-  
+
   let logoUrl: string | undefined;
   if (appInfo?.type === 'composio' && composioToolkits?.toolkits?.[0]) {
     logoUrl = composioToolkits.toolkits[0].logo;
@@ -73,7 +83,13 @@ const MCPLogo: React.FC<{ mcp: MCPConfiguration }> = ({ mcp }) => {
           }}
         />
       ) : null}
-      <div className={logoUrl ? "hidden" : "flex w-full h-full items-center justify-center bg-muted rounded-md text-xs font-medium text-muted-foreground"}>
+      <div
+        className={
+          logoUrl
+            ? 'hidden'
+            : 'flex w-full h-full items-center justify-center bg-muted rounded-md text-xs font-medium text-muted-foreground'
+        }
+      >
         {firstLetter}
       </div>
     </div>
@@ -87,13 +103,18 @@ const MCPConfigurationItem: React.FC<{
   onRemove: (index: number) => void;
   onConfigureTools?: (index: number) => void;
 }> = ({ mcp, index, onEdit, onRemove, onConfigureTools }) => {
-  const qualifiedNameForLookup = (mcp.customType === 'composio' || mcp.isComposio) 
-    ? mcp.mcp_qualified_name || mcp.config?.mcp_qualified_name || mcp.qualifiedName
-    : mcp.qualifiedName;
-  const { data: profiles = [] } = useCredentialProfilesForMcp(qualifiedNameForLookup);
+  const qualifiedNameForLookup =
+    mcp.customType === 'composio' || mcp.isComposio
+      ? mcp.mcp_qualified_name ||
+        mcp.config?.mcp_qualified_name ||
+        mcp.qualifiedName
+      : mcp.qualifiedName;
+  const { data: profiles = [] } = useCredentialProfilesForMcp(
+    qualifiedNameForLookup,
+  );
   const profileId = mcp.selectedProfileId || mcp.config?.profile_id;
-  const selectedProfile = profiles.find(p => p.profile_id === profileId);
-  
+  const selectedProfile = profiles.find((p) => p.profile_id === profileId);
+
   const hasCredentialProfile = !!profileId && !!selectedProfile;
 
   return (
@@ -154,7 +175,10 @@ export const ConfiguredMcpList: React.FC<ConfiguredMcpListProps> = ({
   onConfigureTools,
 }) => {
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
-  const [mcpToDelete, setMcpToDelete] = React.useState<{ mcp: MCPConfiguration; index: number } | null>(null);
+  const [mcpToDelete, setMcpToDelete] = React.useState<{
+    mcp: MCPConfiguration;
+    index: number;
+  } | null>(null);
 
   const handleDeleteClick = (mcp: MCPConfiguration, index: number) => {
     setMcpToDelete({ mcp, index });
@@ -185,13 +209,15 @@ export const ConfiguredMcpList: React.FC<ConfiguredMcpListProps> = ({
           />
         ))}
       </div>
-      
+
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Remove Integration</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to remove the "{mcpToDelete?.mcp.name}" integration? This will disconnect all associated tools and cannot be undone.
+              Are you sure you want to remove the "{mcpToDelete?.mcp.name}"
+              integration? This will disconnect all associated tools and cannot
+              be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

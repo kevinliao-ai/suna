@@ -11,7 +11,7 @@ import {
   Users,
   MessageCircle,
   Globe,
-  ChevronRight
+  ChevronRight,
 } from 'lucide-react';
 import { ToolViewProps } from '../types';
 import { formatTimestamp } from '../utils';
@@ -22,48 +22,48 @@ import { extractDataProviderEndpointsData } from './_utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 const PROVIDER_CONFIG = {
-  'linkedin': {
+  linkedin: {
     name: 'LinkedIn Data Provider',
     icon: Users,
     color: 'from-blue-500 to-blue-600',
     bgColor: 'bg-blue-50 dark:bg-blue-900/20',
-    textColor: 'text-blue-700 dark:text-blue-300'
+    textColor: 'text-blue-700 dark:text-blue-300',
   },
-  'twitter': {
+  twitter: {
     name: 'Twitter Data Provider',
     icon: MessageCircle,
     color: 'from-sky-400 to-sky-500',
     bgColor: 'bg-sky-50 dark:bg-sky-900/20',
-    textColor: 'text-sky-700 dark:text-sky-300'
+    textColor: 'text-sky-700 dark:text-sky-300',
   },
-  'zillow': {
+  zillow: {
     name: 'Zillow Data Provider',
     icon: Home,
     color: 'from-emerald-500 to-emerald-600',
     bgColor: 'bg-emerald-50 dark:bg-emerald-900/20',
-    textColor: 'text-emerald-700 dark:text-emerald-300'
+    textColor: 'text-emerald-700 dark:text-emerald-300',
   },
-  'amazon': {
+  amazon: {
     name: 'Amazon Data Provider',
     icon: ShoppingBag,
     color: 'from-orange-500 to-orange-600',
     bgColor: 'bg-orange-50 dark:bg-orange-900/20',
-    textColor: 'text-orange-700 dark:text-orange-300'
+    textColor: 'text-orange-700 dark:text-orange-300',
   },
-  'yahoo_finance': {
+  yahoo_finance: {
     name: 'Yahoo Finance Data Provider',
     icon: TrendingUp,
     color: 'from-purple-500 to-purple-600',
     bgColor: 'bg-purple-50 dark:bg-purple-900/20',
-    textColor: 'text-purple-700 dark:text-purple-300'
+    textColor: 'text-purple-700 dark:text-purple-300',
   },
-  'active_jobs': {
+  active_jobs: {
     name: 'Active Jobs Data Provider',
     icon: Briefcase,
     color: 'from-indigo-500 to-indigo-600',
     bgColor: 'bg-indigo-50 dark:bg-indigo-900/20',
-    textColor: 'text-indigo-700 dark:text-indigo-300'
-  }
+    textColor: 'text-indigo-700 dark:text-indigo-300',
+  },
 };
 
 export function DataProviderEndpointsToolView({
@@ -74,27 +74,30 @@ export function DataProviderEndpointsToolView({
   isSuccess = true,
   isStreaming = false,
 }: ToolViewProps) {
-
   const {
     serviceName,
     endpoints,
     actualIsSuccess,
     actualToolTimestamp,
-    actualAssistantTimestamp
+    actualAssistantTimestamp,
   } = extractDataProviderEndpointsData(
     assistantContent,
     toolContent,
     isSuccess,
     toolTimestamp,
-    assistantTimestamp
+    assistantTimestamp,
   );
 
-  const providerConfig = serviceName && PROVIDER_CONFIG[serviceName as keyof typeof PROVIDER_CONFIG]
-    ? PROVIDER_CONFIG[serviceName as keyof typeof PROVIDER_CONFIG]
-    : PROVIDER_CONFIG['linkedin'];
+  const providerConfig =
+    serviceName && PROVIDER_CONFIG[serviceName as keyof typeof PROVIDER_CONFIG]
+      ? PROVIDER_CONFIG[serviceName as keyof typeof PROVIDER_CONFIG]
+      : PROVIDER_CONFIG['linkedin'];
   const IconComponent = providerConfig.icon;
 
-  const endpointCount = endpoints && typeof endpoints === 'object' ? Object.keys(endpoints).length : 0;
+  const endpointCount =
+    endpoints && typeof endpoints === 'object'
+      ? Object.keys(endpoints).length
+      : 0;
 
   return (
     <Card className="gap-0 flex border shadow-none border-t border-b-0 border-x-0 p-0 rounded-none flex-col h-full overflow-hidden bg-card">
@@ -115,10 +118,10 @@ export function DataProviderEndpointsToolView({
             <Badge
               variant="secondary"
               className={cn(
-                "text-xs font-medium",
+                'text-xs font-medium',
                 actualIsSuccess
-                  ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800"
-                  : "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800"
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800'
+                  : 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800',
               )}
             >
               {actualIsSuccess ? (
@@ -151,11 +154,13 @@ export function DataProviderEndpointsToolView({
           <ScrollArea className="h-full w-full">
             <div className="p-4 space-y-6">
               <div className="flex items-center gap-4 p-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-lg border border-zinc-200 dark:border-zinc-800">
-                <div className={cn(
-                  "w-12 h-12 rounded-lg flex items-center justify-center shadow-sm border-2",
-                  `bg-gradient-to-br ${providerConfig.color}`,
-                  "border-white/20"
-                )}>
+                <div
+                  className={cn(
+                    'w-12 h-12 rounded-lg flex items-center justify-center shadow-sm border-2',
+                    `bg-gradient-to-br ${providerConfig.color}`,
+                    'border-white/20',
+                  )}
+                >
                   <IconComponent className="h-6 w-6 text-white drop-shadow-sm" />
                 </div>
 
@@ -164,17 +169,19 @@ export function DataProviderEndpointsToolView({
                     {providerConfig.name}
                   </h3>
                   <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                    {endpointCount > 0 ? `${endpointCount} endpoints loaded and ready` : 'Endpoints loaded and ready'}
+                    {endpointCount > 0
+                      ? `${endpointCount} endpoints loaded and ready`
+                      : 'Endpoints loaded and ready'}
                   </p>
                 </div>
 
                 <Badge
                   variant="secondary"
                   className={cn(
-                    "text-xs font-medium",
+                    'text-xs font-medium',
                     actualIsSuccess
-                      ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800"
-                      : "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800"
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800'
+                      : 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800',
                   )}
                 >
                   {actualIsSuccess ? (
@@ -202,10 +209,10 @@ export function DataProviderEndpointsToolView({
                     <Badge
                       variant="secondary"
                       className={cn(
-                        "text-xs font-medium",
+                        'text-xs font-medium',
                         actualIsSuccess
-                          ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800"
-                          : "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800"
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800'
+                          : 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800',
                       )}
                     >
                       {actualIsSuccess ? (
@@ -225,7 +232,9 @@ export function DataProviderEndpointsToolView({
                       </span>
                     </div>
                     <Badge variant="outline" className="text-xs">
-                      {endpointCount > 0 ? `${endpointCount} endpoints` : 'Ready'}
+                      {endpointCount > 0
+                        ? `${endpointCount} endpoints`
+                        : 'Ready'}
                     </Badge>
                   </div>
 
@@ -250,7 +259,8 @@ export function DataProviderEndpointsToolView({
                       </span>
                     </div>
                     <p className="text-xs text-emerald-700 dark:text-emerald-300/70">
-                      Data provider endpoints have been loaded successfully and are ready to process requests.
+                      Data provider endpoints have been loaded successfully and
+                      are ready to process requests.
                     </p>
                   </div>
                 )}
@@ -280,4 +290,4 @@ export function DataProviderEndpointsToolView({
       </div>
     </Card>
   );
-} 
+}

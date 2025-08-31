@@ -1,12 +1,28 @@
 'use client';
 
 import { Project } from '@/lib/api';
-import { getToolIcon, getUserFriendlyToolName } from '@/components/thread/utils';
+import {
+  getToolIcon,
+  getUserFriendlyToolName,
+} from '@/components/thread/utils';
 import React from 'react';
 import { Slider } from '@/components/ui/slider';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ApiMessageType } from '@/components/thread/types';
-import { CircleDashed, X, ChevronLeft, ChevronRight, Computer, Radio, Maximize2, Minimize2, Copy, Check, Globe, Wrench } from 'lucide-react';
+import {
+  CircleDashed,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  Computer,
+  Radio,
+  Maximize2,
+  Minimize2,
+  Copy,
+  Check,
+  Globe,
+  Wrench,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
@@ -78,7 +94,10 @@ interface ViewToggleProps {
   onViewChange: (view: 'tools' | 'browser') => void;
 }
 
-const ViewToggle: React.FC<ViewToggleProps> = ({ currentView, onViewChange }) => {
+const ViewToggle: React.FC<ViewToggleProps> = ({
+  currentView,
+  onViewChange,
+}) => {
   return (
     <div className="relative flex items-center gap-1 bg-muted rounded-3xl px-1 py-1">
       {/* Sliding background */}
@@ -89,12 +108,12 @@ const ViewToggle: React.FC<ViewToggleProps> = ({ currentView, onViewChange }) =>
           x: currentView === 'tools' ? 0 : 32, // 28px button width + 4px gap
         }}
         transition={{
-          type: "spring",
+          type: 'spring',
           stiffness: 300,
-          damping: 30
+          damping: 30,
         }}
       />
-      
+
       {/* Buttons */}
       <Button
         size="sm"
@@ -151,14 +170,12 @@ const PanelHeader: React.FC<PanelHeaderProps> = ({
   layoutId,
 }) => {
   const title = getComputerTitle(agentName);
-  
+
   if (variant === 'drawer') {
     return (
       <DrawerHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <DrawerTitle className="text-lg font-medium">
-            {title}
-          </DrawerTitle>
+          <DrawerTitle className="text-lg font-medium">{title}</DrawerTitle>
           <Button
             variant="ghost"
             size="icon"
@@ -175,10 +192,7 @@ const PanelHeader: React.FC<PanelHeaderProps> = ({
 
   if (variant === 'motion') {
     return (
-      <motion.div
-        layoutId={layoutId}
-        className="p-3"
-      >
+      <motion.div layoutId={layoutId} className="p-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <motion.div layoutId="tool-icon" className="ml-2">
@@ -232,9 +246,13 @@ const PanelHeader: React.FC<PanelHeaderProps> = ({
             size="icon"
             onClick={onClose}
             className="h-8 w-8"
-            title={showMinimize ? "Minimize to floating preview" : "Close"}
+            title={showMinimize ? 'Minimize to floating preview' : 'Close'}
           >
-            {showMinimize ? <Minimize2 className="h-4 w-4" /> : <X className="h-4 w-4" />}
+            {showMinimize ? (
+              <Minimize2 className="h-4 w-4" />
+            ) : (
+              <X className="h-4 w-4" />
+            )}
           </Button>
         </div>
       </div>
@@ -260,17 +278,23 @@ export function ToolCallSidePanel({
 }: ToolCallSidePanelProps) {
   const [dots, setDots] = React.useState('');
   const [internalIndex, setInternalIndex] = React.useState(0);
-  const [navigationMode, setNavigationMode] = React.useState<'live' | 'manual'>('live');
-  const [toolCallSnapshots, setToolCallSnapshots] = React.useState<ToolCallSnapshot[]>([]);
+  const [navigationMode, setNavigationMode] = React.useState<'live' | 'manual'>(
+    'live',
+  );
+  const [toolCallSnapshots, setToolCallSnapshots] = React.useState<
+    ToolCallSnapshot[]
+  >([]);
   const [isInitialized, setIsInitialized] = React.useState(false);
   const [showViewToggle, setShowViewToggle] = React.useState(false);
 
   // Add copy functionality state
   const [isCopyingContent, setIsCopyingContent] = React.useState(false);
-  // Add view toggle state  
-  const [currentView, setCurrentView] = React.useState<'tools' | 'browser'>('tools');
+  // Add view toggle state
+  const [currentView, setCurrentView] = React.useState<'tools' | 'browser'>(
+    'tools',
+  );
   const currentViewRef = React.useRef(currentView);
-  
+
   // Update ref when state changes
   React.useEffect(() => {
     currentViewRef.current = currentView;
@@ -279,25 +303,26 @@ export function ToolCallSidePanel({
   const isMobile = useIsMobile();
 
   const sandbox = project?.sandbox;
-  
+
   // Add refresh key state for VNC iframe
   const [vncRefreshKey, setVncRefreshKey] = React.useState(0);
-  
+
   const handleVncRefresh = React.useCallback(() => {
-    setVncRefreshKey(prev => prev + 1);
+    setVncRefreshKey((prev) => prev + 1);
   }, []);
 
   const persistentVncIframe = React.useMemo(() => {
-    if (!sandbox || !sandbox.vnc_preview || !sandbox.pass || !sandbox.id) return null;
-    
+    if (!sandbox || !sandbox.vnc_preview || !sandbox.pass || !sandbox.id)
+      return null;
+
     return (
       <div>
-        <HealthCheckedVncIframe 
+        <HealthCheckedVncIframe
           key={vncRefreshKey}
           sandbox={{
             id: sandbox.id,
             vnc_preview: sandbox.vnc_preview,
-            pass: sandbox.pass
+            pass: sandbox.pass,
           }}
         />
       </div>
@@ -305,50 +330,65 @@ export function ToolCallSidePanel({
   }, [sandbox, vncRefreshKey]);
 
   // Helper function to check if a tool is browser-related
-  const isBrowserTool = React.useCallback((toolName: string | undefined): boolean => {
-    if (!toolName) return false;
-    const lowerName = toolName.toLowerCase();
-    return [
-      'browser-navigate-to',
-      'browser-act', 
-      'browser-extract-content',
-      'browser-screenshot'
-    ].includes(lowerName);
-  }, []);
+  const isBrowserTool = React.useCallback(
+    (toolName: string | undefined): boolean => {
+      if (!toolName) return false;
+      const lowerName = toolName.toLowerCase();
+      return [
+        'browser-navigate-to',
+        'browser-act',
+        'browser-extract-content',
+        'browser-screenshot',
+      ].includes(lowerName);
+    },
+    [],
+  );
 
   // Handle view toggle visibility and auto-switching logic
   React.useEffect(() => {
-    const safeIndex = Math.min(internalIndex, Math.max(0, toolCallSnapshots.length - 1));
+    const safeIndex = Math.min(
+      internalIndex,
+      Math.max(0, toolCallSnapshots.length - 1),
+    );
     const currentSnapshot = toolCallSnapshots[safeIndex];
-    const isCurrentSnapshotBrowserTool = isBrowserTool(currentSnapshot?.toolCall.assistantCall?.name);
+    const isCurrentSnapshotBrowserTool = isBrowserTool(
+      currentSnapshot?.toolCall.assistantCall?.name,
+    );
     setShowViewToggle(isCurrentSnapshotBrowserTool);
-    
+
     // Handle view switching based on agent status
     if (agentStatus === 'idle') {
       // Switch to tools view when navigating to a non-browser tool
-      if (!isCurrentSnapshotBrowserTool && currentViewRef.current === 'browser') {
+      if (
+        !isCurrentSnapshotBrowserTool &&
+        currentViewRef.current === 'browser'
+      ) {
         setCurrentView('tools');
       }
       // Switch to browser view when navigating to the latest browser tool
-      if (isCurrentSnapshotBrowserTool && currentViewRef.current === 'tools' && safeIndex === toolCallSnapshots.length - 1) {
+      if (
+        isCurrentSnapshotBrowserTool &&
+        currentViewRef.current === 'tools' &&
+        safeIndex === toolCallSnapshots.length - 1
+      ) {
         setCurrentView('browser');
       }
     } else if (agentStatus === 'running') {
       // Auto-switch for streaming tools when agent is actively running
-      const streamingSnapshot = toolCallSnapshots.find(snapshot => 
-        snapshot.toolCall.toolResult?.content === 'STREAMING'
+      const streamingSnapshot = toolCallSnapshots.find(
+        (snapshot) => snapshot.toolCall.toolResult?.content === 'STREAMING',
       );
-      
+
       if (streamingSnapshot) {
         const streamingToolCall = streamingSnapshot.toolCall;
         const toolName = streamingToolCall.assistantCall?.name;
         const isStreamingBrowserTool = isBrowserTool(toolName);
-        
+
         // Switch to browser view when a browser tool starts streaming and we're in tools view
         if (isStreamingBrowserTool && currentViewRef.current === 'tools') {
           setCurrentView('browser');
         }
-        
+
         // Switch to tools view when a non-browser tool starts streaming and we're in browser view
         if (!isStreamingBrowserTool && currentViewRef.current === 'browser') {
           setCurrentView('tools');
@@ -374,17 +414,20 @@ export function ToolCallSidePanel({
     setToolCallSnapshots(newSnapshots);
 
     if (!isInitialized && newSnapshots.length > 0) {
-      const completedCount = newSnapshots.filter(s =>
-        s.toolCall.toolResult?.content &&
-        s.toolCall.toolResult.content !== 'STREAMING'
+      const completedCount = newSnapshots.filter(
+        (s) =>
+          s.toolCall.toolResult?.content &&
+          s.toolCall.toolResult.content !== 'STREAMING',
       ).length;
 
       if (completedCount > 0) {
         let lastCompletedIndex = -1;
         for (let i = newSnapshots.length - 1; i >= 0; i--) {
           const snapshot = newSnapshots[i];
-          if (snapshot.toolCall.toolResult?.content &&
-            snapshot.toolCall.toolResult.content !== 'STREAMING') {
+          if (
+            snapshot.toolCall.toolResult?.content &&
+            snapshot.toolCall.toolResult.content !== 'STREAMING'
+          ) {
             lastCompletedIndex = i;
             break;
           }
@@ -396,13 +439,16 @@ export function ToolCallSidePanel({
       setIsInitialized(true);
     } else if (hasNewSnapshots && navigationMode === 'live') {
       const latestSnapshot = newSnapshots[newSnapshots.length - 1];
-      const isLatestStreaming = latestSnapshot?.toolCall.toolResult?.content === 'STREAMING';
+      const isLatestStreaming =
+        latestSnapshot?.toolCall.toolResult?.content === 'STREAMING';
       if (isLatestStreaming) {
         let lastCompletedIndex = -1;
         for (let i = newSnapshots.length - 1; i >= 0; i--) {
           const snapshot = newSnapshots[i];
-          if (snapshot.toolCall.toolResult?.content &&
-            snapshot.toolCall.toolResult.content !== 'STREAMING') {
+          if (
+            snapshot.toolCall.toolResult?.content &&
+            snapshot.toolCall.toolResult.content !== 'STREAMING'
+          ) {
             lastCompletedIndex = i;
             break;
           }
@@ -424,14 +470,18 @@ export function ToolCallSidePanel({
     setInternalIndex(Math.min(currentIndex, toolCallSnapshots.length - 1));
   }, [currentIndex, toolCallSnapshots.length]);
 
-  const safeInternalIndex = Math.min(internalIndex, Math.max(0, toolCallSnapshots.length - 1));
+  const safeInternalIndex = Math.min(
+    internalIndex,
+    Math.max(0, toolCallSnapshots.length - 1),
+  );
   const currentSnapshot = toolCallSnapshots[safeInternalIndex];
   const currentToolCall = currentSnapshot?.toolCall;
   const totalCalls = toolCallSnapshots.length;
 
-  const completedToolCalls = toolCallSnapshots.filter(snapshot =>
-    snapshot.toolCall.toolResult?.content &&
-    snapshot.toolCall.toolResult.content !== 'STREAMING'
+  const completedToolCalls = toolCallSnapshots.filter(
+    (snapshot) =>
+      snapshot.toolCall.toolResult?.content &&
+      snapshot.toolCall.toolResult.content !== 'STREAMING',
   );
   const totalCompletedCalls = completedToolCalls.length;
 
@@ -439,14 +489,18 @@ export function ToolCallSidePanel({
   let displayIndex = safeInternalIndex;
   let displayTotalCalls = totalCalls;
 
-  const isCurrentToolStreaming = currentToolCall?.toolResult?.content === 'STREAMING';
+  const isCurrentToolStreaming =
+    currentToolCall?.toolResult?.content === 'STREAMING';
   if (isCurrentToolStreaming && totalCompletedCalls > 0) {
-    const lastCompletedSnapshot = completedToolCalls[completedToolCalls.length - 1];
+    const lastCompletedSnapshot =
+      completedToolCalls[completedToolCalls.length - 1];
     displayToolCall = lastCompletedSnapshot.toolCall;
     displayIndex = totalCompletedCalls - 1;
     displayTotalCalls = totalCompletedCalls;
   } else if (!isCurrentToolStreaming) {
-    const completedIndex = completedToolCalls.findIndex(snapshot => snapshot.id === currentSnapshot?.id);
+    const completedIndex = completedToolCalls.findIndex(
+      (snapshot) => snapshot.id === currentSnapshot?.id,
+    );
     if (completedIndex >= 0) {
       displayIndex = completedIndex;
       displayTotalCalls = totalCompletedCalls;
@@ -465,8 +519,11 @@ export function ToolCallSidePanel({
     if (!content) return toolCall?.toolResult?.isSuccess ?? true;
 
     const safeParse = (data: any) => {
-      try { return typeof data === 'string' ? JSON.parse(data) : data; }
-      catch { return null; }
+      try {
+        return typeof data === 'string' ? JSON.parse(data) : data;
+      } catch {
+        return null;
+      }
     };
 
     const parsed = safeParse(content);
@@ -478,11 +535,14 @@ export function ToolCallSidePanel({
         return inner.tool_execution.result.success;
       }
     }
-    const success = parsed.tool_execution?.result?.success ??
+    const success =
+      parsed.tool_execution?.result?.success ??
       parsed.result?.success ??
       parsed.success;
 
-    return success !== undefined ? success : (toolCall?.toolResult?.isSuccess ?? true);
+    return success !== undefined
+      ? success
+      : (toolCall?.toolResult?.isSuccess ?? true);
   };
 
   const isSuccess = isStreaming ? true : getActualSuccess(displayToolCall);
@@ -510,7 +570,10 @@ export function ToolCallSidePanel({
       const parsed = JSON.parse(toolContent);
       if (parsed.content && typeof parsed.content === 'string') {
         fileContent = parsed.content;
-      } else if (parsed.file_content && typeof parsed.file_content === 'string') {
+      } else if (
+        parsed.file_content &&
+        typeof parsed.file_content === 'string'
+      ) {
         fileContent = parsed.file_content;
       } else if (parsed.result && typeof parsed.result === 'string') {
         fileContent = parsed.result;
@@ -522,7 +585,10 @@ export function ToolCallSidePanel({
       }
     } catch (e) {
       // If it's not JSON, use the content as is
-      fileContent = typeof toolContent === 'string' ? toolContent : JSON.stringify(toolContent, null, 2);
+      fileContent =
+        typeof toolContent === 'string'
+          ? toolContent
+          : JSON.stringify(toolContent, null, 2);
     }
 
     setIsCopyingContent(true);
@@ -535,33 +601,40 @@ export function ToolCallSidePanel({
     setTimeout(() => setIsCopyingContent(false), 500);
   }, [displayToolCall?.toolResult?.content, copyToClipboard]);
 
-  const internalNavigate = React.useCallback((newIndex: number, source: string = 'internal') => {
-    if (newIndex < 0 || newIndex >= totalCalls) return;
+  const internalNavigate = React.useCallback(
+    (newIndex: number, source: string = 'internal') => {
+      if (newIndex < 0 || newIndex >= totalCalls) return;
 
-    const isNavigatingToLatest = newIndex === totalCalls - 1;
-    setInternalIndex(newIndex);
+      const isNavigatingToLatest = newIndex === totalCalls - 1;
+      setInternalIndex(newIndex);
 
-    if (isNavigatingToLatest) {
-      setNavigationMode('live');
-    } else {
-      setNavigationMode('manual');
-    }
+      if (isNavigatingToLatest) {
+        setNavigationMode('live');
+      } else {
+        setNavigationMode('manual');
+      }
 
-    if (source === 'user_explicit') {
-      onNavigate(newIndex);
-    }
-  }, [totalCalls, onNavigate]);
+      if (source === 'user_explicit') {
+        onNavigate(newIndex);
+      }
+    },
+    [totalCalls, onNavigate],
+  );
 
   const isLiveMode = navigationMode === 'live';
-  const showJumpToLive = navigationMode === 'manual' && agentStatus === 'running';
-  const showJumpToLatest = navigationMode === 'manual' && agentStatus !== 'running';
+  const showJumpToLive =
+    navigationMode === 'manual' && agentStatus === 'running';
+  const showJumpToLatest =
+    navigationMode === 'manual' && agentStatus !== 'running';
 
   const navigateToPrevious = React.useCallback(() => {
     if (displayIndex > 0) {
       const targetCompletedIndex = displayIndex - 1;
       const targetSnapshot = completedToolCalls[targetCompletedIndex];
       if (targetSnapshot) {
-        const actualIndex = toolCallSnapshots.findIndex(s => s.id === targetSnapshot.id);
+        const actualIndex = toolCallSnapshots.findIndex(
+          (s) => s.id === targetSnapshot.id,
+        );
         if (actualIndex >= 0) {
           setNavigationMode('manual');
           internalNavigate(actualIndex, 'user_explicit');
@@ -575,9 +648,12 @@ export function ToolCallSidePanel({
       const targetCompletedIndex = displayIndex + 1;
       const targetSnapshot = completedToolCalls[targetCompletedIndex];
       if (targetSnapshot) {
-        const actualIndex = toolCallSnapshots.findIndex(s => s.id === targetSnapshot.id);
+        const actualIndex = toolCallSnapshots.findIndex(
+          (s) => s.id === targetSnapshot.id,
+        );
         if (actualIndex >= 0) {
-          const isLatestCompleted = targetCompletedIndex === completedToolCalls.length - 1;
+          const isLatestCompleted =
+            targetCompletedIndex === completedToolCalls.length - 1;
           if (isLatestCompleted) {
             setNavigationMode('live');
           } else {
@@ -587,7 +663,13 @@ export function ToolCallSidePanel({
         }
       }
     }
-  }, [displayIndex, displayTotalCalls, completedToolCalls, toolCallSnapshots, internalNavigate]);
+  }, [
+    displayIndex,
+    displayTotalCalls,
+    completedToolCalls,
+    toolCallSnapshots,
+    internalNavigate,
+  ]);
 
   const jumpToLive = React.useCallback(() => {
     setNavigationMode('live');
@@ -600,23 +682,36 @@ export function ToolCallSidePanel({
   }, [totalCalls, internalNavigate]);
 
   const renderStatusButton = React.useCallback(() => {
-    const baseClasses = "flex items-center justify-center gap-1.5 px-2 py-0.5 rounded-full w-[116px]";
-    const dotClasses = "w-1.5 h-1.5 rounded-full";
-    const textClasses = "text-xs font-medium";
+    const baseClasses =
+      'flex items-center justify-center gap-1.5 px-2 py-0.5 rounded-full w-[116px]';
+    const dotClasses = 'w-1.5 h-1.5 rounded-full';
+    const textClasses = 'text-xs font-medium';
 
     if (isLiveMode) {
       if (agentStatus === 'running') {
         return (
-          <div className={`${baseClasses} bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800`}>
+          <div
+            className={`${baseClasses} bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800`}
+          >
             <div className={`${dotClasses} bg-green-500 animate-pulse`} />
-            <span className={`${textClasses} text-green-700 dark:text-green-400`}>Live Updates</span>
+            <span
+              className={`${textClasses} text-green-700 dark:text-green-400`}
+            >
+              Live Updates
+            </span>
           </div>
         );
       } else {
         return (
-          <div className={`${baseClasses} bg-neutral-50 dark:bg-neutral-900/20 border border-neutral-200 dark:border-neutral-800`}>
+          <div
+            className={`${baseClasses} bg-neutral-50 dark:bg-neutral-900/20 border border-neutral-200 dark:border-neutral-800`}
+          >
             <div className={`${dotClasses} bg-neutral-500`} />
-            <span className={`${textClasses} text-neutral-700 dark:text-neutral-400`}>Latest Tool</span>
+            <span
+              className={`${textClasses} text-neutral-700 dark:text-neutral-400`}
+            >
+              Latest Tool
+            </span>
           </div>
         );
       }
@@ -628,7 +723,11 @@ export function ToolCallSidePanel({
             onClick={jumpToLive}
           >
             <div className={`${dotClasses} bg-green-500 animate-pulse`} />
-            <span className={`${textClasses} text-green-700 dark:text-green-400`}>Jump to Live</span>
+            <span
+              className={`${textClasses} text-green-700 dark:text-green-400`}
+            >
+              Jump to Live
+            </span>
           </div>
         );
       } else {
@@ -638,29 +737,36 @@ export function ToolCallSidePanel({
             onClick={jumpToLatest}
           >
             <div className={`${dotClasses} bg-blue-500`} />
-            <span className={`${textClasses} text-blue-700 dark:text-blue-400`}>Jump to Latest</span>
+            <span className={`${textClasses} text-blue-700 dark:text-blue-400`}>
+              Jump to Latest
+            </span>
           </div>
         );
       }
     }
   }, [isLiveMode, agentStatus, jumpToLive, jumpToLatest]);
 
-  const handleSliderChange = React.useCallback(([newValue]: [number]) => {
-    const targetSnapshot = completedToolCalls[newValue];
-    if (targetSnapshot) {
-      const actualIndex = toolCallSnapshots.findIndex(s => s.id === targetSnapshot.id);
-      if (actualIndex >= 0) {
-        const isLatestCompleted = newValue === completedToolCalls.length - 1;
-        if (isLatestCompleted) {
-          setNavigationMode('live');
-        } else {
-          setNavigationMode('manual');
-        }
+  const handleSliderChange = React.useCallback(
+    ([newValue]: [number]) => {
+      const targetSnapshot = completedToolCalls[newValue];
+      if (targetSnapshot) {
+        const actualIndex = toolCallSnapshots.findIndex(
+          (s) => s.id === targetSnapshot.id,
+        );
+        if (actualIndex >= 0) {
+          const isLatestCompleted = newValue === completedToolCalls.length - 1;
+          if (isLatestCompleted) {
+            setNavigationMode('live');
+          } else {
+            setNavigationMode('manual');
+          }
 
-        internalNavigate(actualIndex, 'user_explicit');
+          internalNavigate(actualIndex, 'user_explicit');
+        }
       }
-    }
-  }, [completedToolCalls, toolCallSnapshots, internalNavigate]);
+    },
+    [completedToolCalls, toolCallSnapshots, internalNavigate],
+  );
 
   React.useEffect(() => {
     if (!isOpen) return;
@@ -696,7 +802,11 @@ export function ToolCallSidePanel({
   }, [isOpen, handleClose]);
 
   React.useEffect(() => {
-    if (externalNavigateToIndex !== undefined && externalNavigateToIndex >= 0 && externalNavigateToIndex < totalCalls) {
+    if (
+      externalNavigateToIndex !== undefined &&
+      externalNavigateToIndex >= 0 &&
+      externalNavigateToIndex < totalCalls
+    ) {
       internalNavigate(externalNavigateToIndex, 'external_click');
     }
   }, [externalNavigateToIndex, totalCalls, internalNavigate]);
@@ -722,12 +832,12 @@ export function ToolCallSidePanel({
       return (
         <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
           <DrawerContent className="h-[85vh]">
-            <PanelHeader 
+            <PanelHeader
               agentName={agentName}
               onClose={handleClose}
               variant="drawer"
             />
-            
+
             <div className="flex-1 p-4 overflow-auto">
               <div className="space-y-4">
                 <Skeleton className="h-8 w-32" />
@@ -747,7 +857,7 @@ export function ToolCallSidePanel({
           <div className="border rounded-2xl flex flex-col shadow-2xl bg-background w-[90%] sm:w-[450px] md:w-[500px] lg:w-[550px] xl:w-[650px]">
             <div className="flex-1 flex flex-col overflow-hidden">
               <div className="flex flex-col h-full">
-                <PanelHeader 
+                <PanelHeader
                   agentName={agentName}
                   onClose={handleClose}
                   showMinimize={true}
@@ -773,10 +883,7 @@ export function ToolCallSidePanel({
       return (
         <div className="flex flex-col h-full">
           {!isMobile && (
-            <PanelHeader 
-              agentName={agentName}
-              onClose={handleClose}
-            />
+            <PanelHeader agentName={agentName} onClose={handleClose} />
           )}
           <div className="flex flex-col items-center justify-center flex-1 p-8">
             <div className="flex flex-col items-center space-y-4 max-w-sm text-center">
@@ -793,7 +900,8 @@ export function ToolCallSidePanel({
                   No tool activity
                 </h3>
                 <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed">
-                  Tool calls and computer interactions will appear here when they're being executed.
+                  Tool calls and computer interactions will appear here when
+                  they're being executed.
                 </p>
               </div>
             </div>
@@ -803,12 +911,14 @@ export function ToolCallSidePanel({
     }
 
     if (!displayToolCall && toolCallSnapshots.length > 0) {
-      const firstStreamingTool = toolCallSnapshots.find(s => s.toolCall.toolResult?.content === 'STREAMING');
+      const firstStreamingTool = toolCallSnapshots.find(
+        (s) => s.toolCall.toolResult?.content === 'STREAMING',
+      );
       if (firstStreamingTool && totalCompletedCalls === 0) {
         return (
           <div className="flex flex-col h-full">
             {!isMobile && (
-              <PanelHeader 
+              <PanelHeader
                 agentName={agentName}
                 onClose={handleClose}
                 isStreaming={true}
@@ -836,7 +946,11 @@ export function ToolCallSidePanel({
                     Tool is running
                   </h3>
                   <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed">
-                    {getUserFriendlyToolName(firstStreamingTool.toolCall.assistantCall.name || 'Tool')} is currently executing. Results will appear here when complete.
+                    {getUserFriendlyToolName(
+                      firstStreamingTool.toolCall.assistantCall.name || 'Tool',
+                    )}{' '}
+                    is currently executing. Results will appear here when
+                    complete.
                   </p>
                 </div>
               </div>
@@ -848,10 +962,7 @@ export function ToolCallSidePanel({
       return (
         <div className="flex flex-col h-full">
           {!isMobile && (
-            <PanelHeader 
-              agentName={agentName}
-              onClose={handleClose}
-            />
+            <PanelHeader agentName={agentName} onClose={handleClose} />
           )}
           <div className="flex-1 p-4 overflow-auto">
             <div className="space-y-4">
@@ -878,14 +989,16 @@ export function ToolCallSidePanel({
         currentIndex={displayIndex}
         totalCalls={displayTotalCalls}
         onFileClick={onFileClick}
-        viewToggle={<ViewToggle currentView={currentView} onViewChange={setCurrentView} />}  
+        viewToggle={
+          <ViewToggle currentView={currentView} onViewChange={setCurrentView} />
+        }
       />
     );
 
     return (
       <div className="flex flex-col h-full">
         {!isMobile && (
-          <PanelHeader 
+          <PanelHeader
             agentName={agentName}
             onClose={handleClose}
             isStreaming={isStreaming}
@@ -895,23 +1008,44 @@ export function ToolCallSidePanel({
           />
         )}
 
-        <div className={`flex-1 ${currentView === 'browser' ? 'overflow-hidden' : 'overflow-hidden'} scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-700 scrollbar-track-transparent`}>
+        <div
+          className={`flex-1 ${currentView === 'browser' ? 'overflow-hidden' : 'overflow-hidden'} scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-700 scrollbar-track-transparent`}
+        >
           {/* Always render VNC iframe to maintain connection when available */}
           {persistentVncIframe && (
-            <div className={`${currentView === 'browser' ? 'h-full flex flex-col' : 'hidden'}`}>
-              <BrowserHeader isConnected={true} onRefresh={handleVncRefresh} viewToggle={<ViewToggle currentView={currentView} onViewChange={setCurrentView} />} />
+            <div
+              className={`${currentView === 'browser' ? 'h-full flex flex-col' : 'hidden'}`}
+            >
+              <BrowserHeader
+                isConnected={true}
+                onRefresh={handleVncRefresh}
+                viewToggle={
+                  <ViewToggle
+                    currentView={currentView}
+                    onViewChange={setCurrentView}
+                  />
+                }
+              />
               {/* VNC iframe container - unchanged */}
               <div className="flex-1 overflow-hidden grid items-center">
                 {persistentVncIframe}
               </div>
             </div>
           )}
-          
+
           {/* Show browser not available message when no VNC and browser tab is selected */}
           {!persistentVncIframe && currentView === 'browser' && (
             <div className="h-full flex flex-col">
-              <BrowserHeader isConnected={false} viewToggle={<ViewToggle currentView={currentView} onViewChange={setCurrentView} />} />
-              
+              <BrowserHeader
+                isConnected={false}
+                viewToggle={
+                  <ViewToggle
+                    currentView={currentView}
+                    onViewChange={setCurrentView}
+                  />
+                }
+              />
+
               {/* Message content */}
               <div className="flex-1 flex flex-col items-center justify-center p-8 bg-zinc-50 dark:bg-zinc-900/50">
                 <div className="flex flex-col items-center space-y-4 max-w-sm text-center">
@@ -923,14 +1057,16 @@ export function ToolCallSidePanel({
                       Browser not available
                     </h3>
                     <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed">
-                      No active browser session available. The browser will appear here when a sandbox is created and Browser tools are used.
+                      No active browser session available. The browser will
+                      appear here when a sandbox is created and Browser tools
+                      are used.
                     </p>
                   </div>
                 </div>
               </div>
             </div>
           )}
-          
+
           {/* Render tool view when tools tab is selected */}
           {currentView === 'tools' && toolView}
         </div>
@@ -943,17 +1079,18 @@ export function ToolCallSidePanel({
     return (
       <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
         <DrawerContent className="h-[85vh]">
-          <PanelHeader 
+          <PanelHeader
             agentName={agentName}
             onClose={handleClose}
             variant="drawer"
           />
-          
+
           <div className="flex-1 flex flex-col overflow-hidden">
             {renderContent()}
           </div>
-          
-          {(displayTotalCalls > 1 || (isCurrentToolStreaming && totalCompletedCalls > 0)) && (
+
+          {(displayTotalCalls > 1 ||
+            (isCurrentToolStreaming && totalCompletedCalls > 0)) && (
             <div className="border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-3">
               <div className="flex items-center justify-between">
                 <Button
@@ -1005,14 +1142,15 @@ export function ToolCallSidePanel({
           transition={{
             opacity: { duration: disableInitialAnimation ? 0 : 0.15 },
             layout: {
-              type: "spring",
+              type: 'spring',
               stiffness: 400,
-              damping: 35
-            }
+              damping: 35,
+            },
           }}
-          className={compact 
-            ? "m-4 h-[calc(100%-2rem)] w-[calc(100%-2rem)] border rounded-3xl flex flex-col z-30"
-            : "fixed top-2 right-2 bottom-4 border rounded-3xl flex flex-col z-30 w-[40vw] sm:w-[450px] md:w-[500px] lg:w-[550px] xl:w-[645px]"
+          className={
+            compact
+              ? 'm-4 h-[calc(100%-2rem)] w-[calc(100%-2rem)] border rounded-3xl flex flex-col z-30'
+              : 'fixed top-2 right-2 bottom-4 border rounded-3xl flex flex-col z-30 w-[40vw] sm:w-[450px] md:w-[500px] lg:w-[550px] xl:w-[645px]'
           }
           style={{
             overflow: 'hidden',
@@ -1021,7 +1159,8 @@ export function ToolCallSidePanel({
           <div className="flex-1 flex flex-col overflow-hidden bg-card">
             {renderContent()}
           </div>
-          {(displayTotalCalls > 1 || (isCurrentToolStreaming && totalCompletedCalls > 0)) && (
+          {(displayTotalCalls > 1 ||
+            (isCurrentToolStreaming && totalCompletedCalls > 0)) && (
             <div className="border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 px-4 py-2.5">
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-1">

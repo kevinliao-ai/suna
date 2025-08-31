@@ -9,16 +9,20 @@ import {
   ArrowRight,
   TerminalIcon,
   Power,
-  StopCircle
+  StopCircle,
 } from 'lucide-react';
 import { ToolViewProps } from '../types';
-import { formatTimestamp, getToolTitle, normalizeContentToString } from '../utils';
+import {
+  formatTimestamp,
+  getToolTitle,
+  normalizeContentToString,
+} from '../utils';
 import { cn } from '@/lib/utils';
 import { useTheme } from 'next-themes';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { extractCommandData } from './_utils';
 
 export function TerminateCommandToolView({
@@ -40,13 +44,13 @@ export function TerminateCommandToolView({
     output,
     actualIsSuccess,
     actualToolTimestamp,
-    actualAssistantTimestamp
+    actualAssistantTimestamp,
   } = extractCommandData(
     assistantContent,
     toolContent,
     isSuccess,
     toolTimestamp,
-    assistantTimestamp
+    assistantTimestamp,
   );
 
   const rawSessionName = React.useMemo(() => {
@@ -88,10 +92,13 @@ export function TerminateCommandToolView({
 
     const outputLower = output.toLowerCase();
     if (outputLower.includes('does not exist')) return false;
-    if (outputLower.includes('terminated') || outputLower.includes('killed')) return true;
+    if (outputLower.includes('terminated') || outputLower.includes('killed'))
+      return true;
 
     if (typeof toolContent === 'string') {
-      const toolResultMatch = toolContent.match(/ToolResult\(success=(true|false)/i);
+      const toolResultMatch = toolContent.match(
+        /ToolResult\(success=(true|false)/i,
+      );
       if (toolResultMatch) {
         return toolResultMatch[1].toLowerCase() === 'true';
       }
@@ -121,14 +128,16 @@ export function TerminateCommandToolView({
     if (!output) return [];
     let processedOutput = output;
     try {
-      if (typeof output === 'string' && (output.trim().startsWith('{') || output.trim().startsWith('{'))) {
+      if (
+        typeof output === 'string' &&
+        (output.trim().startsWith('{') || output.trim().startsWith('{'))
+      ) {
         const parsed = JSON.parse(output);
         if (parsed && typeof parsed === 'object' && parsed.output) {
           processedOutput = parsed.output;
         }
       }
-    } catch (e) {
-    }
+    } catch (e) {}
 
     processedOutput = String(processedOutput);
     processedOutput = processedOutput.replace(/\\\\/g, '\\');
@@ -139,9 +148,12 @@ export function TerminateCommandToolView({
       .replace(/\\"/g, '"')
       .replace(/\\'/g, "'");
 
-    processedOutput = processedOutput.replace(/\\u([0-9a-fA-F]{4})/g, (_match, group) => {
-      return String.fromCharCode(parseInt(group, 16));
-    });
+    processedOutput = processedOutput.replace(
+      /\\u([0-9a-fA-F]{4})/g,
+      (_match, group) => {
+        return String.fromCharCode(parseInt(group, 16));
+      },
+    );
     return processedOutput.split('\n');
   }, [output]);
 
@@ -169,8 +181,8 @@ export function TerminateCommandToolView({
               variant="secondary"
               className={
                 terminationSuccess
-                  ? "bg-gradient-to-b from-emerald-200 to-emerald-100 text-emerald-700 dark:from-emerald-800/50 dark:to-emerald-900/60 dark:text-emerald-300"
-                  : "bg-gradient-to-b from-rose-200 to-rose-100 text-rose-700 dark:from-rose-800/50 dark:to-rose-900/60 dark:text-rose-300"
+                  ? 'bg-gradient-to-b from-emerald-200 to-emerald-100 text-emerald-700 dark:from-emerald-800/50 dark:to-emerald-900/60 dark:text-emerald-300'
+                  : 'bg-gradient-to-b from-rose-200 to-rose-100 text-rose-700 dark:from-rose-800/50 dark:to-rose-900/60 dark:text-rose-300'
               }
             >
               {terminationSuccess ? (
@@ -195,10 +207,14 @@ export function TerminateCommandToolView({
                 Terminating session
               </h3>
               <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6">
-                <span className="font-mono text-xs break-all">{finalSessionName || 'Processing termination...'}</span>
+                <span className="font-mono text-xs break-all">
+                  {finalSessionName || 'Processing termination...'}
+                </span>
               </p>
               <Progress value={progress} className="w-full h-1" />
-              <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-2">{progress}%</p>
+              <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-2">
+                {progress}%
+              </p>
             </div>
           </div>
         ) : finalSessionName ? (
@@ -207,10 +223,14 @@ export function TerminateCommandToolView({
               <div className="mb-4 bg-zinc-100 dark:bg-neutral-900 rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-800">
                 <div className="bg-zinc-200 dark:bg-zinc-800 px-4 py-2 flex items-center gap-2">
                   <Power className="h-4 w-4 text-zinc-600 dark:text-zinc-400" />
-                  <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Session</span>
+                  <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                    Session
+                  </span>
                 </div>
                 <div className="p-4 font-mono text-sm text-zinc-700 dark:text-zinc-300 flex gap-2">
-                  <span className="text-red-500 dark:text-red-400 select-none">●</span>
+                  <span className="text-red-500 dark:text-red-400 select-none">
+                    ●
+                  </span>
                   <code className="flex-1 break-all">{finalSessionName}</code>
                 </div>
               </div>
@@ -224,10 +244,10 @@ export function TerminateCommandToolView({
                     </h3>
                     <Badge
                       className={cn(
-                        "ml-2",
+                        'ml-2',
                         terminationSuccess
-                          ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                          : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                          : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
                       )}
                     >
                       {terminationSuccess ? 'Success' : 'Failed'}
@@ -238,10 +258,15 @@ export function TerminateCommandToolView({
                     <div className="bg-zinc-300 dark:bg-neutral-800 flex items-center justify-between dark:border-zinc-700/50">
                       <div className="bg-zinc-200 w-full dark:bg-zinc-800 px-4 py-2 flex items-center gap-2">
                         <TerminalIcon className="h-4 w-4 text-zinc-600 dark:text-zinc-400" />
-                        <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Termination output</span>
+                        <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                          Termination output
+                        </span>
                       </div>
                       {!terminationSuccess && (
-                        <Badge variant="outline" className="text-xs h-5 border-red-700/30 text-red-400">
+                        <Badge
+                          variant="outline"
+                          className="text-xs h-5 border-red-700/30 text-red-400"
+                        >
                           <AlertTriangle className="h-3 w-3 mr-1" />
                           Error
                         </Badge>
@@ -250,10 +275,7 @@ export function TerminateCommandToolView({
                     <div className="p-4 max-h-96 overflow-auto scrollbar-hide">
                       <pre className="text-xs text-zinc-600 dark:text-zinc-300 font-mono whitespace-pre-wrap break-all overflow-visible">
                         {linesToShow.map((line, index) => (
-                          <div
-                            key={index}
-                            className="py-0.5 bg-transparent"
-                          >
+                          <div key={index} className="py-0.5 bg-transparent">
                             {line || ' '}
                           </div>
                         ))}
@@ -287,7 +309,8 @@ export function TerminateCommandToolView({
               No Session Found
             </h3>
             <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center max-w-md">
-              No session name was detected. Please provide a valid session to terminate.
+              No session name was detected. Please provide a valid session to
+              terminate.
             </p>
           </div>
         )}
@@ -296,7 +319,10 @@ export function TerminateCommandToolView({
       <div className="px-4 py-2 h-10 bg-gradient-to-r from-zinc-50/90 to-zinc-100/90 dark:from-zinc-900/90 dark:to-zinc-800/90 backdrop-blur-sm border-t border-zinc-200 dark:border-zinc-800 flex justify-between items-center gap-4">
         <div className="h-full flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
           {!isStreaming && finalSessionName && (
-            <Badge variant="outline" className="h-6 py-0.5 bg-zinc-50 dark:bg-zinc-900">
+            <Badge
+              variant="outline"
+              className="h-6 py-0.5 bg-zinc-50 dark:bg-zinc-900"
+            >
               <StopCircle className="h-3 w-3 mr-1" />
               Terminate
             </Badge>
@@ -314,4 +340,4 @@ export function TerminateCommandToolView({
       </div>
     </Card>
   );
-} 
+}

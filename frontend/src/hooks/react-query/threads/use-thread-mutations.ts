@@ -1,10 +1,7 @@
 'use client';
 
 import { createMutationHook } from '@/hooks/use-query';
-import { 
-  createThread, 
-  addUserMessage 
-} from '@/lib/api';
+import { createThread, addUserMessage } from '@/lib/api';
 import { toast } from 'sonner';
 
 export const useCreateThread = createMutationHook(
@@ -15,18 +12,18 @@ export const useCreateThread = createMutationHook(
     },
     errorContext: {
       operation: 'create thread',
-      resource: 'thread'
-    }
-  }
+      resource: 'thread',
+    },
+  },
 );
 
 export const useAddUserMessage = createMutationHook(
-  ({ threadId, content }: { threadId: string; content: string }) => 
+  ({ threadId, content }: { threadId: string; content: string }) =>
     addUserMessage(threadId, content),
   {
     errorContext: {
       operation: 'add message',
-      resource: 'message'
-    }
-  }
-); 
+      resource: 'message',
+    },
+  },
+);

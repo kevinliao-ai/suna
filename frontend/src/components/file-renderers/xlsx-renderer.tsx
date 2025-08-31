@@ -25,7 +25,7 @@ export function XlsxRenderer({
   fileName,
   className,
   sandboxId,
-  project
+  project,
 }: XlsxRendererProps) {
   // Determine the path for LuckysheetViewer
   const xlsxPath = filePath || fileName;
@@ -33,7 +33,7 @@ export function XlsxRenderer({
 
   return (
     <div className={cn('w-full h-full', className)}>
-      <LuckysheetViewer 
+      <LuckysheetViewer
         xlsxPath={xlsxPath}
         sandboxId={resolvedSandboxId}
         className="w-full h-full"

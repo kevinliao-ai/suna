@@ -40,7 +40,7 @@ export default function ShareThreadPage({
   const threadId = unwrappedParams.threadId;
 
   const router = useRouter();
-  
+
   // Use the new share-specific hook
   const {
     messages,
@@ -62,7 +62,9 @@ export default function ShareThreadPage({
   const [currentToolIndex, setCurrentToolIndex] = useState<number>(0);
   const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
   const [autoOpenedPanel, setAutoOpenedPanel] = useState(false);
-  const [externalNavIndex, setExternalNavIndex] = useState<number | undefined>(undefined);
+  const [externalNavIndex, setExternalNavIndex] = useState<number | undefined>(
+    undefined,
+  );
 
   // File viewer state
   const [fileViewerOpen, setFileViewerOpen] = useState(false);
@@ -115,42 +117,38 @@ export default function ShareThreadPage({
     }
   }, []);
 
-  const handleStreamStatusChange = useCallback(
-    (hookStatus: string) => {
-      switch (hookStatus) {
-        case 'idle':
-        case 'completed':
-        case 'stopped':
-        case 'agent_not_running':
+  const handleStreamStatusChange = useCallback((hookStatus: string) => {
+    switch (hookStatus) {
+      case 'idle':
+      case 'completed':
+      case 'stopped':
+      case 'agent_not_running':
+        setAgentStatus('idle');
+        setAgentRunId(null);
+        setAutoOpenedPanel(false);
+        break;
+      case 'connecting':
+        setAgentStatus('connecting');
+        break;
+      case 'streaming':
+        setAgentStatus('running');
+        break;
+      case 'error':
+        setAgentStatus('error');
+        setTimeout(() => {
           setAgentStatus('idle');
           setAgentRunId(null);
-          setAutoOpenedPanel(false);
-          break;
-        case 'connecting':
-          setAgentStatus('connecting');
-          break;
-        case 'streaming':
-          setAgentStatus('running');
-          break;
-        case 'error':
-          setAgentStatus('error');
-          setTimeout(() => {
-            setAgentStatus('idle');
-            setAgentRunId(null);
-          }, 3000);
-          break;
-      }
-    },
-    [],
-  );
+        }, 3000);
+        break;
+    }
+  }, []);
 
   const handleStreamError = useCallback((errorMessage: string) => {
     console.error(`[PAGE] Stream hook error: ${errorMessage}`);
     toast.error(errorMessage, { duration: 15000 });
   }, []);
 
-  const handleStreamClose = useCallback(() => {
-  }, [agentStatus]);
+  const handleStreamClose = useCallback(() => {}, [agentStatus]);
 
   // Handle streaming tool calls
   const handleStreamingToolCall = useCallback(
@@ -158,7 +156,8 @@ export default function ShareThreadPage({
       if (!toolCall) return;
 
       // Normalize the tool name like the project thread page does
-      const rawToolName = toolCall.name || toolCall.xml_tag_name || 'Unknown Tool';
+      const rawToolName =
+        toolCall.name || toolCall.xml_tag_name || 'Unknown Tool';
       const toolName = rawToolName.replace(/_/g, '-').toLowerCase();
 
       // If user explicitly closed the panel, don't reopen it for streaming calls
@@ -171,7 +170,7 @@ export default function ShareThreadPage({
       // Format the arguments in a way that matches the expected XML format for each tool
       // This ensures the specialized tool views render correctly
       let formattedContent = toolArguments;
-      
+
       if (
         toolName.includes('command') &&
         !toolArguments.includes('<execute-command>')
@@ -186,18 +185,27 @@ export default function ShareThreadPage({
       ) {
         // For file operations, check if toolArguments contains a file path
         // If it's just a raw file path, format it properly
-        const fileOpTags = ['create-file', 'delete-file', 'full-file-rewrite', 'edit-file'];
+        const fileOpTags = [
+          'create-file',
+          'delete-file',
+          'full-file-rewrite',
+          'edit-file',
+        ];
         const matchingTag = fileOpTags.find((tag) => toolName === tag);
         if (matchingTag) {
           // Check if arguments already have the proper XML format
-          if (!toolArguments.includes(`<${matchingTag}>`) && !toolArguments.includes('file_path=') && !toolArguments.includes('target_file=')) {
+          if (
+            !toolArguments.includes(`<${matchingTag}>`) &&
+            !toolArguments.includes('file_path=') &&
+            !toolArguments.includes('target_file=')
+          ) {
             // If toolArguments looks like a raw file path, format it properly
             const filePath = toolArguments.trim();
             if (filePath && !filePath.startsWith('<')) {
               if (matchingTag === 'edit-file') {
                 formattedContent = `<${matchingTag} target_file="${filePath}">`;
               } else {
-              formattedContent = `<${matchingTag} file_path="${filePath}">`;
+                formattedContent = `<${matchingTag} file_path="${filePath}">`;
               }
             } else {
               formattedContent = `<${matchingTag}>${toolArguments}</${matchingTag}>`;
@@ -210,7 +218,7 @@ export default function ShareThreadPage({
 
       const newToolCall: ToolCallInput = {
         assistantCall: {
-          name: toolName,  // Use normalized tool name
+          name: toolName, // Use normalized tool name
           content: formattedContent,
           timestamp: new Date().toISOString(),
         },
@@ -286,7 +294,12 @@ export default function ShareThreadPage({
 
     assistantMessages.forEach((assistantMsg) => {
       const resultMessage = messages.find((toolMsg) => {
-        if (toolMsg.type !== 'tool' || !toolMsg.metadata || !assistantMsg.message_id) return false;
+        if (
+          toolMsg.type !== 'tool' ||
+          !toolMsg.metadata ||
+          !assistantMsg.message_id
+        )
+          return false;
         try {
           const metadata = safeJsonParse<ParsedMetadata>(toolMsg.metadata, {});
           return metadata.assistant_message_id === assistantMsg.message_id;
@@ -300,7 +313,10 @@ export default function ShareThreadPage({
         try {
           const assistantContent = (() => {
             try {
-              const parsed = safeJsonParse<{ content?: string }>(assistantMsg.content, {});
+              const parsed = safeJsonParse<{ content?: string }>(
+                assistantMsg.content,
+                {},
+              );
               return parsed.content || assistantMsg.content;
             } catch {
               return assistantMsg.content;
@@ -311,41 +327,52 @@ export default function ShareThreadPage({
             toolName = extractedToolName;
           } else {
             const assistantContentParsed = safeJsonParse<{
-              tool_calls?: Array<{ function?: { name?: string }; name?: string }>;
+              tool_calls?: Array<{
+                function?: { name?: string };
+                name?: string;
+              }>;
             }>(assistantMsg.content, {});
             if (
               assistantContentParsed.tool_calls &&
               assistantContentParsed.tool_calls.length > 0
             ) {
               const firstToolCall = assistantContentParsed.tool_calls[0];
-              const rawName = firstToolCall.function?.name || firstToolCall.name || 'unknown';
+              const rawName =
+                firstToolCall.function?.name || firstToolCall.name || 'unknown';
               toolName = rawName.replace(/_/g, '-').toLowerCase();
             }
           }
-        } catch { }
+        } catch {}
 
         let isSuccess = true;
         try {
           const toolResultContent = (() => {
             try {
-              const parsed = safeJsonParse<{ content?: string }>(resultMessage.content, {});
+              const parsed = safeJsonParse<{ content?: string }>(
+                resultMessage.content,
+                {},
+              );
               return parsed.content || resultMessage.content;
             } catch {
               return resultMessage.content;
             }
           })();
           if (toolResultContent && typeof toolResultContent === 'string') {
-            const toolResultMatch = toolResultContent.match(/ToolResult\s*\(\s*success\s*=\s*(True|False|true|false)/i);
+            const toolResultMatch = toolResultContent.match(
+              /ToolResult\s*\(\s*success\s*=\s*(True|False|true|false)/i,
+            );
             if (toolResultMatch) {
               isSuccess = toolResultMatch[1].toLowerCase() === 'true';
             } else {
               const toolContent = toolResultContent.toLowerCase();
-              isSuccess = !(toolContent.includes('failed') ||
+              isSuccess = !(
+                toolContent.includes('failed') ||
                 toolContent.includes('error') ||
-                toolContent.includes('failure'));
+                toolContent.includes('failure')
+              );
             }
           }
-        } catch { }
+        } catch {}
 
         historicalToolPairs.push({
           assistantCall: {
@@ -361,7 +388,7 @@ export default function ShareThreadPage({
         });
       }
     });
-    
+
     historicalToolPairs.sort((a, b) => {
       const timeA = new Date(a.assistantCall.timestamp || '').getTime();
       const timeB = new Date(b.assistantCall.timestamp || '').getTime();
@@ -370,7 +397,6 @@ export default function ShareThreadPage({
 
     setToolCalls(historicalToolPairs);
   }, [messages]);
-
 
   const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
     messagesEndRef.current?.scrollIntoView({ behavior });
@@ -431,14 +457,17 @@ export default function ShareThreadPage({
     [messages, toolCalls],
   );
 
-  const handleOpenFileViewer = useCallback((filePath?: string, filePathList?: string[]) => {
-    if (filePath) {
-      setFileToView(filePath);
-    } else {
-      setFileToView(null);
-    }
-    setFileViewerOpen(true);
-  }, []);
+  const handleOpenFileViewer = useCallback(
+    (filePath?: string, filePathList?: string[]) => {
+      if (filePath) {
+        setFileToView(filePath);
+      } else {
+        setFileToView(null);
+      }
+      setFileViewerOpen(true);
+    },
+    [],
+  );
 
   const playbackController: PlaybackController = PlaybackControls({
     messages,
@@ -471,8 +500,6 @@ export default function ShareThreadPage({
     }
   }, [playbackState.visibleMessages, userHasScrolled]);
 
-
-
   useEffect(() => {
     if (
       (streamHookStatus === 'completed' ||
@@ -487,7 +514,6 @@ export default function ShareThreadPage({
     }
   }, [agentStatus, streamHookStatus, agentRunId, currentHookRunId]);
 
-
   useEffect(() => {
     if (!isPlaying || currentMessageIndex <= 0 || !messages.length) return;
     const currentMsg = messages[currentMessageIndex - 1];
@@ -498,7 +524,7 @@ export default function ShareThreadPage({
         if (assistantId) {
           const toolIndex = toolCalls.findIndex((tc) => {
             const assistantMessage = messages.find(
-              (m) => m.message_id === assistantId && m.type === 'assistant'
+              (m) => m.message_id === assistantId && m.type === 'assistant',
             );
             if (!assistantMessage) return false;
             return tc.assistantCall?.content === assistantMessage.content;

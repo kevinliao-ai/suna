@@ -7,9 +7,9 @@ import { MarkdownRenderer as FileMarkdownRenderer } from '@/components/file-rend
 import type { Project } from '@/lib/api';
 
 interface MarkdownRendererProps {
-    content: string;
-    className?: string;
-    project?: Project;
+  content: string;
+  className?: string;
+  project?: Project;
 }
 
 /**
@@ -17,21 +17,21 @@ interface MarkdownRendererProps {
  * Now uses the FileMarkdownRenderer with image authentication support
  */
 export function MarkdownRenderer({
-    content,
-    className,
-    project
+  content,
+  className,
+  project,
 }: MarkdownRendererProps) {
-    return (
-        <div className={cn('w-full h-full overflow-hidden', className)}>
-            <ScrollArea className="w-full h-full">
-                <div className="p-4">
-                    <FileMarkdownRenderer
-                        content={content}
-                        className="prose prose-sm dark:prose-invert max-w-none [&>:first-child]:mt-0"
-                        project={project}
-                    />
-                </div>
-            </ScrollArea>
+  return (
+    <div className={cn('w-full h-full overflow-hidden', className)}>
+      <ScrollArea className="w-full h-full">
+        <div className="p-4">
+          <FileMarkdownRenderer
+            content={content}
+            className="prose prose-sm dark:prose-invert max-w-none [&>:first-child]:mt-0"
+            project={project}
+          />
         </div>
-    );
-} 
+      </ScrollArea>
+    </div>
+  );
+}

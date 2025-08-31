@@ -25,9 +25,9 @@ const parseContent = (content: any): any => {
 
 const extractFromNewFormat = (content: any): ConfigureProfileForAgentData => {
   const parsedContent = parseContent(content);
-  
+
   if (!parsedContent || typeof parsedContent !== 'object') {
-    return { 
+    return {
       profile_id: null,
       enabled_tools: [],
       display_name: null,
@@ -36,29 +36,31 @@ const extractFromNewFormat = (content: any): ConfigureProfileForAgentData => {
       version_id: null,
       version_name: null,
       success: undefined,
-      timestamp: undefined 
+      timestamp: undefined,
     };
   }
 
-  if ('tool_execution' in parsedContent && typeof parsedContent.tool_execution === 'object') {
+  if (
+    'tool_execution' in parsedContent &&
+    typeof parsedContent.tool_execution === 'object'
+  ) {
     const toolExecution = parsedContent.tool_execution;
     const args = toolExecution.arguments || {};
-    
+
     let parsedOutput = toolExecution.result?.output;
     if (typeof parsedOutput === 'string') {
       try {
         parsedOutput = JSON.parse(parsedOutput);
-      } catch (e) {
-      }
+      } catch (e) {}
     }
     parsedOutput = parsedOutput || {};
 
     const extractedData = {
       profile_id: args.profile_id || null,
-      enabled_tools: Array.isArray(args.enabled_tools) 
-        ? args.enabled_tools 
-        : Array.isArray(parsedOutput.enabled_tools) 
-          ? parsedOutput.enabled_tools 
+      enabled_tools: Array.isArray(args.enabled_tools)
+        ? args.enabled_tools
+        : Array.isArray(parsedOutput.enabled_tools)
+          ? parsedOutput.enabled_tools
           : [],
       display_name: args.display_name || null,
       message: parsedOutput.message || null,
@@ -66,19 +68,19 @@ const extractFromNewFormat = (content: any): ConfigureProfileForAgentData => {
       version_id: parsedOutput.version_id || null,
       version_name: parsedOutput.version_name || null,
       success: toolExecution.result?.success,
-      timestamp: toolExecution.execution_details?.timestamp
+      timestamp: toolExecution.execution_details?.timestamp,
     };
-    
+
     return extractedData;
   }
 
   if ('parameters' in parsedContent && 'output' in parsedContent) {
     const extractedData = {
       profile_id: parsedContent.parameters?.profile_id || null,
-      enabled_tools: Array.isArray(parsedContent.parameters?.enabled_tools) 
-        ? parsedContent.parameters.enabled_tools 
-        : Array.isArray(parsedContent.output?.enabled_tools) 
-          ? parsedContent.output.enabled_tools 
+      enabled_tools: Array.isArray(parsedContent.parameters?.enabled_tools)
+        ? parsedContent.parameters.enabled_tools
+        : Array.isArray(parsedContent.output?.enabled_tools)
+          ? parsedContent.output.enabled_tools
           : [],
       display_name: parsedContent.parameters?.display_name || null,
       message: parsedContent.output?.message || null,
@@ -86,7 +88,7 @@ const extractFromNewFormat = (content: any): ConfigureProfileForAgentData => {
       version_id: parsedContent.output?.version_id || null,
       version_name: parsedContent.output?.version_name || null,
       success: parsedContent.success,
-      timestamp: undefined
+      timestamp: undefined,
     };
 
     return extractedData;
@@ -96,7 +98,7 @@ const extractFromNewFormat = (content: any): ConfigureProfileForAgentData => {
     return extractFromNewFormat(parsedContent.content);
   }
 
-  return { 
+  return {
     profile_id: null,
     enabled_tools: [],
     display_name: null,
@@ -105,27 +107,31 @@ const extractFromNewFormat = (content: any): ConfigureProfileForAgentData => {
     version_id: null,
     version_name: null,
     success: undefined,
-    timestamp: undefined 
+    timestamp: undefined,
   };
 };
 
-const extractFromLegacyFormat = (content: any): Omit<ConfigureProfileForAgentData, 'success' | 'timestamp'> => {
+const extractFromLegacyFormat = (
+  content: any,
+): Omit<ConfigureProfileForAgentData, 'success' | 'timestamp'> => {
   const toolData = extractToolData(content);
-  
+
   if (toolData.toolResult) {
     const args = toolData.arguments || {};
-    
+
     return {
       profile_id: args.profile_id || null,
-      enabled_tools: Array.isArray(args.enabled_tools) ? args.enabled_tools : [],
+      enabled_tools: Array.isArray(args.enabled_tools)
+        ? args.enabled_tools
+        : [],
       display_name: args.display_name || null,
       message: null,
       total_tools: 0,
       version_id: null,
-      version_name: null
+      version_name: null,
     };
   }
-  
+
   return {
     profile_id: null,
     enabled_tools: [],
@@ -133,7 +139,7 @@ const extractFromLegacyFormat = (content: any): Omit<ConfigureProfileForAgentDat
     message: null,
     total_tools: 0,
     version_id: null,
-    version_name: null
+    version_name: null,
   };
 };
 
@@ -142,7 +148,7 @@ export function extractConfigureProfileForAgentData(
   toolContent: any,
   isSuccess: boolean,
   toolTimestamp?: string,
-  assistantTimestamp?: string
+  assistantTimestamp?: string,
 ): {
   profile_id: string | null;
   enabled_tools: string[];
@@ -156,27 +162,35 @@ export function extractConfigureProfileForAgentData(
   actualAssistantTimestamp?: string;
 } {
   let data: ConfigureProfileForAgentData;
-  
+
   if (toolContent) {
     data = extractFromNewFormat(toolContent);
-    if (data.success !== undefined || data.message || data.enabled_tools.length > 0) {
+    if (
+      data.success !== undefined ||
+      data.message ||
+      data.enabled_tools.length > 0
+    ) {
       return {
         ...data,
         actualIsSuccess: data.success !== undefined ? data.success : isSuccess,
         actualToolTimestamp: data.timestamp || toolTimestamp,
-        actualAssistantTimestamp: assistantTimestamp
+        actualAssistantTimestamp: assistantTimestamp,
       };
     }
   }
 
   if (assistantContent) {
     data = extractFromNewFormat(assistantContent);
-    if (data.success !== undefined || data.message || data.enabled_tools.length > 0) {
+    if (
+      data.success !== undefined ||
+      data.message ||
+      data.enabled_tools.length > 0
+    ) {
       return {
         ...data,
         actualIsSuccess: data.success !== undefined ? data.success : isSuccess,
         actualToolTimestamp: toolTimestamp,
-        actualAssistantTimestamp: data.timestamp || assistantTimestamp
+        actualAssistantTimestamp: data.timestamp || assistantTimestamp,
       };
     }
   }
@@ -186,7 +200,10 @@ export function extractConfigureProfileForAgentData(
 
   const combinedData = {
     profile_id: toolLegacy.profile_id || assistantLegacy.profile_id,
-    enabled_tools: toolLegacy.enabled_tools.length > 0 ? toolLegacy.enabled_tools : assistantLegacy.enabled_tools,
+    enabled_tools:
+      toolLegacy.enabled_tools.length > 0
+        ? toolLegacy.enabled_tools
+        : assistantLegacy.enabled_tools,
     display_name: toolLegacy.display_name || assistantLegacy.display_name,
     message: toolLegacy.message || assistantLegacy.message,
     total_tools: toolLegacy.total_tools || assistantLegacy.total_tools,
@@ -194,8 +211,8 @@ export function extractConfigureProfileForAgentData(
     version_name: toolLegacy.version_name || assistantLegacy.version_name,
     actualIsSuccess: isSuccess,
     actualToolTimestamp: toolTimestamp,
-    actualAssistantTimestamp: assistantTimestamp
+    actualAssistantTimestamp: assistantTimestamp,
   };
 
   return combinedData;
-} 
+}

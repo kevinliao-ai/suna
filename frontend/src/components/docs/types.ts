@@ -36,4 +36,4 @@ export interface DocsThemeToggleProps {
   size?: 'sm' | 'default' | 'lg';
   variant?: 'default' | 'outline' | 'ghost';
   className?: string;
-} 
+}

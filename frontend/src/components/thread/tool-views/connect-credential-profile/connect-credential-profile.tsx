@@ -9,7 +9,7 @@ import {
   Check,
   AlertCircle,
   User,
-  Zap
+  Zap,
 } from 'lucide-react';
 import { ToolViewProps } from '../types';
 import { formatTimestamp, getToolTitle } from '../utils';
@@ -17,9 +17,9 @@ import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { LoadingState } from '../shared/LoadingState';
-import { Separator } from "@/components/ui/separator";
+import { Separator } from '@/components/ui/separator';
 import { extractConnectCredentialProfileData } from './_utils';
 
 export function ConnectCredentialProfileToolView({
@@ -31,7 +31,6 @@ export function ConnectCredentialProfileToolView({
   isSuccess = true,
   isStreaming = false,
 }: ToolViewProps) {
-
   const [copiedLink, setCopiedLink] = useState(false);
   const [timeUntilExpiry, setTimeUntilExpiry] = useState<string>('');
 
@@ -45,13 +44,13 @@ export function ConnectCredentialProfileToolView({
     message,
     actualIsSuccess,
     actualToolTimestamp,
-    actualAssistantTimestamp
+    actualAssistantTimestamp,
   } = extractConnectCredentialProfileData(
     assistantContent,
     toolContent,
     isSuccess,
     toolTimestamp,
-    assistantTimestamp
+    assistantTimestamp,
   );
 
   const toolTitle = getToolTitle(name);
@@ -104,7 +103,7 @@ export function ConnectCredentialProfileToolView({
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
-        timeZoneName: 'short'
+        timeZoneName: 'short',
       });
     } catch (e) {
       return dateString;
@@ -113,7 +112,7 @@ export function ConnectCredentialProfileToolView({
 
   const copyLink = async () => {
     if (!connection_link) return;
-    
+
     try {
       await navigator.clipboard.writeText(connection_link);
       setCopiedLink(true);
@@ -150,10 +149,10 @@ export function ConnectCredentialProfileToolView({
             <Badge
               variant="secondary"
               className={cn(
-                "text-xs font-medium",
+                'text-xs font-medium',
                 actualIsSuccess
-                  ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800"
-                  : "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800"
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800'
+                  : 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800',
               )}
             >
               {actualIsSuccess ? (
@@ -228,19 +227,24 @@ export function ConnectCredentialProfileToolView({
                   <h3 className="font-medium text-zinc-900 dark:text-zinc-100">
                     Connection Link
                   </h3>
-                  
+
                   {expires_at && (
                     <div className="flex items-center gap-2">
                       <Clock className="w-4 h-4 text-zinc-500" />
-                      <span className={cn(
-                        "text-xs font-medium",
-                        isExpired 
-                          ? "text-red-600 dark:text-red-400"
-                          : timeUntilExpiry.includes('m') || timeUntilExpiry.includes('h')
-                            ? "text-green-600 dark:text-green-400"
-                            : "text-yellow-600 dark:text-yellow-400"
-                      )}>
-                        {isExpired ? 'Expired' : `Expires in ${timeUntilExpiry}`}
+                      <span
+                        className={cn(
+                          'text-xs font-medium',
+                          isExpired
+                            ? 'text-red-600 dark:text-red-400'
+                            : timeUntilExpiry.includes('m') ||
+                                timeUntilExpiry.includes('h')
+                              ? 'text-green-600 dark:text-green-400'
+                              : 'text-yellow-600 dark:text-yellow-400',
+                        )}
+                      >
+                        {isExpired
+                          ? 'Expired'
+                          : `Expires in ${timeUntilExpiry}`}
                       </span>
                     </div>
                   )}
@@ -250,20 +254,20 @@ export function ConnectCredentialProfileToolView({
                   <p className="text-xs font-mono text-zinc-600 dark:text-zinc-400 mb-3 break-all">
                     {connection_link}
                   </p>
-                  
+
                   <div className="flex gap-2">
                     <Button
                       onClick={openConnectionLink}
                       disabled={isExpired}
                       className={cn(
-                        "flex-1 h-9",
-                        isExpired && "opacity-50 cursor-not-allowed"
+                        'flex-1 h-9',
+                        isExpired && 'opacity-50 cursor-not-allowed',
                       )}
                     >
                       <ExternalLink className="w-4 h-4" />
                       {isExpired ? 'Link Expired' : 'Connect Account'}
                     </Button>
-                    
+
                     <Button
                       variant="outline"
                       onClick={copyLink}
@@ -295,7 +299,8 @@ export function ConnectCredentialProfileToolView({
                           Connection Link Expired
                         </p>
                         <p className="text-xs text-red-700 dark:text-red-300">
-                          This connection link has expired. You'll need to generate a new one to connect your account.
+                          This connection link has expired. You'll need to
+                          generate a new one to connect your account.
                         </p>
                       </div>
                     </div>
@@ -314,7 +319,9 @@ export function ConnectCredentialProfileToolView({
                 No connection link generated
               </h3>
               <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                {profile_name ? `Failed to generate link for "${profile_name}"` : 'Connection link generation failed'}
+                {profile_name
+                  ? `Failed to generate link for "${profile_name}"`
+                  : 'Connection link generation failed'}
               </p>
             </div>
           </div>
@@ -322,4 +329,4 @@ export function ConnectCredentialProfileToolView({
       </CardContent>
     </Card>
   );
-} 
+}

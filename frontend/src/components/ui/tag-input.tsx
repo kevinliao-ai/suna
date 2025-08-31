@@ -18,25 +18,28 @@ interface TagInputProps {
 export const TagInput: React.FC<TagInputProps> = ({
   tags,
   onTagsChange,
-  placeholder = "Add tags...",
+  placeholder = 'Add tags...',
   className,
   maxTags = 10,
-  disabled = false
+  disabled = false,
 }) => {
   const [inputValue, setInputValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    
+
     // Check if user typed a comma or pressed enter
     if (value.includes(',')) {
-      const newTags = value.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+      const newTags = value
+        .split(',')
+        .map((tag) => tag.trim())
+        .filter((tag) => tag.length > 0);
       addTags(newTags);
       setInputValue('');
       return;
     }
-    
+
     setInputValue(value);
   };
 
@@ -54,12 +57,10 @@ export const TagInput: React.FC<TagInputProps> = ({
   };
 
   const addTags = (newTags: string[]) => {
-    const filteredTags = newTags.filter(tag => 
-      tag.length > 0 && 
-      !tags.includes(tag) &&
-      tag.length <= 50
+    const filteredTags = newTags.filter(
+      (tag) => tag.length > 0 && !tags.includes(tag) && tag.length <= 50,
     );
-    
+
     const updatedTags = [...tags, ...filteredTags].slice(0, maxTags);
     onTagsChange(updatedTags);
   };
@@ -76,12 +77,12 @@ export const TagInput: React.FC<TagInputProps> = ({
   };
 
   return (
-    <div className={cn("relative", className)}>
+    <div className={cn('relative', className)}>
       <div
         className={cn(
-          "flex flex-wrap gap-1.5 p-3 min-h-[2.5rem] border rounded-md bg-background cursor-text",
-          "focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
-          disabled && "opacity-50 cursor-not-allowed bg-muted"
+          'flex flex-wrap gap-1.5 p-3 min-h-[2.5rem] border rounded-md bg-background cursor-text',
+          'focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2',
+          disabled && 'opacity-50 cursor-not-allowed bg-muted',
         )}
         onClick={handleContainerClick}
       >
@@ -106,20 +107,20 @@ export const TagInput: React.FC<TagInputProps> = ({
             )}
           </Badge>
         ))}
-        
+
         {!disabled && tags.length < maxTags && (
           <Input
             ref={inputRef}
             value={inputValue}
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
-            placeholder={tags.length === 0 ? placeholder : ""}
+            placeholder={tags.length === 0 ? placeholder : ''}
             className="shadow-none flex-1 min-w-[120px] border-none p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent"
             disabled={disabled}
           />
         )}
       </div>
-      
+
       {tags.length >= maxTags && (
         <p className="text-xs text-muted-foreground mt-1">
           Maximum {maxTags} tags allowed
@@ -127,4 +128,4 @@ export const TagInput: React.FC<TagInputProps> = ({
       )}
     </div>
   );
-}; 
+};

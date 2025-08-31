@@ -20,10 +20,9 @@ export function ThreadError({ error }: ThreadErrorProps) {
             'JSON object requested, multiple (or no) rows returned',
           )
             ? 'This thread either does not exist or you do not have access to it.'
-            : error
-          }
+            : error}
         </p>
       </div>
     </div>
   );
-} 
+}

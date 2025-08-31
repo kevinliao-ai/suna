@@ -15,7 +15,7 @@ export function usePresentationViewer() {
   const openPresentation = (
     presentationName: string,
     sandboxUrl: string,
-    initialSlide: number = 1
+    initialSlide: number = 1,
   ) => {
     setViewerState({
       isOpen: true,

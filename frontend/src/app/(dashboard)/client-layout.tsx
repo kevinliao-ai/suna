@@ -21,9 +21,7 @@ export function ClientLayout({
       <SidebarProvider>
         <SidebarInset>
           <div className="bg-background h-screen flex flex-col">
-            <div className="flex-1 min-h-0">
-              {children}
-            </div>
+            <div className="flex-1 min-h-0">{children}</div>
           </div>
         </SidebarInset>
         <MaintenanceAlert

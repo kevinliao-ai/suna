@@ -10,18 +10,15 @@ export function CTACard() {
             Enterprise Demo
           </span>
           <span className="text-xs text-muted-foreground mt-0.5">
-          Request custom AI Agents implementation
+            Request custom AI Agents implementation
           </span>
         </div>
 
         <div>
           <KortixProcessModal>
-            <Button className="w-full">
-              Learn more
-            </Button>
+            <Button className="w-full">Learn more</Button>
           </KortixProcessModal>
         </div>
-
       </div>
     </div>
   );

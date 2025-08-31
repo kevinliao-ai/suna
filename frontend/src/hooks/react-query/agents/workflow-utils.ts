@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/client";
+import { createClient } from '@/lib/supabase/client';
 
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || '';
 
@@ -93,9 +93,11 @@ export interface LLMWorkflowFormat {
   steps: LLMWorkflowStep[];
 }
 
-export const convertWorkflowToLLMFormat = (workflow: AgentWorkflow): LLMWorkflowFormat => {
+export const convertWorkflowToLLMFormat = (
+  workflow: AgentWorkflow,
+): LLMWorkflowFormat => {
   const convertSteps = (steps: any[]): LLMWorkflowStep[] => {
-    return steps.map(step => {
+    return steps.map((step) => {
       const llmStep: LLMWorkflowStep = {
         step: step.name,
       };
@@ -126,7 +128,7 @@ export const convertWorkflowToLLMFormat = (workflow: AgentWorkflow): LLMWorkflow
 
   const llmFormat: LLMWorkflowFormat = {
     workflow: workflow.name,
-    steps: convertSteps(workflow.steps)
+    steps: convertSteps(workflow.steps),
   };
 
   if (workflow.description) {
@@ -141,26 +143,37 @@ export const generateLLMWorkflowPrompt = (workflow: AgentWorkflow): string => {
   return JSON.stringify(llmFormat, null, 2);
 };
 
-export const getAgentWorkflows = async (agentId: string): Promise<AgentWorkflow[]> => {
+export const getAgentWorkflows = async (
+  agentId: string,
+): Promise<AgentWorkflow[]> => {
   try {
     const supabase = createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
 
     if (!session) {
       throw new Error('You must be logged in to get workflows');
     }
 
-    const response = await fetch(`${API_URL}/triggers/workflows/agents/${agentId}/workflows`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`,
+    const response = await fetch(
+      `${API_URL}/triggers/workflows/agents/${agentId}/workflows`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
       },
-    });
+    );
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }));
-      throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`);
+      const errorData = await response
+        .json()
+        .catch(() => ({ detail: 'Unknown error' }));
+      throw new Error(
+        errorData.detail || `HTTP ${response.status}: ${response.statusText}`,
+      );
     }
 
     const workflows = await response.json();
@@ -171,27 +184,39 @@ export const getAgentWorkflows = async (agentId: string): Promise<AgentWorkflow[
   }
 };
 
-export const createAgentWorkflow = async (agentId: string, workflow: CreateWorkflowRequest): Promise<AgentWorkflow> => {
+export const createAgentWorkflow = async (
+  agentId: string,
+  workflow: CreateWorkflowRequest,
+): Promise<AgentWorkflow> => {
   try {
     const supabase = createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
 
     if (!session) {
       throw new Error('You must be logged in to create a workflow');
     }
 
-    const response = await fetch(`${API_URL}/triggers/workflows/agents/${agentId}/workflows`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`,
+    const response = await fetch(
+      `${API_URL}/triggers/workflows/agents/${agentId}/workflows`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify(workflow),
       },
-      body: JSON.stringify(workflow),
-    });
+    );
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }));
-      throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`);
+      const errorData = await response
+        .json()
+        .catch(() => ({ detail: 'Unknown error' }));
+      throw new Error(
+        errorData.detail || `HTTP ${response.status}: ${response.statusText}`,
+      );
     }
 
     const result = await response.json();
@@ -203,30 +228,39 @@ export const createAgentWorkflow = async (agentId: string, workflow: CreateWorkf
 };
 
 export const updateAgentWorkflow = async (
-  agentId: string, 
-  workflowId: string, 
-  workflow: UpdateWorkflowRequest
+  agentId: string,
+  workflowId: string,
+  workflow: UpdateWorkflowRequest,
 ): Promise<AgentWorkflow> => {
   try {
     const supabase = createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
 
     if (!session) {
       throw new Error('You must be logged in to update a workflow');
     }
 
-    const response = await fetch(`${API_URL}/triggers/workflows/agents/${agentId}/workflows/${workflowId}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`,
+    const response = await fetch(
+      `${API_URL}/triggers/workflows/agents/${agentId}/workflows/${workflowId}`,
+      {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify(workflow),
       },
-      body: JSON.stringify(workflow),
-    });
+    );
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }));
-      throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`);
+      const errorData = await response
+        .json()
+        .catch(() => ({ detail: 'Unknown error' }));
+      throw new Error(
+        errorData.detail || `HTTP ${response.status}: ${response.statusText}`,
+      );
     }
 
     const result = await response.json();
@@ -237,26 +271,38 @@ export const updateAgentWorkflow = async (
   }
 };
 
-export const deleteAgentWorkflow = async (agentId: string, workflowId: string): Promise<void> => {
+export const deleteAgentWorkflow = async (
+  agentId: string,
+  workflowId: string,
+): Promise<void> => {
   try {
     const supabase = createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
 
     if (!session) {
       throw new Error('You must be logged in to delete a workflow');
     }
 
-    const response = await fetch(`${API_URL}/triggers/workflows/agents/${agentId}/workflows/${workflowId}`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`,
+    const response = await fetch(
+      `${API_URL}/triggers/workflows/agents/${agentId}/workflows/${workflowId}`,
+      {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
       },
-    });
+    );
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }));
-      throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`);
+      const errorData = await response
+        .json()
+        .catch(() => ({ detail: 'Unknown error' }));
+      throw new Error(
+        errorData.detail || `HTTP ${response.status}: ${response.statusText}`,
+      );
     }
   } catch (err) {
     console.error('Error deleting workflow:', err);
@@ -265,36 +311,45 @@ export const deleteAgentWorkflow = async (agentId: string, workflowId: string): 
 };
 
 export const executeWorkflow = async (
-  agentId: string, 
-  workflowId: string, 
-  execution: ExecuteWorkflowRequest
-): Promise<{ 
-  execution_id: string; 
-  thread_id?: string; 
-  agent_run_id?: string; 
-  status: string; 
-  message?: string; 
+  agentId: string,
+  workflowId: string,
+  execution: ExecuteWorkflowRequest,
+): Promise<{
+  execution_id: string;
+  thread_id?: string;
+  agent_run_id?: string;
+  status: string;
+  message?: string;
 }> => {
   try {
     const supabase = createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
 
     if (!session) {
       throw new Error('You must be logged in to execute a workflow');
     }
 
-    const response = await fetch(`${API_URL}/triggers/workflows/agents/${agentId}/workflows/${workflowId}/execute`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`,
+    const response = await fetch(
+      `${API_URL}/triggers/workflows/agents/${agentId}/workflows/${workflowId}/execute`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify(execution),
       },
-      body: JSON.stringify(execution),
-    });
+    );
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }));
-      throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`);
+      const errorData = await response
+        .json()
+        .catch(() => ({ detail: 'Unknown error' }));
+      throw new Error(
+        errorData.detail || `HTTP ${response.status}: ${response.statusText}`,
+      );
     }
 
     const result = await response.json();
@@ -306,29 +361,38 @@ export const executeWorkflow = async (
 };
 
 export const getWorkflowExecutions = async (
-  agentId: string, 
-  workflowId: string, 
-  limit: number = 20
+  agentId: string,
+  workflowId: string,
+  limit: number = 20,
 ): Promise<WorkflowExecution[]> => {
   try {
     const supabase = createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
 
     if (!session) {
       throw new Error('You must be logged in to get workflow executions');
     }
 
-    const response = await fetch(`${API_URL}/triggers/workflows/agents/${agentId}/workflows/${workflowId}/executions?limit=${limit}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`,
+    const response = await fetch(
+      `${API_URL}/triggers/workflows/agents/${agentId}/workflows/${workflowId}/executions?limit=${limit}`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
       },
-    });
+    );
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }));
-      throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`);
+      const errorData = await response
+        .json()
+        .catch(() => ({ detail: 'Unknown error' }));
+      throw new Error(
+        errorData.detail || `HTTP ${response.status}: ${response.statusText}`,
+      );
     }
 
     const executions = await response.json();
@@ -337,4 +401,4 @@ export const getWorkflowExecutions = async (
     console.error('Error fetching workflow executions:', err);
     throw err;
   }
-}; 
+};

@@ -2,7 +2,11 @@
 
 import * as React from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
+import {
+  SidebarProvider,
+  SidebarInset,
+  SidebarTrigger,
+} from '@/components/ui/sidebar';
 
 import { AppSidebar } from '@/components/app-sidebar';
 import { TableOfContents } from '@/components/ui/table-of-contents';
@@ -14,7 +18,7 @@ export default function DocsLayout({
 }) {
   return (
     <div style={{ scrollBehavior: 'smooth' }} className="min-h-screen">
-     <div className="hidden dark:block fixed rotate-180 opacity-15 inset-0 -z-10 h-full w-full items-center px-5 py-24 bg-white dark:bg-black"></div>
+      <div className="hidden dark:block fixed rotate-180 opacity-15 inset-0 -z-10 h-full w-full items-center px-5 py-24 bg-white dark:bg-black"></div>
       <SidebarProvider>
         <AppSidebar />
         <SidebarInset className="flex-1">
@@ -42,4 +46,4 @@ export default function DocsLayout({
       </SidebarProvider>
     </div>
   );
-} 
+}

@@ -46,7 +46,7 @@ const getTypeLabel = (type: FileType, extension?: string): string => {
         other: 'File'
     };
 
-    return labels[type];
+    return labels[type] || 'File';
 };
 
 export const FileAttachment: React.FC<FileAttachmentProps> = ({

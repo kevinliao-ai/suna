@@ -54,8 +54,8 @@ const useAgentConfigTourStore = create<AgentConfigTourState>()(
       partialize: (state) => ({
         hasSeenTour: state.hasSeenTour,
       }),
-    }
-  )
+    },
+  ),
 );
 
 const areAllTourTargetsReady = (): boolean => {
@@ -71,7 +71,7 @@ const areAllTourTargetsReady = (): boolean => {
     '[data-tour="preview-agent"]',
   ];
 
-  return requiredTargets.every(selector => {
+  return requiredTargets.every((selector) => {
     const element = document.querySelector(selector);
     return element !== null;
   });
@@ -97,7 +97,7 @@ export const useAgentConfigTour = () => {
     handleWelcomeAccept,
     handleWelcomeDecline,
   } = useTourPermissions(true);
-  
+
   const {
     hasSeenTour,
     run,
@@ -113,12 +113,12 @@ export const useAgentConfigTour = () => {
     if (toursEnabled && !hasSeenTour && !run) {
       const startTourWhenReady = async () => {
         try {
-          const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Timeout')), 10000)
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Timeout')), 10000),
           );
-          
+
           await Promise.race([waitForTourTargets(), timeoutPromise]);
-          
+
           setTimeout(() => {
             startTour();
           }, 300);
@@ -141,7 +141,7 @@ export const useAgentConfigTour = () => {
           run,
           stepIndex,
           toursEnabled,
-        })
+        }),
       };
     }
   }, [hasSeenTour, run, stepIndex, toursEnabled, resetTour]);

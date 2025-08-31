@@ -300,28 +300,30 @@ export function NavUserWithTeams({
                     Billing
                   </Link>
                 </DropdownMenuItem>
-                {(
+                {
                   <DropdownMenuItem asChild>
                     <Link href="/settings/credentials">
                       <Plug className="h-4 w-4" />
                       Integrations
                     </Link>
                   </DropdownMenuItem>
-                )}
-                {(
+                }
+                {
                   <DropdownMenuItem asChild>
                     <Link href="/settings/api-keys">
                       <Key className="h-4 w-4" />
                       API Keys (Admin)
                     </Link>
                   </DropdownMenuItem>
+                }
+                {isLocalMode() && (
+                  <DropdownMenuItem asChild>
+                    <Link href="/settings/env-manager">
+                      <KeyRound className="h-4 w-4" />
+                      Local .Env Manager
+                    </Link>
+                  </DropdownMenuItem>
                 )}
-                {isLocalMode() && <DropdownMenuItem asChild>
-                  <Link href="/settings/env-manager">
-                    <KeyRound className="h-4 w-4" />
-                    Local .Env Manager
-                  </Link>
-                </DropdownMenuItem>}
                 {/* <DropdownMenuItem asChild>
                   <Link href="/settings">
                     <Settings className="mr-2 h-4 w-4" />
@@ -339,7 +341,10 @@ export function NavUserWithTeams({
                 </DropdownMenuItem>
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className='text-destructive focus:text-destructive focus:bg-destructive/10' onClick={handleLogout}>
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                onClick={handleLogout}
+              >
                 <LogOut className="h-4 w-4 text-destructive" />
                 Log out
               </DropdownMenuItem>
@@ -364,7 +369,9 @@ export function NavUserWithTeams({
       <BillingModal
         open={showBillingModal}
         onOpenChange={setShowBillingModal}
-        returnUrl={typeof window !== 'undefined' ? window?.location?.href || '/' : '/'}
+        returnUrl={
+          typeof window !== 'undefined' ? window?.location?.href || '/' : '/'
+        }
       />
     </Dialog>
   );

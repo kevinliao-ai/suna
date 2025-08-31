@@ -26,7 +26,7 @@ export function extractActivateAgentWorkflowData(
   toolContent?: any,
   isSuccess?: boolean,
   toolTimestamp?: string,
-  assistantTimestamp?: string
+  assistantTimestamp?: string,
 ): ActivateAgentWorkflowData & {
   actualIsSuccess: boolean;
   actualToolTimestamp: string | undefined;
@@ -44,7 +44,7 @@ export function extractActivateAgentWorkflowData(
     status: null,
     actualIsSuccess: isSuccess || false,
     actualToolTimestamp: toolTimestamp,
-    actualAssistantTimestamp: assistantTimestamp
+    actualAssistantTimestamp: assistantTimestamp,
   };
 
   try {
@@ -60,10 +60,12 @@ export function extractActivateAgentWorkflowData(
 
       if (content && typeof content === 'object' && content.content) {
         try {
-          const nestedContent = typeof content.content === 'string' ? JSON.parse(content.content) : content.content;
+          const nestedContent =
+            typeof content.content === 'string'
+              ? JSON.parse(content.content)
+              : content.content;
           content = nestedContent;
-        } catch (e) {
-        }
+        } catch (e) {}
       }
 
       if (content && typeof content === 'object' && content.tool_execution) {
@@ -80,7 +82,7 @@ export function extractActivateAgentWorkflowData(
               workflow_name: output.workflow_name || null,
               active: args.active || false,
               status: output.status || null,
-              actualIsSuccess: true
+              actualIsSuccess: true,
             };
           }
         }
@@ -101,7 +103,7 @@ export function extractActivateAgentWorkflowData(
             workflow_name: toolOutput.workflow_name || null,
             active: args.active || false,
             status: toolOutput.status || null,
-            actualIsSuccess: true
+            actualIsSuccess: true,
           };
         }
       }
@@ -112,4 +114,4 @@ export function extractActivateAgentWorkflowData(
     console.error('Error extracting activate agent workflow data:', error);
     return defaultResult;
   }
-} 
+}

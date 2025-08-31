@@ -8,16 +8,16 @@ import {
   Play,
   Pause,
   Settings,
-  ListChecks
+  ListChecks,
 } from 'lucide-react';
 import { ToolViewProps } from '../types';
 import { getToolTitle } from '../utils';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { LoadingState } from '../shared/LoadingState';
-import { Separator } from "@/components/ui/separator";
+import { Separator } from '@/components/ui/separator';
 import { extractListAgentWorkflowsData, WorkflowItem } from './_utils';
 
 function WorkflowCard({ workflow }: { workflow: WorkflowItem }) {
@@ -28,31 +28,40 @@ function WorkflowCard({ workflow }: { workflow: WorkflowItem }) {
     <div className="border border-border rounded-xl p-4 space-y-3 bg-muted/20 dark:bg-muted/10 hover:bg-muted/30 dark:hover:bg-muted/20 transition-colors">
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
-          <div className={cn(
-            "w-10 h-10 flex-shrink-0 rounded-lg border flex items-center justify-center",
-            isActive 
-              ? "bg-gradient-to-br from-blue-500/20 to-blue-600/10 border-blue-500/20"
-              : "bg-gradient-to-br from-slate-500/20 to-slate-600/10 border-slate-500/20"
-          )}>
-            <FileText className={cn(
-              "h-5 w-5",
-              isActive ? "text-blue-600" : "text-slate-600"
-            )} />
+          <div
+            className={cn(
+              'w-10 h-10 flex-shrink-0 rounded-lg border flex items-center justify-center',
+              isActive
+                ? 'bg-gradient-to-br from-blue-500/20 to-blue-600/10 border-blue-500/20'
+                : 'bg-gradient-to-br from-slate-500/20 to-slate-600/10 border-slate-500/20',
+            )}
+          >
+            <FileText
+              className={cn(
+                'h-5 w-5',
+                isActive ? 'text-blue-600' : 'text-slate-600',
+              )}
+            />
           </div>
           <div className="space-y-1">
             <h3 className="font-semibold text-foreground">{workflow.name}</h3>
             {workflow.description && (
-              <p className="text-sm text-muted-foreground line-clamp-2">{workflow.description}</p>
+              <p className="text-sm text-muted-foreground line-clamp-2">
+                {workflow.description}
+              </p>
             )}
           </div>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
-          <Badge variant="outline" className={cn(
-            "text-xs",
-            isActive 
-              ? "border-emerald-200 dark:border-emerald-800 text-emerald-700 bg-emerald-50 dark:bg-emerald-950/50 dark:text-emerald-400"
-              : "border-slate-200 dark:border-slate-800 text-slate-700 bg-slate-50 dark:bg-slate-950/50 dark:text-slate-400"
-          )}>
+          <Badge
+            variant="outline"
+            className={cn(
+              'text-xs',
+              isActive
+                ? 'border-emerald-200 dark:border-emerald-800 text-emerald-700 bg-emerald-50 dark:bg-emerald-950/50 dark:text-emerald-400'
+                : 'border-slate-200 dark:border-slate-800 text-slate-700 bg-slate-50 dark:bg-slate-950/50 dark:text-slate-400',
+            )}
+          >
             <StatusIcon className="h-3 w-3" />
             {workflow.status}
           </Badge>
@@ -62,7 +71,9 @@ function WorkflowCard({ workflow }: { workflow: WorkflowItem }) {
       <div className="grid grid-cols-2 gap-4 text-sm">
         <div className="flex items-center gap-2">
           <ListChecks className="h-4 w-4 text-muted-foreground" />
-          <span className="text-muted-foreground">{workflow.steps_count} step{workflow.steps_count !== 1 ? 's' : ''}</span>
+          <span className="text-muted-foreground">
+            {workflow.steps_count} step{workflow.steps_count !== 1 ? 's' : ''}
+          </span>
         </div>
         <div className="flex items-center gap-2">
           <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -90,13 +101,13 @@ export default function ListAgentWorkflowsToolView({
     total_count,
     actualIsSuccess,
     actualToolTimestamp,
-    actualAssistantTimestamp
+    actualAssistantTimestamp,
   } = extractListAgentWorkflowsData(
     assistantContent,
     toolContent,
     isSuccess,
     toolTimestamp,
-    assistantTimestamp
+    assistantTimestamp,
   );
 
   const toolTitle = getToolTitle(name);
@@ -120,10 +131,10 @@ export default function ListAgentWorkflowsToolView({
             <Badge
               variant="secondary"
               className={cn(
-                "text-xs font-medium",
+                'text-xs font-medium',
                 actualIsSuccess
-                  ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800"
-                  : "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800"
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800'
+                  : 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800',
               )}
             >
               {actualIsSuccess ? (
@@ -152,15 +163,18 @@ export default function ListAgentWorkflowsToolView({
               <div className="p-4 space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
-                    <h3 className="text-lg font-semibold text-foreground">Agent Workflows</h3>
+                    <h3 className="text-lg font-semibold text-foreground">
+                      Agent Workflows
+                    </h3>
                     <p className="text-sm text-muted-foreground">
-                      {total_count} workflow{total_count !== 1 ? 's' : ''} configured for this agent
+                      {total_count} workflow{total_count !== 1 ? 's' : ''}{' '}
+                      configured for this agent
                     </p>
                   </div>
                 </div>
-                
+
                 <Separator />
-                
+
                 <div className="space-y-3">
                   {workflows.map((workflow) => (
                     <WorkflowCard key={workflow.id} workflow={workflow} />
@@ -175,7 +189,9 @@ export default function ListAgentWorkflowsToolView({
                   <FileText className="h-8 w-8 text-blue-500" />
                 </div>
                 <div className="space-y-2">
-                  <p className="text-sm font-medium text-foreground">No workflows found</p>
+                  <p className="text-sm font-medium text-foreground">
+                    No workflows found
+                  </p>
                   <p className="text-xs text-muted-foreground">
                     This agent doesn't have any workflows configured yet.
                   </p>
@@ -187,12 +203,16 @@ export default function ListAgentWorkflowsToolView({
           <div className="p-4 text-center">
             <div className="space-y-2">
               <AlertTriangle className="h-8 w-8 text-red-500 mx-auto" />
-              <p className="text-sm font-medium text-foreground">Failed to load workflows</p>
-              <p className="text-xs text-muted-foreground">Please try again or check the agent configuration.</p>
+              <p className="text-sm font-medium text-foreground">
+                Failed to load workflows
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Please try again or check the agent configuration.
+              </p>
             </div>
           </div>
         )}
       </CardContent>
     </Card>
   );
-} 
+}

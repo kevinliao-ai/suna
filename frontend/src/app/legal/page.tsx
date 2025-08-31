@@ -23,22 +23,28 @@ function LegalContent() {
   const [isScrolling, setIsScrolling] = useState(false);
 
   // Memoize the updateUrl function to prevent unnecessary re-renders
-  const updateUrl = useCallback((tab: string) => {
-    const params = new URLSearchParams(searchParams);
-    params.set('tab', tab);
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-  }, [searchParams, pathname, router]);
+  const updateUrl = useCallback(
+    (tab: string) => {
+      const params = new URLSearchParams(searchParams);
+      params.set('tab', tab);
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    },
+    [searchParams, pathname, router],
+  );
 
   // Initialize and handle URL changes
   useEffect(() => {
     setMounted(true);
-    
+
     // If there's no tab parameter in URL, set the default tab
     if (!tabParam) {
       updateUrl('terms');
-    } 
+    }
     // If the URL parameter is valid but doesn't match activeTab, update activeTab
-    else if ((tabParam === 'terms' || tabParam === 'privacy') && tabParam !== activeTab) {
+    else if (
+      (tabParam === 'terms' || tabParam === 'privacy') &&
+      tabParam !== activeTab
+    ) {
       setActiveTab(tabParam);
     }
   }, [tabParam, activeTab, updateUrl]);
@@ -169,9 +175,9 @@ function LegalContent() {
                         Unit 12-2521 Austin, Texas 78702, United States).
                       </li>
                       <li>
-                        "Site" refers to the Anisora website, including any related
-                        features, content, or applications offered from time to
-                        time by the Company.
+                        "Site" refers to the Anisora website, including any
+                        related features, content, or applications offered from
+                        time to time by the Company.
                       </li>
                       <li>
                         "Service" refers to the Anisora website and all related
@@ -406,9 +412,9 @@ function LegalContent() {
                       subscription, payable in U.S. dollars, that will
                       automatically renew. You can stop using the Service and
                       cancel your subscription at any time through the website
-                      or by emailing us at legal@anisora.ai. If you cancel
-                      your subscription, you may not receive a refund or credit
-                      for any amounts that have already been billed or paid. The
+                      or by emailing us at legal@anisora.ai. If you cancel your
+                      subscription, you may not receive a refund or credit for
+                      any amounts that have already been billed or paid. The
                       Company reserves the right to change its prices at any
                       time. If you are on a subscription plan, changes to
                       pricing will not apply until your next renewal.
@@ -552,15 +558,15 @@ function LegalContent() {
                       Trademarks and Patents
                     </h3>
                     <p className="text-muted-foreground text-balance mb-6">
-                      All Anisora logos, marks, and designations are trademarks or
-                      registered trademarks of the Company. All other trademarks
-                      mentioned on this website are the property of their
-                      respective owners. The trademarks and logos displayed on
-                      this website may not be used without the prior written
-                      consent of the Company or their respective owners.
-                      Portions, features, and/or functionality of the Company's
-                      products may be protected under the Company's patent
-                      applications or patents.
+                      All Anisora logos, marks, and designations are trademarks
+                      or registered trademarks of the Company. All other
+                      trademarks mentioned on this website are the property of
+                      their respective owners. The trademarks and logos
+                      displayed on this website may not be used without the
+                      prior written consent of the Company or their respective
+                      owners. Portions, features, and/or functionality of the
+                      Company's products may be protected under the Company's
+                      patent applications or patents.
                     </p>
 
                     <h3 className="text-lg font-medium tracking-tight">
@@ -642,19 +648,19 @@ function LegalContent() {
                     <p className="text-muted-foreground text-balance mb-6">
                       ALL USE OF THE SERVICE AND ANY CONTENT IS UNDERTAKEN
                       ENTIRELY AT YOUR OWN RISK. THE SERVICE (INCLUDING, WITHOUT
-                      LIMITATION, THE ANISORA WEB APP AND ANY CONTENT) IS PROVIDED
-                      "AS IS" AND "AS AVAILABLE" AND IS WITHOUT WARRANTY OF ANY
-                      KIND, EXPRESS OR IMPLIED, INCLUDING, BUT NOT LIMITED TO,
-                      THE IMPLIED WARRANTIES OF TITLE, NON-INFRINGEMENT,
-                      MERCHANTABILITY, AND FITNESS FOR A PARTICULAR PURPOSE, AND
-                      ANY WARRANTIES IMPLIED BY ANY COURSE OF PERFORMANCE OR
-                      USAGE OF TRADE, ALL OF WHICH ARE EXPRESSLY DISCLAIMED.
-                      ANISORA DOES NOT GUARANTEE THE ACCURACY, COMPLETENESS, OR
-                      RELIABILITY OF THE AI-GENERATED CONTENT, AND USERS ASSUME
-                      FULL RESPONSIBILITY FOR ANY APPLICATIONS CREATED USING THE
-                      SERVICE. SOME STATES DO NOT ALLOW LIMITATIONS ON HOW LONG
-                      AN IMPLIED WARRANTY LASTS, SO THE ABOVE LIMITATIONS MAY
-                      NOT APPLY TO YOU.
+                      LIMITATION, THE ANISORA WEB APP AND ANY CONTENT) IS
+                      PROVIDED "AS IS" AND "AS AVAILABLE" AND IS WITHOUT
+                      WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING, BUT
+                      NOT LIMITED TO, THE IMPLIED WARRANTIES OF TITLE,
+                      NON-INFRINGEMENT, MERCHANTABILITY, AND FITNESS FOR A
+                      PARTICULAR PURPOSE, AND ANY WARRANTIES IMPLIED BY ANY
+                      COURSE OF PERFORMANCE OR USAGE OF TRADE, ALL OF WHICH ARE
+                      EXPRESSLY DISCLAIMED. ANISORA DOES NOT GUARANTEE THE
+                      ACCURACY, COMPLETENESS, OR RELIABILITY OF THE AI-GENERATED
+                      CONTENT, AND USERS ASSUME FULL RESPONSIBILITY FOR ANY
+                      APPLICATIONS CREATED USING THE SERVICE. SOME STATES DO NOT
+                      ALLOW LIMITATIONS ON HOW LONG AN IMPLIED WARRANTY LASTS,
+                      SO THE ABOVE LIMITATIONS MAY NOT APPLY TO YOU.
                     </p>
 
                     <h3 className="text-lg font-medium tracking-tight">

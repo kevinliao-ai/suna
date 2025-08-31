@@ -1,8 +1,16 @@
 import { useQuery } from '@tanstack/react-query';
-import { composioApi, type ComposioProfile, type ComposioToolkitGroup, type ComposioMcpUrlResponse } from './utils';
+import {
+  composioApi,
+  type ComposioProfile,
+  type ComposioToolkitGroup,
+  type ComposioMcpUrlResponse,
+} from './utils';
 import { composioKeys } from './keys';
 
-export const useComposioProfiles = (params?: { toolkit_slug?: string; is_active?: boolean }) => {
+export const useComposioProfiles = (params?: {
+  toolkit_slug?: string;
+  is_active?: boolean;
+}) => {
   return useQuery({
     queryKey: composioKeys.profiles.list(params),
     queryFn: () => composioApi.getProfiles(params),
@@ -16,7 +24,7 @@ export const useComposioProfile = (profileId: string, enabled = true) => {
     queryKey: composioKeys.profiles.detail(profileId),
     queryFn: async () => {
       const profiles = await composioApi.getProfiles();
-      return profiles.find(p => p.profile_id === profileId) || null;
+      return profiles.find((p) => p.profile_id === profileId) || null;
     },
     enabled: enabled && !!profileId,
     staleTime: 5 * 60 * 1000,
@@ -39,4 +47,4 @@ export const useComposioMcpUrl = (profileId: string, enabled = false) => {
     staleTime: 0,
     gcTime: 0,
   });
-}; 
+};

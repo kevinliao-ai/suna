@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { useComposioProfiles } from '@/hooks/react-query/composio/use-composio-profiles';
 import { useComposioToolkitIcon } from '@/hooks/react-query/composio/use-composio';
 import { backendApi } from '@/lib/api-client';
@@ -25,8 +30,6 @@ interface ComposioToolsManagerProps {
   onToolsUpdate?: () => void;
 }
 
-
-
 export const ComposioToolsManager: React.FC<ComposioToolsManagerProps> = ({
   agentId,
   open,
@@ -41,10 +44,14 @@ export const ComposioToolsManager: React.FC<ComposioToolsManagerProps> = ({
   const queryClient = useQueryClient();
   const { data: profiles } = useComposioProfiles();
 
-  const currentProfile = profileInfo || profiles?.find(p => p.profile_id === profileId);
-  const { data: iconData } = useComposioToolkitIcon(currentProfile?.toolkit_slug || '', {
-    enabled: !!currentProfile?.toolkit_slug
-  });
+  const currentProfile =
+    profileInfo || profiles?.find((p) => p.profile_id === profileId);
+  const { data: iconData } = useComposioToolkitIcon(
+    currentProfile?.toolkit_slug || '',
+    {
+      enabled: !!currentProfile?.toolkit_slug,
+    },
+  );
 
   // Load current tools when dialog opens
   useEffect(() => {
@@ -55,11 +62,15 @@ export const ComposioToolsManager: React.FC<ComposioToolsManagerProps> = ({
         const response = await backendApi.get(`/agents/${agentId}`);
         if (response.success && response.data) {
           const agent = response.data;
-          const composioMcps = agent.custom_mcps?.filter((mcp: any) =>
-            mcp.type === 'composio' && mcp.config?.profile_id === profileId
-          ) || [];
+          const composioMcps =
+            agent.custom_mcps?.filter(
+              (mcp: any) =>
+                mcp.type === 'composio' && mcp.config?.profile_id === profileId,
+            ) || [];
 
-          const enabledTools = composioMcps.flatMap((mcp: any) => mcp.enabledTools || []);
+          const enabledTools = composioMcps.flatMap(
+            (mcp: any) => mcp.enabledTools || [],
+          );
           setSelectedTools(enabledTools);
         }
       } catch (error) {
@@ -80,16 +91,25 @@ export const ComposioToolsManager: React.FC<ComposioToolsManagerProps> = ({
     if (!currentProfile) return;
 
     try {
-      const mcpConfigResponse = await composioApi.getMcpConfigForProfile(currentProfile.profile_id);
-      const response = await backendApi.put(`/agents/${agentId}/custom-mcp-tools`, {
-        custom_mcps: [{
-          ...mcpConfigResponse.mcp_config,
-          enabledTools: selectedTools
-        }]
-      });
-      
+      const mcpConfigResponse = await composioApi.getMcpConfigForProfile(
+        currentProfile.profile_id,
+      );
+      const response = await backendApi.put(
+        `/agents/${agentId}/custom-mcp-tools`,
+        {
+          custom_mcps: [
+            {
+              ...mcpConfigResponse.mcp_config,
+              enabledTools: selectedTools,
+            },
+          ],
+        },
+      );
+
       if (response?.data?.success) {
-        toast.success(`Added ${selectedTools.length} ${currentProfile.toolkit_name} tools to your agent!`);
+        toast.success(
+          `Added ${selectedTools.length} ${currentProfile.toolkit_name} tools to your agent!`,
+        );
         onToolsUpdate?.();
         onOpenChange(false);
       } else {
@@ -97,7 +117,7 @@ export const ComposioToolsManager: React.FC<ComposioToolsManagerProps> = ({
       }
     } catch (error: any) {
       console.error('Failed to save tools:', error);
-      
+
       if (error.response?.status === 403) {
         toast.error('Access denied. Please check your permissions.');
       } else if (error.response?.status === 404) {
@@ -153,4 +173,4 @@ export const ComposioToolsManager: React.FC<ComposioToolsManagerProps> = ({
       </DialogContent>
     </Dialog>
   );
-}; 
+};

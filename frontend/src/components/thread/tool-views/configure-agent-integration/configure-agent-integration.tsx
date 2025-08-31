@@ -10,16 +10,16 @@ import {
   Link2,
   Globe,
   Bot,
-  Wrench
+  Wrench,
 } from 'lucide-react';
 import { ToolViewProps } from '../types';
 import { formatTimestamp, getToolTitle } from '../utils';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { LoadingState } from '../shared/LoadingState';
-import { Separator } from "@/components/ui/separator";
+import { Separator } from '@/components/ui/separator';
 import { extractConfigureAgentIntegrationData } from './_utils';
 import { useComposioToolkitIcon } from '@/hooks/react-query/composio/use-composio';
 
@@ -32,7 +32,6 @@ export function ConfigureAgentIntegrationToolView({
   isSuccess = true,
   isStreaming = false,
 }: ToolViewProps) {
-
   const {
     agent_id,
     profile_name,
@@ -42,13 +41,13 @@ export function ConfigureAgentIntegrationToolView({
     enabled_tools_count,
     actualIsSuccess,
     actualToolTimestamp,
-    actualAssistantTimestamp
+    actualAssistantTimestamp,
   } = extractConfigureAgentIntegrationData(
     assistantContent,
     toolContent,
     isSuccess,
     toolTimestamp,
-    assistantTimestamp
+    assistantTimestamp,
   );
 
   const toolTitle = getToolTitle(name);
@@ -57,9 +56,12 @@ export function ConfigureAgentIntegrationToolView({
     return integrationName?.toLowerCase().replace(/\s+/g, '') || '';
   };
 
-  const { data: iconData } = useComposioToolkitIcon(getToolkitSlug(integration_name || ''), {
-    enabled: !!integration_name
-  });
+  const { data: iconData } = useComposioToolkitIcon(
+    getToolkitSlug(integration_name || ''),
+    {
+      enabled: !!integration_name,
+    },
+  );
 
   return (
     <Card className="gap-0 flex border shadow-none border-t border-b-0 border-x-0 p-0 rounded-none flex-col h-full overflow-hidden bg-card">
@@ -80,10 +82,10 @@ export function ConfigureAgentIntegrationToolView({
             <Badge
               variant="secondary"
               className={cn(
-                "text-xs font-medium",
+                'text-xs font-medium',
                 actualIsSuccess
-                  ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800"
-                  : "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800"
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800'
+                  : 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800',
               )}
             >
               {actualIsSuccess ? (
@@ -91,7 +93,9 @@ export function ConfigureAgentIntegrationToolView({
               ) : (
                 <AlertTriangle className="h-3 w-3" />
               )}
-              {actualIsSuccess ? 'Integration configured' : 'Configuration failed'}
+              {actualIsSuccess
+                ? 'Integration configured'
+                : 'Configuration failed'}
             </Badge>
           )}
         </div>
@@ -138,13 +142,16 @@ export function ConfigureAgentIntegrationToolView({
                       </h3>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center gap-2">
                     <Badge variant="outline" className="text-xs">
                       <Globe className="w-3 h-3 mr-1" />
                       {integration_name}
                     </Badge>
-                    <Badge variant="secondary" className="text-xs bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800">
+                    <Badge
+                      variant="secondary"
+                      className="text-xs bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800"
+                    >
                       <Shield className="w-3 h-3 mr-1" />
                       Active
                     </Badge>
@@ -189,11 +196,12 @@ export function ConfigureAgentIntegrationToolView({
           <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg m-4">
             <p className="text-sm text-red-800 dark:text-red-200 flex items-center gap-2">
               <AlertTriangle className="h-4 w-4" />
-              Failed to configure integration. Please check the profile and try again.
+              Failed to configure integration. Please check the profile and try
+              again.
             </p>
           </div>
         )}
       </CardContent>
     </Card>
   );
-} 
+}

@@ -5,7 +5,7 @@ import { ApiVersionRepository } from './version-repository';
 
 export class DependencyContainer {
   private static instance: DependencyContainer;
-  
+
   private apiClient?: IApiClient;
   private versionRepository?: IVersionRepository;
   private versionService?: IVersionService;
@@ -47,4 +47,4 @@ export class DependencyContainer {
   }
 }
 
-export const container = DependencyContainer.getInstance(); 
+export const container = DependencyContainer.getInstance();

@@ -1,10 +1,10 @@
-import { createServerClient } from '@supabase/ssr'
-import { NextResponse, type NextRequest } from 'next/server'
+import { createServerClient } from '@supabase/ssr';
+import { NextResponse, type NextRequest } from 'next/server';
 
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
-  })
+  });
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -12,48 +12,56 @@ export async function middleware(request: NextRequest) {
     {
       cookies: {
         getAll() {
-          return request.cookies.getAll()
+          return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value),
+          );
           supabaseResponse = NextResponse.next({
             request,
-          })
+          });
           cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          )
+            supabaseResponse.cookies.set(name, value, options),
+          );
         },
       },
-    }
-  )
+    },
+  );
 
   // IMPORTANT: DO NOT REMOVE auth.getUser()
   // This refreshes the Auth token and is required for server-side auth
   const {
     data: { user },
-  } = await supabase.auth.getUser()
+  } = await supabase.auth.getUser();
 
   // Define protected routes
-  const protectedRoutes = ['/dashboard', '/agents', '/projects', '/settings', '/invitation']
-  const authRoutes = ['/auth', '/login', '/signup']
-  
-  const isProtectedRoute = protectedRoutes.some(route => 
-    request.nextUrl.pathname.startsWith(route)
-  )
-  const isAuthRoute = authRoutes.some(route => 
-    request.nextUrl.pathname.startsWith(route)
-  )
+  const protectedRoutes = [
+    '/dashboard',
+    '/agents',
+    '/projects',
+    '/settings',
+    '/invitation',
+  ];
+  const authRoutes = ['/auth', '/login', '/signup'];
+
+  const isProtectedRoute = protectedRoutes.some((route) =>
+    request.nextUrl.pathname.startsWith(route),
+  );
+  const isAuthRoute = authRoutes.some((route) =>
+    request.nextUrl.pathname.startsWith(route),
+  );
 
   // Redirect unauthenticated users from protected routes
   if (isProtectedRoute && !user) {
-    const redirectUrl = new URL('/auth', request.url)
-    redirectUrl.searchParams.set('returnUrl', request.nextUrl.pathname)
-    return NextResponse.redirect(redirectUrl)
+    const redirectUrl = new URL('/auth', request.url);
+    redirectUrl.searchParams.set('returnUrl', request.nextUrl.pathname);
+    return NextResponse.redirect(redirectUrl);
   }
 
   // Redirect authenticated users away from auth routes
   if (isAuthRoute && user) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
+    return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
   // IMPORTANT: You *must* return the supabaseResponse object as it is.
@@ -68,7 +76,7 @@ export async function middleware(request: NextRequest) {
   //    return myNewResponse
   // If this is not done, you may be causing the browser and server to go out
   // of sync and terminate the user's session prematurely!
-  return supabaseResponse
+  return supabaseResponse;
 }
 
 export const config = {
@@ -82,4 +90,4 @@ export const config = {
      */
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
-} 
+};

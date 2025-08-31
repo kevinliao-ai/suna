@@ -59,10 +59,19 @@ export interface PricingTier {
 
 export const siteConfig = {
   name: 'AniSora AI',
-  description: 'AniSora AI is a powerful open-source AI model for generating anime-style videos.',
+  description:
+    'AniSora AI is a powerful open-source AI model for generating anime-style videos.',
   cta: 'Start Free',
   url: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
-  keywords: ['AI Agent', 'anime videos', 'anime-style videos', 'generate anime videos', 'Open Source AI', 'Autonomous Agent',  'Generalist AI'],
+  keywords: [
+    'AI Agent',
+    'anime videos',
+    'anime-style videos',
+    'generate anime videos',
+    'Open Source AI',
+    'Autonomous Agent',
+    'Generalist AI',
+  ],
   links: {
     email: 'liaokuanya0907@gmail.com',
     discord: 'https://discord.gg/anisora',
@@ -107,7 +116,8 @@ export const siteConfig = {
     badge: '100% OPEN SOURCE',
     githubUrl: 'https://github.com/bilibili/Index-anisora',
     title: 'AniSora, the AI Employee.',
-    description:'the most powerful open-source animated video generation model.',
+    description:
+      'the most powerful open-source animated video generation model.',
     inputPlaceholder: 'Ask AniSora to...',
   },
   cloudPricingItems: [
@@ -151,7 +161,8 @@ export const siteConfig = {
       ],
       stripePriceId: config.SUBSCRIPTION_TIERS.TIER_2_20.priceId,
       yearlyStripePriceId: config.SUBSCRIPTION_TIERS.TIER_2_20_YEARLY.priceId,
-      monthlyCommitmentStripePriceId: config.SUBSCRIPTION_TIERS.TIER_2_17_YEARLY_COMMITMENT.priceId,
+      monthlyCommitmentStripePriceId:
+        config.SUBSCRIPTION_TIERS.TIER_2_17_YEARLY_COMMITMENT.priceId,
       upgradePlans: [],
     },
     {
@@ -175,7 +186,8 @@ export const siteConfig = {
       ],
       stripePriceId: config.SUBSCRIPTION_TIERS.TIER_6_50.priceId,
       yearlyStripePriceId: config.SUBSCRIPTION_TIERS.TIER_6_50_YEARLY.priceId,
-      monthlyCommitmentStripePriceId: config.SUBSCRIPTION_TIERS.TIER_6_42_YEARLY_COMMITMENT.priceId,
+      monthlyCommitmentStripePriceId:
+        config.SUBSCRIPTION_TIERS.TIER_6_42_YEARLY_COMMITMENT.priceId,
       upgradePlans: [],
     },
     {
@@ -221,7 +233,8 @@ export const siteConfig = {
       ],
       stripePriceId: config.SUBSCRIPTION_TIERS.TIER_25_200.priceId,
       yearlyStripePriceId: config.SUBSCRIPTION_TIERS.TIER_25_200_YEARLY.priceId,
-      monthlyCommitmentStripePriceId: config.SUBSCRIPTION_TIERS.TIER_25_170_YEARLY_COMMITMENT.priceId,
+      monthlyCommitmentStripePriceId:
+        config.SUBSCRIPTION_TIERS.TIER_25_170_YEARLY_COMMITMENT.priceId,
       upgradePlans: [],
     },
     {
@@ -267,7 +280,8 @@ export const siteConfig = {
         'Dedicated account manager',
       ],
       stripePriceId: config.SUBSCRIPTION_TIERS.TIER_125_800.priceId,
-      yearlyStripePriceId: config.SUBSCRIPTION_TIERS.TIER_125_800_YEARLY.priceId,
+      yearlyStripePriceId:
+        config.SUBSCRIPTION_TIERS.TIER_125_800_YEARLY.priceId,
       upgradePlans: [],
       hidden: true,
     },
@@ -292,7 +306,8 @@ export const siteConfig = {
         'Custom deployment',
       ],
       stripePriceId: config.SUBSCRIPTION_TIERS.TIER_200_1000.priceId,
-      yearlyStripePriceId: config.SUBSCRIPTION_TIERS.TIER_200_1000_YEARLY.priceId,
+      yearlyStripePriceId:
+        config.SUBSCRIPTION_TIERS.TIER_200_1000_YEARLY.priceId,
       upgradePlans: [],
       hidden: true,
     },
@@ -982,9 +997,11 @@ export const siteConfig = {
       img: 'https://randomuser.me/api/portraits/men/90.jpg',
       description: (
         <p>
-          AniSora's advanced temporal modeling has revolutionized our animation generation pipeline.
+          AniSora's advanced temporal modeling has revolutionized our animation
+          generation pipeline.
           <Highlight>
-            The smooth interpolation between keyframes has reduced our production time by 50% while maintaining exceptional quality.
+            The smooth interpolation between keyframes has reduced our
+            production time by 50% while maintaining exceptional quality.
           </Highlight>{' '}
           A breakthrough in AI-powered animation technology.
         </p>
@@ -997,8 +1014,12 @@ export const siteConfig = {
       img: 'https://randomuser.me/api/portraits/women/12.jpg',
       description: (
         <p>
-          Implementing AniSora's spatial control has transformed our visual effects workflow.
-          <Highlight>65% improvement in animation consistency and character movement quality.</Highlight>{' '}
+          Implementing AniSora's spatial control has transformed our visual
+          effects workflow.
+          <Highlight>
+            65% improvement in animation consistency and character movement
+            quality.
+          </Highlight>{' '}
           Essential for next-gen anime production.
         </p>
       ),
@@ -1011,8 +1032,8 @@ export const siteConfig = {
       description: (
         <p>
           AniSora's multi-style adaptation maintains artistic integrity while
-          <Highlight>reducing manual correction work by 70%.</Highlight> 
-          A game-changer for anime-style content creation.
+          <Highlight>reducing manual correction work by 70%.</Highlight>A
+          game-changer for anime-style content creation.
         </p>
       ),
     },
@@ -1023,8 +1044,12 @@ export const siteConfig = {
       img: 'https://randomuser.me/api/portraits/women/83.jpg',
       description: (
         <p>
-          Our benchmark dataset in AniSora has set new standards for anime video generation.
-          <Highlight>Unprecedented 4K resolution support with perfect frame interpolation.</Highlight>
+          Our benchmark dataset in AniSora has set new standards for anime video
+          generation.
+          <Highlight>
+            Unprecedented 4K resolution support with perfect frame
+            interpolation.
+          </Highlight>
           Redefining quality in AI animation.
         </p>
       ),
@@ -1036,7 +1061,8 @@ export const siteConfig = {
       img: 'https://randomuser.me/api/portraits/men/1.jpg',
       description: (
         <p>
-          AniSora's style consistency algorithm is revolutionary for webtoon adaptation.
+          AniSora's style consistency algorithm is revolutionary for webtoon
+          adaptation.
           <Highlight>
             Maintains 98% style accuracy across all frames.
           </Highlight>{' '}
@@ -1052,7 +1078,9 @@ export const siteConfig = {
       description: (
         <p>
           AniSora's open-source framework enables complete customization
-          <Highlight>while ensuring production-ready animation quality.</Highlight>
+          <Highlight>
+            while ensuring production-ready animation quality.
+          </Highlight>
           Empowering creators worldwide with cutting-edge AI.
         </p>
       ),
@@ -1081,7 +1109,8 @@ export const siteConfig = {
         <p>
           AniSora's lighting simulation has revolutionized our workflow.
           <Highlight>
-            Complex lighting setups now render 8x faster with photorealistic quality.
+            Complex lighting setups now render 8x faster with photorealistic
+            quality.
           </Highlight>{' '}
           A technical masterpiece.
         </p>
@@ -1109,7 +1138,8 @@ export const siteConfig = {
       img: 'https://randomuser.me/api/portraits/women/73.jpg',
       description: (
         <p>
-          Working with AniSora's codebase has been an incredible learning experience.
+          Working with AniSora's codebase has been an incredible learning
+          experience.
           <Highlight>
             The documentation and community support are exceptional.
           </Highlight>{' '}
@@ -1140,7 +1170,9 @@ export const siteConfig = {
       description: (
         <p>
           AniSora's understanding of character movement is astonishing.
-          <Highlight>Brings subtle emotions to life with natural motion.</Highlight> 
+          <Highlight>
+            Brings subtle emotions to life with natural motion.
+          </Highlight>
           The perfect assistant for animators.
         </p>
       ),
@@ -1152,9 +1184,11 @@ export const siteConfig = {
       img: 'https://randomuser.me/api/portraits/men/54.jpg',
       description: (
         <p>
-          Contributing to AniSora's open-source community has been incredibly rewarding.
+          Contributing to AniSora's open-source community has been incredibly
+          rewarding.
           <Highlight>
-            The maintainers are responsive and the codebase is exceptionally well-structured.
+            The maintainers are responsive and the codebase is exceptionally
+            well-structured.
           </Highlight>{' '}
           The future of collaborative AI development.
         </p>
@@ -1198,7 +1232,8 @@ export const siteConfig = {
       },
       {
         id: 6,
-        question: 'What makes AniSora different from other video generation models?',
+        question:
+          'What makes AniSora different from other video generation models?',
         answer:
           'AniSora is specifically designed for anime-style content generation, with specialized training on anime datasets. It offers features like localized region guidance, temporal control (first/last frame guidance, keyframe interpolation), and supports both GPU and NPU acceleration. The model has demonstrated state-of-the-art results in anime video generation benchmarks.',
       },
@@ -1224,7 +1259,11 @@ export const siteConfig = {
     {
       title: 'AniSora',
       links: [
-        { id: 1, title: 'Documentation', url: 'https://github.com/bilibili/Index-anisora' },
+        {
+          id: 1,
+          title: 'Documentation',
+          url: 'https://github.com/bilibili/Index-anisora',
+        },
         // { id: 3, title: 'Discord', url: 'https://discord.gg/KXkc59Yy' },
         { id: 4, title: 'Start Using', url: '/auth' },
       ],

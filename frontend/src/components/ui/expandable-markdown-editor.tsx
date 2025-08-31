@@ -1,10 +1,16 @@
-import { useEffect, useState, useRef } from "react";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Textarea } from "./textarea";
-import { cn } from "@/lib/utils";
-import { Edit2, Expand, Save, X } from "lucide-react";
+import { useEffect, useState, useRef } from 'react';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Textarea } from './textarea';
+import { cn } from '@/lib/utils';
+import { Edit2, Expand, Save, X } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -17,13 +23,15 @@ interface ExpandableMarkdownEditorProps {
   disabled?: boolean;
 }
 
-export const ExpandableMarkdownEditor: React.FC<ExpandableMarkdownEditorProps> = ({ 
-  value, 
-  onSave, 
-  className = '', 
+export const ExpandableMarkdownEditor: React.FC<
+  ExpandableMarkdownEditorProps
+> = ({
+  value,
+  onSave,
+  className = '',
   placeholder = 'Click to edit...',
   title = 'Edit Instructions',
-  disabled = false
+  disabled = false,
 }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -62,33 +70,90 @@ export const ExpandableMarkdownEditor: React.FC<ExpandableMarkdownEditorProps> =
   };
 
   const renderMarkdown = (content: string, isPreview = false) => (
-    <ReactMarkdown 
+    <ReactMarkdown
       remarkPlugins={[remarkGfm]}
       components={{
-        h1: ({ children }) => <h1 className="text-2xl font-bold mb-4 text-foreground">{children}</h1>,
-        h2: ({ children }) => <h2 className="text-xl font-semibold mb-3 text-foreground">{children}</h2>,
-        h3: ({ children }) => <h3 className="text-lg font-semibold mb-2 text-foreground">{children}</h3>,
-        h4: ({ children }) => <h4 className="text-base font-semibold mb-2 text-foreground">{children}</h4>,
-        h5: ({ children }) => <h5 className="text-sm font-semibold mb-2 text-foreground">{children}</h5>,
-        h6: ({ children }) => <h6 className="text-sm font-medium mb-2 text-foreground">{children}</h6>,
-        p: ({ children }) => <p className="mb-4 last:mb-0 text-foreground leading-relaxed">{children}</p>,
-        ul: ({ children }) => <ul className="list-disc list-inside mb-4 space-y-2 text-foreground">{children}</ul>,
-        ol: ({ children }) => <ol className="list-decimal list-inside mb-4 space-y-2 text-foreground">{children}</ol>,
-        li: ({ children }) => <li className="text-foreground leading-relaxed">{children}</li>,
+        h1: ({ children }) => (
+          <h1 className="text-2xl font-bold mb-4 text-foreground">
+            {children}
+          </h1>
+        ),
+        h2: ({ children }) => (
+          <h2 className="text-xl font-semibold mb-3 text-foreground">
+            {children}
+          </h2>
+        ),
+        h3: ({ children }) => (
+          <h3 className="text-lg font-semibold mb-2 text-foreground">
+            {children}
+          </h3>
+        ),
+        h4: ({ children }) => (
+          <h4 className="text-base font-semibold mb-2 text-foreground">
+            {children}
+          </h4>
+        ),
+        h5: ({ children }) => (
+          <h5 className="text-sm font-semibold mb-2 text-foreground">
+            {children}
+          </h5>
+        ),
+        h6: ({ children }) => (
+          <h6 className="text-sm font-medium mb-2 text-foreground">
+            {children}
+          </h6>
+        ),
+        p: ({ children }) => (
+          <p className="mb-4 last:mb-0 text-foreground leading-relaxed">
+            {children}
+          </p>
+        ),
+        ul: ({ children }) => (
+          <ul className="list-disc list-inside mb-4 space-y-2 text-foreground">
+            {children}
+          </ul>
+        ),
+        ol: ({ children }) => (
+          <ol className="list-decimal list-inside mb-4 space-y-2 text-foreground">
+            {children}
+          </ol>
+        ),
+        li: ({ children }) => (
+          <li className="text-foreground leading-relaxed">{children}</li>
+        ),
         code: ({ children, className }) => {
           const isInline = !className?.includes('language-');
           return isInline ? (
-            <code className="bg-muted px-2 py-1 rounded text-sm font-mono text-foreground">{children}</code>
+            <code className="bg-muted px-2 py-1 rounded text-sm font-mono text-foreground">
+              {children}
+            </code>
           ) : (
-            <code className={cn('block bg-muted p-4 rounded text-sm font-mono overflow-x-auto', className)}>
+            <code
+              className={cn(
+                'block bg-muted p-4 rounded text-sm font-mono overflow-x-auto',
+                className,
+              )}
+            >
               {children}
             </code>
           );
         },
-        pre: ({ children }) => <pre className="bg-muted p-4 rounded text-sm font-mono overflow-x-auto mb-4">{children}</pre>,
-        blockquote: ({ children }) => <blockquote className="border-l-4 border-muted-foreground/30 pl-6 italic mb-4 text-muted-foreground">{children}</blockquote>,
-        strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
-        em: ({ children }) => <em className="italic text-foreground">{children}</em>,
+        pre: ({ children }) => (
+          <pre className="bg-muted p-4 rounded text-sm font-mono overflow-x-auto mb-4">
+            {children}
+          </pre>
+        ),
+        blockquote: ({ children }) => (
+          <blockquote className="border-l-4 border-muted-foreground/30 pl-6 italic mb-4 text-muted-foreground">
+            {children}
+          </blockquote>
+        ),
+        strong: ({ children }) => (
+          <strong className="font-semibold text-foreground">{children}</strong>
+        ),
+        em: ({ children }) => (
+          <em className="italic text-foreground">{children}</em>
+        ),
         hr: () => <hr className="my-6 border-muted-foreground/20" />,
         table: ({ children }) => (
           <div className="overflow-x-auto mb-4">
@@ -116,7 +181,7 @@ export const ExpandableMarkdownEditor: React.FC<ExpandableMarkdownEditorProps> =
   return (
     <>
       <div className={cn('relative', className)}>
-        <div 
+        <div
           className="group relative pb-4 border rounded-2xl bg-muted/30 hover:opacity-80 transition-colors cursor-pointer overflow-hidden"
           onClick={openDialog}
         >
@@ -169,7 +234,7 @@ export const ExpandableMarkdownEditor: React.FC<ExpandableMarkdownEditorProps> =
               )}
             </DialogTitle>
           </DialogHeader>
-          
+
           <div className="flex-1 overflow-hidden min-h-0">
             {isEditing ? (
               <div className="h-full flex flex-col gap-3">
@@ -185,7 +250,15 @@ export const ExpandableMarkdownEditor: React.FC<ExpandableMarkdownEditorProps> =
                   />
                 </ScrollArea>
                 <div className="text-xs text-muted-foreground/60 flex-shrink-0 px-2">
-                  Markdown supported • <kbd className="bg-muted px-1 py-0.5 rounded text-xs">⌘+Enter</kbd> to save • <kbd className="bg-muted px-1 py-0.5 rounded text-xs">Esc</kbd> to cancel
+                  Markdown supported •{' '}
+                  <kbd className="bg-muted px-1 py-0.5 rounded text-xs">
+                    ⌘+Enter
+                  </kbd>{' '}
+                  to save •{' '}
+                  <kbd className="bg-muted px-1 py-0.5 rounded text-xs">
+                    Esc
+                  </kbd>{' '}
+                  to cancel
                 </div>
               </div>
             ) : (
@@ -231,4 +304,4 @@ export const ExpandableMarkdownEditor: React.FC<ExpandableMarkdownEditorProps> =
       </Dialog>
     </>
   );
-}; 
+};

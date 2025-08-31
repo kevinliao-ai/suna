@@ -45,13 +45,23 @@ import {
   XCircle,
   Trash2,
 } from 'lucide-react';
-import { useComposioCredentialsProfiles, useComposioMcpUrl } from '@/hooks/react-query/composio/use-composio-profiles';
-import { useDeleteProfile, useBulkDeleteProfiles, useSetDefaultProfile } from '@/hooks/react-query/composio/use-composio-mutations';
+import {
+  useComposioCredentialsProfiles,
+  useComposioMcpUrl,
+} from '@/hooks/react-query/composio/use-composio-profiles';
+import {
+  useDeleteProfile,
+  useBulkDeleteProfiles,
+  useSetDefaultProfile,
+} from '@/hooks/react-query/composio/use-composio-mutations';
 import { ComposioRegistry } from './composio-registry';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
-import type { ComposioProfileSummary, ComposioToolkitGroup } from '@/hooks/react-query/composio/utils';
+import type {
+  ComposioProfileSummary,
+  ComposioToolkitGroup,
+} from '@/hooks/react-query/composio/utils';
 
 interface ComposioConnectionsSectionProps {
   className?: string;
@@ -85,19 +95,20 @@ const DeleteConfirmationDialog: React.FC<DeleteConfirmationDialogProps> = ({
   isDeleting,
 }) => {
   const isSingle = selectedProfiles.length === 1;
-  
+
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>
-            {isSingle ? 'Delete Profile' : `Delete ${selectedProfiles.length} Profiles`}
+            {isSingle
+              ? 'Delete Profile'
+              : `Delete ${selectedProfiles.length} Profiles`}
           </AlertDialogTitle>
           <AlertDialogDescription>
-            {isSingle 
+            {isSingle
               ? `Are you sure you want to delete "${selectedProfiles[0]?.profile_name}"? This action cannot be undone.`
-              : `Are you sure you want to delete ${selectedProfiles.length} profiles? This action cannot be undone.`
-            }
+              : `Are you sure you want to delete ${selectedProfiles.length} profiles? This action cannot be undone.`}
             <div className="mt-2 text-amber-600 dark:text-amber-400">
               <strong>Warning:</strong> This may affect existing integrations.
             </div>
@@ -105,7 +116,7 @@ const DeleteConfirmationDialog: React.FC<DeleteConfirmationDialogProps> = ({
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
-          <AlertDialogAction 
+          <AlertDialogAction
             onClick={onConfirm}
             disabled={isDeleting}
             className="bg-destructive text-white hover:bg-destructive/90"
@@ -126,13 +137,17 @@ const McpUrlDialog: React.FC<McpUrlDialogProps> = ({
   toolkitName,
 }) => {
   const [showUrl, setShowUrl] = useState(false);
-  const { data: urlData, isLoading, error } = useComposioMcpUrl(profileId, open);
+  const {
+    data: urlData,
+    isLoading,
+    error,
+  } = useComposioMcpUrl(profileId, open);
 
   const { data: toolkits } = useComposioCredentialsProfiles();
   const currentToolkit = useMemo(() => {
     if (!toolkits) return null;
-    return toolkits.find(toolkit => 
-      toolkit.profiles.some(p => p.profile_id === profileId)
+    return toolkits.find((toolkit) =>
+      toolkit.profiles.some((p) => p.profile_id === profileId),
     );
   }, [toolkits, profileId]);
 
@@ -164,21 +179,28 @@ const McpUrlDialog: React.FC<McpUrlDialogProps> = ({
           <DialogTitle className="flex items-center gap-3">
             <div className="h-14 w-14 rounded-lg bg-muted border flex items-center justify-center overflow-hidden">
               {currentToolkit?.icon_url ? (
-                <img 
-                  src={currentToolkit.icon_url} 
+                <img
+                  src={currentToolkit.icon_url}
                   alt={`${toolkitName} icon`}
                   className="h-8 w-8 object-contain"
                   onError={(e) => {
                     (e.target as HTMLImageElement).style.display = 'none';
-                    (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                    (
+                      e.target as HTMLImageElement
+                    ).nextElementSibling?.classList.remove('hidden');
                   }}
                 />
               ) : null}
-              <Settings className={`h-4 w-4 text-muted-foreground ${currentToolkit?.icon_url ? 'hidden' : ''}`} />
+              <Settings
+                className={`h-4 w-4 text-muted-foreground ${currentToolkit?.icon_url ? 'hidden' : ''}`}
+              />
             </div>
             <div>
               <span>{profileName}</span>
-              <div onClick={() => window.open('https://composio.dev', '_blank')} className="hover:underline cursor-pointer text-sm text-muted-foreground flex items-center gap-1 mt-1">
+              <div
+                onClick={() => window.open('https://composio.dev', '_blank')}
+                className="hover:underline cursor-pointer text-sm text-muted-foreground flex items-center gap-1 mt-1"
+              >
                 <ExternalLink className="h-3 w-3" />
                 <span>composio.dev</span>
               </div>
@@ -189,8 +211,9 @@ const McpUrlDialog: React.FC<McpUrlDialogProps> = ({
         <div className="space-y-6">
           <Alert className="border-amber-400/50 dark:border-amber-600/30 bg-amber-400/10 dark:bg-amber-900/10">
             <AlertDescription className="text-amber-800 dark:text-amber-600">
-              <strong>Security Warning:</strong> This MCP URL contains sensitive authentication 
-              information and must not be shared. Anyone with access to this URL can perform actions on your behalf.
+              <strong>Security Warning:</strong> This MCP URL contains sensitive
+              authentication information and must not be shared. Anyone with
+              access to this URL can perform actions on your behalf.
             </AlertDescription>
           </Alert>
           <div className="space-y-3">
@@ -249,7 +272,9 @@ const McpUrlDialog: React.FC<McpUrlDialogProps> = ({
                     </div>
                   </div>
                   {showUrl && (
-                    <span className="font-mono">{urlData.mcp_url.length} chars</span>
+                    <span className="font-mono">
+                      {urlData.mcp_url.length} chars
+                    </span>
                   )}
                 </div>
               </div>
@@ -273,14 +298,20 @@ const ToolkitTable: React.FC<ToolkitTableProps> = ({ toolkit }) => {
     profileName: string;
     toolkitName: string;
   } | null>(null);
-  const [selectedProfiles, setSelectedProfiles] = useState<ComposioProfileSummary[]>([]);
+  const [selectedProfiles, setSelectedProfiles] = useState<
+    ComposioProfileSummary[]
+  >([]);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const deleteProfile = useDeleteProfile();
   const bulkDeleteProfiles = useBulkDeleteProfiles();
   const setDefaultProfile = useSetDefaultProfile();
 
-  const handleViewUrl = (profileId: string, profileName: string, toolkitName: string) => {
+  const handleViewUrl = (
+    profileId: string,
+    profileName: string,
+    toolkitName: string,
+  ) => {
     setSelectedProfile({ profileId, profileName, toolkitName });
   };
 
@@ -292,7 +323,9 @@ const ToolkitTable: React.FC<ToolkitTableProps> = ({ toolkit }) => {
     if (selectedProfiles.length === 1) {
       await deleteProfile.mutateAsync(selectedProfiles[0].profile_id);
     } else {
-      await bulkDeleteProfiles.mutateAsync(selectedProfiles.map(p => p.profile_id));
+      await bulkDeleteProfiles.mutateAsync(
+        selectedProfiles.map((p) => p.profile_id),
+      );
     }
     setSelectedProfiles([]);
     setShowDeleteDialog(false);
@@ -331,17 +364,25 @@ const ToolkitTable: React.FC<ToolkitTableProps> = ({ toolkit }) => {
               <code className="text-xs flex items-center gap-2 font-mono text-muted-foreground bg-muted px-2 py-1 rounded-md">
                 https://mcp.composio.dev/...
                 <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleViewUrl(profile.profile_id, profile.profile_name, toolkit.toolkit_name)}
-                    className="h-6 text-xs"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() =>
+                    handleViewUrl(
+                      profile.profile_id,
+                      profile.profile_name,
+                      toolkit.toolkit_name,
+                    )
+                  }
+                  className="h-6 text-xs"
                 >
                   <Eye className="h-3 w-3" />
                 </Button>
               </code>
             </div>
           ) : (
-            <span className="text-xs text-muted-foreground">No URL available</span>
+            <span className="text-xs text-muted-foreground">
+              No URL available
+            </span>
           )}
         </div>
       ),
@@ -376,28 +417,37 @@ const ToolkitTable: React.FC<ToolkitTableProps> = ({ toolkit }) => {
         <div className="flex items-center justify-end gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-8 w-8 p-0"
-              >
+              <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
                 <Settings className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               {profile.has_mcp_url && (
                 <>
-                  <DropdownMenuItem className="rounded-lg" onClick={() => handleViewUrl(profile.profile_id, profile.profile_name, toolkit.toolkit_name)}>
+                  <DropdownMenuItem
+                    className="rounded-lg"
+                    onClick={() =>
+                      handleViewUrl(
+                        profile.profile_id,
+                        profile.profile_name,
+                        toolkit.toolkit_name,
+                      )
+                    }
+                  >
                     <Eye className="h-4 w-4" />
                     View MCP URL
                   </DropdownMenuItem>
                 </>
               )}
-              <DropdownMenuItem className="rounded-lg" onClick={() => handleSetDefault(profile.profile_id)} disabled={setDefaultProfile.isPending}>
+              <DropdownMenuItem
+                className="rounded-lg"
+                onClick={() => handleSetDefault(profile.profile_id)}
+                disabled={setDefaultProfile.isPending}
+              >
                 <CheckCircle2 className="h-4 w-4" />
                 {profile.is_default ? 'Remove Default' : 'Set as Default'}
               </DropdownMenuItem>
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 onClick={() => {
                   setSelectedProfiles([profile]);
                   setShowDeleteDialog(true);
@@ -421,22 +471,29 @@ const ToolkitTable: React.FC<ToolkitTableProps> = ({ toolkit }) => {
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-lg bg-muted border flex items-center justify-center overflow-hidden">
             {toolkit.icon_url ? (
-              <img 
-                src={toolkit.icon_url} 
+              <img
+                src={toolkit.icon_url}
                 alt={`${toolkit.toolkit_name} icon`}
                 className="h-6 w-6 object-contain"
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.display = 'none';
-                  (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                  (
+                    e.target as HTMLImageElement
+                  ).nextElementSibling?.classList.remove('hidden');
                 }}
               />
             ) : null}
-            <Settings className={`h-4 w-4 text-muted-foreground ${toolkit.icon_url ? 'hidden' : ''}`} />
+            <Settings
+              className={`h-4 w-4 text-muted-foreground ${toolkit.icon_url ? 'hidden' : ''}`}
+            />
           </div>
           <div>
-            <h3 className="font-semibold text-foreground">{toolkit.toolkit_name}</h3>
+            <h3 className="font-semibold text-foreground">
+              {toolkit.toolkit_name}
+            </h3>
             <p className="text-xs text-muted-foreground">
-              {toolkit.profiles.length} profile{toolkit.profiles.length !== 1 ? 's' : ''}
+              {toolkit.profiles.length} profile
+              {toolkit.profiles.length !== 1 ? 's' : ''}
             </p>
           </div>
         </div>
@@ -459,12 +516,15 @@ const ToolkitTable: React.FC<ToolkitTableProps> = ({ toolkit }) => {
               disabled={isDeleting}
             >
               <Trash2 className="h-4 w-4" />
-              Delete {selectedProfiles.length > 1 ? `${selectedProfiles.length} Profiles` : 'Profile'}
+              Delete{' '}
+              {selectedProfiles.length > 1
+                ? `${selectedProfiles.length} Profiles`
+                : 'Profile'}
             </Button>
           ) : null
         }
       />
-      
+
       {selectedProfile && (
         <McpUrlDialog
           open={!!selectedProfile}
@@ -474,7 +534,7 @@ const ToolkitTable: React.FC<ToolkitTableProps> = ({ toolkit }) => {
           toolkitName={selectedProfile.toolkitName}
         />
       )}
-      
+
       <DeleteConfirmationDialog
         open={showDeleteDialog}
         onOpenChange={setShowDeleteDialog}
@@ -486,9 +546,9 @@ const ToolkitTable: React.FC<ToolkitTableProps> = ({ toolkit }) => {
   );
 };
 
-export const ComposioConnectionsSection: React.FC<ComposioConnectionsSectionProps> = ({
-  className,
-}) => {
+export const ComposioConnectionsSection: React.FC<
+  ComposioConnectionsSectionProps
+> = ({ className }) => {
   const { data: toolkits, isLoading, error } = useComposioCredentialsProfiles();
   const [searchQuery, setSearchQuery] = useState('');
   const [showRegistry, setShowRegistry] = useState(false);
@@ -496,42 +556,68 @@ export const ComposioConnectionsSection: React.FC<ComposioConnectionsSectionProp
 
   const filteredToolkits = useMemo(() => {
     if (!toolkits || !searchQuery.trim()) return toolkits || [];
-    
-    return toolkits.filter(toolkit => 
-      toolkit.toolkit_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      toolkit.profiles.some(profile => 
-        profile.profile_name.toLowerCase().includes(searchQuery.toLowerCase())
+
+    return toolkits
+      .filter(
+        (toolkit) =>
+          toolkit.toolkit_name
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase()) ||
+          toolkit.profiles.some((profile) =>
+            profile.profile_name
+              .toLowerCase()
+              .includes(searchQuery.toLowerCase()),
+          ),
       )
-    ).map(toolkit => ({
-      ...toolkit,
-      profiles: toolkit.profiles.filter(profile =>
-        profile.profile_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        toolkit.toolkit_name.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    })).filter(toolkit => toolkit.profiles.length > 0);
+      .map((toolkit) => ({
+        ...toolkit,
+        profiles: toolkit.profiles.filter(
+          (profile) =>
+            profile.profile_name
+              .toLowerCase()
+              .includes(searchQuery.toLowerCase()) ||
+            toolkit.toolkit_name
+              .toLowerCase()
+              .includes(searchQuery.toLowerCase()),
+        ),
+      }))
+      .filter((toolkit) => toolkit.profiles.length > 0);
   }, [toolkits, searchQuery]);
 
   const stats = useMemo(() => {
-    if (!toolkits) return { totalProfiles: 0, connectedProfiles: 0, uniqueToolkits: 0 };
-    
-    const totalProfiles = toolkits.reduce((acc, toolkit) => acc + toolkit.profiles.length, 0);
+    if (!toolkits)
+      return { totalProfiles: 0, connectedProfiles: 0, uniqueToolkits: 0 };
+
+    const totalProfiles = toolkits.reduce(
+      (acc, toolkit) => acc + toolkit.profiles.length,
+      0,
+    );
     const connectedProfiles = toolkits.reduce(
-      (acc, toolkit) => acc + toolkit.profiles.filter(p => p.is_connected).length, 
-      0
+      (acc, toolkit) =>
+        acc + toolkit.profiles.filter((p) => p.is_connected).length,
+      0,
     );
     const uniqueToolkits = toolkits.length;
-    
+
     return { totalProfiles, connectedProfiles, uniqueToolkits };
   }, [toolkits]);
 
   const filteredStats = useMemo(() => {
-    const filteredProfilesCount = filteredToolkits.reduce((acc, toolkit) => acc + toolkit.profiles.length, 0);
+    const filteredProfilesCount = filteredToolkits.reduce(
+      (acc, toolkit) => acc + toolkit.profiles.length,
+      0,
+    );
     const filteredToolkitsCount = filteredToolkits.length;
-    
+
     return { filteredProfilesCount, filteredToolkitsCount };
   }, [filteredToolkits]);
 
-  const handleProfileCreated = (profileId: string, selectedTools: string[], appName: string, appSlug: string) => {
+  const handleProfileCreated = (
+    profileId: string,
+    selectedTools: string[],
+    appName: string,
+    appSlug: string,
+  ) => {
     setShowRegistry(false);
     queryClient.invalidateQueries({ queryKey: ['composio', 'profiles'] });
     toast.success(`Successfully connected ${appName}!`);
@@ -539,7 +625,7 @@ export const ComposioConnectionsSection: React.FC<ComposioConnectionsSectionProp
 
   if (isLoading) {
     return (
-      <div className={cn("space-y-6", className)}>
+      <div className={cn('space-y-6', className)}>
         <div className="space-y-4">
           {Array.from({ length: 3 }).map((_, index) => (
             <Card key={index}>
@@ -562,7 +648,7 @@ export const ComposioConnectionsSection: React.FC<ComposioConnectionsSectionProp
 
   if (error) {
     return (
-      <div className={cn("space-y-6", className)}>
+      <div className={cn('space-y-6', className)}>
         <Alert className="border-red-200 bg-red-50">
           <XCircle className="h-4 w-4 text-red-600" />
           <AlertDescription className="text-red-800">
@@ -575,14 +661,15 @@ export const ComposioConnectionsSection: React.FC<ComposioConnectionsSectionProp
 
   if (!toolkits || toolkits.length === 0) {
     return (
-      <div className={cn("space-y-6", className)}>
+      <div className={cn('space-y-6', className)}>
         <Card className="border-dashed">
           <CardContent className="py-12">
             <div className="text-center">
               <Settings className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-medium mb-2">No Connections</h3>
               <p className="text-muted-foreground">
-                Connect integrations to your agents and you will be able to manage them here.
+                Connect integrations to your agents and you will be able to
+                manage them here.
               </p>
             </div>
           </CardContent>
@@ -592,20 +679,16 @@ export const ComposioConnectionsSection: React.FC<ComposioConnectionsSectionProp
   }
 
   return (
-    <div className={cn("space-y-6", className)}>
+    <div className={cn('space-y-6', className)}>
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm text-muted-foreground">
-            {searchQuery 
+            {searchQuery
               ? `${filteredStats.filteredToolkitsCount} ${filteredStats.filteredToolkitsCount === 1 ? 'app' : 'apps'} with ${filteredStats.filteredProfilesCount} ${filteredStats.filteredProfilesCount === 1 ? 'profile' : 'profiles'} found`
-              : `${stats.uniqueToolkits} ${stats.uniqueToolkits === 1 ? 'app' : 'apps'} with ${stats.totalProfiles} ${stats.totalProfiles === 1 ? 'profile' : 'profiles'} (${stats.connectedProfiles} connected)`
-            }
+              : `${stats.uniqueToolkits} ${stats.uniqueToolkits === 1 ? 'app' : 'apps'} with ${stats.totalProfiles} ${stats.totalProfiles === 1 ? 'profile' : 'profiles'} (${stats.connectedProfiles} connected)`}
           </p>
         </div>
-        <Button
-          onClick={() => setShowRegistry(true)}
-          size="sm"
-        >
+        <Button onClick={() => setShowRegistry(true)} size="sm">
           <Plus className="h-4 w-4" />
           Connect New App
         </Button>
@@ -637,12 +720,14 @@ export const ComposioConnectionsSection: React.FC<ComposioConnectionsSectionProp
                 <Search className="h-6 w-6 text-muted-foreground" />
               </div>
               <div className="space-y-1">
-                <h3 className="font-semibold text-foreground">No results found</h3>
+                <h3 className="font-semibold text-foreground">
+                  No results found
+                </h3>
                 <p className="text-sm text-muted-foreground">
                   Try adjusting your search terms or browse all apps
                 </p>
               </div>
-              <Button 
+              <Button
                 onClick={() => setSearchQuery('')}
                 variant="outline"
                 size="sm"
@@ -656,8 +741,12 @@ export const ComposioConnectionsSection: React.FC<ComposioConnectionsSectionProp
         <div className="space-y-6">
           {filteredToolkits
             .sort((a, b) => {
-              const aConnected = a.profiles.filter(p => p.is_connected).length;
-              const bConnected = b.profiles.filter(p => p.is_connected).length;
+              const aConnected = a.profiles.filter(
+                (p) => p.is_connected,
+              ).length;
+              const bConnected = b.profiles.filter(
+                (p) => p.is_connected,
+              ).length;
               if (aConnected !== bConnected) return bConnected - aConnected;
               return b.profiles.length - a.profiles.length;
             })
@@ -681,4 +770,4 @@ export const ComposioConnectionsSection: React.FC<ComposioConnectionsSectionProp
       </Dialog>
     </div>
   );
-}; 
+};

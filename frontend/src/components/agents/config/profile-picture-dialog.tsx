@@ -2,12 +2,12 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
 import { Sparkles } from 'lucide-react';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
   DialogTitle,
-  DialogFooter 
+  DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -19,7 +19,11 @@ import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { HexColorPicker } from 'react-colorful';
 
 interface ProfilePictureDialogProps {
@@ -31,7 +35,11 @@ interface ProfilePictureDialogProps {
   currentIconName?: string;
   currentIconColor?: string;
   currentBackgroundColor?: string;
-  onIconUpdate?: (iconName: string | null, iconColor: string, backgroundColor: string) => void;
+  onIconUpdate?: (
+    iconName: string | null,
+    iconColor: string,
+    backgroundColor: string,
+  ) => void;
 }
 
 export function ProfilePictureDialog({
@@ -47,7 +55,9 @@ export function ProfilePictureDialog({
 }: ProfilePictureDialogProps) {
   const [selectedIcon, setSelectedIcon] = useState(currentIconName || 'bot');
   const [iconColor, setIconColor] = useState(currentIconColor || '#000000');
-  const [backgroundColor, setBackgroundColor] = useState(currentBackgroundColor || '#e5e5e5');
+  const [backgroundColor, setBackgroundColor] = useState(
+    currentBackgroundColor || '#e5e5e5',
+  );
 
   useEffect(() => {
     if (isOpen) {
@@ -56,7 +66,7 @@ export function ProfilePictureDialog({
       setBackgroundColor(currentBackgroundColor || '#e5e5e5');
     }
   }, [isOpen, currentIconName, currentIconColor, currentBackgroundColor]);
-  
+
   const handleIconSave = useCallback(() => {
     if (onIconUpdate) {
       onIconUpdate(selectedIcon, iconColor, backgroundColor);
@@ -64,19 +74,38 @@ export function ProfilePictureDialog({
       toast.success('Agent icon updated!');
       onClose();
     }
-  }, [selectedIcon, iconColor, backgroundColor, onIconUpdate, onImageUpdate, onClose]);
+  }, [
+    selectedIcon,
+    iconColor,
+    backgroundColor,
+    onIconUpdate,
+    onImageUpdate,
+    onClose,
+  ]);
 
   const presetColors = [
-    '#000000', '#FFFFFF', '#6366F1', '#10B981', '#F59E0B', 
-    '#EF4444', '#8B5CF6', '#EC4899', '#14B8A6', '#F97316',
-    '#06B6D4', '#84CC16', '#F43F5E', '#A855F7', '#3B82F6'
+    '#000000',
+    '#FFFFFF',
+    '#6366F1',
+    '#10B981',
+    '#F59E0B',
+    '#EF4444',
+    '#8B5CF6',
+    '#EC4899',
+    '#14B8A6',
+    '#F97316',
+    '#06B6D4',
+    '#84CC16',
+    '#F43F5E',
+    '#A855F7',
+    '#3B82F6',
   ];
 
-  const ColorPickerField = ({ 
-    label, 
-    color, 
+  const ColorPickerField = ({
+    label,
+    color,
     onChange,
-  }: { 
+  }: {
     label: string;
     color: string;
     onChange: (color: string) => void;
@@ -88,11 +117,14 @@ export function ProfilePictureDialog({
       <div className="space-y-2">
         <Label className="text-sm font-medium">{label}</Label>
         <div className="flex items-center gap-3">
-          <Popover open={isOpen} onOpenChange={(open) => {
-            if (!open || !isInteracting) {
-              setIsOpen(open);
-            }
-          }}>
+          <Popover
+            open={isOpen}
+            onOpenChange={(open) => {
+              if (!open || !isInteracting) {
+                setIsOpen(open);
+              }
+            }}
+          >
             <PopoverTrigger asChild>
               <button
                 type="button"
@@ -111,27 +143,28 @@ export function ProfilePictureDialog({
                   e.preventDefault();
                   return;
                 }
-                
+
                 const target = e.target as HTMLElement;
-                const isColorPickerElement = target.closest('[class*="react-colorful"]') || 
+                const isColorPickerElement =
+                  target.closest('[class*="react-colorful"]') ||
                   target.className.includes('react-colorful') ||
                   target.closest('.react-colorful-container');
-                
+
                 if (isColorPickerElement) {
                   e.preventDefault();
                 }
               }}
             >
               <div className="space-y-3">
-                <div 
+                <div
                   className="react-colorful-container"
                   onMouseDown={() => setIsInteracting(true)}
                   onMouseUp={() => setIsInteracting(false)}
                   onTouchStart={() => setIsInteracting(true)}
                   onTouchEnd={() => setIsInteracting(false)}
                 >
-                  <HexColorPicker 
-                    color={color} 
+                  <HexColorPicker
+                    color={color}
                     onChange={(newColor) => {
                       onChange(newColor);
                     }}
@@ -144,7 +177,10 @@ export function ProfilePictureDialog({
                     value={color}
                     onChange={(e) => {
                       const hex = e.target.value;
-                      if (/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(hex) || hex.startsWith('#')) {
+                      if (
+                        /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(hex) ||
+                        hex.startsWith('#')
+                      ) {
                         onChange(hex.toUpperCase());
                       }
                     }}
@@ -171,7 +207,10 @@ export function ProfilePictureDialog({
             value={color}
             onChange={(e) => {
               const hex = e.target.value;
-              if (/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(hex) || hex.startsWith('#')) {
+              if (
+                /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(hex) ||
+                hex.startsWith('#')
+              ) {
                 onChange(hex.toUpperCase());
               }
             }}
@@ -188,8 +227,10 @@ export function ProfilePictureDialog({
                 key={presetColor}
                 onClick={() => onChange(presetColor)}
                 className={cn(
-                  "w-7 h-7 rounded border-2 transition-all hover:scale-110",
-                  color === presetColor ? "border-primary ring-2 ring-primary/20" : "border-transparent"
+                  'w-7 h-7 rounded border-2 transition-all hover:scale-110',
+                  color === presetColor
+                    ? 'border-primary ring-2 ring-primary/20'
+                    : 'border-transparent',
                 )}
                 style={{ backgroundColor: presetColor }}
                 title={presetColor}
@@ -208,7 +249,7 @@ export function ProfilePictureDialog({
     { bg: '#EF4444', icon: '#FFFFFF', name: 'Red' },
     { bg: '#8B5CF6', icon: '#FFFFFF', name: 'Purple' },
   ];
-  
+
   const ColorControls = () => (
     <div className="space-y-6">
       <div className="flex flex-col items-center space-y-3 py-4">
@@ -250,19 +291,16 @@ export function ProfilePictureDialog({
                 setBackgroundColor(preset.bg);
               }}
               className={cn(
-                "group relative h-12 w-full rounded-xl border-2 transition-all hover:scale-105",
-                backgroundColor === preset.bg && iconColor === preset.icon 
-                  ? "border-primary shadow-md" 
-                  : "border-border hover:border-primary/60"
+                'group relative h-12 w-full rounded-xl border-2 transition-all hover:scale-105',
+                backgroundColor === preset.bg && iconColor === preset.icon
+                  ? 'border-primary shadow-md'
+                  : 'border-border hover:border-primary/60',
               )}
               style={{ backgroundColor: preset.bg }}
               title={preset.name}
             >
               <span className="absolute inset-0 flex items-center justify-center">
-                <Sparkles 
-                  className="w-4 h-4" 
-                  style={{ color: preset.icon }}
-                />
+                <Sparkles className="w-4 h-4" style={{ color: preset.icon }} />
               </span>
               <span className="sr-only">{preset.name}</span>
             </button>
@@ -306,7 +344,7 @@ export function ProfilePictureDialog({
               <TabsTrigger value="customize">Customize</TabsTrigger>
               <TabsTrigger value="icons">Icons</TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="customize" className="flex-1 min-h-0 mt-4">
               <ScrollArea className="h-[400px]">
                 <ColorControls />
@@ -324,17 +362,10 @@ export function ProfilePictureDialog({
           </Tabs>
         </div>
         <DialogFooter className="px-6 py-4 shrink-0 border-t">
-          <Button
-            variant="outline"
-            onClick={onClose}
-          >
+          <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button 
-            onClick={handleIconSave}
-          >
-            Save Icon
-          </Button>
+          <Button onClick={handleIconSave}>Save Icon</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

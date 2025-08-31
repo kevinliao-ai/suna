@@ -9,7 +9,6 @@ export interface ImageEditGenerateData {
   success?: boolean;
   timestamp?: string;
   error?: string | null;
-  
 }
 
 const parseContent = (content: any): any => {
@@ -25,30 +24,35 @@ const parseContent = (content: any): any => {
 
 const extractFromNewFormat = (content: any): ImageEditGenerateData => {
   const parsedContent = parseContent(content);
-  
+
   if (!parsedContent || typeof parsedContent !== 'object') {
-    return { 
-      mode: null, 
-      prompt: null, 
-      imagePath: null, 
-      generatedImagePath: null, 
-      status: null, 
-      success: undefined, 
+    return {
+      mode: null,
+      prompt: null,
+      imagePath: null,
+      generatedImagePath: null,
+      status: null,
+      success: undefined,
       timestamp: undefined,
-      error: null
+      error: null,
     };
   }
 
-  if ('tool_execution' in parsedContent && typeof parsedContent.tool_execution === 'object') {
+  if (
+    'tool_execution' in parsedContent &&
+    typeof parsedContent.tool_execution === 'object'
+  ) {
     const toolExecution = parsedContent.tool_execution;
     const args = toolExecution.arguments || {};
     const result = toolExecution.result || {};
-    
+
     // Extract generated image path from the output
     let generatedImagePath: string | null = null;
     if (result.output && typeof result.output === 'string') {
       // Look for patterns like "Image saved as: generated_image_xxx.png"
-      const imagePathMatch = result.output.match(/Image saved as:\s*([^\s.]+\.(png|jpg|jpeg|webp|gif))/i);
+      const imagePathMatch = result.output.match(
+        /Image saved as:\s*([^\s.]+\.(png|jpg|jpeg|webp|gif))/i,
+      );
       if (imagePathMatch) {
         generatedImagePath = imagePathMatch[1];
       }
@@ -62,9 +66,9 @@ const extractFromNewFormat = (content: any): ImageEditGenerateData => {
       status: result.output || null,
       success: result.success,
       timestamp: toolExecution.execution_details?.timestamp,
-      error: result.error || null
+      error: result.error || null,
     };
-    
+
     return extractedData;
   }
 
@@ -72,31 +76,33 @@ const extractFromNewFormat = (content: any): ImageEditGenerateData => {
     return extractFromNewFormat(parsedContent.content);
   }
 
-  return { 
-    mode: null, 
-    prompt: null, 
-    imagePath: null, 
-    generatedImagePath: null, 
-    status: null, 
-    success: undefined, 
+  return {
+    mode: null,
+    prompt: null,
+    imagePath: null,
+    generatedImagePath: null,
+    status: null,
+    success: undefined,
     timestamp: undefined,
-    error: null
+    error: null,
   };
 };
 
 const extractFromLegacyFormat = (content: any): ImageEditGenerateData => {
   const toolData = extractToolData(content);
-  
+
   if (toolData.toolResult && toolData.arguments) {
     // Extract generated image path from the result
     let generatedImagePath: string | null = null;
     if (toolData.toolResult && typeof toolData.toolResult === 'string') {
-      const imagePathMatch = (toolData.toolResult as string).match(/Image saved as:\s*([^\s.]+\.(png|jpg|jpeg|webp|gif))/i);
+      const imagePathMatch = (toolData.toolResult as string).match(
+        /Image saved as:\s*([^\s.]+\.(png|jpg|jpeg|webp|gif))/i,
+      );
       if (imagePathMatch) {
         generatedImagePath = imagePathMatch[1];
       }
     }
-    
+
     return {
       mode: toolData.arguments.mode || null,
       prompt: toolData.arguments.prompt || null,
@@ -105,50 +111,58 @@ const extractFromLegacyFormat = (content: any): ImageEditGenerateData => {
       status: toolData.toolResult?.toolOutput || null,
       success: toolData.toolResult?.isSuccess,
       timestamp: undefined,
-      error: null
+      error: null,
     };
   }
 
   const contentStr = normalizeContentToString(content);
   if (!contentStr) {
-    return { 
-      mode: null, 
-      prompt: null, 
-      imagePath: null, 
-      generatedImagePath: null, 
+    return {
+      mode: null,
+      prompt: null,
+      imagePath: null,
+      generatedImagePath: null,
       status: null,
       success: undefined,
       timestamp: undefined,
-      error: null
+      error: null,
     };
   }
 
   // Try to extract data from XML-like format
   let mode: 'generate' | 'edit' | null = null;
-  const modeMatch = contentStr.match(/<parameter name="mode">([^<]*)<\/parameter>/i);
+  const modeMatch = contentStr.match(
+    /<parameter name="mode">([^<]*)<\/parameter>/i,
+  );
   if (modeMatch) {
     mode = modeMatch[1].trim() as 'generate' | 'edit';
   }
 
   let prompt: string | null = null;
-  const promptMatch = contentStr.match(/<parameter name="prompt">([^<]*)<\/parameter>/i);
+  const promptMatch = contentStr.match(
+    /<parameter name="prompt">([^<]*)<\/parameter>/i,
+  );
   if (promptMatch) {
     prompt = promptMatch[1].trim();
   }
 
   let imagePath: string | null = null;
-  const imagePathMatch = contentStr.match(/<parameter name="image_path">([^<]*)<\/parameter>/i);
+  const imagePathMatch = contentStr.match(
+    /<parameter name="image_path">([^<]*)<\/parameter>/i,
+  );
   if (imagePathMatch) {
     imagePath = imagePathMatch[1].trim();
   }
 
   // Try to extract generated image path from output
   let generatedImagePath: string | null = null;
-  const generatedImageMatch = contentStr.match(/Image saved as:\s*([^\s.]+\.(png|jpg|jpeg|webp|gif))/i);
+  const generatedImageMatch = contentStr.match(
+    /Image saved as:\s*([^\s.]+\.(png|jpg|jpeg|webp|gif))/i,
+  );
   if (generatedImageMatch) {
     generatedImagePath = generatedImageMatch[1];
   }
-  
+
   return {
     mode,
     prompt,
@@ -157,7 +171,7 @@ const extractFromLegacyFormat = (content: any): ImageEditGenerateData => {
     status: null,
     success: undefined,
     timestamp: undefined,
-    error: null
+    error: null,
   };
 };
 
@@ -166,7 +180,7 @@ export function extractImageEditGenerateData(
   toolContent: any,
   isSuccess: boolean,
   toolTimestamp?: string,
-  assistantTimestamp?: string
+  assistantTimestamp?: string,
 ): ImageEditGenerateData & {
   actualIsSuccess: boolean;
   actualToolTimestamp?: string;
@@ -181,8 +195,12 @@ export function extractImageEditGenerateData(
 
   // Prefer data from toolContent if it has meaningful data
   let finalData = { ...assistantNewFormat };
-  
-  if (toolNewFormat.mode || toolNewFormat.prompt || toolNewFormat.generatedImagePath) {
+
+  if (
+    toolNewFormat.mode ||
+    toolNewFormat.prompt ||
+    toolNewFormat.generatedImagePath
+  ) {
     finalData = { ...toolNewFormat };
     if (toolNewFormat.success !== undefined) {
       actualIsSuccess = toolNewFormat.success;
@@ -190,7 +208,11 @@ export function extractImageEditGenerateData(
     if (toolNewFormat.timestamp) {
       actualToolTimestamp = toolNewFormat.timestamp;
     }
-  } else if (assistantNewFormat.mode || assistantNewFormat.prompt || assistantNewFormat.generatedImagePath) {
+  } else if (
+    assistantNewFormat.mode ||
+    assistantNewFormat.prompt ||
+    assistantNewFormat.generatedImagePath
+  ) {
     if (assistantNewFormat.success !== undefined) {
       actualIsSuccess = assistantNewFormat.success;
     }
@@ -206,18 +228,19 @@ export function extractImageEditGenerateData(
       mode: toolLegacy.mode || assistantLegacy.mode,
       prompt: toolLegacy.prompt || assistantLegacy.prompt,
       imagePath: toolLegacy.imagePath || assistantLegacy.imagePath,
-      generatedImagePath: toolLegacy.generatedImagePath || assistantLegacy.generatedImagePath,
+      generatedImagePath:
+        toolLegacy.generatedImagePath || assistantLegacy.generatedImagePath,
       status: toolLegacy.status || assistantLegacy.status,
       success: toolLegacy.success || assistantLegacy.success,
       timestamp: toolLegacy.timestamp || assistantLegacy.timestamp,
-      error: toolLegacy.error || assistantLegacy.error
+      error: toolLegacy.error || assistantLegacy.error,
     };
   }
-  
+
   return {
     ...finalData,
     actualIsSuccess,
     actualToolTimestamp,
-    actualAssistantTimestamp
+    actualAssistantTimestamp,
   };
 }

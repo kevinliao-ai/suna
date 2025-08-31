@@ -8,10 +8,7 @@ import {
   ChatInput,
   ChatInputHandles,
 } from '@/components/thread/chat-input/chat-input';
-import {
-  BillingError,
-  AgentRunLimitError,
-} from '@/lib/api';
+import { BillingError, AgentRunLimitError } from '@/lib/api';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useBillingError } from '@/hooks/useBillingError';
 import { BillingErrorAlert } from '@/components/billing/usage-limit-alert';
@@ -40,21 +37,24 @@ const PENDING_PROMPT_KEY = 'pendingAgentPrompt';
 const dashboardTourSteps: Step[] = [
   {
     target: '[data-tour="chat-input"]',
-    content: 'Type your questions or tasks here. Suna can help with research, analysis, automation, and much more.',
+    content:
+      'Type your questions or tasks here. Suna can help with research, analysis, automation, and much more.',
     title: 'Start a Conversation',
     placement: 'top',
     disableBeacon: true,
   },
   {
     target: '[data-tour="my-agents"]',
-    content: 'Create and manage your custom AI agents here. Build specialized agents for different tasks and workflows.',
+    content:
+      'Create and manage your custom AI agents here. Build specialized agents for different tasks and workflows.',
     title: 'Manage Your Agents',
     placement: 'right',
     disableBeacon: true,
   },
   {
     target: '[data-tour="examples"]',
-    content: 'Get started quickly with these example prompts. Click any example to try it out.',
+    content:
+      'Get started quickly with these example prompts. Click any example to try it out.',
     title: 'Example Prompts',
     placement: 'top',
     disableBeacon: true,
@@ -66,13 +66,15 @@ export function DashboardContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [autoSubmit, setAutoSubmit] = useState(false);
-  const { 
-    selectedAgentId, 
-    setSelectedAgent, 
+  const {
+    selectedAgentId,
+    setSelectedAgent,
     initializeFromAgents,
-    getCurrentAgent
+    getCurrentAgent,
   } = useAgentSelection();
-  const [initiatedThreadId, setInitiatedThreadId] = useState<string | null>(null);
+  const [initiatedThreadId, setInitiatedThreadId] = useState<string | null>(
+    null,
+  );
   const { billingError, handleBillingError, clearBillingError } =
     useBillingError();
   const [showAgentLimitDialog, setShowAgentLimitDialog] = useState(false);
@@ -106,12 +108,12 @@ export function DashboardContent() {
   const { data: agentsResponse } = useAgents({
     limit: 100,
     sort_by: 'name',
-    sort_order: 'asc'
+    sort_order: 'asc',
   });
 
   const agents = agentsResponse?.agents || [];
   const selectedAgent = selectedAgentId
-    ? agents.find(agent => agent.agent_id === selectedAgentId)
+    ? agents.find((agent) => agent.agent_id === selectedAgentId)
     : null;
   const displayName = selectedAgent?.name || 'Suna';
   const agentAvatar = undefined;
@@ -142,7 +144,9 @@ export function DashboardContent() {
       const thread = threadQuery.data;
       setIsRedirecting(true);
       if (thread.project_id) {
-        router.push(`/projects/${thread.project_id}/thread/${initiatedThreadId}`);
+        router.push(
+          `/projects/${thread.project_id}/thread/${initiatedThreadId}`,
+        );
       } else {
         router.push(`/agents/${initiatedThreadId}`);
       }
@@ -150,15 +154,18 @@ export function DashboardContent() {
     }
   }, [threadQuery.data, initiatedThreadId, router]);
 
-  const handleTourCallback = useCallback((data: CallBackProps) => {
-    const { status, type, index } = data;
-    
-    if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {
-      stopTour();
-    } else if (type === 'step:after') {
-      setStepIndex(index + 1);
-    }
-  }, [stopTour, setStepIndex]);
+  const handleTourCallback = useCallback(
+    (data: CallBackProps) => {
+      const { status, type, index } = data;
+
+      if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {
+        stopTour();
+      } else if (type === 'step:after') {
+        setStepIndex(index + 1);
+      }
+    },
+    [stopTour, setStepIndex],
+  );
 
   const handleSubmit = async (
     message: string,
@@ -196,11 +203,18 @@ export function DashboardContent() {
         formData.append('files', file, normalizedName);
       });
 
-      if (options?.model_name) formData.append('model_name', options.model_name);
-      formData.append('enable_thinking', String(options?.enable_thinking ?? false));
+      if (options?.model_name)
+        formData.append('model_name', options.model_name);
+      formData.append(
+        'enable_thinking',
+        String(options?.enable_thinking ?? false),
+      );
       formData.append('reasoning_effort', options?.reasoning_effort ?? 'low');
       formData.append('stream', String(options?.stream ?? true));
-      formData.append('enable_context_manager', String(options?.enable_context_manager ?? false));
+      formData.append(
+        'enable_context_manager',
+        String(options?.enable_context_manager ?? false),
+      );
 
       const result = await initiateAgentMutation.mutateAsync(formData);
 
@@ -223,7 +237,8 @@ export function DashboardContent() {
         });
         setShowAgentLimitDialog(true);
       } else {
-        const errorMessage = error instanceof Error ? error.message : 'Operation failed';
+        const errorMessage =
+          error instanceof Error ? error.message : 'Operation failed';
         toast.error(errorMessage);
       }
       // Only reset loading state if there was an error or no thread_id was returned
@@ -324,30 +339,33 @@ export function DashboardContent() {
           },
         }}
       />
-      
+
       <TourConfirmationDialog
         open={showWelcome}
         onAccept={handleWelcomeAccept}
         onDecline={handleWelcomeDecline}
       />
 
-      <BillingModal 
-        open={showPaymentModal} 
+      <BillingModal
+        open={showPaymentModal}
         onOpenChange={setShowPaymentModal}
         showUsageLimitAlert={true}
       />
       <div className="flex flex-col h-screen w-full overflow-hidden">
         <div className="flex-1 overflow-y-auto">
           <div className="min-h-full flex flex-col">
-            {(
+            {
               <div className="flex justify-center px-4 pt-4 md:pt-8">
-                <ReleaseBadge text="Custom Agents, Playbooks, and more!" link="/agents?tab=my-agents" />
+                <ReleaseBadge
+                  text="Custom Agents, Playbooks, and more!"
+                  link="/agents?tab=my-agents"
+                />
               </div>
-            )}
+            }
             <div className="flex-1 flex items-center justify-center px-4 py-8">
               <div className="w-full max-w-[650px] flex flex-col items-center justify-center space-y-4 md:space-y-6">
                 <div className="flex flex-col items-center text-center w-full">
-                  <p 
+                  <p
                     className="tracking-tight text-2xl md:text-3xl font-normal text-foreground/90"
                     data-tour="dashboard-title"
                   >
@@ -366,26 +384,29 @@ export function DashboardContent() {
                     selectedAgentId={selectedAgentId}
                     onAgentSelect={setSelectedAgent}
                     enableAdvancedConfig={true}
-                    onConfigureAgent={(agentId) => router.push(`/agents/config/${agentId}`)}
+                    onConfigureAgent={(agentId) =>
+                      router.push(`/agents/config/${agentId}`)
+                    }
                   />
                 </div>
                 <div className="w-full" data-tour="examples">
-                  <Examples onSelectPrompt={setInputValue} count={isMobile ? 3 : 4} />
+                  <Examples
+                    onSelectPrompt={setInputValue}
+                    count={isMobile ? 3 : 4}
+                  />
                 </div>
               </div>
             </div>
             {enabledEnvironment && (
               <div className="w-full px-4 pb-8" data-tour="custom-agents">
                 <div className="max-w-7xl mx-auto">
-                  <CustomAgentsSection 
-                    onAgentSelect={setSelectedAgent}
-                  />
+                  <CustomAgentsSection onAgentSelect={setSelectedAgent} />
                 </div>
               </div>
             )}
           </div>
         </div>
-        
+
         <BillingErrorAlert
           message={billingError?.message}
           currentUsage={billingError?.currentUsage}

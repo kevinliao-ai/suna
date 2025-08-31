@@ -18,10 +18,13 @@ interface AgentToolsResponse {
   mcp_tools: AgentTool[];
 }
 
-const fetchAgentTools = async (agentId: string): Promise<AgentToolsResponse> => {
-
+const fetchAgentTools = async (
+  agentId: string,
+): Promise<AgentToolsResponse> => {
   const supabase = createClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
 
   if (!session) {
     throw new Error('You must be logged in to get agent tools');
@@ -31,16 +34,20 @@ const fetchAgentTools = async (agentId: string): Promise<AgentToolsResponse> => 
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${session.access_token}`,
+      Authorization: `Bearer ${session.access_token}`,
     },
   });
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }));
-    throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`);
+    const errorData = await response
+      .json()
+      .catch(() => ({ detail: 'Unknown error' }));
+    throw new Error(
+      errorData.detail || `HTTP ${response.status}: ${response.statusText}`,
+    );
   }
 
-  const toolsResponse = await response.json() as AgentToolsResponse;
+  const toolsResponse = (await response.json()) as AgentToolsResponse;
   return toolsResponse;
 };
 
@@ -51,4 +58,4 @@ export const useAgentTools = (agentId: string) => {
     staleTime: 5 * 60 * 1000,
     enabled: !!agentId,
   });
-}; 
+};

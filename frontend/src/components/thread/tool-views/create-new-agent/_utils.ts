@@ -32,7 +32,7 @@ export function extractCreateNewAgentData(
   toolContent?: any,
   isSuccess?: boolean,
   toolTimestamp?: string,
-  assistantTimestamp?: string
+  assistantTimestamp?: string,
 ): AgentCreationData & {
   actualIsSuccess: boolean;
   actualToolTimestamp: string | undefined;
@@ -56,15 +56,18 @@ export function extractCreateNewAgentData(
     agent_name: null,
     actualIsSuccess: isSuccess || false,
     actualToolTimestamp: toolTimestamp,
-    actualAssistantTimestamp: assistantTimestamp
+    actualAssistantTimestamp: assistantTimestamp,
   };
 
   if (toolContent) {
     const parsedToolResult = parseToolResult(toolContent);
-    
-    if (parsedToolResult && parsedToolResult.functionName === 'create_new_agent') {
+
+    if (
+      parsedToolResult &&
+      parsedToolResult.functionName === 'create_new_agent'
+    ) {
       const args = parsedToolResult.arguments || {};
-      
+
       let output: any = {};
       try {
         if (typeof parsedToolResult.toolOutput === 'string') {
@@ -95,17 +98,20 @@ export function extractCreateNewAgentData(
         timestamp: parsedToolResult.timestamp,
         actualIsSuccess: parsedToolResult.isSuccess,
         actualToolTimestamp: parsedToolResult.timestamp || toolTimestamp,
-        actualAssistantTimestamp: assistantTimestamp
+        actualAssistantTimestamp: assistantTimestamp,
       };
     }
   }
 
   if (assistantContent) {
     const parsedToolResult = parseToolResult(assistantContent);
-    
-    if (parsedToolResult && parsedToolResult.functionName === 'create_new_agent') {
+
+    if (
+      parsedToolResult &&
+      parsedToolResult.functionName === 'create_new_agent'
+    ) {
       const args = parsedToolResult.arguments || {};
-      
+
       let output: any = {};
       try {
         if (typeof parsedToolResult.toolOutput === 'string') {
@@ -136,10 +142,11 @@ export function extractCreateNewAgentData(
         timestamp: parsedToolResult.timestamp,
         actualIsSuccess: parsedToolResult.isSuccess,
         actualToolTimestamp: toolTimestamp,
-        actualAssistantTimestamp: parsedToolResult.timestamp || assistantTimestamp
+        actualAssistantTimestamp:
+          parsedToolResult.timestamp || assistantTimestamp,
       };
     }
   }
 
   return defaultResult;
-} 
+}

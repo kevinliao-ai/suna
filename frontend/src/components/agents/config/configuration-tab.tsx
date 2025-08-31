@@ -1,5 +1,14 @@
 import React from 'react';
-import { Settings, Wrench, Server, BookOpen, Workflow, Zap, ChevronDown, Brain } from 'lucide-react';
+import {
+  Settings,
+  Wrench,
+  Server,
+  BookOpen,
+  Workflow,
+  Zap,
+  ChevronDown,
+  Brain,
+} from 'lucide-react';
 import { ExpandableMarkdownEditor } from '@/components/ui/expandable-markdown-editor';
 import { AgentToolsConfiguration } from '../agent-tools-configuration';
 import { AgentMCPConfiguration } from '../agent-mcp-configuration';
@@ -32,10 +41,15 @@ interface ConfigurationTabProps {
   };
   isViewingOldVersion: boolean;
   onFieldChange: (field: string, value: any) => void;
-  onMCPChange: (updates: { configured_mcps: any[]; custom_mcps: any[] }) => void;
+  onMCPChange: (updates: {
+    configured_mcps: any[];
+    custom_mcps: any[];
+  }) => void;
   onSystemPromptSave?: (value: string) => void;
-  onModelSave?: (model: string) => void;  // Add model save handler
-  onToolsSave?: (tools: Record<string, boolean | { enabled: boolean; description: string }>) => void;
+  onModelSave?: (model: string) => void; // Add model save handler
+  onToolsSave?: (
+    tools: Record<string, boolean | { enabled: boolean; description: string }>,
+  ) => void;
   initialAccordion?: string;
   agentMetadata?: {
     is_suna_default?: boolean;
@@ -65,7 +79,6 @@ export function ConfigurationTab({
   agentMetadata,
   isLoading = false,
 }: ConfigurationTabProps) {
-  
   const isSunaAgent = agentMetadata?.is_suna_default || false;
 
   const mapAccordion = (val?: string) => {
@@ -74,13 +87,24 @@ export function ConfigurationTab({
     if (isSunaAgent && (val === 'system' || val === 'tools')) {
       return 'integrations';
     }
-    if (['system', 'tools', 'integrations', 'knowledge', 'playbooks', 'triggers'].includes(val || '')) {
+    if (
+      [
+        'system',
+        'tools',
+        'integrations',
+        'knowledge',
+        'playbooks',
+        'triggers',
+      ].includes(val || '')
+    ) {
       return val!;
     }
     return isSunaAgent ? 'integrations' : 'system';
   };
 
-  const [openAccordion, setOpenAccordion] = React.useState<string>(mapAccordion(initialAccordion));
+  const [openAccordion, setOpenAccordion] = React.useState<string>(
+    mapAccordion(initialAccordion),
+  );
   React.useEffect(() => {
     if (initialAccordion) {
       setOpenAccordion(mapAccordion(initialAccordion));
@@ -88,13 +112,16 @@ export function ConfigurationTab({
   }, [initialAccordion]);
   const restrictions = agentMetadata?.restrictions || {};
 
-  const isSystemPromptEditable = !isViewingOldVersion && (restrictions.system_prompt_editable !== false);
-  const areToolsEditable = !isViewingOldVersion && (restrictions.tools_editable !== false);
+  const isSystemPromptEditable =
+    !isViewingOldVersion && restrictions.system_prompt_editable !== false;
+  const areToolsEditable =
+    !isViewingOldVersion && restrictions.tools_editable !== false;
 
   const handleSystemPromptChange = (value: string) => {
     if (!isSystemPromptEditable && isSunaAgent) {
-      toast.error("System prompt cannot be edited", {
-        description: "Suna's system prompt is managed centrally and cannot be changed.",
+      toast.error('System prompt cannot be edited', {
+        description:
+          "Suna's system prompt is managed centrally and cannot be changed.",
       });
       return;
     }
@@ -105,14 +132,17 @@ export function ConfigurationTab({
     }
   };
 
-  const handleToolsChange = (tools: Record<string, boolean | { enabled: boolean; description: string }>) => {
+  const handleToolsChange = (
+    tools: Record<string, boolean | { enabled: boolean; description: string }>,
+  ) => {
     if (!areToolsEditable && isSunaAgent) {
-      toast.error("Tools cannot be modified", {
-        description: "Suna's default tools are managed centrally and cannot be changed.",
+      toast.error('Tools cannot be modified', {
+        description:
+          "Suna's default tools are managed centrally and cannot be changed.",
       });
       return;
     }
-    
+
     if (onToolsSave) {
       onToolsSave(tools);
     } else {
@@ -130,11 +160,14 @@ export function ConfigurationTab({
                 <div className="text-primary-600">
                   <KortixLogo size={20} />
                 </div>
-                <span className="font-semibold text-primary-800">Suna Default Agent</span>
+                <span className="font-semibold text-primary-800">
+                  Suna Default Agent
+                </span>
               </div>
               <p className="text-sm text-primary-700">
-                This is Suna's default agent with centrally managed system prompt and tools.
-                You can customize integrations, knowledge base, playbooks, and triggers to personalize your experience.
+                This is Suna's default agent with centrally managed system
+                prompt and tools. You can customize integrations, knowledge
+                base, playbooks, and triggers to personalize your experience.
               </p>
             </div>
           )}
@@ -142,10 +175,15 @@ export function ConfigurationTab({
           <div className="space-y-3">
             {!isSunaAgent && (
               <>
-                <div className="group overflow-hidden rounded-2xl border border-border bg-card transition-all duration-300 hover:border-primary/10" data-tour="model-section">
+                <div
+                  className="group overflow-hidden rounded-2xl border border-border bg-card transition-all duration-300 hover:border-primary/10"
+                  data-tour="model-section"
+                >
                   <button
                     className="w-full p-4 text-left group-hover:bg-muted/30 transition-all duration-300"
-                    onClick={() => setOpenAccordion(openAccordion === 'model' ? '' : 'model')}
+                    onClick={() =>
+                      setOpenAccordion(openAccordion === 'model' ? '' : 'model')
+                    }
                     disabled={isLoading}
                   >
                     <div className="flex items-center gap-4 w-full">
@@ -155,10 +193,16 @@ export function ConfigurationTab({
                         </div>
                       </div>
                       <div className="text-left flex-1 min-w-0">
-                        <h4 className="text-sm font-semibold text-foreground mb-1 group-hover:text-primary transition-colors duration-300">Model Configuration</h4>
-                        <p className="text-xs text-muted-foreground group-hover:text-foreground/70 transition-colors duration-300">Choose the AI model for your agent</p>
+                        <h4 className="text-sm font-semibold text-foreground mb-1 group-hover:text-primary transition-colors duration-300">
+                          Model Configuration
+                        </h4>
+                        <p className="text-xs text-muted-foreground group-hover:text-foreground/70 transition-colors duration-300">
+                          Choose the AI model for your agent
+                        </p>
                       </div>
-                      <ChevronDown className={`h-4 w-4 flex-shrink-0 transition-transform duration-300 ease-out ${openAccordion === 'model' ? 'rotate-180' : ''}`} />
+                      <ChevronDown
+                        className={`h-4 w-4 flex-shrink-0 transition-transform duration-300 ease-out ${openAccordion === 'model' ? 'rotate-180' : ''}`}
+                      />
                     </div>
                   </button>
                   {openAccordion === 'model' && (
@@ -179,10 +223,17 @@ export function ConfigurationTab({
                     </div>
                   )}
                 </div>
-                <div className="group overflow-hidden rounded-2xl border border-border bg-card transition-all duration-300 hover:border-primary/10" data-tour="system-prompt">
+                <div
+                  className="group overflow-hidden rounded-2xl border border-border bg-card transition-all duration-300 hover:border-primary/10"
+                  data-tour="system-prompt"
+                >
                   <button
                     className="w-full p-4 text-left group-hover:bg-muted/30 transition-all duration-300"
-                    onClick={() => setOpenAccordion(openAccordion === 'system' ? '' : 'system')}
+                    onClick={() =>
+                      setOpenAccordion(
+                        openAccordion === 'system' ? '' : 'system',
+                      )
+                    }
                     disabled={isLoading}
                   >
                     <div className="flex items-center gap-4 w-full">
@@ -192,10 +243,16 @@ export function ConfigurationTab({
                         </div>
                       </div>
                       <div className="text-left flex-1 min-w-0">
-                        <h4 className="text-sm font-semibold text-foreground mb-1 group-hover:text-primary transition-colors duration-300">System Prompt</h4>
-                        <p className="text-xs text-muted-foreground group-hover:text-foreground/70 transition-colors duration-300">Define agent behavior and goals</p>
+                        <h4 className="text-sm font-semibold text-foreground mb-1 group-hover:text-primary transition-colors duration-300">
+                          System Prompt
+                        </h4>
+                        <p className="text-xs text-muted-foreground group-hover:text-foreground/70 transition-colors duration-300">
+                          Define agent behavior and goals
+                        </p>
                       </div>
-                      <ChevronDown className={`h-4 w-4 flex-shrink-0 transition-transform duration-300 ease-out ${openAccordion === 'system' ? 'rotate-180' : ''}`} />
+                      <ChevronDown
+                        className={`h-4 w-4 flex-shrink-0 transition-transform duration-300 ease-out ${openAccordion === 'system' ? 'rotate-180' : ''}`}
+                      />
                     </div>
                   </button>
                   {openAccordion === 'system' && (
@@ -215,10 +272,15 @@ export function ConfigurationTab({
               </>
             )}
 
-            <div className="group overflow-hidden rounded-2xl border border-border bg-card transition-all duration-300 hover:border-primary/10" data-tour="tools-section">
+            <div
+              className="group overflow-hidden rounded-2xl border border-border bg-card transition-all duration-300 hover:border-primary/10"
+              data-tour="tools-section"
+            >
               <button
                 className="w-full p-4 text-left group-hover:bg-muted/30 transition-all duration-300"
-                onClick={() => setOpenAccordion(openAccordion === 'tools' ? '' : 'tools')}
+                onClick={() =>
+                  setOpenAccordion(openAccordion === 'tools' ? '' : 'tools')
+                }
                 disabled={isLoading}
               >
                 <div className="flex items-center gap-4 w-full">
@@ -228,31 +290,46 @@ export function ConfigurationTab({
                     </div>
                   </div>
                   <div className="text-left flex-1 min-w-0">
-                    <h4 className="text-sm font-semibold text-foreground mb-1 group-hover:text-primary transition-colors duration-300">Tools</h4>
-                    <p className="text-xs text-muted-foreground group-hover:text-foreground/70 transition-colors duration-300">Configure agent capabilities</p>
+                    <h4 className="text-sm font-semibold text-foreground mb-1 group-hover:text-primary transition-colors duration-300">
+                      Tools
+                    </h4>
+                    <p className="text-xs text-muted-foreground group-hover:text-foreground/70 transition-colors duration-300">
+                      Configure agent capabilities
+                    </p>
                   </div>
-                  <ChevronDown className={`h-4 w-4 flex-shrink-0 transition-transform duration-300 ease-out ${openAccordion === 'tools' ? 'rotate-180' : ''}`} />
+                  <ChevronDown
+                    className={`h-4 w-4 flex-shrink-0 transition-transform duration-300 ease-out ${openAccordion === 'tools' ? 'rotate-180' : ''}`}
+                  />
                 </div>
               </button>
               {openAccordion === 'tools' && (
                 <div className="border-t border-border bg-muted/10">
                   <div className="p-4">
-                                         <AgentToolsConfiguration
-                       tools={displayData.agentpress_tools}
-                       onToolsChange={areToolsEditable ? handleToolsChange : () => { }}
-                       disabled={!areToolsEditable}
-                       isSunaAgent={isSunaAgent}
-                       isLoading={isLoading}
-                     />
+                    <AgentToolsConfiguration
+                      tools={displayData.agentpress_tools}
+                      onToolsChange={
+                        areToolsEditable ? handleToolsChange : () => {}
+                      }
+                      disabled={!areToolsEditable}
+                      isSunaAgent={isSunaAgent}
+                      isLoading={isLoading}
+                    />
                   </div>
                 </div>
               )}
             </div>
 
-            <div className="group overflow-hidden rounded-2xl border border-border bg-card transition-all duration-300 hover:border-primary/10" data-tour="integrations-section">
+            <div
+              className="group overflow-hidden rounded-2xl border border-border bg-card transition-all duration-300 hover:border-primary/10"
+              data-tour="integrations-section"
+            >
               <button
                 className="w-full p-4 text-left group-hover:bg-muted/30 transition-all duration-300"
-                onClick={() => setOpenAccordion(openAccordion === 'integrations' ? '' : 'integrations')}
+                onClick={() =>
+                  setOpenAccordion(
+                    openAccordion === 'integrations' ? '' : 'integrations',
+                  )
+                }
                 disabled={isLoading}
               >
                 <div className="flex items-center gap-4 w-full">
@@ -262,39 +339,52 @@ export function ConfigurationTab({
                     </div>
                   </div>
                   <div className="text-left flex-1 min-w-0">
-                    <h4 className="text-sm font-semibold text-foreground mb-1 group-hover:text-primary transition-colors duration-300">Integrations</h4>
-                    <p className="text-xs text-muted-foreground group-hover:text-foreground/70 transition-colors duration-300">Connect external services</p>
+                    <h4 className="text-sm font-semibold text-foreground mb-1 group-hover:text-primary transition-colors duration-300">
+                      Integrations
+                    </h4>
+                    <p className="text-xs text-muted-foreground group-hover:text-foreground/70 transition-colors duration-300">
+                      Connect external services
+                    </p>
                   </div>
-                  <ChevronDown className={`h-4 w-4 flex-shrink-0 transition-transform duration-300 ease-out ${openAccordion === 'integrations' ? 'rotate-180' : ''}`} />
+                  <ChevronDown
+                    className={`h-4 w-4 flex-shrink-0 transition-transform duration-300 ease-out ${openAccordion === 'integrations' ? 'rotate-180' : ''}`}
+                  />
                 </div>
               </button>
               {openAccordion === 'integrations' && (
                 <div className="border-t border-border bg-muted/10">
                   <div className="p-4">
                     <AgentMCPConfiguration
-                       configuredMCPs={displayData.configured_mcps}
-                       customMCPs={displayData.custom_mcps}
-                       onMCPChange={onMCPChange}
-                       agentId={agentId}
-                       versionData={{
-                         configured_mcps: displayData.configured_mcps,
-                         custom_mcps: displayData.custom_mcps,
-                         system_prompt: displayData.system_prompt,
-                         agentpress_tools: displayData.agentpress_tools
-                       }}
-                       saveMode="callback"
-                       versionId={versionData?.version_id}
-                       isLoading={isLoading}
-                     />
+                      configuredMCPs={displayData.configured_mcps}
+                      customMCPs={displayData.custom_mcps}
+                      onMCPChange={onMCPChange}
+                      agentId={agentId}
+                      versionData={{
+                        configured_mcps: displayData.configured_mcps,
+                        custom_mcps: displayData.custom_mcps,
+                        system_prompt: displayData.system_prompt,
+                        agentpress_tools: displayData.agentpress_tools,
+                      }}
+                      saveMode="callback"
+                      versionId={versionData?.version_id}
+                      isLoading={isLoading}
+                    />
                   </div>
                 </div>
               )}
             </div>
-            
-            <div className="group overflow-hidden rounded-2xl border border-border bg-card transition-all duration-300 hover:border-primary/10" data-tour="knowledge-section">
+
+            <div
+              className="group overflow-hidden rounded-2xl border border-border bg-card transition-all duration-300 hover:border-primary/10"
+              data-tour="knowledge-section"
+            >
               <button
                 className="w-full p-4 text-left group-hover:bg-muted/30 transition-all duration-300"
-                onClick={() => setOpenAccordion(openAccordion === 'knowledge' ? '' : 'knowledge')}
+                onClick={() =>
+                  setOpenAccordion(
+                    openAccordion === 'knowledge' ? '' : 'knowledge',
+                  )
+                }
                 disabled={isLoading}
               >
                 <div className="flex items-center gap-4 w-full">
@@ -304,17 +394,24 @@ export function ConfigurationTab({
                     </div>
                   </div>
                   <div className="text-left flex-1 min-w-0">
-                    <h4 className="text-sm font-semibold text-foreground mb-1 group-hover:text-primary transition-colors duration-300">Knowledge Base</h4>
-                    <p className="text-xs text-muted-foreground group-hover:text-foreground/70 transition-colors duration-300">Upload and manage knowledge for the agent</p>
+                    <h4 className="text-sm font-semibold text-foreground mb-1 group-hover:text-primary transition-colors duration-300">
+                      Knowledge Base
+                    </h4>
+                    <p className="text-xs text-muted-foreground group-hover:text-foreground/70 transition-colors duration-300">
+                      Upload and manage knowledge for the agent
+                    </p>
                   </div>
-                  <ChevronDown className={`h-4 w-4 flex-shrink-0 transition-transform duration-300 ease-out ${openAccordion === 'knowledge' ? 'rotate-180' : ''}`} />
+                  <ChevronDown
+                    className={`h-4 w-4 flex-shrink-0 transition-transform duration-300 ease-out ${openAccordion === 'knowledge' ? 'rotate-180' : ''}`}
+                  />
                 </div>
               </button>
               <div
-                className={`transition-all duration-300 ease-out ${openAccordion === 'knowledge'
-                  ? 'max-h-[600px] opacity-100'
-                  : 'max-h-0 opacity-0'
-                  }`}
+                className={`transition-all duration-300 ease-out ${
+                  openAccordion === 'knowledge'
+                    ? 'max-h-[600px] opacity-100'
+                    : 'max-h-0 opacity-0'
+                }`}
               >
                 <div className="px-6 pb-6 pt-2 overflow-y-auto max-h-[600px]">
                   <div className="pt-4">
@@ -326,11 +423,18 @@ export function ConfigurationTab({
                 </div>
               </div>
             </div>
-            
-            <div className="group overflow-hidden rounded-2xl border border-border bg-card transition-all duration-300 hover:border-primary/10" data-tour="playbooks-section">
+
+            <div
+              className="group overflow-hidden rounded-2xl border border-border bg-card transition-all duration-300 hover:border-primary/10"
+              data-tour="playbooks-section"
+            >
               <button
                 className="w-full p-4 text-left group-hover:bg-muted/30 transition-all duration-300"
-                onClick={() => setOpenAccordion(openAccordion === 'playbooks' ? '' : 'playbooks')}
+                onClick={() =>
+                  setOpenAccordion(
+                    openAccordion === 'playbooks' ? '' : 'playbooks',
+                  )
+                }
                 disabled={isLoading}
               >
                 <div className="flex items-center gap-4 w-full">
@@ -340,17 +444,24 @@ export function ConfigurationTab({
                     </div>
                   </div>
                   <div className="text-left flex-1 min-w-0">
-                    <h4 className="text-sm font-semibold text-foreground mb-1 group-hover:text-primary transition-colors duration-300">Playbooks</h4>
-                    <p className="text-xs text-muted-foreground group-hover:text-foreground/70 transition-colors duration-300">Simple variable-driven runs</p>
+                    <h4 className="text-sm font-semibold text-foreground mb-1 group-hover:text-primary transition-colors duration-300">
+                      Playbooks
+                    </h4>
+                    <p className="text-xs text-muted-foreground group-hover:text-foreground/70 transition-colors duration-300">
+                      Simple variable-driven runs
+                    </p>
                   </div>
-                  <ChevronDown className={`h-4 w-4 flex-shrink-0 transition-transform duration-300 ease-out ${openAccordion === 'playbooks' ? 'rotate-180' : ''}`} />
+                  <ChevronDown
+                    className={`h-4 w-4 flex-shrink-0 transition-transform duration-300 ease-out ${openAccordion === 'playbooks' ? 'rotate-180' : ''}`}
+                  />
                 </div>
               </button>
               <div
-                className={`overflow-hidden transition-all duration-300 ease-out ${openAccordion === 'playbooks'
-                  ? 'max-h-[600px] opacity-100'
-                  : 'max-h-0 opacity-0'
-                  }`}
+                className={`overflow-hidden transition-all duration-300 ease-out ${
+                  openAccordion === 'playbooks'
+                    ? 'max-h-[600px] opacity-100'
+                    : 'max-h-0 opacity-0'
+                }`}
               >
                 <div className="px-6 pb-6 pt-2">
                   <div className="pt-4">

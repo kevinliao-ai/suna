@@ -50,25 +50,27 @@ const parseContent = (content: any): any => {
 
 const extractFromNewFormat = (content: any): GetCurrentAgentConfigData => {
   const parsedContent = parseContent(content);
-  
+
   if (!parsedContent || typeof parsedContent !== 'object') {
-    return { 
+    return {
       summary: null,
       configuration: null,
       success: undefined,
-      timestamp: undefined 
+      timestamp: undefined,
     };
   }
 
-  if ('tool_execution' in parsedContent && typeof parsedContent.tool_execution === 'object') {
+  if (
+    'tool_execution' in parsedContent &&
+    typeof parsedContent.tool_execution === 'object'
+  ) {
     const toolExecution = parsedContent.tool_execution;
-    
+
     let parsedOutput = toolExecution.result?.output;
     if (typeof parsedOutput === 'string') {
       try {
         parsedOutput = JSON.parse(parsedOutput);
-      } catch (e) {
-      }
+      } catch (e) {}
     }
     parsedOutput = parsedOutput || {};
 
@@ -76,9 +78,9 @@ const extractFromNewFormat = (content: any): GetCurrentAgentConfigData => {
       summary: parsedOutput.summary || null,
       configuration: parsedOutput.configuration || null,
       success: toolExecution.result?.success,
-      timestamp: toolExecution.execution_details?.timestamp
+      timestamp: toolExecution.execution_details?.timestamp,
     };
-    
+
     return extractedData;
   }
 
@@ -87,7 +89,7 @@ const extractFromNewFormat = (content: any): GetCurrentAgentConfigData => {
       summary: parsedContent.output?.summary || null,
       configuration: parsedContent.output?.configuration || null,
       success: parsedContent.success,
-      timestamp: undefined
+      timestamp: undefined,
     };
 
     return extractedData;
@@ -97,27 +99,29 @@ const extractFromNewFormat = (content: any): GetCurrentAgentConfigData => {
     return extractFromNewFormat(parsedContent.content);
   }
 
-  return { 
+  return {
     summary: null,
     configuration: null,
     success: undefined,
-    timestamp: undefined 
+    timestamp: undefined,
   };
 };
 
-const extractFromLegacyFormat = (content: any): Omit<GetCurrentAgentConfigData, 'success' | 'timestamp'> => {
+const extractFromLegacyFormat = (
+  content: any,
+): Omit<GetCurrentAgentConfigData, 'success' | 'timestamp'> => {
   const toolData = extractToolData(content);
-  
+
   if (toolData.toolResult) {
     return {
       summary: null,
-      configuration: null
+      configuration: null,
     };
   }
-  
+
   return {
     summary: null,
-    configuration: null
+    configuration: null,
   };
 };
 
@@ -126,7 +130,7 @@ export function extractGetCurrentAgentConfigData(
   toolContent: any,
   isSuccess: boolean,
   toolTimestamp?: string,
-  assistantTimestamp?: string
+  assistantTimestamp?: string,
 ): {
   summary: string | null;
   configuration: AgentConfiguration | null;
@@ -135,7 +139,7 @@ export function extractGetCurrentAgentConfigData(
   actualAssistantTimestamp?: string;
 } {
   let data: GetCurrentAgentConfigData;
-  
+
   if (toolContent) {
     data = extractFromNewFormat(toolContent);
     if (data.success !== undefined || data.configuration || data.summary) {
@@ -143,7 +147,7 @@ export function extractGetCurrentAgentConfigData(
         ...data,
         actualIsSuccess: data.success !== undefined ? data.success : isSuccess,
         actualToolTimestamp: data.timestamp || toolTimestamp,
-        actualAssistantTimestamp: assistantTimestamp
+        actualAssistantTimestamp: assistantTimestamp,
       };
     }
   }
@@ -155,7 +159,7 @@ export function extractGetCurrentAgentConfigData(
         ...data,
         actualIsSuccess: data.success !== undefined ? data.success : isSuccess,
         actualToolTimestamp: toolTimestamp,
-        actualAssistantTimestamp: data.timestamp || assistantTimestamp
+        actualAssistantTimestamp: data.timestamp || assistantTimestamp,
       };
     }
   }
@@ -168,8 +172,8 @@ export function extractGetCurrentAgentConfigData(
     configuration: toolLegacy.configuration || assistantLegacy.configuration,
     actualIsSuccess: isSuccess,
     actualToolTimestamp: toolTimestamp,
-    actualAssistantTimestamp: assistantTimestamp
+    actualAssistantTimestamp: assistantTimestamp,
   };
 
   return combinedData;
-} 
+}

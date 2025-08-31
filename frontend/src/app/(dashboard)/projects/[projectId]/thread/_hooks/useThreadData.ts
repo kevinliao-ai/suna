@@ -26,7 +26,10 @@ interface UseThreadDataReturn {
   agentRunsQuery: ReturnType<typeof useAgentRunsQuery>;
 }
 
-export function useThreadData(threadId: string, projectId: string): UseThreadDataReturn {
+export function useThreadData(
+  threadId: string,
+  projectId: string,
+): UseThreadDataReturn {
   const [messages, setMessages] = useState<UnifiedMessage[]>([]);
   const [project, setProject] = useState<Project | null>(null);
   const [sandboxId, setSandboxId] = useState<string | null>(null);
@@ -35,28 +38,27 @@ export function useThreadData(threadId: string, projectId: string): UseThreadDat
   const [agentStatus, setAgentStatus] = useState<AgentStatus>('idle');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   const initialLoadCompleted = useRef<boolean>(false);
   const messagesLoadedRef = useRef(false);
   const agentRunsCheckedRef = useRef(false);
   const hasInitiallyScrolled = useRef<boolean>(false);
-  
 
   const threadQuery = useThreadQuery(threadId);
   const messagesQuery = useMessagesQuery(threadId);
   const projectQuery = useProjectQuery(projectId);
   const agentRunsQuery = useAgentRunsQuery(threadId);
-  
+
   // (debug logs removed)
 
   useEffect(() => {
     let isMounted = true;
-    
+
     // Reset refs when thread changes
     agentRunsCheckedRef.current = false;
     messagesLoadedRef.current = false;
     initialLoadCompleted.current = false;
-    
+
     // Clear messages on thread change; fresh data will set messages
     setMessages([]);
 
@@ -102,19 +104,24 @@ export function useThreadData(threadId: string, projectId: string): UseThreadDat
 
           // Merge with any local messages that are not present in server data yet
           const serverIds = new Set(
-            unifiedMessages.map((m) => m.message_id).filter(Boolean) as string[],
+            unifiedMessages
+              .map((m) => m.message_id)
+              .filter(Boolean) as string[],
           );
           const localExtras = (messages || []).filter(
             (m) =>
               !m.message_id ||
-              (typeof m.message_id === 'string' && m.message_id.startsWith('temp-')) ||
+              (typeof m.message_id === 'string' &&
+                m.message_id.startsWith('temp-')) ||
               !serverIds.has(m.message_id as string),
           );
-          const mergedMessages = [...unifiedMessages, ...localExtras].sort((a, b) => {
-            const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
-            const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
-            return aTime - bTime;
-          });
+          const mergedMessages = [...unifiedMessages, ...localExtras].sort(
+            (a, b) => {
+              const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
+              const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
+              return aTime - bTime;
+            },
+          );
 
           setMessages(mergedMessages);
           // Messages set only from server merge; no cross-thread cache
@@ -127,11 +134,13 @@ export function useThreadData(threadId: string, projectId: string): UseThreadDat
 
         if (agentRunsQuery.data && !agentRunsCheckedRef.current && isMounted) {
           // (debug logs removed)
-          
+
           agentRunsCheckedRef.current = true;
-          
+
           // Check for any running agents - no time restrictions!
-          const runningRuns = agentRunsQuery.data.filter(r => r.status === 'running');
+          const runningRuns = agentRunsQuery.data.filter(
+            (r) => r.status === 'running',
+          );
           if (runningRuns.length > 0) {
             const latestRunning = runningRuns[0]; // Use first running agent
             setAgentRunId(latestRunning.id);
@@ -147,7 +156,6 @@ export function useThreadData(threadId: string, projectId: string): UseThreadDat
           setIsLoading(false);
           // Removed time-based final check to avoid incorrectly forcing idle while a stream is active
         }
-
       } catch (err) {
         console.error('Error loading thread data:', err);
         if (isMounted) {
@@ -174,20 +182,26 @@ export function useThreadData(threadId: string, projectId: string): UseThreadDat
     threadQuery.error,
     projectQuery.data,
     messagesQuery.data,
-    agentRunsQuery.data
+    agentRunsQuery.data,
   ]);
 
   // Force message reload when thread changes or new data arrives
   useEffect(() => {
-    if (messagesQuery.data && messagesQuery.status === 'success' && !isLoading) {
+    if (
+      messagesQuery.data &&
+      messagesQuery.status === 'success' &&
+      !isLoading
+    ) {
       // (debug logs removed)
-      
+
       // Always reload messages when thread data changes or we have more raw messages than processed
-      const shouldReload = messages.length === 0 || messagesQuery.data.length > messages.length + 50; // Allow for status messages
-      
+      const shouldReload =
+        messages.length === 0 ||
+        messagesQuery.data.length > messages.length + 50; // Allow for status messages
+
       if (shouldReload) {
         // (debug logs removed)
-        
+
         const unifiedMessages = (messagesQuery.data || [])
           .filter((msg) => msg.type !== 'status')
           .map((msg: ApiMessageType) => ({
@@ -206,12 +220,15 @@ export function useThreadData(threadId: string, projectId: string): UseThreadDat
         // Merge strategy: preserve any local (optimistic/streamed) messages not in server yet
         setMessages((prev) => {
           const serverIds = new Set(
-            unifiedMessages.map((m) => m.message_id).filter(Boolean) as string[],
+            unifiedMessages
+              .map((m) => m.message_id)
+              .filter(Boolean) as string[],
           );
           const localExtras = (prev || []).filter(
             (m) =>
               !m.message_id ||
-              (typeof m.message_id === 'string' && m.message_id.startsWith('temp-')) ||
+              (typeof m.message_id === 'string' &&
+                m.message_id.startsWith('temp-')) ||
               !serverIds.has(m.message_id as string),
           );
           const merged = [...unifiedMessages, ...localExtras].sort((a, b) => {
@@ -219,7 +236,7 @@ export function useThreadData(threadId: string, projectId: string): UseThreadDat
             const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
             return aTime - bTime;
           });
-          
+
           // Messages set only from server merge; no cross-thread cache
           return merged;
         });
@@ -227,7 +244,13 @@ export function useThreadData(threadId: string, projectId: string): UseThreadDat
         // (debug logs removed)
       }
     }
-  }, [messagesQuery.data, messagesQuery.status, isLoading, messages.length, threadId]);
+  }, [
+    messagesQuery.data,
+    messagesQuery.status,
+    isLoading,
+    messages.length,
+    threadId,
+  ]);
 
   return {
     messages,
@@ -247,4 +270,4 @@ export function useThreadData(threadId: string, projectId: string): UseThreadDat
     projectQuery,
     agentRunsQuery,
   };
-} 
+}

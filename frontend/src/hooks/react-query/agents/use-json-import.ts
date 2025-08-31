@@ -56,7 +56,10 @@ export const useAnalyzeJsonForImport = () => {
         const response = await backendApi.post('/agents/json/analyze', request);
         return response.data;
       } catch (error: any) {
-        const message = error.response?.data?.detail || error.message || 'Failed to analyze JSON';
+        const message =
+          error.response?.data?.detail ||
+          error.message ||
+          'Failed to analyze JSON';
         throw new Error(message);
       }
     },
@@ -74,18 +77,21 @@ export const useImportAgentFromJson = () => {
         return response.data;
       } catch (error: any) {
         const errorData = error.response?.data;
-        const isAgentLimitError = (error.response?.status === 402) && (
-          errorData?.error_code === 'AGENT_LIMIT_EXCEEDED' || 
-          errorData?.detail?.error_code === 'AGENT_LIMIT_EXCEEDED'
-        );
-        
+        const isAgentLimitError =
+          error.response?.status === 402 &&
+          (errorData?.error_code === 'AGENT_LIMIT_EXCEEDED' ||
+            errorData?.detail?.error_code === 'AGENT_LIMIT_EXCEEDED');
+
         if (isAgentLimitError) {
           const { AgentCountLimitError } = await import('@/lib/api');
           const errorDetail = errorData?.detail || errorData;
           throw new AgentCountLimitError(error.response.status, errorDetail);
         }
-        
-        const message = error.response?.data?.detail || error.message || 'Failed to import agent';
+
+        const message =
+          error.response?.data?.detail ||
+          error.message ||
+          'Failed to import agent';
         throw new Error(message);
       }
     },
@@ -100,4 +106,9 @@ export const useImportAgentFromJson = () => {
   });
 };
 
-export type { JsonAnalysisRequest, JsonAnalysisResult, JsonImportRequest, JsonImportResult }; 
+export type {
+  JsonAnalysisRequest,
+  JsonAnalysisResult,
+  JsonImportRequest,
+  JsonImportResult,
+};

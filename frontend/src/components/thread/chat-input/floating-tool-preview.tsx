@@ -1,7 +1,10 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CircleDashed, Maximize2 } from 'lucide-react';
-import { getToolIcon, getUserFriendlyToolName } from '@/components/thread/utils';
+import {
+  getToolIcon,
+  getUserFriendlyToolName,
+} from '@/components/thread/utils';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
@@ -40,8 +43,11 @@ const getToolResultStatus = (toolCall: any): boolean => {
   if (!content) return toolCall?.toolResult?.isSuccess ?? true;
 
   const safeParse = (data: any) => {
-    try { return typeof data === 'string' ? JSON.parse(data) : data; }
-    catch { return null; }
+    try {
+      return typeof data === 'string' ? JSON.parse(data) : data;
+    } catch {
+      return null;
+    }
   };
 
   const parsed = safeParse(content);
@@ -53,11 +59,14 @@ const getToolResultStatus = (toolCall: any): boolean => {
       return inner.tool_execution.result.success;
     }
   }
-  const success = parsed.tool_execution?.result?.success ??
+  const success =
+    parsed.tool_execution?.result?.success ??
     parsed.result?.success ??
     parsed.success;
 
-  return success !== undefined ? success : (toolCall?.toolResult?.isSuccess ?? true);
+  return success !== undefined
+    ? success
+    : (toolCall?.toolResult?.isSuccess ?? true);
 };
 
 export const FloatingToolPreview: React.FC<FloatingToolPreviewProps> = ({
@@ -103,10 +112,10 @@ export const FloatingToolPreview: React.FC<FloatingToolPreviewProps> = ({
           layout
           transition={{
             layout: {
-              type: "spring",
+              type: 'spring',
               stiffness: 300,
-              damping: 30
-            }
+              damping: 30,
+            },
           }}
           className="-mb-4 w-full"
           style={{ pointerEvents: 'auto' }}
@@ -124,46 +133,62 @@ export const FloatingToolPreview: React.FC<FloatingToolPreviewProps> = ({
                 <motion.div
                   layoutId="tool-icon"
                   className={cn(
-                    "w-10 h-10 rounded-2xl flex items-center justify-center",
+                    'w-10 h-10 rounded-2xl flex items-center justify-center',
                     isStreaming
-                      ? "bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800"
+                      ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800'
                       : isSuccess
-                        ? "bg-green-50 dark:bg-green-900/20 border border-green-300 dark:border-green-800"
-                        : "bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800"
+                        ? 'bg-green-50 dark:bg-green-900/20 border border-green-300 dark:border-green-800'
+                        : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800',
                   )}
                   style={{ opacity: isExpanding ? 0 : 1 }}
                 >
                   {isStreaming ? (
-                    <CircleDashed className="h-5 w-5 text-blue-500 dark:text-blue-400 animate-spin" style={{ opacity: isExpanding ? 0 : 1 }} />
+                    <CircleDashed
+                      className="h-5 w-5 text-blue-500 dark:text-blue-400 animate-spin"
+                      style={{ opacity: isExpanding ? 0 : 1 }}
+                    />
                   ) : (
-                    <CurrentToolIcon className="h-5 w-5 text-foreground" style={{ opacity: isExpanding ? 0 : 1 }} />
+                    <CurrentToolIcon
+                      className="h-5 w-5 text-foreground"
+                      style={{ opacity: isExpanding ? 0 : 1 }}
+                    />
                   )}
                 </motion.div>
               </div>
 
-              <div className="flex-1 min-w-0" style={{ opacity: isExpanding ? 0 : 1 }}>
-                <motion.div layoutId="tool-title" className="flex items-center gap-2 mb-1">
+              <div
+                className="flex-1 min-w-0"
+                style={{ opacity: isExpanding ? 0 : 1 }}
+              >
+                <motion.div
+                  layoutId="tool-title"
+                  className="flex items-center gap-2 mb-1"
+                >
                   <h4 className="text-sm font-medium text-foreground truncate">
                     {getUserFriendlyToolName(toolName)}
                   </h4>
                 </motion.div>
 
-                <motion.div layoutId="tool-status" className="flex items-center gap-2">
-                  <div className={cn(
-                    "w-2 h-2 rounded-full",
-                    isStreaming
-                      ? "bg-blue-500 animate-pulse"
-                      : isSuccess
-                        ? "bg-green-500"
-                        : "bg-red-500"
-                  )} />
+                <motion.div
+                  layoutId="tool-status"
+                  className="flex items-center gap-2"
+                >
+                  <div
+                    className={cn(
+                      'w-2 h-2 rounded-full',
+                      isStreaming
+                        ? 'bg-blue-500 animate-pulse'
+                        : isSuccess
+                          ? 'bg-green-500'
+                          : 'bg-red-500',
+                    )}
+                  />
                   <span className="text-xs text-muted-foreground truncate">
                     {isStreaming
                       ? `${agentName || 'Suna'} is working...`
                       : isSuccess
-                        ? "Success"
-                        : "Failed"
-                    }
+                        ? 'Success'
+                        : 'Failed'}
                   </span>
                 </motion.div>
               </div>
@@ -184,17 +209,21 @@ export const FloatingToolPreview: React.FC<FloatingToolPreviewProps> = ({
                     <div
                       key={index}
                       className={cn(
-                        "transition-all duration-300 ease-out rounded-full",
+                        'transition-all duration-300 ease-out rounded-full',
                         index === indicatorIndex
-                          ? "w-6 h-2 bg-foreground"
-                          : "w-3 h-2 bg-muted-foreground/40"
+                          ? 'w-6 h-2 bg-foreground'
+                          : 'w-3 h-2 bg-muted-foreground/40',
                       )}
                     />
                   ))}
                 </button>
               )}
 
-              <Button value='ghost' className="bg-transparent hover:bg-transparent flex-shrink-0" style={{ opacity: isExpanding ? 0 : 1 }}>
+              <Button
+                value="ghost"
+                className="bg-transparent hover:bg-transparent flex-shrink-0"
+                style={{ opacity: isExpanding ? 0 : 1 }}
+              >
                 <Maximize2 className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
               </Button>
             </div>
@@ -203,4 +232,4 @@ export const FloatingToolPreview: React.FC<FloatingToolPreviewProps> = ({
       )}
     </AnimatePresence>
   );
-}; 
+};

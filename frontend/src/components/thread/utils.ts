@@ -37,14 +37,16 @@ export function safeJsonParse<T>(
   if (!jsonString) {
     return fallback;
   }
-  
+
   try {
     // First attempt: Parse as normal JSON
     const parsed = JSON.parse(jsonString);
-    
+
     // Check if the result is a string that looks like JSON (double-escaped case)
-    if (typeof parsed === 'string' && 
-        (parsed.startsWith('{') || parsed.startsWith('['))) {
+    if (
+      typeof parsed === 'string' &&
+      (parsed.startsWith('{') || parsed.startsWith('['))
+    ) {
       try {
         // Second attempt: Parse the string result as JSON (handles double-escaped)
         return JSON.parse(parsed) as T;
@@ -53,14 +55,14 @@ export function safeJsonParse<T>(
         return parsed as unknown as T;
       }
     }
-    
+
     return parsed as T;
   } catch (outerError) {
     // If the input is already an object/array (shouldn't happen but just in case)
     if (typeof jsonString === 'object') {
       return jsonString as T;
     }
-    
+
     // Try one more time in case it's a plain string that should be returned as-is
     if (typeof jsonString === 'string') {
       // Check if it's a string representation of a simple value
@@ -68,13 +70,13 @@ export function safeJsonParse<T>(
       if (jsonString === 'false') return false as unknown as T;
       if (jsonString === 'null') return null as unknown as T;
       if (!isNaN(Number(jsonString))) return Number(jsonString) as unknown as T;
-      
+
       // Return as string if it doesn't look like JSON
       if (!jsonString.startsWith('{') && !jsonString.startsWith('[')) {
         return jsonString as unknown as T;
       }
     }
-    
+
     // console.warn('Failed to parse JSON string:', jsonString, outerError); // Optional: log errors
     return fallback;
   }
@@ -125,7 +127,7 @@ export const getToolIcon = (toolName: string): ElementType => {
     case 'crawl-webpage':
       return Globe;
     case 'scrape-webpage':
-        return Globe;
+      return Globe;
 
     // API and data operations
     case 'call-data-provider':
@@ -170,11 +172,14 @@ export const getToolIcon = (toolName: string): ElementType => {
         if (parts.length >= 3) {
           const serverName = parts[1];
           const toolNamePart = parts.slice(2).join('_');
-          
+
           // Map specific MCP tools to appropriate icons
           if (toolNamePart.includes('search') || toolNamePart.includes('web')) {
             return Search;
-          } else if (toolNamePart.includes('research') || toolNamePart.includes('paper')) {
+          } else if (
+            toolNamePart.includes('research') ||
+            toolNamePart.includes('paper')
+          ) {
             return BookOpen;
           } else if (serverName === 'exa') {
             return Search; // Exa is primarily a search service
@@ -182,7 +187,7 @@ export const getToolIcon = (toolName: string): ElementType => {
         }
         return PlugIcon; // Default icon for MCP tools
       }
-      
+
       // Add logging for debugging unhandled tool types
       return Wrench; // Default icon for tools
   }
@@ -249,7 +254,9 @@ export const extractPrimaryParam = (
         return match ? match[1].split('/').pop() || match[1] : null;
       case 'edit-file':
         // Try to match target_file attribute for edit-file
-        match = content.match(/target_file=(?:"|')([^"|']+)(?:"|')/) || content.match(/<parameter\s+name=["']target_file["']>([^<]+)/i);
+        match =
+          content.match(/target_file=(?:"|')([^"|']+)(?:"|')/) ||
+          content.match(/<parameter\s+name=["']target_file["']>([^<]+)/i);
         // Return just the filename part
         return match ? (match[1].split('/').pop() || match[1]).trim() : null;
 
@@ -300,7 +307,7 @@ const TOOL_DISPLAY_NAMES = new Map([
   ['check-command-output', 'Checking Command Output'],
   ['terminate-command', 'Terminating Command'],
   ['list-commands', 'Listing Commands'],
-  
+
   ['create-file', 'Creating File'],
   ['delete-file', 'Deleting File'],
   ['full-file-rewrite', 'Rewriting File'],
@@ -312,7 +319,7 @@ const TOOL_DISPLAY_NAMES = new Map([
 
   ['create-tasks', 'Creating Tasks'],
   ['update-tasks', 'Updating Tasks'],
-  
+
   ['browser_navigate_to', 'Navigating to Page'],
   ['browser_act', 'Performing Action'],
   ['browser_extract_content', 'Extracting Content'],
@@ -321,7 +328,7 @@ const TOOL_DISPLAY_NAMES = new Map([
   ['execute-data-provider-call', 'Calling data provider'],
   ['execute_data-provider_call', 'Calling data provider'],
   ['get-data-provider-endpoints', 'Getting endpoints'],
-  
+
   ['deploy', 'Deploying'],
   ['ask', 'Ask'],
   ['create-tasks', 'Creating Tasks'],
@@ -341,7 +348,6 @@ const TOOL_DISPLAY_NAMES = new Map([
   ['analyze-sheet', 'Analyzing Sheet'],
   ['visualize-sheet', 'Visualizing Sheet'],
   ['format-sheet', 'Formatting Sheet'],
-  
 
   ['update-agent', 'Updating Agent'],
   ['get-current-agent-config', 'Getting Agent Config'],
@@ -360,13 +366,13 @@ const TOOL_DISPLAY_NAMES = new Map([
   ['check_command_output', 'Checking Command Output'],
   ['terminate_command', 'Terminating Command'],
   ['list_commands', 'Listing Commands'],
-  
+
   ['create_file', 'Creating File'],
   ['delete_file', 'Deleting File'],
   ['full_file_rewrite', 'Rewriting File'],
   ['str_replace', 'Editing Text'],
   ['edit_file', 'Editing File'],
-  
+
   ['browser_navigate_to', 'Navigating to Page'],
   ['browser_act', 'Performing Action'],
   ['browser_extract_content', 'Extracting Content'],
@@ -374,7 +380,7 @@ const TOOL_DISPLAY_NAMES = new Map([
 
   ['execute_data_provider_call', 'Calling data provider'],
   ['get_data_provider_endpoints', 'Getting endpoints'],
-  
+
   ['deploy', 'Deploying'],
   ['ask', 'Ask'],
   ['complete', 'Completing Task'],
@@ -383,7 +389,7 @@ const TOOL_DISPLAY_NAMES = new Map([
   ['scrape_webpage', 'Scraping Website'],
   ['web_search', 'Searching Web'],
   ['see_image', 'Viewing Image'],
-  
+
   ['update_agent', 'Updating Agent'],
   ['get_current_agent_config', 'Getting Agent Config'],
   ['search_mcp_servers', 'Searching MCP Servers'],
@@ -391,7 +397,6 @@ const TOOL_DISPLAY_NAMES = new Map([
   ['configure_mcp_server', 'Configuring MCP Server'],
   ['get_popular_mcp_servers', 'Getting Popular MCP Servers'],
   ['test_mcp_server_connection', 'Testing MCP Server Connection'],
-
 
   ['create-new-agent', 'Creating New Agent'],
   ['search-mcp-servers-for-agent', 'Searching MCP Servers'],
@@ -405,7 +410,6 @@ const TOOL_DISPLAY_NAMES = new Map([
   ['list-agent-scheduled-triggers', 'Listing Agent Scheduled Triggers'],
 ]);
 
-
 const MCP_SERVER_NAMES = new Map([
   ['exa', 'Exa Search'],
   ['github', 'GitHub'],
@@ -417,47 +421,45 @@ const MCP_SERVER_NAMES = new Map([
 
 function formatMCPToolName(serverName: string, toolName: string): string {
   const serverMappings: Record<string, string> = {
-    'exa': 'Exa Search',
-    'github': 'GitHub',
-    'notion': 'Notion', 
-    'slack': 'Slack',
-    'filesystem': 'File System',
-    'memory': 'Memory',
-    'anthropic': 'Anthropic',
-    'openai': 'OpenAI',
-    'composio': 'Composio',
-    'langchain': 'LangChain',
-    'llamaindex': 'LlamaIndex'
+    exa: 'Exa Search',
+    github: 'GitHub',
+    notion: 'Notion',
+    slack: 'Slack',
+    filesystem: 'File System',
+    memory: 'Memory',
+    anthropic: 'Anthropic',
+    openai: 'OpenAI',
+    composio: 'Composio',
+    langchain: 'LangChain',
+    llamaindex: 'LlamaIndex',
   };
-  
-  const formattedServerName = serverMappings[serverName.toLowerCase()] || 
+
+  const formattedServerName =
+    serverMappings[serverName.toLowerCase()] ||
     serverName.charAt(0).toUpperCase() + serverName.slice(1);
-  
+
   let formattedToolName = toolName;
-  
+
   if (toolName.includes('-')) {
     formattedToolName = toolName
       .split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
-  }
-  else if (toolName.includes('_')) {
+  } else if (toolName.includes('_')) {
     formattedToolName = toolName
       .split('_')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
-  }
-  else if (/[a-z][A-Z]/.test(toolName)) {
+  } else if (/[a-z][A-Z]/.test(toolName)) {
     formattedToolName = toolName
       .replace(/([a-z])([A-Z])/g, '$1 $2')
       .split(' ')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
-  }
-  else {
+  } else {
     formattedToolName = toolName.charAt(0).toUpperCase() + toolName.slice(1);
   }
-  
+
   return `${formattedServerName}: ${formattedToolName}`;
 }
 

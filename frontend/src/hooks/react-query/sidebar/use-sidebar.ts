@@ -1,11 +1,11 @@
 'use client';
 
-import { createMutationHook } from "@/hooks/use-query";
-import { getProjects, getThreads, Project, Thread } from "@/lib/api";
+import { createMutationHook } from '@/hooks/use-query';
+import { getProjects, getThreads, Project, Thread } from '@/lib/api';
 import { createQueryHook } from '@/hooks/use-query';
-import { threadKeys } from "./keys";
-import { projectKeys } from "./keys";
-import { deleteThread } from "../threads/utils";
+import { threadKeys } from './keys';
+import { projectKeys } from './keys';
+import { deleteThread } from '../threads/utils';
 
 export const useProjects = createQueryHook(
   projectKeys.lists(),
@@ -16,7 +16,7 @@ export const useProjects = createQueryHook(
   {
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
-  }
+  },
 );
 
 export const useThreads = createQueryHook(
@@ -28,7 +28,7 @@ export const useThreads = createQueryHook(
   {
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
-  }
+  },
 );
 
 interface DeleteThreadVariables {
@@ -42,9 +42,8 @@ export const useDeleteThread = createMutationHook(
     return await deleteThread(threadId, sandboxId);
   },
   {
-    onSuccess: () => {
-    },
-  }
+    onSuccess: () => {},
+  },
 );
 
 interface DeleteMultipleThreadsVariables {
@@ -54,7 +53,11 @@ interface DeleteMultipleThreadsVariables {
 }
 
 export const useDeleteMultipleThreads = createMutationHook(
-  async ({ threadIds, threadSandboxMap, onProgress }: DeleteMultipleThreadsVariables) => {
+  async ({
+    threadIds,
+    threadSandboxMap,
+    onProgress,
+  }: DeleteMultipleThreadsVariables) => {
     let completedCount = 0;
     const results = await Promise.all(
       threadIds.map(async (threadId) => {
@@ -67,18 +70,17 @@ export const useDeleteMultipleThreads = createMutationHook(
         } catch (error) {
           return { success: false, threadId, error };
         }
-      })
+      }),
     );
-    
+
     return {
-      successful: results.filter(r => r.success).map(r => r.threadId),
-      failed: results.filter(r => !r.success).map(r => r.threadId),
+      successful: results.filter((r) => r.success).map((r) => r.threadId),
+      failed: results.filter((r) => !r.success).map((r) => r.threadId),
     };
   },
   {
-    onSuccess: () => {
-    },
-  }
+    onSuccess: () => {},
+  },
 );
 
 export type ThreadWithProject = {
@@ -91,7 +93,7 @@ export type ThreadWithProject = {
 
 export const processThreadsWithProjects = (
   threads: Thread[],
-  projects: Project[]
+  projects: Project[],
 ): ThreadWithProject[] => {
   const projectsById = new Map<string, Project>();
   projects.forEach((project) => {
@@ -109,7 +111,10 @@ export const processThreadsWithProjects = (
       continue;
     }
     let displayName = project.name || 'Unnamed Project';
-    if (thread.metadata?.is_workflow_execution && thread.metadata?.workflow_run_name) {
+    if (
+      thread.metadata?.is_workflow_execution &&
+      thread.metadata?.workflow_run_name
+    ) {
       displayName = thread.metadata.workflow_run_name;
     }
 
@@ -139,19 +144,19 @@ export type GroupedThreads = {
 };
 
 export const groupThreadsByDate = (
-  threadsList: ThreadWithProject[]
+  threadsList: ThreadWithProject[],
 ): GroupedThreads => {
   const sortedThreads = sortThreads(threadsList);
   const grouped: GroupedThreads = {};
   const now = new Date();
-  
-  sortedThreads.forEach(thread => {
+
+  sortedThreads.forEach((thread) => {
     const threadDate = new Date(thread.updatedAt);
     const diffInMs = now.getTime() - threadDate.getTime();
     const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
-    
+
     let dateGroup: string;
-    
+
     if (diffInDays === 0) {
       dateGroup = 'Today';
     } else if (diffInDays === 1) {
@@ -165,12 +170,12 @@ export const groupThreadsByDate = (
     } else {
       dateGroup = 'Older';
     }
-    
+
     if (!grouped[dateGroup]) {
       grouped[dateGroup] = [];
     }
     grouped[dateGroup].push(thread);
   });
-  
+
   return grouped;
 };

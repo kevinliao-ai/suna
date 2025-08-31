@@ -9,16 +9,16 @@ import {
   Hash,
   Tag,
   GitBranch,
-  Package
+  Package,
 } from 'lucide-react';
 import { ToolViewProps } from '../types';
 import { formatTimestamp, getToolTitle } from '../utils';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { LoadingState } from '../shared/LoadingState';
-import { Separator } from "@/components/ui/separator";
+import { Separator } from '@/components/ui/separator';
 import { extractConfigureProfileForAgentData } from './_utils';
 
 export function ConfigureProfileForAgentToolView({
@@ -30,7 +30,6 @@ export function ConfigureProfileForAgentToolView({
   isSuccess = true,
   isStreaming = false,
 }: ToolViewProps) {
-
   const {
     enabled_tools,
     display_name,
@@ -40,13 +39,13 @@ export function ConfigureProfileForAgentToolView({
     version_name,
     actualIsSuccess,
     actualToolTimestamp,
-    actualAssistantTimestamp
+    actualAssistantTimestamp,
   } = extractConfigureProfileForAgentData(
     assistantContent,
     toolContent,
     isSuccess,
     toolTimestamp,
-    assistantTimestamp
+    assistantTimestamp,
   );
 
   const toolTitle = getToolTitle(name);
@@ -55,15 +54,18 @@ export function ConfigureProfileForAgentToolView({
     return toolName
       .replace(/^[A-Z_]+-/, '')
       .split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
       .join(' ');
   };
 
   const getToolCategory = (toolName: string) => {
     const upperTool = toolName.toUpperCase();
-    if (upperTool.includes('SCHEDULE') || upperTool.includes('MEETING')) return 'Meeting';
-    if (upperTool.includes('EMAIL') || upperTool.includes('SEND')) return 'Communication';
-    if (upperTool.includes('FILE') || upperTool.includes('DOCUMENT')) return 'Files';
+    if (upperTool.includes('SCHEDULE') || upperTool.includes('MEETING'))
+      return 'Meeting';
+    if (upperTool.includes('EMAIL') || upperTool.includes('SEND'))
+      return 'Communication';
+    if (upperTool.includes('FILE') || upperTool.includes('DOCUMENT'))
+      return 'Files';
     if (upperTool.includes('CALENDAR')) return 'Calendar';
     return 'Integration';
   };
@@ -87,10 +89,10 @@ export function ConfigureProfileForAgentToolView({
             <Badge
               variant="outline"
               className={cn(
-                "text-xs font-medium",
+                'text-xs font-medium',
                 actualIsSuccess
-                  ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800"
-                  : "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800"
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800'
+                  : 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800',
               )}
             >
               {actualIsSuccess ? (
@@ -98,7 +100,9 @@ export function ConfigureProfileForAgentToolView({
               ) : (
                 <AlertTriangle className="h-3 w-3" />
               )}
-              {actualIsSuccess ? 'Configuration updated' : 'Configuration failed'}
+              {actualIsSuccess
+                ? 'Configuration updated'
+                : 'Configuration failed'}
             </Badge>
           )}
         </div>
@@ -242,4 +246,4 @@ export function ConfigureProfileForAgentToolView({
       </CardContent>
     </Card>
   );
-} 
+}
