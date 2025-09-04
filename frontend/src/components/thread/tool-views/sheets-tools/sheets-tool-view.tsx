@@ -16,13 +16,8 @@ import {
 import { cn } from '@/lib/utils';
 import { parseToolResult } from '../tool-result-parser';
 import { FileAttachment } from '../../file-attachment';
-import { LuckysheetViewer } from './luckysheet-viewer';
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from '@/components/ui/dropdown-menu';
+import { XlsxRenderer } from '@/components/file-renderers/xlsx-renderer';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/components/AuthProvider';
 import { fetchFileContent } from '@/hooks/react-query/files/use-file-queries';
 
@@ -259,12 +254,14 @@ export function SheetsToolView({
             <ScrollArea className="h-full">
               <div className="p-4 flex flex-col h-full space-y-4">
                 {primaryXlsx ? (
-                  <LuckysheetViewer
-                    xlsxPath={primaryXlsx}
-                    sandboxId={project?.sandbox?.id}
-                    className="w-full"
-                    height={520}
-                  />
+                  <div className="space-y-3 h-full">
+                    <XlsxRenderer
+                      filePath={primaryXlsx}
+                      fileName={(primaryXlsx.split('/').pop() || 'sheet.xlsx')}
+                      project={project}
+                      className="w-full h-[60vh]"
+                    />
+                  </div>
                 ) : primaryCsv ? (
                   <div className="space-y-3 h-full">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">

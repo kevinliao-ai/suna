@@ -205,6 +205,7 @@ export function FileOperationToolView({
           <MarkdownRenderer
             content={processUnicodeContent(fileContent)}
             project={project}
+            basePath={processedFilePath || undefined}
           />
         </div>
       );

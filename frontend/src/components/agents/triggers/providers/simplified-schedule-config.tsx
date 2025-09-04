@@ -45,7 +45,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
-import { Separator } from '@/components/ui/separator';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { TriggerProvider, ScheduleTriggerConfig } from '../types';
@@ -1383,20 +1382,15 @@ export const SimplifiedScheduleConfig: React.FC<
     </div>
   );
 
-  // If open is true, render as standalone dialog
-  if (open) {
-    return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-4xl max-h-[90vh] p-0">
-          <VisuallyHidden>
-            <DialogTitle>Create Scheduled Task</DialogTitle>
-          </VisuallyHidden>
-          {renderContent()}
-        </DialogContent>
-      </Dialog>
-    );
-  }
-
-  // Otherwise, just return the content (for use inside TriggerConfigDialog)
-  return renderContent();
+  // Always render as dialog
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-4xl max-h-[90vh] p-0 overflow-hidden">
+        <VisuallyHidden>
+          <DialogTitle>Create Scheduled Task</DialogTitle>
+        </VisuallyHidden>
+        {renderContent()}
+      </DialogContent>
+    </Dialog>
+  );
 };
