@@ -66,7 +66,7 @@ export default function NotFound() {
             className="h-full w-full"
             squareSize={mounted && tablet ? 2 : 2.5}
             gridGap={mounted && tablet ? 2 : 2.5}
-            color="var(--secondary)"
+            color="#B4B4B4"
             maxOpacity={0.4}
             flickerChance={isScrolling ? 0.01 : 0.03}
           />
@@ -87,7 +87,7 @@ export default function NotFound() {
             className="h-full w-full"
             squareSize={mounted && tablet ? 2 : 2.5}
             gridGap={mounted && tablet ? 2 : 2.5}
-            color="var(--secondary)"
+            color="#B4B4B4"
             maxOpacity={0.4}
             flickerChance={isScrolling ? 0.01 : 0.03}
           />
