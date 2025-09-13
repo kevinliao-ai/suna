@@ -7,6 +7,8 @@ import { ToolCallInput } from '@/components/thread/tool-call-side-panel';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { UnifiedMessage } from '@/components/thread/types';
 
+
+
 interface ShareThreadLayoutProps {
   children: React.ReactNode;
   threadId: string;
@@ -53,7 +55,7 @@ export function ShareThreadLayout({
   initialLoadCompleted,
 }: ShareThreadLayoutProps) {
   const isActuallyMobile = useIsMobile();
-
+  
   return (
     <div className="flex h-screen">
       <div

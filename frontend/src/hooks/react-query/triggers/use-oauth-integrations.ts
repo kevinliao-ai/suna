@@ -32,24 +32,20 @@ interface OAuthInstallResponse {
 
 const getAccessToken = async () => {
   const supabase = createClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  const { data: { session } } = await supabase.auth.getSession();
   if (!session) {
     throw new Error('You must be logged in to manage integrations');
   }
   return session.access_token;
 };
 
-const initiateOAuthInstall = async (
-  request: OAuthInstallRequest,
-): Promise<OAuthInstallResponse> => {
+const initiateOAuthInstall = async (request: OAuthInstallRequest): Promise<OAuthInstallResponse> => {
   const accessToken = await getAccessToken();
   const response = await fetch(`${API_URL}/integrations/install`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${accessToken}`,
+      'Authorization': `Bearer ${accessToken}`,
     },
     body: JSON.stringify(request),
   });
@@ -64,16 +60,13 @@ const initiateOAuthInstall = async (
 
 const uninstallOAuthIntegration = async (triggerId: string): Promise<void> => {
   const accessToken = await getAccessToken();
-  const response = await fetch(
-    `${API_URL}/integrations/uninstall/${triggerId}`,
-    {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${accessToken}`,
-      },
+  const response = await fetch(`${API_URL}/integrations/uninstall/${triggerId}`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${accessToken}`,
     },
-  );
+  });
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
@@ -120,7 +113,7 @@ export const useOAuthCallbackHandler = () => {
     const urlParams = new URLSearchParams(window.location.search);
     const agentId = sessionStorage.getItem('oauth_agent_id');
     const provider = sessionStorage.getItem('oauth_provider');
-
+    
     const slackSuccess = urlParams.get('slack_success');
     const discordSuccess = urlParams.get('discord_success');
     const teamsSuccess = urlParams.get('teams_success');
@@ -133,40 +126,30 @@ export const useOAuthCallbackHandler = () => {
     const teamsError = urlParams.get('teams_error');
 
     if (slackSuccess || discordSuccess || teamsSuccess) {
-      const providerName = slackSuccess
-        ? 'Slack'
-        : discordSuccess
-          ? 'Discord'
-          : 'Teams';
+      const providerName = slackSuccess ? 'Slack' : discordSuccess ? 'Discord' : 'Teams';
       toast.success(`${providerName} integration installed successfully!`);
-
+      
       if (agentId) {
-        queryClient.invalidateQueries({
-          queryKey: ['oauth-integrations', agentId],
-        });
+        queryClient.invalidateQueries({ queryKey: ['oauth-integrations', agentId] });
       }
 
       sessionStorage.removeItem('oauth_agent_id');
       sessionStorage.removeItem('oauth_provider');
-
+      
       const newUrl = window.location.pathname;
       window.history.replaceState({}, document.title, newUrl);
     } else if (slackError || discordError || teamsError) {
       const error = slackError || discordError || teamsError;
-      const providerName = slackError
-        ? 'Slack'
-        : discordError
-          ? 'Discord'
-          : 'Teams';
+      const providerName = slackError ? 'Slack' : discordError ? 'Discord' : 'Teams';
       toast.error(`Failed to install ${providerName} integration: ${error}`);
-
+      
       sessionStorage.removeItem('oauth_agent_id');
       sessionStorage.removeItem('oauth_provider');
-
+      
       const newUrl = window.location.pathname;
       window.history.replaceState({}, document.title, newUrl);
     }
   };
 
   return { handleCallback };
-};
+}; 

@@ -9,6 +9,52 @@ const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || '';
 const nonRunningAgentRuns = new Set<string>();
 // Map to keep track of active EventSource streams
 const activeStreams = new Map<string, EventSource>();
+// Map to keep track of safety timeouts
+const safetyTimeouts = new Map<string, number>();
+
+/**
+ * Helper function to safely cleanup EventSource connections
+ * This ensures consistent cleanup and prevents memory leaks
+ */
+const cleanupEventSource = (agentRunId: string, reason?: string): void => {
+  const stream = activeStreams.get(agentRunId);
+  if (stream) {
+    if (reason) {
+      console.log(`[STREAM] Cleaning up EventSource for ${agentRunId}: ${reason}`);
+    }
+    
+    // Close the connection
+    if (stream.readyState !== EventSource.CLOSED) {
+      stream.close();
+    }
+    
+    // Remove from active streams
+    activeStreams.delete(agentRunId);
+  }
+
+  // Clear any associated safety timeout
+  const timeout = safetyTimeouts.get(agentRunId);
+  if (timeout) {
+    clearTimeout(timeout);
+    safetyTimeouts.delete(agentRunId);
+  }
+};
+
+/**
+ * Failsafe cleanup function to prevent memory leaks
+ * Should be called periodically or during app teardown
+ */
+const cleanupAllEventSources = (reason = 'batch cleanup'): void => {
+  console.log(`[STREAM] Running batch cleanup: ${activeStreams.size} active streams`);
+  
+  const streamIds = Array.from(activeStreams.keys());
+  streamIds.forEach(agentRunId => {
+    cleanupEventSource(agentRunId, reason);
+  });
+};
+
+// Export cleanup function for external use
+export { cleanupAllEventSources };
 
 // Custom error for billing issues
 export class BillingError extends Error {
@@ -33,7 +79,7 @@ export class BillingError extends Error {
 // Custom error for agent run limit exceeded
 export class AgentRunLimitError extends Error {
   status: number;
-  detail: {
+  detail: { 
     message: string;
     running_thread_ids: string[];
     running_count: number;
@@ -41,7 +87,7 @@ export class AgentRunLimitError extends Error {
 
   constructor(
     status: number,
-    detail: {
+    detail: { 
       message: string;
       running_thread_ids: string[];
       running_count: number;
@@ -61,7 +107,7 @@ export class AgentRunLimitError extends Error {
 
 export class AgentCountLimitError extends Error {
   status: number;
-  detail: {
+  detail: { 
     message: string;
     current_count: number;
     limit: number;
@@ -71,7 +117,7 @@ export class AgentCountLimitError extends Error {
 
   constructor(
     status: number,
-    detail: {
+    detail: { 
       message: string;
       current_count: number;
       limit: number;
@@ -89,6 +135,36 @@ export class AgentCountLimitError extends Error {
   }
 }
 
+export class ProjectLimitError extends Error {
+  status: number;
+  detail: { 
+    message: string;
+    current_count: number;
+    limit: number;
+    tier_name: string;
+    error_code: string;
+  };
+
+  constructor(
+    status: number,
+    detail: { 
+      message: string;
+      current_count: number;
+      limit: number;
+      tier_name: string;
+      error_code: string;
+      [key: string]: any;
+    },
+    message?: string,
+  ) {
+    super(message || detail.message || `Project Limit Exceeded: ${status}`);
+    this.name = 'ProjectLimitError';
+    this.status = status;
+    this.detail = detail;
+    Object.setPrototypeOf(this, ProjectLimitError.prototype);
+  }
+}
+
 export class NoAccessTokenAvailableError extends Error {
   constructor(message?: string, options?: { cause?: Error }) {
     super(message || 'No access token available', options);
@@ -96,7 +172,6 @@ export class NoAccessTokenAvailableError extends Error {
   name = 'NoAccessTokenAvailableError';
 }
 
-// Type Definitions (moved from potential separate file for clarity)
 export type Project = {
   id: string;
   name: string;
@@ -370,10 +445,7 @@ export const getProject = async (projectId: string): Promise<Project> => {
     return mappedProject;
   } catch (error) {
     console.error(`Error fetching project ${projectId}:`, error);
-    handleApiError(error, {
-      operation: 'load project',
-      resource: `project ${projectId}`,
-    });
+    handleApiError(error, { operation: 'load project', resource: `project ${projectId}` });
     throw error;
   }
 };
@@ -442,19 +514,13 @@ export const updateProject = async (
 
   if (error) {
     console.error('Error updating project:', error);
-    handleApiError(error, {
-      operation: 'update project',
-      resource: `project ${projectId}`,
-    });
+    handleApiError(error, { operation: 'update project', resource: `project ${projectId}` });
     throw error;
   }
 
   if (!updatedData) {
     const noDataError = new Error('No data returned from update');
-    handleApiError(noDataError, {
-      operation: 'update project',
-      resource: `project ${projectId}`,
-    });
+    handleApiError(noDataError, { operation: 'update project', resource: `project ${projectId}` });
     throw noDataError;
   }
 
@@ -498,10 +564,7 @@ export const deleteProject = async (projectId: string): Promise<void> => {
     .eq('project_id', projectId);
 
   if (error) {
-    handleApiError(error, {
-      operation: 'delete project',
-      resource: `project ${projectId}`,
-    });
+    handleApiError(error, { operation: 'delete project', resource: `project ${projectId}` });
     throw error;
   }
 };
@@ -534,20 +597,18 @@ export const getThreads = async (projectId?: string): Promise<Thread[]> => {
   const { data, error } = await query;
 
   if (error) {
-    handleApiError(error, {
-      operation: 'load threads',
-      resource: projectId ? `threads for project ${projectId}` : 'threads',
-    });
+    handleApiError(error, { operation: 'load threads', resource: projectId ? `threads for project ${projectId}` : 'threads' });
     throw error;
   }
 
-  const mappedThreads: Thread[] = (data || []).map((thread) => ({
-    thread_id: thread.thread_id,
-    project_id: thread.project_id,
-    created_at: thread.created_at,
-    updated_at: thread.updated_at,
-    metadata: thread.metadata,
-  }));
+  const mappedThreads: Thread[] = (data || [])
+    .map((thread) => ({
+      thread_id: thread.thread_id,
+      project_id: thread.project_id,
+      created_at: thread.created_at,
+      updated_at: thread.updated_at,
+      metadata: thread.metadata,
+    }));
   return mappedThreads;
 };
 
@@ -560,10 +621,7 @@ export const getThread = async (threadId: string): Promise<Thread> => {
     .single();
 
   if (error) {
-    handleApiError(error, {
-      operation: 'load thread',
-      resource: `thread ${threadId}`,
-    });
+    handleApiError(error, { operation: 'load thread', resource: `thread ${threadId}` });
     throw error;
   }
 
@@ -635,16 +693,14 @@ export const getMessages = async (threadId: string): Promise<Message[]> => {
   while (hasMore) {
     const { data, error } = await supabase
       .from('messages')
-      .select(
-        `
+      .select(`
         *,
         agents:agent_id (
           name,
           avatar,
           avatar_color
         )
-      `,
-      )
+      `)
       .eq('thread_id', threadId)
       .neq('type', 'cost')
       .neq('type', 'summary')
@@ -653,10 +709,7 @@ export const getMessages = async (threadId: string): Promise<Message[]> => {
 
     if (error) {
       console.error('Error fetching messages:', error);
-      handleApiError(error, {
-        operation: 'load messages',
-        resource: `messages for thread ${threadId}`,
-      });
+      handleApiError(error, { operation: 'load messages', resource: `messages for thread ${threadId}` });
       throw new Error(`Error getting messages: ${error.message}`);
     }
 
@@ -715,7 +768,7 @@ export const startAgent = async (
       reasoning_effort: finalOptions.reasoning_effort,
       stream: finalOptions.stream,
     };
-
+    
     // Only include agent_id if it's provided
     if (finalOptions.agent_id) {
       body.agent_id = finalOptions.agent_id;
@@ -749,22 +802,45 @@ export const startAgent = async (
       }
 
       if (response.status === 429) {
-        const errorData = await response.json();
-        const detail = errorData?.detail || {
-          message: 'Too many agent runs running',
-          running_thread_ids: [],
-          running_count: 0,
-        };
-        if (typeof detail.message !== 'string') {
-          detail.message = 'Too many agent runs running';
+          const errorData = await response.json();
+          const detail = errorData?.detail || { 
+            message: 'Too many agent runs running',
+            running_thread_ids: [],
+            running_count: 0,
+          };
+          if (typeof detail.message !== 'string') {
+            detail.message = 'Too many agent runs running';
+          }
+          if (!Array.isArray(detail.running_thread_ids)) {
+            detail.running_thread_ids = [];
+          }
+          if (typeof detail.running_count !== 'number') {
+            detail.running_count = 0;
+          }
+          throw new AgentRunLimitError(response.status, detail);
+      }
+
+      // Check for project limit errors (402 with PROJECT_LIMIT_EXCEEDED error_code)
+      if (response.status === 402) {
+        try {
+          const errorData = await response.json();
+          const detail = errorData?.detail || {};
+          
+          if (detail.error_code === 'PROJECT_LIMIT_EXCEEDED') {
+            throw new ProjectLimitError(response.status, {
+              message: detail.message || 'Project limit exceeded',
+              current_count: detail.current_count || 0,
+              limit: detail.limit || 0,
+              tier_name: detail.tier_name || 'none',
+              error_code: detail.error_code
+            });
+          }
+        } catch (parseError) {
+          if (parseError instanceof ProjectLimitError) {
+            throw parseError;
+          }
+          // If it's not a project limit error, continue to general error handling
         }
-        if (!Array.isArray(detail.running_thread_ids)) {
-          detail.running_thread_ids = [];
-        }
-        if (typeof detail.running_count !== 'number') {
-          detail.running_count = 0;
-        }
-        throw new AgentRunLimitError(response.status, detail);
       }
 
       const errorText = await response
@@ -790,7 +866,7 @@ export const startAgent = async (
     }
 
     console.error('[API] Failed to start agent:', error);
-
+    
     if (
       error instanceof TypeError &&
       error.message.includes('Failed to fetch')
@@ -798,17 +874,11 @@ export const startAgent = async (
       const networkError = new Error(
         `Cannot connect to backend server. Please check your internet connection and make sure the backend is running.`,
       );
-      handleApiError(networkError, {
-        operation: 'start agent',
-        resource: 'AI assistant',
-      });
+      handleApiError(networkError, { operation: 'start agent', resource: 'AI assistant' });
       throw networkError;
     }
 
-    handleApiError(error, {
-      operation: 'start agent',
-      resource: 'AI assistant',
-    });
+    handleApiError(error, { operation: 'start agent', resource: 'AI assistant' });
     throw error;
   }
 };
@@ -829,10 +899,7 @@ export const stopAgent = async (agentRunId: string): Promise<void> => {
 
   if (!session?.access_token) {
     const authError = new NoAccessTokenAvailableError();
-    handleApiError(authError, {
-      operation: 'stop agent',
-      resource: 'AI assistant',
-    });
+    handleApiError(authError, { operation: 'stop agent', resource: 'AI assistant' });
     throw authError;
   }
 
@@ -849,10 +916,7 @@ export const stopAgent = async (agentRunId: string): Promise<void> => {
 
   if (!response.ok) {
     const stopError = new Error(`Error stopping agent: ${response.statusText}`);
-    handleApiError(stopError, {
-      operation: 'stop agent',
-      resource: 'AI assistant',
-    });
+    handleApiError(stopError, { operation: 'stop agent', resource: 'AI assistant' });
     throw stopError;
   }
 };
@@ -906,11 +970,7 @@ export const getAgentStatus = async (agentRunId: string): Promise<AgentRun> => {
     return data;
   } catch (error) {
     console.error('[API] Failed to get agent status:', error);
-    handleApiError(error, {
-      operation: 'get agent status',
-      resource: 'AI assistant status',
-      silent: true,
-    });
+    handleApiError(error, { operation: 'get agent status', resource: 'AI assistant status', silent: true });
     throw error;
   }
 };
@@ -945,10 +1005,7 @@ export const getAgentRuns = async (threadId: string): Promise<AgentRun[]> => {
     }
 
     console.error('Failed to get agent runs:', error);
-    handleApiError(error, {
-      operation: 'load agent runs',
-      resource: 'conversation history',
-    });
+    handleApiError(error, { operation: 'load agent runs', resource: 'conversation history' });
     throw error;
   }
 };
@@ -972,8 +1029,7 @@ export const streamAgent = (
 
   const existingStream = activeStreams.get(agentRunId);
   if (existingStream) {
-    existingStream.close();
-    activeStreams.delete(agentRunId);
+    cleanupEventSource(agentRunId, 'replacing existing stream');
   }
 
   try {
@@ -1023,7 +1079,20 @@ export const streamAgent = (
 
       activeStreams.set(agentRunId, eventSource);
 
-      eventSource.onopen = () => {};
+      // Safety timeout to prevent indefinite connections (30 minutes)
+      const safetyTimeout = setTimeout(() => {
+        console.warn(`[STREAM] Safety timeout reached for ${agentRunId}, cleaning up`);
+        cleanupEventSource(agentRunId, 'safety timeout');
+        callbacks.onError('Connection timeout - stream has been running too long');
+        callbacks.onClose();
+      }, 30 * 60 * 1000); // 30 minutes
+
+      // Store the timeout ID for cleanup
+      safetyTimeouts.set(agentRunId, safetyTimeout as unknown as number);
+
+      eventSource.onopen = () => {
+        console.log(`[STREAM] EventSource opened for ${agentRunId}`);
+      };
 
       eventSource.onmessage = (event) => {
         try {
@@ -1039,14 +1108,11 @@ export const streamAgent = (
           try {
             const jsonData = JSON.parse(rawData);
             if (jsonData.status === 'error') {
-              console.error(
-                `[STREAM] Error status received for ${agentRunId}:`,
-                jsonData,
-              );
-
+              console.error(`[STREAM] Error status received for ${agentRunId}:`, jsonData);
+              
               // Pass the error message to the callback
               callbacks.onError(jsonData.message || 'Unknown error occurred');
-
+              
               // Don't close the stream for error status messages as they may continue
               return;
             }
@@ -1066,8 +1132,7 @@ export const streamAgent = (
             callbacks.onError('Agent run not found in active runs');
 
             // Clean up
-            eventSource.close();
-            activeStreams.delete(agentRunId);
+            cleanupEventSource(agentRunId, 'agent run not found');
             callbacks.onClose();
 
             return;
@@ -1088,8 +1153,7 @@ export const streamAgent = (
             callbacks.onMessage(rawData);
 
             // Clean up
-            eventSource.close();
-            activeStreams.delete(agentRunId);
+            cleanupEventSource(agentRunId, 'agent run completed');
             callbacks.onClose();
 
             return;
@@ -1114,13 +1178,14 @@ export const streamAgent = (
       };
 
       eventSource.onerror = (event) => {
+        console.error(`[STREAM] EventSource error for ${agentRunId}:`, event);
+        
         // Check if the agent is still running
         getAgentStatus(agentRunId)
           .then((status) => {
             if (status.status !== 'running') {
               nonRunningAgentRuns.add(agentRunId);
-              eventSource.close();
-              activeStreams.delete(agentRunId);
+              cleanupEventSource(agentRunId, 'agent not running');
               callbacks.onClose();
             } else {
               // Let the browser handle reconnection for non-fatal errors
@@ -1141,13 +1206,16 @@ export const streamAgent = (
 
             if (isNotFoundErr) {
               nonRunningAgentRuns.add(agentRunId);
-              eventSource.close();
-              activeStreams.delete(agentRunId);
+              cleanupEventSource(agentRunId, 'agent not found');
+              callbacks.onClose();
+            } else {
+              // For other errors, still clean up the stream to prevent memory leaks
+              // but don't add to nonRunningAgentRuns as it might be a temporary network issue
+              console.warn(`[STREAM] Cleaning up stream for ${agentRunId} due to persistent error`);
+              cleanupEventSource(agentRunId, 'persistent error');
+              callbacks.onError(errMsg);
               callbacks.onClose();
             }
-
-            // For other errors, notify but don't close the stream
-            callbacks.onError(errMsg);
           });
       };
     };
@@ -1157,11 +1225,7 @@ export const streamAgent = (
 
     // Return a cleanup function
     return () => {
-      const stream = activeStreams.get(agentRunId);
-      if (stream) {
-        stream.close();
-        activeStreams.delete(agentRunId);
-      }
+      cleanupEventSource(agentRunId, 'manual cleanup');
     };
   } catch (error) {
     console.error(`[STREAM] Error setting up stream for ${agentRunId}:`, error);
@@ -1219,10 +1283,7 @@ export const createSandboxFile = async (
     return result;
   } catch (error) {
     console.error('Failed to create sandbox file:', error);
-    handleApiError(error, {
-      operation: 'create file',
-      resource: `file ${filePath}`,
-    });
+    handleApiError(error, { operation: 'create file', resource: `file ${filePath}` });
     throw error;
   }
 };
@@ -1276,10 +1337,7 @@ export const createSandboxFileJson = async (
     return result;
   } catch (error) {
     console.error('Failed to create sandbox file with JSON:', error);
-    handleApiError(error, {
-      operation: 'create file',
-      resource: `file ${filePath}`,
-    });
+    handleApiError(error, { operation: 'create file', resource: `file ${filePath}` });
     throw error;
   }
 };
@@ -1308,10 +1366,10 @@ export const listSandboxFiles = async (
     } = await supabase.auth.getSession();
 
     const url = new URL(`${API_URL}/sandboxes/${sandboxId}/files`);
-
+    
     // Normalize the path to handle Unicode escape sequences
     const normalizedPath = normalizePathWithUnicode(path);
-
+    
     // Properly encode the path parameter for UTF-8 support
     url.searchParams.append('path', normalizedPath);
 
@@ -1357,10 +1415,10 @@ export const getSandboxFileContent = async (
     } = await supabase.auth.getSession();
 
     const url = new URL(`${API_URL}/sandboxes/${sandboxId}/files/content`);
-
+    
     // Normalize the path to handle Unicode escape sequences
     const normalizedPath = normalizePathWithUnicode(path);
-
+    
     // Properly encode the path parameter for UTF-8 support
     url.searchParams.append('path', normalizedPath);
 
@@ -1398,10 +1456,7 @@ export const getSandboxFileContent = async (
     }
   } catch (error) {
     console.error('Failed to get sandbox file content:', error);
-    handleApiError(error, {
-      operation: 'load file content',
-      resource: `file ${path}`,
-    });
+    handleApiError(error, { operation: 'load file content', resource: `file ${path}` });
     throw error;
   }
 };
@@ -1467,13 +1522,11 @@ export const getPublicProjects = async (): Promise<Project[]> => {
     return mappedProjects;
   } catch (err) {
     console.error('Error fetching public projects:', err);
-    handleApiError(err, {
-      operation: 'load public projects',
-      resource: 'public projects',
-    });
+    handleApiError(err, { operation: 'load public projects', resource: 'public projects' });
     return [];
   }
 };
+
 
 export const initiateAgent = async (
   formData: FormData,
@@ -1526,41 +1579,41 @@ export const initiateAgent = async (
 
       // Check for 429 Too Many Requests (Agent Run Limit)
       if (response.status === 429) {
-        const errorData = await response.json();
-        // Ensure detail exists and has required properties
-        const detail = errorData?.detail || {
-          message: 'Too many agent runs running',
-          running_thread_ids: [],
-          running_count: 0,
-        };
-        if (typeof detail.message !== 'string') {
-          detail.message = 'Too many agent runs running';
-        }
-        if (!Array.isArray(detail.running_thread_ids)) {
-          detail.running_thread_ids = [];
-        }
-        if (typeof detail.running_count !== 'number') {
-          detail.running_count = 0;
-        }
-        throw new AgentRunLimitError(response.status, detail);
+          const errorData = await response.json();
+          // Ensure detail exists and has required properties
+          const detail = errorData?.detail || { 
+            message: 'Too many agent runs running',
+            running_thread_ids: [],
+            running_count: 0,
+          };
+          if (typeof detail.message !== 'string') {
+            detail.message = 'Too many agent runs running';
+          }
+          if (!Array.isArray(detail.running_thread_ids)) {
+            detail.running_thread_ids = [];
+          }
+          if (typeof detail.running_count !== 'number') {
+            detail.running_count = 0;
+          }
+          throw new AgentRunLimitError(response.status, detail);
       }
 
       // Handle other errors
       const errorText = await response
         .text()
         .catch(() => 'No error details available');
-
+      
       console.error(
         `[API] Error initiating agent: ${response.status} ${response.statusText}`,
         errorText,
       );
-
+    
       if (response.status === 401) {
         throw new Error('Authentication error: Please sign in again');
       } else if (response.status >= 500) {
         throw new Error('Server error: Please try again later');
       }
-
+    
       throw new Error(
         `Error initiating agent: ${response.statusText} (${response.status})`,
       );
@@ -1583,10 +1636,7 @@ export const initiateAgent = async (
       const networkError = new Error(
         `Cannot connect to backend server. Please check your internet connection and make sure the backend is running.`,
       );
-      handleApiError(networkError, {
-        operation: 'initiate agent',
-        resource: 'AI assistant',
-      });
+      handleApiError(networkError, { operation: 'initiate agent', resource: 'AI assistant' });
       throw networkError;
     }
     handleApiError(error, { operation: 'initiate agent' });
@@ -1650,6 +1700,13 @@ export interface SubscriptionStatus {
   // Credit information
   credit_balance?: number;
   can_purchase_credits?: boolean;
+  tier?: {
+    name: string;
+    credits: number;
+    can_purchase_credits: boolean;
+    models?: string[];
+    project_limit?: number;
+  };
 }
 
 export interface CommitmentInfo {
@@ -1836,9 +1893,11 @@ export const createCheckoutSession = async (
     if (!session?.access_token) {
       throw new NoAccessTokenAvailableError();
     }
-
+    
+    
     const requestBody = { ...request, tolt_referral: window.tolt_referral };
-
+    
+    // Use the new billing v2 API endpoint
     const response = await fetch(`${API_URL}/billing/create-checkout-session`, {
       method: 'POST',
       headers: {
@@ -1862,35 +1921,27 @@ export const createCheckoutSession = async (
     }
 
     const data = await response.json();
-    switch (data.status) {
-      case 'upgraded':
-      case 'updated':
-      case 'downgrade_scheduled':
-      case 'scheduled':
-      case 'no_change':
-        return data;
-      case 'new':
-      case 'checkout_created':
-        if (!data.url) {
-          throw new Error('No checkout URL provided');
-        }
-        return data;
-      default:
-        console.warn(
-          'Unexpected status from createCheckoutSession:',
-          data.status,
-        );
-        return data;
+    if (data.checkout_url) {
+      return {
+        status: 'checkout_created',
+        url: data.checkout_url
+      };
+    } else if (data.success && data.subscription_id) {
+      return {
+        status: 'updated',
+        message: data.message || 'Subscription updated successfully',
+        subscription_id: data.subscription_id
+      };
+    } else {
+      return data;
     }
   } catch (error) {
     console.error('Failed to create checkout session:', error);
-    handleApiError(error, {
-      operation: 'create checkout session',
-      resource: 'billing',
-    });
+    handleApiError(error, { operation: 'create checkout session', resource: 'billing' });
     throw error;
   }
 };
+
 
 export const createPortalSession = async (
   request: CreatePortalSessionRequest,
@@ -1927,25 +1978,21 @@ export const createPortalSession = async (
       );
     }
 
-    return response.json();
+    const data = await response.json();
+    
+    return {
+      url: data.portal_url
+    };
   } catch (error) {
     console.error('Failed to create portal session:', error);
-    handleApiError(error, {
-      operation: 'create portal session',
-      resource: 'billing portal',
-    });
+    handleApiError(error, { operation: 'create portal session', resource: 'billing portal' });
     throw error;
   }
 };
 
+
 export const getSubscription = async (): Promise<SubscriptionStatus> => {
   try {
-    // Log when subscription API is called for debugging
-    console.log(
-      '🔍 [BILLING] Making subscription API call:',
-      new Date().toISOString(),
-    );
-
     const supabase = createClient();
     const {
       data: { session },
@@ -1957,7 +2004,7 @@ export const getSubscription = async (): Promise<SubscriptionStatus> => {
 
     const response = await fetch(`${API_URL}/billing/subscription`, {
       headers: {
-        Authorization: `Bearer ${session?.access_token}`,
+        Authorization: `Bearer ${session.access_token}`,
       },
     });
 
@@ -1974,24 +2021,31 @@ export const getSubscription = async (): Promise<SubscriptionStatus> => {
       );
     }
 
-    return response.json();
+    const data = await response.json();
+
+    return {
+      subscription: data.subscription ? {
+        ...data.subscription,
+        cancel_at_period_end: data.subscription.cancel_at ? true : false,
+      } : null,
+      current_usage: data.credits?.lifetime_used || 0,
+      cost_limit: data.tier?.credits || 0,
+      credit_balance: data.credits?.balance || 0,
+      can_purchase_credits: data.credits?.can_purchase || false,
+      ...data 
+    } as SubscriptionStatus;
   } catch (error) {
     if (error instanceof NoAccessTokenAvailableError) {
       throw error;
     }
 
     console.error('Failed to get subscription:', error);
-    handleApiError(error, {
-      operation: 'load subscription',
-      resource: 'billing information',
-    });
+    handleApiError(error, { operation: 'load subscription', resource: 'billing information' });
     throw error;
   }
 };
 
-export const getSubscriptionCommitment = async (
-  subscriptionId: string,
-): Promise<CommitmentInfo> => {
+export const getSubscriptionCommitment = async (subscriptionId: string): Promise<CommitmentInfo> => {
   try {
     const supabase = createClient();
     const {
@@ -2002,14 +2056,12 @@ export const getSubscriptionCommitment = async (
       throw new NoAccessTokenAvailableError();
     }
 
-    const response = await fetch(
-      `${API_URL}/billing/subscription-commitment/${subscriptionId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
+    // Use the new billing v2 API endpoint
+    const response = await fetch(`${API_URL}/billing/subscription-commitment/${subscriptionId}`, {
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
       },
-    );
+    });
 
     if (!response.ok) {
       const errorText = await response
@@ -2031,59 +2083,53 @@ export const getSubscriptionCommitment = async (
     }
 
     console.error('Failed to get subscription commitment:', error);
-    handleApiError(error, {
-      operation: 'load subscription commitment',
-      resource: 'commitment information',
-    });
+    handleApiError(error, { operation: 'load subscription commitment', resource: 'commitment information' });
     throw error;
   }
 };
 
-export const getAvailableModels =
-  async (): Promise<AvailableModelsResponse> => {
-    try {
-      const supabase = createClient();
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+export const getAvailableModels = async (): Promise<AvailableModelsResponse> => {
+  try {
+    const supabase = createClient();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
 
-      if (!session?.access_token) {
-        throw new NoAccessTokenAvailableError();
-      }
+    if (!session?.access_token) {
+      throw new NoAccessTokenAvailableError();
+    }
 
-      const response = await fetch(`${API_URL}/billing/available-models`, {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      });
+    const response = await fetch(`${API_URL}/billing/available-models`, {
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
+    });
 
-      if (!response.ok) {
-        const errorText = await response
-          .text()
-          .catch(() => 'No error details available');
-        console.error(
-          `Error getting available models: ${response.status} ${response.statusText}`,
-          errorText,
-        );
-        throw new Error(
-          `Error getting available models: ${response.statusText} (${response.status})`,
-        );
-      }
+    if (!response.ok) {
+      const errorText = await response
+        .text()
+        .catch(() => 'No error details available');
+      console.error(
+        `Error getting available models: ${response.status} ${response.statusText}`,
+        errorText,
+      );
+      throw new Error(
+        `Error getting available models: ${response.statusText} (${response.status})`,
+      );
+    }
 
-      return response.json();
-    } catch (error) {
-      if (error instanceof NoAccessTokenAvailableError) {
-        throw error;
-      }
-
-      console.error('Failed to get available models:', error);
-      handleApiError(error, {
-        operation: 'load available models',
-        resource: 'AI models',
-      });
+    return response.json();
+  } catch (error) {
+    if (error instanceof NoAccessTokenAvailableError) {
       throw error;
     }
-  };
+
+    console.error('Failed to get available models:', error);
+    handleApiError(error, { operation: 'load available models', resource: 'AI models' });
+    throw error;
+  }
+};
+
 
 export const checkBillingStatus = async (): Promise<BillingStatusResponse> => {
   try {
@@ -2126,96 +2172,87 @@ export const checkBillingStatus = async (): Promise<BillingStatusResponse> => {
   }
 };
 
-export const cancelSubscription =
-  async (): Promise<CancelSubscriptionResponse> => {
-    try {
-      const supabase = createClient();
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+export const cancelSubscription = async (): Promise<CancelSubscriptionResponse> => {
+  try {
+    const supabase = createClient();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
 
-      if (!session?.access_token) {
-        throw new NoAccessTokenAvailableError();
-      }
-
-      const response = await fetch(`${API_URL}/billing/cancel-subscription`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      });
-
-      if (!response.ok) {
-        const errorText = await response
-          .text()
-          .catch(() => 'No error details available');
-        console.error(
-          `Error cancelling subscription: ${response.status} ${response.statusText}`,
-          errorText,
-        );
-        throw new Error(
-          `Error cancelling subscription: ${response.statusText} (${response.status})`,
-        );
-      }
-
-      return response.json();
-    } catch (error) {
-      console.error('Failed to cancel subscription:', error);
-      handleApiError(error, {
-        operation: 'cancel subscription',
-        resource: 'subscription',
-      });
-      throw error;
+    if (!session?.access_token) {
+      throw new NoAccessTokenAvailableError();
     }
-  };
 
-export const reactivateSubscription =
-  async (): Promise<ReactivateSubscriptionResponse> => {
-    try {
-      const supabase = createClient();
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+    const response = await fetch(`${API_URL}/billing/cancel-subscription`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({}),
+    });
 
-      if (!session?.access_token) {
-        throw new NoAccessTokenAvailableError();
-      }
-
-      const response = await fetch(
-        `${API_URL}/billing/reactivate-subscription`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${session.access_token}`,
-          },
-        },
+    if (!response.ok) {
+      const errorText = await response
+        .text()
+        .catch(() => 'No error details available');
+      console.error(
+        `Error cancelling subscription: ${response.status} ${response.statusText}`,
+        errorText,
       );
-
-      if (!response.ok) {
-        const errorText = await response
-          .text()
-          .catch(() => 'No error details available');
-        console.error(
-          `Error reactivating subscription: ${response.status} ${response.statusText}`,
-          errorText,
-        );
-        throw new Error(
-          `Error reactivating subscription: ${response.statusText} (${response.status})`,
-        );
-      }
-
-      return response.json();
-    } catch (error) {
-      console.error('Failed to reactivate subscription:', error);
-      handleApiError(error, {
-        operation: 'reactivate subscription',
-        resource: 'subscription',
-      });
-      throw error;
+      throw new Error(
+        `Error cancelling subscription: ${response.statusText} (${response.status})`,
+      );
     }
-  };
+
+    return response.json();
+  } catch (error) {
+    console.error('Failed to cancel subscription:', error);
+    handleApiError(error, { operation: 'cancel subscription', resource: 'subscription' });
+    throw error;
+  }
+};
+
+export const reactivateSubscription = async (): Promise<ReactivateSubscriptionResponse> => {
+  try {
+    const supabase = createClient();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session?.access_token) {
+      throw new NoAccessTokenAvailableError();
+    }
+
+    const response = await fetch(`${API_URL}/billing/reactivate-subscription`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({}),
+    });
+
+    if (!response.ok) {
+      const errorText = await response
+        .text()
+        .catch(() => 'No error details available');
+      console.error(
+        `Error reactivating subscription: ${response.status} ${response.statusText}`,
+        errorText,
+      );
+      throw new Error(
+        `Error reactivating subscription: ${response.statusText} (${response.status})`,
+      );
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error('Failed to reactivate subscription:', error);
+    handleApiError(error, { operation: 'reactivate subscription', resource: 'subscription' });
+    throw error;
+  }
+};
 
 // Transcription API Types
 export interface TranscriptionResponse {
@@ -2223,9 +2260,7 @@ export interface TranscriptionResponse {
 }
 
 // Transcription API Functions
-export const transcribeAudio = async (
-  audioFile: File,
-): Promise<TranscriptionResponse> => {
+export const transcribeAudio = async (audioFile: File): Promise<TranscriptionResponse> => {
   try {
     const supabase = createClient();
     const {
@@ -2266,10 +2301,7 @@ export const transcribeAudio = async (
     }
 
     console.error('Failed to transcribe audio:', error);
-    handleApiError(error, {
-      operation: 'transcribe audio',
-      resource: 'speech-to-text',
-    });
+    handleApiError(error, { operation: 'transcribe audio', resource: 'speech-to-text' });
     throw error;
   }
 };

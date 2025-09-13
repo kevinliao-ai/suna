@@ -37,4 +37,4 @@ export interface BillingData {
   accountId?: string | null;
 }
 
-export type AgentStatus = 'idle' | 'running' | 'connecting' | 'error';
+export type AgentStatus = 'idle' | 'running' | 'connecting' | 'error'; 

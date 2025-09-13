@@ -1,7 +1,7 @@
 export interface MCPConfiguration {
   name: string;
   qualifiedName: string;
-  mcp_qualified_name?: string;
+  mcp_qualified_name?: string; 
   config: Record<string, any>;
   enabledTools: string[];
   selectedProfileId?: string;
@@ -10,7 +10,7 @@ export interface MCPConfiguration {
   isComposio?: boolean;
   toolkitSlug?: string;
 }
-
+  
 export interface MCPConfigurationProps {
   configuredMCPs: MCPConfiguration[];
   onConfigurationChange: (mcps: MCPConfiguration[]) => void;

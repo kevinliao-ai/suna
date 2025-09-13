@@ -1,7 +1,7 @@
 export default function NewWorkflowLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return children;
-}
+    children,
+  }: {
+    children: React.ReactNode;
+  }) {
+    return children;
+  } 

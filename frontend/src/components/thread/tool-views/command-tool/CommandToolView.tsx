@@ -15,7 +15,7 @@ import { cn } from '@/lib/utils';
 import { useTheme } from 'next-themes';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { LoadingState } from '../shared/LoadingState';
 import { extractCommandData } from './_utils';
 
@@ -41,13 +41,13 @@ export function CommandToolView({
     completed,
     actualIsSuccess,
     actualToolTimestamp,
-    actualAssistantTimestamp,
+    actualAssistantTimestamp
   } = extractCommandData(
     assistantContent,
     toolContent,
     isSuccess,
     toolTimestamp,
-    assistantTimestamp,
+    assistantTimestamp
   );
 
   const displayText = name === 'check-command-output' ? sessionName : command;
@@ -65,11 +65,11 @@ export function CommandToolView({
       'Command sent to tmux session',
       'Use check_command_output to view results',
       'Session still running',
-      'completed: false',
+      'completed: false'
     ];
 
-    return nonBlockingPatterns.some((pattern) =>
-      output.toLowerCase().includes(pattern.toLowerCase()),
+    return nonBlockingPatterns.some(pattern =>
+      output.toLowerCase().includes(pattern.toLowerCase())
     );
   }, [output]);
 
@@ -87,13 +87,12 @@ export function CommandToolView({
       'Count:',
       'date:',
       'ls:',
-      'pwd:',
+      'pwd:'
     ];
 
-    return (
-      actualOutputPatterns.some((pattern) => output.includes(pattern)) ||
-      output.trim().length > 50
-    ); // Arbitrary threshold for "substantial" output
+    return actualOutputPatterns.some(pattern =>
+      output.includes(pattern)
+    ) || output.trim().length > 50; // Arbitrary threshold for "substantial" output
   }, [output, isNonBlockingCommand]);
 
   const formattedOutput = React.useMemo(() => {
@@ -136,12 +135,9 @@ export function CommandToolView({
       .replace(/\\"/g, '"')
       .replace(/\\'/g, "'");
 
-    processedOutput = processedOutput.replace(
-      /\\u([0-9a-fA-F]{4})/g,
-      (_match, group) => {
-        return String.fromCharCode(parseInt(group, 16));
-      },
-    );
+    processedOutput = processedOutput.replace(/\\u([0-9a-fA-F]{4})/g, (_match, group) => {
+      return String.fromCharCode(parseInt(group, 16));
+    });
     return processedOutput.split('\n');
   }, [output, hasActualOutput]);
 
@@ -169,8 +165,8 @@ export function CommandToolView({
               variant="secondary"
               className={
                 actualIsSuccess
-                  ? 'bg-gradient-to-b from-emerald-200 to-emerald-100 text-emerald-700 dark:from-emerald-800/50 dark:to-emerald-900/60 dark:text-emerald-300'
-                  : 'bg-gradient-to-b from-rose-200 to-rose-100 text-rose-700 dark:from-rose-800/50 dark:to-rose-900/60 dark:text-rose-300'
+                  ? "bg-gradient-to-b from-emerald-200 to-emerald-100 text-emerald-700 dark:from-emerald-800/50 dark:to-emerald-900/60 dark:text-emerald-300"
+                  : "bg-gradient-to-b from-rose-200 to-rose-100 text-rose-700 dark:from-rose-800/50 dark:to-rose-900/60 dark:text-rose-300"
               }
             >
               {actualIsSuccess ? (
@@ -178,13 +174,10 @@ export function CommandToolView({
               ) : (
                 <AlertTriangle className="h-3.5 w-3.5 mr-1" />
               )}
-              {actualIsSuccess
-                ? name === 'check-command-output'
-                  ? 'Output retrieved successfully'
-                  : 'Command executed successfully'
-                : name === 'check-command-output'
-                  ? 'Failed to retrieve output'
-                  : 'Command failed'}
+              {actualIsSuccess ?
+                (name === 'check-command-output' ? 'Output retrieved successfully' : 'Command executed successfully') :
+                (name === 'check-command-output' ? 'Failed to retrieve output' : 'Command failed')
+              }
             </Badge>
           )}
         </div>
@@ -196,11 +189,7 @@ export function CommandToolView({
             icon={Terminal}
             iconColor="text-purple-500 dark:text-purple-400"
             bgColor="bg-gradient-to-b from-purple-100 to-purple-50 shadow-inner dark:from-purple-800/40 dark:to-purple-900/60 dark:shadow-purple-950/20"
-            title={
-              name === 'check-command-output'
-                ? 'Checking command output'
-                : 'Executing command'
-            }
+            title={name === 'check-command-output' ? 'Checking command output' : 'Executing command'}
             filePath={displayText || 'Processing command...'}
             showProgress={true}
           />
@@ -212,15 +201,10 @@ export function CommandToolView({
                   <div className="bg-zinc-300 dark:bg-neutral-800 flex items-center justify-between dark:border-zinc-700/50">
                     <div className="bg-zinc-200 w-full dark:bg-zinc-800 px-4 py-2 flex items-center gap-2">
                       <TerminalIcon className="h-4 w-4 text-zinc-600 dark:text-zinc-400" />
-                      <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                        Terminal
-                      </span>
+                      <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Terminal</span>
                     </div>
                     {exitCode !== null && exitCode !== 0 && (
-                      <Badge
-                        variant="outline"
-                        className="text-xs h-5 border-red-700/30 text-red-400"
-                      >
+                      <Badge variant="outline" className="text-xs h-5 border-red-700/30 text-red-400">
                         <AlertTriangle className="h-3 w-3 mr-1" />
                         Error
                       </Badge>
@@ -231,12 +215,8 @@ export function CommandToolView({
                     <div className="py-0.5 bg-transparent font-mono text-xs">
                       {command && (
                         <>
-                          <span className="text-green-500 dark:text-green-400 font-semibold">
-                            {displayPrefix}{' '}
-                          </span>
-                          <span className="text-zinc-700 dark:text-zinc-300">
-                            {command}
-                          </span>
+                          <span className="text-green-500 dark:text-green-400 font-semibold">{displayPrefix} </span>
+                          <span className="text-zinc-700 dark:text-zinc-300">{command}</span>
                         </>
                       )}
                     </div>
@@ -267,13 +247,9 @@ export function CommandToolView({
                 <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
                   <div className="flex items-center gap-2 mb-2">
                     <CircleDashed className="h-4 w-4 text-blue-500" />
-                    <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
-                      Command Status
-                    </span>
+                    <span className="text-sm font-medium text-blue-700 dark:text-blue-300">Command Status</span>
                   </div>
-                  <p className="text-sm text-blue-600 dark:text-blue-400">
-                    {output}
-                  </p>
+                  <p className="text-sm text-blue-600 dark:text-blue-400">{output}</p>
                 </div>
               )}
 
@@ -293,14 +269,13 @@ export function CommandToolView({
               <Terminal className="h-10 w-10 text-zinc-400 dark:text-zinc-600" />
             </div>
             <h3 className="text-xl font-semibold mb-2 text-zinc-900 dark:text-zinc-100">
-              {name === 'check-command-output'
-                ? 'No Session Found'
-                : 'No Command Found'}
+              {name === 'check-command-output' ? 'No Session Found' : 'No Command Found'}
             </h3>
             <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center max-w-md">
               {name === 'check-command-output'
                 ? 'No session name was detected. Please provide a valid session name to check.'
-                : 'No command was detected. Please provide a valid command to execute.'}
+                : 'No command was detected. Please provide a valid command to execute.'
+              }
             </p>
           </div>
         )}
@@ -309,10 +284,7 @@ export function CommandToolView({
       <div className="px-4 py-2 h-10 bg-gradient-to-r from-zinc-50/90 to-zinc-100/90 dark:from-zinc-900/90 dark:to-zinc-800/90 backdrop-blur-sm border-t border-zinc-200 dark:border-zinc-800 flex justify-between items-center gap-4">
         <div className="h-full flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
           {!isStreaming && displayText && (
-            <Badge
-              variant="outline"
-              className="h-6 py-0.5 bg-zinc-50 dark:bg-zinc-900"
-            >
+            <Badge variant="outline" className="h-6 py-0.5 bg-zinc-50 dark:bg-zinc-900">
               <Terminal className="h-3 w-3 mr-1" />
               {displayLabel}
             </Badge>

@@ -1,7 +1,9 @@
 'use client';
 
 import React from 'react';
-import { ThreadParams } from '@/components/thread/types';
+import {
+  ThreadParams,
+} from '@/components/thread/types';
 import { RedirectPage } from './redirect-page';
 
 export default function ThreadPage({

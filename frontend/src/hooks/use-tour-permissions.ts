@@ -43,14 +43,14 @@ const useTourPermissionsStore = create<TourPermissionsState>()(
         hasBeenAsked: state.hasBeenAsked,
         toursEnabled: state.toursEnabled,
       }),
-    },
-  ),
+    }
+  )
 );
 
 export const useTourPermissions = (shouldShowWelcome = false) => {
   const initializedRef = useRef(false);
   const [hydrated, setHydrated] = useState(false);
-
+  
   const {
     hasBeenAsked,
     toursEnabled,
@@ -75,18 +75,11 @@ export const useTourPermissions = (shouldShowWelcome = false) => {
           hasBeenAsked,
           toursEnabled,
           showWelcome,
-          hydrated,
-        }),
+          hydrated
+        })
       };
     }
-  }, [
-    hasBeenAsked,
-    toursEnabled,
-    showWelcome,
-    forceShowWelcome,
-    resetPermissions,
-    hydrated,
-  ]);
+  }, [hasBeenAsked, toursEnabled, showWelcome, forceShowWelcome, resetPermissions, hydrated]);
 
   const handleWelcomeAccept = useCallback(() => {
     enableTours();
@@ -99,14 +92,14 @@ export const useTourPermissions = (shouldShowWelcome = false) => {
   useEffect(() => {
     if (!hydrated || !shouldShowWelcome) return;
 
-    const shouldShow = !hasBeenAsked;
+    const shouldShow = !hasBeenAsked;    
     if (shouldShow && !showWelcome && !initializedRef.current) {
       initializedRef.current = true;
-
+      
       const timer = setTimeout(() => {
         setShowWelcome(true);
       }, 1500);
-
+      
       return () => {
         clearTimeout(timer);
       };
@@ -122,4 +115,4 @@ export const useTourPermissions = (shouldShowWelcome = false) => {
     forceShowWelcome,
     resetPermissions,
   };
-};
+}; 

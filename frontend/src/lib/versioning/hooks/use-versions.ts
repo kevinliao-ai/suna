@@ -11,10 +11,8 @@ const versionKeys = {
   lists: () => [...versionKeys.all, 'list'] as const,
   list: (agentId: string) => [...versionKeys.lists(), agentId] as const,
   details: () => [...versionKeys.all, 'detail'] as const,
-  detail: (agentId: string, versionId: string) =>
-    [...versionKeys.details(), agentId, versionId] as const,
-  comparison: (agentId: string, v1: string, v2: string) =>
-    [...versionKeys.all, 'comparison', agentId, v1, v2] as const,
+  detail: (agentId: string, versionId: string) => [...versionKeys.details(), agentId, versionId] as const,
+  comparison: (agentId: string, v1: string, v2: string) => [...versionKeys.all, 'comparison', agentId, v1, v2] as const,
 };
 
 export const useAgentVersions = (agentId: string) => {
@@ -29,8 +27,7 @@ export const useAgentVersions = (agentId: string) => {
         setVersions(versions);
         return versions;
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : 'Failed to fetch versions';
+        const message = error instanceof Error ? error.message : 'Failed to fetch versions';
         setError(message);
         throw error;
       } finally {
@@ -42,10 +39,7 @@ export const useAgentVersions = (agentId: string) => {
   });
 };
 
-export const useAgentVersion = (
-  agentId: string,
-  versionId: string | null | undefined,
-) => {
+export const useAgentVersion = (agentId: string, versionId: string | null | undefined) => {
   const { setCurrentVersion } = useVersionStore();
   return useQuery({
     queryKey: versionKeys.detail(agentId, versionId!),
@@ -63,26 +57,16 @@ export const useCreateAgentVersion = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      agentId,
-      data,
-    }: {
-      agentId: string;
-      data: CreateVersionRequest;
-    }) => {
+    mutationFn: async ({ agentId, data }: { agentId: string; data: CreateVersionRequest }) => {
       return versionService.createVersion(agentId, data);
     },
     onSuccess: (newVersion, { agentId }) => {
       // Invalidate both version list and agent data to update current version
       queryClient.invalidateQueries({ queryKey: versionKeys.list(agentId) });
-      queryClient.invalidateQueries({
-        queryKey: ['agents', 'detail', agentId],
-      });
+      queryClient.invalidateQueries({ queryKey: ['agents', 'detail', agentId] });
       // Also invalidate the specific version query
       if (newVersion?.versionId?.value) {
-        queryClient.invalidateQueries({
-          queryKey: versionKeys.detail(agentId, newVersion.versionId.value),
-        });
+        queryClient.invalidateQueries({ queryKey: versionKeys.detail(agentId, newVersion.versionId.value) });
       }
     },
     onError: (error: Error) => {
@@ -95,20 +79,12 @@ export const useActivateAgentVersion = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      agentId,
-      versionId,
-    }: {
-      agentId: string;
-      versionId: string;
-    }) => {
+    mutationFn: async ({ agentId, versionId }: { agentId: string; versionId: string }) => {
       return versionService.activateVersion(agentId, versionId);
     },
     onSuccess: (_, { agentId }) => {
       queryClient.invalidateQueries({ queryKey: versionKeys.list(agentId) });
-      queryClient.invalidateQueries({
-        queryKey: ['agents', 'detail', agentId],
-      });
+      queryClient.invalidateQueries({ queryKey: ['agents', 'detail', agentId] });
       queryClient.invalidateQueries({ queryKey: ['agents'] });
       toast.success('Version activated successfully');
     },
@@ -122,25 +98,21 @@ export const useUpdateVersionDetails = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      agentId,
-      versionId,
-      data,
-    }: {
-      agentId: string;
-      versionId: string;
-      data: UpdateVersionDetailsRequest;
+    mutationFn: async ({ 
+      agentId, 
+      versionId, 
+      data 
+    }: { 
+      agentId: string; 
+      versionId: string; 
+      data: UpdateVersionDetailsRequest 
     }) => {
       return versionService.updateVersionDetails(agentId, versionId, data);
     },
     onSuccess: (updatedVersion, { agentId, versionId }) => {
       queryClient.invalidateQueries({ queryKey: versionKeys.list(agentId) });
-      queryClient.invalidateQueries({
-        queryKey: versionKeys.detail(agentId, versionId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: ['agents', 'detail', agentId],
-      });
+      queryClient.invalidateQueries({ queryKey: versionKeys.detail(agentId, versionId) });
+      queryClient.invalidateQueries({ queryKey: ['agents', 'detail', agentId] });
       queryClient.invalidateQueries({ queryKey: ['agents'] });
       toast.success('Version details updated successfully');
     },
@@ -148,4 +120,4 @@ export const useUpdateVersionDetails = () => {
       toast.error(error.message || 'Failed to update version details');
     },
   });
-};
+}; 

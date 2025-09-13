@@ -1,8 +1,13 @@
 'use client';
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import { useSearchParams } from 'next/navigation';
-import { BillingError, AgentRunLimitError } from '@/lib/api';
+import { BillingError, AgentRunLimitError, ProjectLimitError } from '@/lib/api';
 import { toast } from 'sonner';
 import { ChatInput } from '@/components/thread/chat-input/chat-input';
 import { useSidebar } from '@/components/ui/sidebar';
@@ -20,19 +25,19 @@ import {
 import { useSharedSubscription } from '@/contexts/SubscriptionContext';
 import { SubscriptionStatus } from '@/components/thread/chat-input/_use-model-selection';
 
-import { UnifiedMessage } from '@/components/thread/types';
-import { ApiMessageType } from '@/app/(dashboard)/projects/[projectId]/thread/_types';
+import {
+  UnifiedMessage,
+} from '@/components/thread/types';
+import {
+  ApiMessageType,
+} from '@/app/(dashboard)/projects/[projectId]/thread/_types';
 import {
   useThreadData,
   useToolCalls,
   useBilling,
   useKeyboardShortcuts,
 } from '@/app/(dashboard)/projects/[projectId]/thread/_hooks';
-import {
-  ThreadError,
-  UpgradeDialog,
-  ThreadLayout,
-} from '@/app/(dashboard)/projects/[projectId]/thread/_components';
+import { ThreadError, UpgradeDialog, ThreadLayout } from '@/app/(dashboard)/projects/[projectId]/thread/_components';
 
 import {
   useThreadAgent,
@@ -52,12 +57,7 @@ interface ThreadComponentProps {
   configuredAgentId?: string; // When set, only allow selection of this specific agent
 }
 
-export function ThreadComponent({
-  projectId,
-  threadId,
-  compact = false,
-  configuredAgentId,
-}: ThreadComponentProps) {
+export function ThreadComponent({ projectId, threadId, compact = false, configuredAgentId }: ThreadComponentProps) {
   const isMobile = useIsMobile();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
@@ -98,6 +98,7 @@ export function ThreadComponent({
   const latestMessageRef = useRef<HTMLDivElement>(null);
   const initialLayoutAppliedRef = useRef(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const lastStreamStartedRef = useRef<string | null>(null); // Track last runId we started streaming for
 
   // Sidebar
   const { state: leftSidebarState, setOpen: setLeftSidebarOpen } = useSidebar();
@@ -175,35 +176,31 @@ export function ThreadComponent({
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-
+    
     if (urlParams.get('google_auth') === 'success') {
       // Clean up the URL parameters first
       window.history.replaceState({}, '', window.location.pathname);
-
+      
       // Check if there was an intent to upload to Google Slides
-      const uploadIntent = sessionStorage.getItem(
-        'google_slides_upload_intent',
-      );
+      const uploadIntent = sessionStorage.getItem('google_slides_upload_intent');
       if (uploadIntent) {
         sessionStorage.removeItem('google_slides_upload_intent');
-
+        
         try {
           const uploadData = JSON.parse(uploadIntent);
           const { presentation_path, sandbox_url } = uploadData;
-
+          
           if (presentation_path && sandbox_url) {
             // Handle upload in async function
             (async () => {
               const uploadPromise = handleGoogleSlidesUpload(
                 sandbox_url,
-                presentation_path,
+                presentation_path
               );
-
+              
               // Show loading toast and handle upload
-              const loadingToast = toast.loading(
-                'Google authentication successful! Uploading presentation...',
-              );
-
+              const loadingToast = toast.loading('Google authentication successful! Uploading presentation...');
+              
               try {
                 await uploadPromise;
                 // Success toast is now handled universally by handleGoogleSlidesUpload
@@ -217,10 +214,7 @@ export function ThreadComponent({
             })();
           }
         } catch (error) {
-          console.error(
-            'Error processing Google Slides upload from session:',
-            error,
-          );
+          console.error('Error processing Google Slides upload from session:', error);
           // Error toast is handled universally by handleGoogleSlidesUpload, no need to duplicate
         }
       } else {
@@ -240,29 +234,18 @@ export function ThreadComponent({
       // Otherwise, fall back to threadAgentId (existing behavior)
       const threadAgentId = threadAgentData?.agent?.agent_id;
       const agentIdToUse = configuredAgentId || threadAgentId;
-
-      console.log(
-        `[ThreadComponent] Agent initialization - configuredAgentId: ${configuredAgentId}, threadAgentId: ${threadAgentId}, selectedAgentId: ${selectedAgentId}`,
-      );
-
+      
+      console.log(`[ThreadComponent] Agent initialization - configuredAgentId: ${configuredAgentId}, threadAgentId: ${threadAgentId}, selectedAgentId: ${selectedAgentId}`);
+      
       initializeFromAgents(agents, agentIdToUse);
-
+      
       // If configuredAgentId is provided, force selection and override any existing selection
       if (configuredAgentId && selectedAgentId !== configuredAgentId) {
-        console.log(
-          `[ThreadComponent] Forcing selection to configured agent: ${configuredAgentId} (was: ${selectedAgentId})`,
-        );
+        console.log(`[ThreadComponent] Forcing selection to configured agent: ${configuredAgentId} (was: ${selectedAgentId})`);
         setSelectedAgent(configuredAgentId);
       }
     }
-  }, [
-    threadAgentData,
-    agents,
-    initializeFromAgents,
-    configuredAgentId,
-    selectedAgentId,
-    setSelectedAgent,
-  ]);
+  }, [threadAgentData, agents, initializeFromAgents, configuredAgentId, selectedAgentId, setSelectedAgent]);
 
   const { data: subscriptionData } = useSharedSubscription();
   const subscriptionStatus: SubscriptionStatus =
@@ -274,32 +257,23 @@ export function ThreadComponent({
   const handleProjectRenamed = useCallback((newName: string) => {}, []);
 
   // Create restricted agent selection handler when configuredAgentId is provided
-  const handleAgentSelect = useCallback(
-    (agentId: string | undefined) => {
-      // If configuredAgentId is set, only allow selection of that specific agent
-      if (configuredAgentId) {
-        console.log(
-          `[ThreadComponent] Configured agent mode: ${configuredAgentId}. Attempted selection: ${agentId}`,
-        );
-        if (agentId === configuredAgentId) {
-          setSelectedAgent(agentId);
-          console.log(
-            `[ThreadComponent] Allowed selection of configured agent: ${agentId}`,
-          );
-        } else {
-          console.log(
-            `[ThreadComponent] Blocked selection of non-configured agent: ${agentId}`,
-          );
-        }
-        // Ignore attempts to select other agents
-        return;
+  const handleAgentSelect = useCallback((agentId: string | undefined) => {
+    // If configuredAgentId is set, only allow selection of that specific agent
+    if (configuredAgentId) {
+      console.log(`[ThreadComponent] Configured agent mode: ${configuredAgentId}. Attempted selection: ${agentId}`);
+      if (agentId === configuredAgentId) {
+        setSelectedAgent(agentId);
+        console.log(`[ThreadComponent] Allowed selection of configured agent: ${agentId}`);
+      } else {
+        console.log(`[ThreadComponent] Blocked selection of non-configured agent: ${agentId}`);
       }
-
-      // Normal agent selection behavior
-      setSelectedAgent(agentId);
-    },
-    [configuredAgentId, setSelectedAgent],
-  );
+      // Ignore attempts to select other agents
+      return;
+    }
+    
+    // Normal agent selection behavior
+    setSelectedAgent(agentId);
+  }, [configuredAgentId, setSelectedAgent]);
 
   // scrollToBottom for flex-column-reverse layout
   const scrollToBottom = useCallback(() => {
@@ -517,6 +491,25 @@ export function ThreadComponent({
             return;
           }
 
+          if (error instanceof ProjectLimitError) {
+            setBillingData({
+              currentUsage: error.detail.current_count as number,
+              limit: error.detail.limit as number,
+              message:
+                error.detail.message ||
+                `You've reached your project limit (${error.detail.current_count}/${error.detail.limit}). Please upgrade to create more projects.`,
+              accountId: null,
+            });
+            setShowBillingAlert(true);
+
+            setMessages((prev) =>
+              prev.filter(
+                (m) => m.message_id !== optimisticUserMessage.message_id,
+              ),
+            );
+            return;
+          }
+
           throw new Error(`Failed to start agent: ${error?.message || error}`);
         }
 
@@ -664,9 +657,16 @@ export function ThreadComponent({
   ]);
 
   useEffect(() => {
+    // Prevent duplicate streaming calls for the same runId
+    if (agentRunId && lastStreamStartedRef.current === agentRunId) {
+      return;
+    }
+
     // Start streaming if user initiated a run (don't wait for initialLoadCompleted for first-time users)
     if (agentRunId && agentRunId !== currentHookRunId && userInitiatedRun) {
+      console.log(`[ThreadComponent] Starting user-initiated stream for runId: ${agentRunId}`);
       startStreaming(agentRunId);
+      lastStreamStartedRef.current = agentRunId; // Track that we started this runId
       setUserInitiatedRun(false); // Reset flag after starting
       return;
     }
@@ -679,7 +679,9 @@ export function ThreadComponent({
       !userInitiatedRun &&
       agentStatus === 'running'
     ) {
+      console.log(`[ThreadComponent] Starting auto stream for runId: ${agentRunId}`);
       startStreaming(agentRunId);
+      lastStreamStartedRef.current = agentRunId; // Track that we started this runId
     }
   }, [
     agentRunId,
@@ -700,8 +702,15 @@ export function ThreadComponent({
     ) {
       setAgentStatus('idle');
       setAgentRunId(null);
+      // Reset the stream tracking ref when stream completes
+      lastStreamStartedRef.current = null;
     }
   }, [streamHookStatus, agentStatus, setAgentStatus, setAgentRunId]);
+
+  // Reset stream tracking ref when threadId changes  
+  useEffect(() => {
+    lastStreamStartedRef.current = null;
+  }, [threadId]);
 
   // SEO title update
   useEffect(() => {
@@ -807,9 +816,7 @@ export function ThreadComponent({
   }, [messages, initialLoadCompleted]);
 
   if (!initialLoadCompleted || isLoading) {
-    return (
-      <ThreadSkeleton isSidePanelOpen={isSidePanelOpen} compact={compact} />
-    );
+    return <ThreadSkeleton isSidePanelOpen={isSidePanelOpen} compact={compact} />;
   }
 
   if (error) {
@@ -892,13 +899,11 @@ export function ThreadComponent({
           isMobile={isMobile}
           initialLoadCompleted={initialLoadCompleted}
           agentName={agent && agent.name}
-          disableInitialAnimation={
-            !initialLoadCompleted && toolCalls.length > 0
-          }
+          disableInitialAnimation={!initialLoadCompleted && toolCalls.length > 0}
           compact={true}
         >
           {/* Thread Content - Scrollable */}
-          <div
+          <div 
             ref={scrollContainerRef}
             className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col-reverse"
           >

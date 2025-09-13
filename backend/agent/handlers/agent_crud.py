@@ -1,7 +1,7 @@
 from typing import Optional
 from fastapi import APIRouter, HTTPException, Depends, File, UploadFile, Query
 
-from utils.auth_utils import get_current_user_id_from_jwt
+from utils.auth_utils import verify_and_get_user_id_from_jwt
 from utils.logger import logger
 from utils.config import config, EnvMode
 from utils.pagination import PaginationParams
@@ -21,7 +21,7 @@ router = APIRouter()
 async def update_agent(
     agent_id: str,
     agent_data: AgentUpdateRequest,
-    user_id: str = Depends(get_current_user_id_from_jwt)
+    user_id: str = Depends(verify_and_get_user_id_from_jwt)
 ):
     logger.debug(f"Updating agent {agent_id} for user: {user_id}")
     
@@ -223,12 +223,7 @@ async def update_agent(
             update_data["is_default"] = agent_data.is_default
             if agent_data.is_default:
                 await client.table('agents').update({"is_default": False}).eq("account_id", user_id).eq("is_default", True).neq("agent_id", agent_id).execute()
-        if agent_data.avatar is not None:
-            update_data["avatar"] = agent_data.avatar
-        if agent_data.avatar_color is not None:
-            update_data["avatar_color"] = agent_data.avatar_color
-        if agent_data.profile_image_url is not None:
-            update_data["profile_image_url"] = agent_data.profile_image_url
+        # Removed avatar, avatar_color, and profile_image_url updates - using icons instead
         # Handle new icon system fields
         if agent_data.icon_name is not None:
             update_data["icon_name"] = agent_data.icon_name
@@ -436,7 +431,7 @@ async def update_agent(
         raise HTTPException(status_code=500, detail=f"Failed to update agent: {str(e)}")
 
 @router.delete("/agents/{agent_id}")
-async def delete_agent(agent_id: str, user_id: str = Depends(get_current_user_id_from_jwt)):
+async def delete_agent(agent_id: str, user_id: str = Depends(verify_and_get_user_id_from_jwt)):
     logger.debug(f"Deleting agent: {agent_id}")
     client = await utils.db.client
     
@@ -502,7 +497,7 @@ async def delete_agent(agent_id: str, user_id: str = Depends(get_current_user_id
 
 @router.get("/agents", response_model=AgentsResponse)
 async def get_agents(
-    user_id: str = Depends(get_current_user_id_from_jwt),
+    user_id: str = Depends(verify_and_get_user_id_from_jwt),
     page: Optional[int] = Query(1, ge=1, description="Page number (1-based)"),
     limit: Optional[int] = Query(20, ge=1, le=100, description="Number of items per page"),
     search: Optional[str] = Query(None, description="Search in name and description"),
@@ -570,7 +565,7 @@ async def get_agents(
         raise HTTPException(status_code=500, detail=f"Failed to fetch agents: {str(e)}")
 
 @router.get("/agents/{agent_id}", response_model=AgentResponse)
-async def get_agent(agent_id: str, user_id: str = Depends(get_current_user_id_from_jwt)):
+async def get_agent(agent_id: str, user_id: str = Depends(verify_and_get_user_id_from_jwt)):
     
     logger.debug(f"Fetching agent {agent_id} for user: {user_id}")
     
@@ -697,7 +692,7 @@ async def get_agent(agent_id: str, user_id: str = Depends(get_current_user_id_fr
 @router.post("/agents", response_model=AgentResponse)
 async def create_agent(
     agent_data: AgentCreateRequest,
-    user_id: str = Depends(get_current_user_id_from_jwt)
+    user_id: str = Depends(verify_and_get_user_id_from_jwt)
 ):
     logger.debug(f"Creating new agent for user: {user_id}")
     client = await utils.db.client
@@ -724,9 +719,6 @@ async def create_agent(
             "account_id": user_id,
             "name": agent_data.name,
             "description": agent_data.description,
-            "avatar": agent_data.avatar,
-            "avatar_color": agent_data.avatar_color,
-            "profile_image_url": agent_data.profile_image_url,
             "icon_name": agent_data.icon_name or "bot",
             "icon_color": agent_data.icon_color or "#000000",
             "icon_background": agent_data.icon_background or "#F3F4F6",

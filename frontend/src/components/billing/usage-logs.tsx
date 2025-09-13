@@ -32,6 +32,7 @@ import { useUsageLogs } from '@/hooks/react-query/subscriptions/use-billing';
 import { UsageLogEntry } from '@/lib/api';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
+
 interface DailyUsage {
   date: string;
   logs: UsageLogEntry[];
@@ -49,16 +50,11 @@ export default function UsageLogs({ accountId }: Props) {
   const [page, setPage] = useState(0);
   const [allLogs, setAllLogs] = useState<UsageLogEntry[]>([]);
   const [hasMore, setHasMore] = useState(true);
-
+  
   const ITEMS_PER_PAGE = 1000;
 
   // Use React Query hook for the current page
-  const {
-    data: currentPageData,
-    isLoading,
-    error,
-    refetch,
-  } = useUsageLogs(page, ITEMS_PER_PAGE);
+  const { data: currentPageData, isLoading, error, refetch } = useUsageLogs(page, ITEMS_PER_PAGE);
 
   // Update accumulated logs when new data arrives
   useEffect(() => {
@@ -68,7 +64,7 @@ export default function UsageLogs({ accountId }: Props) {
         setAllLogs(currentPageData.logs || []);
       } else {
         // Subsequent pages - append to existing logs
-        setAllLogs((prev) => [...prev, ...(currentPageData.logs || [])]);
+        setAllLogs(prev => [...prev, ...(currentPageData.logs || [])]);
       }
       setHasMore(currentPageData.has_more || false);
     }
@@ -147,6 +143,8 @@ export default function UsageLogs({ accountId }: Props) {
     );
   };
 
+
+
   if (isLoading && page === 0) {
     return (
       <Card>
@@ -218,9 +216,8 @@ export default function UsageLogs({ accountId }: Props) {
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Credits Being Used</AlertTitle>
           <AlertDescription>
-            You've exceeded your monthly subscription limit of $
-            {subscriptionLimit.toFixed(2)}. Additional usage is being deducted
-            from your credit balance.
+            You've exceeded your monthly subscription limit of ${subscriptionLimit.toFixed(2)}. 
+            Additional usage is being deducted from your credit balance.
           </AlertDescription>
         </Alert>
       )}
@@ -230,11 +227,11 @@ export default function UsageLogs({ accountId }: Props) {
         <CardHeader>
           <CardTitle>Daily Usage Logs</CardTitle>
           <CardDescription>
-            <div className="flex justify-between items-center">
-              Your token usage organized by day, sorted by most recent.{' '}
-              <Button variant="outline" asChild className="text-sm ml-4">
+            <div className='flex justify-between items-center'>
+              Your token usage organized by day, sorted by most recent.{" "}
+              <Button variant='outline' asChild className='text-sm ml-4'>
                 <Link href="/model-pricing">
-                  View Model Pricing <OpenInNewWindowIcon className="w-4 h-4" />
+                  View Model Pricing <OpenInNewWindowIcon className='w-4 h-4' />
                 </Link>
               </Button>
             </div>
@@ -277,28 +274,14 @@ export default function UsageLogs({ accountId }: Props) {
                         <Table>
                           <TableHeader>
                             <TableRow className="hover:bg-transparent">
-                              <TableHead className="w-[180px] text-xs">
-                                Time
-                              </TableHead>
+                              <TableHead className="w-[180px] text-xs">Time</TableHead>
                               <TableHead className="text-xs">Model</TableHead>
-                              <TableHead className="text-xs text-right">
-                                Prompt
-                              </TableHead>
-                              <TableHead className="text-xs text-right">
-                                Completion
-                              </TableHead>
-                              <TableHead className="text-xs text-right">
-                                Total
-                              </TableHead>
-                              <TableHead className="text-xs text-right">
-                                Cost
-                              </TableHead>
-                              <TableHead className="text-xs text-right">
-                                Payment
-                              </TableHead>
-                              <TableHead className="w-[100px] text-xs text-center">
-                                Thread
-                              </TableHead>
+                              <TableHead className="text-xs text-right">Prompt</TableHead>
+                              <TableHead className="text-xs text-right">Completion</TableHead>
+                              <TableHead className="text-xs text-right">Total</TableHead>
+                              <TableHead className="text-xs text-right">Cost</TableHead>
+                              <TableHead className="text-xs text-right">Payment</TableHead>
+                              <TableHead className="w-[100px] text-xs text-center">Thread</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -308,18 +291,11 @@ export default function UsageLogs({ accountId }: Props) {
                                 className="hover:bg-muted/50 group"
                               >
                                 <TableCell className="font-mono text-xs text-muted-foreground">
-                                  {new Date(
-                                    log.created_at,
-                                  ).toLocaleTimeString()}
+                                  {new Date(log.created_at).toLocaleTimeString()}
                                 </TableCell>
                                 <TableCell className="text-xs">
-                                  <Badge
-                                    variant="secondary"
-                                    className="font-mono text-xs"
-                                  >
-                                    {log.content.model
-                                      .replace('openrouter/', '')
-                                      .replace('anthropic/', '')}
+                                  <Badge variant="secondary" className="font-mono text-xs">
+                                    {log.content.model.replace('openrouter/', '').replace('anthropic/', '')}
                                   </Badge>
                                 </TableCell>
                                 <TableCell className="text-right font-mono text-xs">
@@ -337,27 +313,17 @@ export default function UsageLogs({ accountId }: Props) {
                                 <TableCell className="text-right text-xs">
                                   {log.payment_method === 'credits' ? (
                                     <div className="flex items-center justify-end gap-2">
-                                      <Badge
-                                        variant="outline"
-                                        className="text-xs"
-                                      >
+                                      <Badge variant="outline" className="text-xs">
                                         Credits
                                       </Badge>
-                                      {log.credit_used &&
-                                        log.credit_used > 0 && (
-                                          <span className="text-xs text-muted-foreground">
-                                            -
-                                            {formatCreditAmount(
-                                              log.credit_used,
-                                            )}
-                                          </span>
-                                        )}
+                                      {log.credit_used && log.credit_used > 0 && (
+                                        <span className="text-xs text-muted-foreground">
+                                          -{formatCreditAmount(log.credit_used)}
+                                        </span>
+                                      )}
                                     </div>
                                   ) : (
-                                    <Badge
-                                      variant="secondary"
-                                      className="text-xs"
-                                    >
+                                    <Badge variant="secondary" className="text-xs">
                                       Subscription
                                     </Badge>
                                   )}
@@ -366,12 +332,7 @@ export default function UsageLogs({ accountId }: Props) {
                                   <Button
                                     variant="ghost"
                                     size="sm"
-                                    onClick={() =>
-                                      handleThreadClick(
-                                        log.thread_id,
-                                        log.project_id,
-                                      )
-                                    }
+                                    onClick={() => handleThreadClick(log.thread_id, log.project_id)}
                                     className="h-6 px-2 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
                                   >
                                     <ExternalLink className="h-3 w-3" />

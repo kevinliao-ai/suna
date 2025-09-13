@@ -15,9 +15,7 @@ export function RedirectPage({ threadId }: RedirectPageProps) {
 
   useEffect(() => {
     if (threadQuery.data?.project_id) {
-      router.replace(
-        `/projects/${threadQuery.data.project_id}/thread/${threadId}`,
-      );
+      router.replace(`/projects/${threadQuery.data.project_id}/thread/${threadId}`);
     }
   }, [threadQuery.data, threadId, router]);
 
@@ -26,4 +24,4 @@ export function RedirectPage({ threadId }: RedirectPageProps) {
     return null;
   }
   return <ThreadSkeleton isSidePanelOpen={false} />;
-}
+} 

@@ -5,13 +5,7 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Loader2, Play, Plus, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from '@/components/ui/drawer';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer';
 import { useUpdateAgent } from '@/hooks/react-query/agents/use-agents';
 import { useUpdateAgentMCPs } from '@/hooks/react-query/agents/use-update-agent-mcps';
 import { useActivateAgentVersion } from '@/hooks/react-query/agents/use-agent-versions';
@@ -24,11 +18,7 @@ import { ThreadComponent } from '@/components/thread/ThreadComponent';
 import { useAgentVersionData } from '../../../../../hooks/use-agent-version-data';
 import { useAgentVersionStore } from '../../../../../lib/stores/agent-version-store';
 
-import {
-  AgentHeader,
-  VersionAlert,
-  ConfigurationTab,
-} from '@/components/agents/config';
+import { AgentHeader, VersionAlert, ConfigurationTab } from '@/components/agents/config';
 
 import { DEFAULT_AGENTPRESS_TOOLS } from '@/components/agents/tools';
 import { useExportAgent } from '@/hooks/react-query/agents/use-agent-export-import';
@@ -39,72 +29,63 @@ import { TourConfirmationDialog } from '@/components/tour/TourConfirmationDialog
 const agentConfigTourSteps: Step[] = [
   {
     target: '[data-tour="agent-header"]',
-    content:
-      "This is your agent's profile. You can edit the name and profile picture to personalize your agent.",
+    content: 'This is your agent\'s profile. You can edit the name and profile picture to personalize your agent.',
     title: 'Agent Profile',
     placement: 'bottom',
     disableBeacon: true,
   },
   {
     target: '[data-tour="model-section"]',
-    content:
-      'Choose the AI model that powers your agent. Different models have different capabilities and pricing.',
+    content: 'Choose the AI model that powers your agent. Different models have different capabilities and pricing.',
     title: 'Model Configuration',
     placement: 'right',
     disableBeacon: true,
   },
   {
     target: '[data-tour="system-prompt"]',
-    content:
-      "Define how your agent behaves and responds. This is the core instruction that guides your agent's personality and capabilities.",
+    content: 'Define how your agent behaves and responds. This is the core instruction that guides your agent\'s personality and capabilities.',
     title: 'System Prompt',
     placement: 'right',
     disableBeacon: true,
   },
   {
     target: '[data-tour="tools-section"]',
-    content:
-      'Configure the tools and capabilities your agent can use. Enable browser automation, web development, and more.',
+    content: 'Configure the tools and capabilities your agent can use. Enable browser automation, web development, and more.',
     title: 'Agent Tools',
     placement: 'right',
     disableBeacon: true,
   },
   {
     target: '[data-tour="integrations-section"]',
-    content:
-      "Connect your agent to external services. Add integrations to extend your agent's capabilities.",
+    content: 'Connect your agent to external services. Add integrations to extend your agent\'s capabilities.',
     title: 'Integrations',
     placement: 'right',
     disableBeacon: true,
   },
   {
     target: '[data-tour="knowledge-section"]',
-    content:
-      'Add knowledge to your agent to provide it with context and information.',
+    content: 'Add knowledge to your agent to provide it with context and information.',
     title: 'Knowledge Base',
     placement: 'right',
     disableBeacon: true,
   },
   {
     target: '[data-tour="playbooks-section"]',
-    content:
-      'Add playbooks to your agent to help it perform tasks and automate workflows.',
+    content: 'Add playbooks to your agent to help it perform tasks and automate workflows.',
     title: 'Playbooks',
     placement: 'right',
     disableBeacon: true,
   },
   {
     target: '[data-tour="triggers-section"]',
-    content:
-      'Set up automated triggers for your agent to run on schedules or events.',
+    content: 'Set up automated triggers for your agent to run on schedules or events.',
     title: 'Triggers & Automation',
     placement: 'right',
     disableBeacon: true,
   },
   {
     target: '[data-tour="preview-agent"]',
-    content:
-      'Build and test your agent by previewing how it will behave and respond. Here you can also ask the agent to self-configure',
+    content: 'Build and test your agent by previewing how it will behave and respond. Here you can also ask the agent to self-configure',
     title: 'Build & Test Your Agent',
     placement: 'left',
     disableBeacon: true,
@@ -131,12 +112,11 @@ function AgentConfigurationContent() {
   const agentId = params.agentId as string;
   const router = useRouter();
 
-  const { agent, versionData, isViewingOldVersion, isLoading, error } =
-    useAgentVersionData({ agentId });
+  const { agent, versionData, isViewingOldVersion, isLoading, error } = useAgentVersionData({ agentId });
   const searchParams = useSearchParams();
   const initialAccordion = searchParams.get('accordion');
   const { setHasUnsavedChanges } = useAgentVersionStore();
-
+  
   const updateAgentMutation = useUpdateAgent();
   const updateAgentMCPsMutation = useUpdateAgentMCPs();
   const activateVersionMutation = useActivateAgentVersion();
@@ -160,13 +140,7 @@ function AgentConfigurationContent() {
       export: exportMutation,
       activate: activateVersionMutation,
     };
-  }, [
-    agentId,
-    updateAgentMutation,
-    updateAgentMCPsMutation,
-    exportMutation,
-    activateVersionMutation,
-  ]);
+  }, [agentId, updateAgentMutation, updateAgentMCPsMutation, exportMutation, activateVersionMutation]);
 
   const [formData, setFormData] = useState<FormData>({
     name: '',
@@ -187,28 +161,23 @@ function AgentConfigurationContent() {
 
   const [testThreadId, setTestThreadId] = useState<string | null>(null);
   const [testProjectId, setTestProjectId] = useState<string | null>(null);
-  const [lastLoadedVersionId, setLastLoadedVersionId] = useState<string | null>(
-    null,
-  );
+  const [lastLoadedVersionId, setLastLoadedVersionId] = useState<string | null>(null);
 
   const initiateAgentMutation = useInitiateAgentWithInvalidation();
 
-  // Query thread data to get project ID when we have a test thread
+  // Query thread data to get project ID when we have a test thread  
   const { data: testThreadData } = useThreadQuery(testThreadId || '');
 
   // Update project ID when thread data loads and navigate if in test mode
   useEffect(() => {
     if (testThreadData?.project_id && testThreadId && !testProjectId) {
       setTestProjectId(testThreadData.project_id);
-
+      
       // Save to localStorage
-      localStorage.setItem(
-        `agent-test-thread-${agentId}`,
-        JSON.stringify({
-          threadId: testThreadId,
-          projectId: testThreadData.project_id,
-        }),
-      );
+      localStorage.setItem(`agent-test-thread-${agentId}`, JSON.stringify({
+        threadId: testThreadId,
+        projectId: testThreadData.project_id
+      }));
 
       // If we're in test mode, we already have the data to render
       // No need to navigate
@@ -217,9 +186,7 @@ function AgentConfigurationContent() {
 
   // Load test thread from localStorage on mount
   useEffect(() => {
-    const savedTestThread = localStorage.getItem(
-      `agent-test-thread-${agentId}`,
-    );
+    const savedTestThread = localStorage.getItem(`agent-test-thread-${agentId}`);
     if (savedTestThread) {
       try {
         const { threadId, projectId } = JSON.parse(savedTestThread);
@@ -242,14 +209,11 @@ function AgentConfigurationContent() {
     // Create new test thread
     try {
       const formData = new FormData();
-      formData.append(
-        'prompt',
-        `Test conversation with ${agent?.name || 'agent'}`,
-      );
+      formData.append('prompt', `Test conversation with ${agent?.name || 'agent'}`);
       formData.append('agent_id', agentId);
 
       const result = await initiateAgentMutation.mutateAsync(formData);
-
+      
       if (result.thread_id) {
         setTestThreadId(result.thread_id);
       }
@@ -263,7 +227,7 @@ function AgentConfigurationContent() {
   const handleStartNewTask = () => {
     // Clear existing test session from localStorage
     localStorage.removeItem(`agent-test-thread-${agentId}`);
-
+    
     // Reset state to show the initial prompt selection screen
     setTestThreadId(null);
     setTestProjectId(null);
@@ -274,18 +238,18 @@ function AgentConfigurationContent() {
     try {
       // Clear existing test session from localStorage
       localStorage.removeItem(`agent-test-thread-${agentId}`);
-
+      
       // Reset state
       setTestThreadId(null);
       setTestProjectId(null);
-
+      
       // Create new test thread with the specific prompt
       const formData = new FormData();
       formData.append('prompt', prompt);
       formData.append('agent_id', agentId);
 
       const result = await initiateAgentMutation.mutateAsync(formData);
-
+      
       if (result.thread_id) {
         setTestThreadId(result.thread_id);
       }
@@ -297,17 +261,15 @@ function AgentConfigurationContent() {
 
   useEffect(() => {
     if (!agent) return;
-
-    const currentVersionId =
-      versionData?.version_id || agent.current_version_id || 'current';
-    const shouldResetForm =
-      !lastLoadedVersionId || lastLoadedVersionId !== currentVersionId;
-
+    
+    const currentVersionId = versionData?.version_id || agent.current_version_id || 'current';
+    const shouldResetForm = !lastLoadedVersionId || lastLoadedVersionId !== currentVersionId;
+    
     if (!shouldResetForm) {
       setLastLoadedVersionId(currentVersionId);
       return;
     }
-
+    
     let configSource = agent;
     if (versionData) {
       configSource = {
@@ -328,8 +290,7 @@ function AgentConfigurationContent() {
       description: configSource.description || '',
       system_prompt: configSource.system_prompt || '',
       model: configSource.model,
-      agentpress_tools:
-        configSource.agentpress_tools || DEFAULT_AGENTPRESS_TOOLS,
+      agentpress_tools: configSource.agentpress_tools || DEFAULT_AGENTPRESS_TOOLS,
       configured_mcps: configSource.configured_mcps || [],
       custom_mcps: configSource.custom_mcps || [],
       is_default: configSource.is_default || false,
@@ -343,78 +304,63 @@ function AgentConfigurationContent() {
     setLastLoadedVersionId(currentVersionId);
   }, [agent, versionData, lastLoadedVersionId]);
 
-  const displayData =
-    isViewingOldVersion && versionData
-      ? {
-          name: formData.name,
-          description: formData.description,
-          system_prompt: versionData.system_prompt || formData.system_prompt,
-          model: versionData.model || formData.model,
-          agentpress_tools:
-            versionData.agentpress_tools || formData.agentpress_tools,
-          configured_mcps:
-            versionData.configured_mcps || formData.configured_mcps,
-          custom_mcps: versionData.custom_mcps || formData.custom_mcps,
-          is_default: formData.is_default,
-          profile_image_url: formData.profile_image_url,
-          icon_name: versionData.icon_name || formData.icon_name || null,
-          icon_color:
-            versionData.icon_color || formData.icon_color || '#000000',
-          icon_background:
-            versionData.icon_background ||
-            formData.icon_background ||
-            '#e5e5e5',
-        }
-      : formData;
+  const displayData = isViewingOldVersion && versionData ? {
+    name: formData.name,
+    description: formData.description,
+    system_prompt: versionData.system_prompt || formData.system_prompt,
+    model: versionData.model || formData.model,
+    agentpress_tools: versionData.agentpress_tools || formData.agentpress_tools,
+    configured_mcps: versionData.configured_mcps || formData.configured_mcps,
+    custom_mcps: versionData.custom_mcps || formData.custom_mcps,
+    is_default: formData.is_default,
+    profile_image_url: formData.profile_image_url,
+    icon_name: versionData.icon_name || formData.icon_name || null,
+    icon_color: versionData.icon_color || formData.icon_color || '#000000',
+    icon_background: versionData.icon_background || formData.icon_background || '#e5e5e5',
+  } : formData;
 
   const handleFieldChange = (field: string, value: any) => {
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
-      [field]: value,
+      [field]: value
     }));
   };
 
-  const handleMCPChange = useCallback(
-    (updates: { configured_mcps: any[]; custom_mcps: any[] }) => {
-      const previousConfigured = formData.configured_mcps;
-      const previousCustom = formData.custom_mcps;
+  const handleMCPChange = useCallback((updates: { configured_mcps: any[]; custom_mcps: any[] }) => {
+    const previousConfigured = formData.configured_mcps;
+    const previousCustom = formData.custom_mcps;
 
-      setFormData((prev) => ({
-        ...prev,
-        configured_mcps: updates.configured_mcps || [],
-        custom_mcps: updates.custom_mcps || [],
-      }));
+    setFormData(prev => ({
+      ...prev,
+      configured_mcps: updates.configured_mcps || [],
+      custom_mcps: updates.custom_mcps || []
+    }));
 
-      mutationsRef.current.updateMCPs.mutate(
-        {
-          agentId: agentIdRef.current,
+    mutationsRef.current.updateMCPs.mutate({
+      agentId: agentIdRef.current,
+      configured_mcps: updates.configured_mcps || [],
+      custom_mcps: updates.custom_mcps || [],
+      replace_mcps: true
+    }, {
+      onSuccess: () => {
+        setOriginalData(prev => ({
+          ...prev,
           configured_mcps: updates.configured_mcps || [],
-          custom_mcps: updates.custom_mcps || [],
-          replace_mcps: true,
-        },
-        {
-          onSuccess: () => {
-            setOriginalData((prev) => ({
-              ...prev,
-              configured_mcps: updates.configured_mcps || [],
-              custom_mcps: updates.custom_mcps || [],
-            }));
-            toast.success('MCP configuration updated');
-          },
-          onError: (error) => {
-            setFormData((prev) => ({
-              ...prev,
-              configured_mcps: previousConfigured,
-              custom_mcps: previousCustom,
-            }));
-            toast.error('Failed to update MCP configuration');
-            console.error('MCP update error:', error);
-          },
-        },
-      );
-    },
-    [],
-  );
+          custom_mcps: updates.custom_mcps || []
+        }));
+        toast.success('MCP configuration updated');
+      },
+      onError: (error) => {
+        setFormData(prev => ({
+          ...prev,
+          configured_mcps: previousConfigured,
+          custom_mcps: previousCustom
+        }));
+        toast.error('Failed to update MCP configuration');
+        console.error('MCP update error:', error);
+      }
+    });
+  }, []);
 
   const saveField = useCallback(async (fieldData: Partial<FormData>) => {
     try {
@@ -422,9 +368,9 @@ function AgentConfigurationContent() {
         agentId: agentIdRef.current,
         ...fieldData,
       });
-
-      setFormData((prev) => ({ ...prev, ...fieldData }));
-      setOriginalData((prev) => ({ ...prev, ...fieldData }));
+      
+      setFormData(prev => ({ ...prev, ...fieldData }));
+      setOriginalData(prev => ({ ...prev, ...fieldData }));
       return true;
     } catch (error) {
       console.error('Failed to save field:', error);
@@ -450,18 +396,10 @@ function AgentConfigurationContent() {
       throw new Error('Failed to update profile picture');
     }
   };
-
-  const handleIconSave = async (
-    iconName: string | null,
-    iconColor: string,
-    iconBackground: string,
-  ) => {
+  
+  const handleIconSave = async (iconName: string | null, iconColor: string, iconBackground: string) => {
     try {
-      await saveField({
-        icon_name: iconName,
-        icon_color: iconColor,
-        icon_background: iconBackground,
-      });
+      await saveField({ icon_name: iconName, icon_color: iconColor, icon_background: iconBackground });
       toast.success('Agent icon updated');
     } catch {
       toast.error('Failed to update agent icon');
@@ -489,12 +427,7 @@ function AgentConfigurationContent() {
     }
   };
 
-  const handleToolsSave = async (
-    agentpress_tools: Record<
-      string,
-      boolean | { enabled: boolean; description: string }
-    >,
-  ) => {
+  const handleToolsSave = async (agentpress_tools: Record<string, boolean | { enabled: boolean; description: string }>) => {
     try {
       await saveField({ agentpress_tools });
       toast.success('Tools updated');
@@ -513,9 +446,9 @@ function AgentConfigurationContent() {
     const originalDataStr = JSON.stringify(originalData);
     const hasChanges = formDataStr !== originalDataStr;
     const isCurrent = !isViewingOldVersion;
-
+    
     return {
-      hasUnsavedChanges: hasChanges && isCurrent,
+      hasUnsavedChanges: hasChanges && isCurrent
     };
   }, [formData, originalData, isViewingOldVersion]);
 
@@ -529,10 +462,7 @@ function AgentConfigurationContent() {
 
   const handleActivateVersion = async (versionId: string) => {
     try {
-      await mutationsRef.current.activate.mutateAsync({
-        agentId: agentIdRef.current,
-        versionId,
-      });
+      await mutationsRef.current.activate.mutateAsync({ agentId: agentIdRef.current, versionId });
       router.push(`/agents/config/${agentIdRef.current}`);
     } catch (error) {
       console.error('Failed to activate version:', error);
@@ -542,16 +472,15 @@ function AgentConfigurationContent() {
   // OPTIMIZED: Simplified save with stable reference
   const handleSave = useCallback(async () => {
     const currentFormData = formData;
-    const hasChanges =
-      JSON.stringify(currentFormData) !== JSON.stringify(originalData);
-
+    const hasChanges = JSON.stringify(currentFormData) !== JSON.stringify(originalData);
+    
     if (hasChanges) {
       try {
         await mutationsRef.current.updateAgent.mutateAsync({
           agentId: agentIdRef.current,
           ...currentFormData,
         });
-
+        
         setOriginalData(currentFormData);
         toast.success('Agent updated successfully');
       } catch (error) {
@@ -585,14 +514,19 @@ function AgentConfigurationContent() {
     return (
       <div className="h-screen flex items-center justify-center">
         <Alert className="max-w-md">
-          <AlertDescription>Agent not found</AlertDescription>
+          <AlertDescription>
+            Agent not found
+          </AlertDescription>
         </Alert>
       </div>
     );
   }
 
+
+
   return (
     <div className="h-screen flex flex-col bg-background relative">
+
       <div className="flex-1 flex overflow-hidden">
         <div className="hidden lg:grid lg:grid-cols-2 w-full h-full">
           <div className="bg-background h-full flex flex-col border-r border-border/40 overflow-hidden">
@@ -621,7 +555,7 @@ function AgentConfigurationContent() {
                       system_prompt: formData.system_prompt,
                       configured_mcps: formData.configured_mcps,
                       custom_mcps: formData.custom_mcps,
-                      agentpress_tools: formData.agentpress_tools,
+                      agentpress_tools: formData.agentpress_tools
                     }}
                     hasUnsavedChanges={hasUnsavedChanges}
                     onVersionCreated={() => {
@@ -653,22 +587,17 @@ function AgentConfigurationContent() {
               </div>
             </div>
           </div>
-
-          <div
-            className="bg-background h-full flex flex-col overflow-hidden"
-            data-tour="preview-agent"
-          >
+          
+          <div className="bg-background h-full flex flex-col overflow-hidden" data-tour="preview-agent">
             {/* Thread Header */}
             <div className="flex-shrink-0 p-4 border-b border-border/20">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div>
-                    <h3 className="text-sm font-semibold">
-                      Run "{agent?.name || 'Agent'}"
-                    </h3>
+                    <h3 className="text-sm font-semibold">Run "{agent?.name || 'Agent'}"</h3>
                   </div>
                 </div>
-
+                
                 <div className="flex items-center gap-2">
                   {!testThreadId && (
                     <Button
@@ -701,11 +630,11 @@ function AgentConfigurationContent() {
                 </div>
               </div>
             </div>
-
+            
             {/* Thread Content */}
             <div className="flex-1 overflow-hidden relative">
               {testThreadId && testProjectId ? (
-                <ThreadComponent
+                <ThreadComponent 
                   projectId={testProjectId}
                   threadId={testThreadId}
                   compact={true}
@@ -729,7 +658,7 @@ function AgentConfigurationContent() {
                     <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto">
                       <Play className="h-8 w-8 text-muted-foreground" />
                     </div>
-
+                    
                     <div className="space-y-2">
                       <h3 className="text-lg font-medium">Ready to run</h3>
                       <p className="text-sm text-muted-foreground">
@@ -761,56 +690,36 @@ function AgentConfigurationContent() {
                         <p className="text-xs text-muted-foreground">
                           Or try a suggested prompt:
                         </p>
-
+                        
                         <div className="space-y-2">
                           <button
-                            onClick={() =>
-                              handleStartTestWithPrompt(
-                                'Enter agent builder mode. Help me configure you to be my perfect agent. Ask me detailed questions about what I want you to do, how you should behave, what tools you need, and what knowledge would be helpful. Then suggest improvements to your system prompt, tools, and configuration.',
-                              )
-                            }
+                            onClick={() => handleStartTestWithPrompt("Enter agent builder mode. Help me configure you to be my perfect agent. Ask me detailed questions about what I want you to do, how you should behave, what tools you need, and what knowledge would be helpful. Then suggest improvements to your system prompt, tools, and configuration.")}
                             disabled={initiateAgentMutation.isPending}
                             className="w-full text-left p-2 rounded-xl border border-border hover:bg-accent text-xs transition-colors"
                           >
-                            <span className="font-medium">
-                              Agent Builder Mode
-                            </span>
+                            <span className="font-medium">Agent Builder Mode</span>
                             <br />
-                            <span className="text-muted-foreground">
-                              Help configure the perfect agent
-                            </span>
+                            <span className="text-muted-foreground">Help configure the perfect agent</span>
                           </button>
 
                           <button
-                            onClick={() =>
-                              handleStartTestWithPrompt(
-                                "Hi! I want to test your capabilities. Can you tell me who you are, what you can do, and what tools and knowledge you have access to? Then let's do a quick test to see how well you work.",
-                              )
-                            }
+                            onClick={() => handleStartTestWithPrompt("Hi! I want to test your capabilities. Can you tell me who you are, what you can do, and what tools and knowledge you have access to? Then let's do a quick test to see how well you work.")}
                             disabled={initiateAgentMutation.isPending}
                             className="w-full text-left p-2 rounded-xl border border-border hover:bg-accent text-xs transition-colors"
                           >
                             <span className="font-medium">Capability Test</span>
                             <br />
-                            <span className="text-muted-foreground">
-                              Test what your agent can do
-                            </span>
+                            <span className="text-muted-foreground">Test what your agent can do</span>
                           </button>
 
                           <button
-                            onClick={() =>
-                              handleStartTestWithPrompt(
-                                "I need help with a specific task. Let me explain what I'm trying to accomplish and you can guide me through the process step by step.",
-                              )
-                            }
+                            onClick={() => handleStartTestWithPrompt("I need help with a specific task. Let me explain what I'm trying to accomplish and you can guide me through the process step by step.")}
                             disabled={initiateAgentMutation.isPending}
                             className="w-full text-left p-2 rounded-xl border border-border hover:bg-accent text-xs transition-colors"
                           >
                             <span className="font-medium">Task-Based Run</span>
                             <br />
-                            <span className="text-muted-foreground">
-                              Start with a real task
-                            </span>
+                            <span className="text-muted-foreground">Start with a real task</span>
                           </button>
                         </div>
                       </div>
@@ -826,6 +735,7 @@ function AgentConfigurationContent() {
           <div className="bg-background h-full flex flex-col overflow-hidden">
             <div className="flex-shrink-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
               <div className="pt-4">
+                
                 {isViewingOldVersion && (
                   <div className="mb-4 px-4">
                     <VersionAlert
@@ -835,7 +745,7 @@ function AgentConfigurationContent() {
                     />
                   </div>
                 )}
-
+                
                 <div className="flex items-center justify-between px-4">
                   <AgentHeader
                     agentId={agentId}
@@ -850,7 +760,7 @@ function AgentConfigurationContent() {
                       system_prompt: formData.system_prompt,
                       configured_mcps: formData.configured_mcps,
                       custom_mcps: formData.custom_mcps,
-                      agentpress_tools: formData.agentpress_tools,
+                      agentpress_tools: formData.agentpress_tools
                     }}
                     hasUnsavedChanges={hasUnsavedChanges}
                     onVersionCreated={() => {
@@ -885,14 +795,10 @@ function AgentConfigurationContent() {
                           Start a conversation with your agent
                         </p>
                       </DrawerHeader>
-
+                      
                       <div className="space-y-4 max-w-sm mx-auto">
                         <Button
-                          onClick={
-                            !testThreadId
-                              ? handleStartTestMode
-                              : handleStartNewTask
-                          }
+                          onClick={!testThreadId ? handleStartTestMode : handleStartNewTask}
                           disabled={initiateAgentMutation.isPending}
                           className="w-full"
                           size="sm"
@@ -914,60 +820,36 @@ function AgentConfigurationContent() {
                           <p className="text-xs text-muted-foreground text-center">
                             Or try a suggested prompt:
                           </p>
-
+                          
                           <div className="space-y-2">
                             <button
-                              onClick={() =>
-                                handleStartTestWithPrompt(
-                                  'Enter agent builder mode. Help me configure you to be my perfect agent. Ask me detailed questions about what I want you to do, how you should behave, what tools you need, and what knowledge would be helpful. Then suggest improvements to your system prompt, tools, and configuration.',
-                                )
-                              }
+                              onClick={() => handleStartTestWithPrompt("Enter agent builder mode. Help me configure you to be my perfect agent. Ask me detailed questions about what I want you to do, how you should behave, what tools you need, and what knowledge would be helpful. Then suggest improvements to your system prompt, tools, and configuration.")}
                               disabled={initiateAgentMutation.isPending}
                               className="w-full text-left p-2 rounded border border-border hover:bg-accent text-xs transition-colors"
                             >
-                              <span className="font-medium">
-                                Agent Builder Mode
-                              </span>
+                              <span className="font-medium">Agent Builder Mode</span>
                               <br />
-                              <span className="text-muted-foreground">
-                                Help configure the perfect agent
-                              </span>
+                              <span className="text-muted-foreground">Help configure the perfect agent</span>
                             </button>
 
                             <button
-                              onClick={() =>
-                                handleStartTestWithPrompt(
-                                  "Hi! I want to test your capabilities. Can you tell me who you are, what you can do, and what tools and knowledge you have access to? Then let's do a quick test to see how well you work.",
-                                )
-                              }
+                              onClick={() => handleStartTestWithPrompt("Hi! I want to test your capabilities. Can you tell me who you are, what you can do, and what tools and knowledge you have access to? Then let's do a quick test to see how well you work.")}
                               disabled={initiateAgentMutation.isPending}
                               className="w-full text-left p-2 rounded border border-border hover:bg-accent text-xs transition-colors"
                             >
-                              <span className="font-medium">
-                                Capability Test
-                              </span>
+                              <span className="font-medium">Capability Test</span>
                               <br />
-                              <span className="text-muted-foreground">
-                                Test what your agent can do
-                              </span>
+                              <span className="text-muted-foreground">Test what your agent can do</span>
                             </button>
 
                             <button
-                              onClick={() =>
-                                handleStartTestWithPrompt(
-                                  "I need help with a specific task. Let me explain what I'm trying to accomplish and you can guide me through the process step by step.",
-                                )
-                              }
+                              onClick={() => handleStartTestWithPrompt("I need help with a specific task. Let me explain what I'm trying to accomplish and you can guide me through the process step by step.")}
                               disabled={initiateAgentMutation.isPending}
                               className="w-full text-left p-2 rounded border border-border hover:bg-accent text-xs transition-colors"
                             >
-                              <span className="font-medium">
-                                Task-Based Run
-                              </span>
+                              <span className="font-medium">Task-Based Run</span>
                               <br />
-                              <span className="text-muted-foreground">
-                                Start with a real task
-                              </span>
+                              <span className="text-muted-foreground">Start with a real task</span>
                             </button>
                           </div>
                         </div>
@@ -1016,7 +898,7 @@ export default function AgentConfigurationPage() {
   // OPTIMIZED: Simple function instead of useCallback with stable dependencies
   const handleTourCallback = (data: CallBackProps) => {
     const { status, type, index } = data;
-
+    
     if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {
       stopTour();
     } else if (type === 'step:after') {
@@ -1104,4 +986,4 @@ export default function AgentConfigurationPage() {
       <AgentConfigurationContent />
     </>
   );
-}
+} 

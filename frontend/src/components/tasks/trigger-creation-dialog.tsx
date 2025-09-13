@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import React, { useState } from 'react';
 import {
@@ -28,7 +28,7 @@ export function TriggerCreationDialog({
   open,
   onOpenChange,
   type,
-  onTriggerCreated,
+  onTriggerCreated
 }: TriggerCreationDialogProps) {
   const [selectedAgent, setSelectedAgent] = useState<string>('');
   const [step, setStep] = useState<'agent' | 'config'>('agent');
@@ -36,7 +36,7 @@ export function TriggerCreationDialog({
   const [description, setDescription] = useState<string>('');
   const [config, setConfig] = useState<ScheduleTriggerConfig>({
     cron_expression: '',
-    execution_type: 'agent',
+    execution_type: 'agent'
   });
   const createTriggerMutation = useCreateTrigger();
 
@@ -45,15 +45,10 @@ export function TriggerCreationDialog({
     name: 'Schedule',
     trigger_type: 'schedule',
     webhook_enabled: true,
-    config_schema: {},
+    config_schema: {}
   };
 
-  const handleScheduleSave = async (data: {
-    name: string;
-    description: string;
-    config: any;
-    is_active: boolean;
-  }) => {
+  const handleScheduleSave = async (data: { name: string; description: string; config: any; is_active: boolean }) => {
     if (!selectedAgent) {
       toast.error('Please select an agent');
       return;
@@ -152,7 +147,7 @@ export function TriggerCreationDialog({
         onNameChange={setName}
         onDescriptionChange={setDescription}
         isActive={true}
-        onActiveChange={() => {}}
+        onActiveChange={() => { }}
         selectedAgent={selectedAgent}
         onAgentSelect={setSelectedAgent}
         open={open}
@@ -170,4 +165,4 @@ export function TriggerCreationDialog({
       onTriggerCreated={onTriggerCreated}
     />
   );
-}
+} 

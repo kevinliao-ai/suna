@@ -1,17 +1,17 @@
 'use client';
 
 import { createMutationHook } from '@/hooks/use-query';
-import {
-  createProject,
-  updateProject,
+import { 
+  createProject, 
+  updateProject, 
   deleteProject,
-  Project,
+  Project 
 } from '@/lib/api';
 import { toast } from 'sonner';
 import { projectKeys } from './keys';
 
 export const useCreateProject = createMutationHook(
-  (data: { name: string; description: string; accountId?: string }) =>
+  (data: { name: string; description: string; accountId?: string }) => 
     createProject(data, data.accountId),
   {
     onSuccess: () => {
@@ -19,23 +19,23 @@ export const useCreateProject = createMutationHook(
     },
     errorContext: {
       operation: 'create project',
-      resource: 'project',
-    },
-  },
+      resource: 'project'
+    }
+  }
 );
 
 export const useUpdateProject = createMutationHook(
-  ({ projectId, data }: { projectId: string; data: Partial<Project> }) =>
+  ({ projectId, data }: { projectId: string; data: Partial<Project> }) => 
     updateProject(projectId, data),
   {
     onSuccess: () => {
-      //   toast.success('Project updated successfully');
+    //   toast.success('Project updated successfully');
     },
     errorContext: {
       operation: 'update project',
-      resource: 'project',
-    },
-  },
+      resource: 'project'
+    }
+  }
 );
 
 export const useDeleteProject = createMutationHook(
@@ -46,7 +46,7 @@ export const useDeleteProject = createMutationHook(
     },
     errorContext: {
       operation: 'delete project',
-      resource: 'project',
-    },
-  },
-);
+      resource: 'project'
+    }
+  }
+); 

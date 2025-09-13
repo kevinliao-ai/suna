@@ -24,16 +24,11 @@ interface NewAgentDialogProps {
   onSuccess?: (agentId: string) => void;
 }
 
-export function NewAgentDialog({
-  open,
-  onOpenChange,
-  onSuccess,
-}: NewAgentDialogProps) {
+export function NewAgentDialog({ open, onOpenChange, onSuccess }: NewAgentDialogProps) {
   const [showJsonImport, setShowJsonImport] = useState(false);
   const [jsonImportText, setJsonImportText] = useState('');
   const [showAgentLimitDialog, setShowAgentLimitDialog] = useState(false);
-  const [agentLimitError, setAgentLimitError] =
-    useState<AgentCountLimitError | null>(null);
+  const [agentLimitError, setAgentLimitError] = useState<AgentCountLimitError | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const createNewAgentMutation = useCreateNewAgent();
@@ -50,11 +45,9 @@ export function NewAgentDialog({
           setShowAgentLimitDialog(true);
           onOpenChange(false);
         } else {
-          toast.error(
-            error instanceof Error ? error.message : 'Failed to create agent',
-          );
+          toast.error(error instanceof Error ? error.message : 'Failed to create agent');
         }
-      },
+      }
     });
   };
 
@@ -64,9 +57,7 @@ export function NewAgentDialog({
     }
   };
 
-  const handleFileChange = async (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -104,20 +95,17 @@ export function NewAgentDialog({
     <AlertDialog open={open} onOpenChange={handleDialogClose}>
       <AlertDialogContent className="max-w-lg">
         <AlertDialogHeader className="space-y-3">
-          <AlertDialogTitle className="text-xl">
-            Create New Agent
-          </AlertDialogTitle>
+          <AlertDialogTitle className="text-xl">Create New Agent</AlertDialogTitle>
           <AlertDialogDescription className="text-base leading-relaxed">
-            Create a new agent with default settings that you can customize
-            later, or{' '}
+            Create a new agent with default settings that you can customize later, or{' '}
             <button
               onClick={handleFileImport}
               className="text-muted-foreground hover:text-foreground transition-colors underline underline-offset-4 disabled:cursor-not-allowed disabled:opacity-50"
               disabled={isLoading}
             >
               import from file
-            </button>{' '}
-            or{' '}
+            </button>
+            {' '}or{' '}
             <button
               onClick={() => !isLoading && setShowJsonImport(true)}
               className="text-muted-foreground hover:text-foreground transition-colors underline underline-offset-4 disabled:cursor-not-allowed disabled:opacity-50"

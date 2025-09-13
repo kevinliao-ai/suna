@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import React, { useState } from 'react';
 import {
@@ -11,16 +11,16 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import {
-  Search,
-  MessageSquare,
-  Webhook,
-  Clock,
+import { 
+  Search, 
+  MessageSquare, 
+  Webhook, 
+  Clock, 
   Mail,
   Github,
   Gamepad2,
   Activity,
-  ArrowRight,
+  ArrowRight
 } from 'lucide-react';
 import { TriggerProvider } from './types';
 import { useTriggerProviders } from '@/hooks/react-query/triggers';
@@ -79,30 +79,22 @@ export const TriggerBrowseDialog: React.FC<TriggerBrowseDialogProps> = ({
   onProviderSelect,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const {
-    data: providers = [],
-    isLoading: loading,
-    error,
-  } = useTriggerProviders();
+  const { data: providers = [], isLoading: loading, error } = useTriggerProviders();
 
-  const filteredProviders = providers.filter(
-    (provider) =>
-      provider.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      provider.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      provider.trigger_type.toLowerCase().includes(searchTerm.toLowerCase()),
+  const filteredProviders = providers.filter(provider =>
+    provider.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    provider.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    provider.trigger_type.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const groupedProviders = filteredProviders.reduce(
-    (groups, provider) => {
-      const type = provider.trigger_type;
-      if (!groups[type]) {
-        groups[type] = [];
-      }
-      groups[type].push(provider);
-      return groups;
-    },
-    {} as Record<string, TriggerProvider[]>,
-  );
+  const groupedProviders = filteredProviders.reduce((groups, provider) => {
+    const type = provider.trigger_type;
+    if (!groups[type]) {
+      groups[type] = [];
+    }
+    groups[type].push(provider);
+    return groups;
+  }, {} as Record<string, TriggerProvider[]>);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -110,11 +102,10 @@ export const TriggerBrowseDialog: React.FC<TriggerBrowseDialogProps> = ({
         <DialogHeader>
           <DialogTitle>Browse Trigger Providers</DialogTitle>
           <DialogDescription>
-            Choose from available trigger providers to connect external services
-            to your agent
+            Choose from available trigger providers to connect external services to your agent
           </DialogDescription>
         </DialogHeader>
-
+        
         <div className="flex-1 overflow-hidden flex flex-col">
           <div className="mb-4">
             <div className="relative">
@@ -127,7 +118,7 @@ export const TriggerBrowseDialog: React.FC<TriggerBrowseDialogProps> = ({
               />
             </div>
           </div>
-
+          
           <div className="flex-1 overflow-y-auto space-y-6">
             {loading ? (
               <div className="flex items-center justify-center py-8">
@@ -136,13 +127,9 @@ export const TriggerBrowseDialog: React.FC<TriggerBrowseDialogProps> = ({
             ) : error ? (
               <div className="text-center py-8">
                 <Activity className="h-12 w-12 text-destructive mx-auto mb-4" />
-                <h3 className="text-sm font-medium mb-2 text-destructive">
-                  Error Loading Providers
-                </h3>
+                <h3 className="text-sm font-medium mb-2 text-destructive">Error Loading Providers</h3>
                 <p className="text-sm text-muted-foreground">
-                  {error instanceof Error
-                    ? error.message
-                    : 'Failed to load trigger providers'}
+                  {error instanceof Error ? error.message : 'Failed to load trigger providers'}
                 </p>
               </div>
             ) : (
@@ -157,7 +144,7 @@ export const TriggerBrowseDialog: React.FC<TriggerBrowseDialogProps> = ({
                       {typeProviders.length}
                     </Badge>
                   </div>
-
+                  
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {typeProviders.map((provider) => (
                       <div
@@ -171,11 +158,9 @@ export const TriggerBrowseDialog: React.FC<TriggerBrowseDialogProps> = ({
                               {getTriggerIcon(provider.trigger_type)}
                             </div>
                             <div>
-                              <h4 className="text-sm font-medium">
-                                {provider.name}
-                              </h4>
-                              <Badge
-                                variant="secondary"
+                              <h4 className="text-sm font-medium">{provider.name}</h4>
+                              <Badge 
+                                variant="secondary" 
                                 className={`text-xs ${getTriggerTypeColor(provider.trigger_type)}`}
                               >
                                 {provider.trigger_type}
@@ -184,11 +169,11 @@ export const TriggerBrowseDialog: React.FC<TriggerBrowseDialogProps> = ({
                           </div>
                           <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                         </div>
-
+                        
                         <p className="text-xs text-muted-foreground leading-relaxed">
                           {provider.description}
                         </p>
-
+                        
                         <div className="flex items-center justify-between mt-3">
                           <div className="flex items-center space-x-2">
                             {provider.webhook_enabled && (
@@ -197,7 +182,7 @@ export const TriggerBrowseDialog: React.FC<TriggerBrowseDialogProps> = ({
                               </Badge>
                             )}
                           </div>
-
+                          
                           <Button
                             size="sm"
                             variant="ghost"
@@ -216,15 +201,13 @@ export const TriggerBrowseDialog: React.FC<TriggerBrowseDialogProps> = ({
                 </div>
               ))
             )}
-
+            
             {!loading && filteredProviders.length === 0 && (
               <div className="text-center py-8">
                 <Activity className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-sm font-medium mb-2">No triggers found</h3>
                 <p className="text-sm text-muted-foreground">
-                  {searchTerm
-                    ? 'Try adjusting your search terms'
-                    : 'No trigger providers are available'}
+                  {searchTerm ? 'Try adjusting your search terms' : 'No trigger providers are available'}
                 </p>
               </div>
             )}
@@ -233,4 +216,4 @@ export const TriggerBrowseDialog: React.FC<TriggerBrowseDialogProps> = ({
       </DialogContent>
     </Dialog>
   );
-};
+}; 

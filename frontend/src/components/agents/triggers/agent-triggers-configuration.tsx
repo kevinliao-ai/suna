@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import React, { useState } from 'react';
 import { Zap } from 'lucide-react';
@@ -6,13 +6,13 @@ import { Dialog } from '@/components/ui/dialog';
 import { ConfiguredTriggersList } from './configured-triggers-list';
 import { TriggerConfigDialog } from './trigger-config-dialog';
 import { TriggerConfiguration, TriggerProvider } from './types';
-import {
-  useAgentTriggers,
-  useCreateTrigger,
-  useUpdateTrigger,
-  useDeleteTrigger,
+import { 
+  useAgentTriggers, 
+  useCreateTrigger, 
+  useUpdateTrigger, 
+  useDeleteTrigger, 
   useToggleTrigger,
-  useTriggerProviders,
+  useTriggerProviders 
 } from '@/hooks/react-query/triggers';
 import { toast } from 'sonner';
 import { OneClickIntegrations } from './one-click-integrations';
@@ -21,13 +21,12 @@ interface AgentTriggersConfigurationProps {
   agentId: string;
 }
 
-export const AgentTriggersConfiguration: React.FC<
-  AgentTriggersConfigurationProps
-> = ({ agentId }) => {
-  const [configuringProvider, setConfiguringProvider] =
-    useState<TriggerProvider | null>(null);
-  const [editingTrigger, setEditingTrigger] =
-    useState<TriggerConfiguration | null>(null);
+
+export const AgentTriggersConfiguration: React.FC<AgentTriggersConfigurationProps> = ({
+  agentId,
+}) => {
+  const [configuringProvider, setConfiguringProvider] = useState<TriggerProvider | null>(null);
+  const [editingTrigger, setEditingTrigger] = useState<TriggerConfiguration | null>(null);
 
   const { data: triggers = [], isLoading, error } = useAgentTriggers(agentId);
   const { data: providers = [] } = useTriggerProviders();
@@ -38,10 +37,8 @@ export const AgentTriggersConfiguration: React.FC<
 
   const handleEditTrigger = (trigger: TriggerConfiguration) => {
     setEditingTrigger(trigger);
-
-    const provider = providers.find(
-      (p) => p.provider_id === trigger.provider_id,
-    );
+    
+    const provider = providers.find(p => p.provider_id === trigger.provider_id);
     if (provider) {
       setConfiguringProvider(provider);
     } else {
@@ -51,7 +48,7 @@ export const AgentTriggersConfiguration: React.FC<
         description: '',
         trigger_type: trigger.trigger_type,
         webhook_enabled: !!trigger.webhook_url,
-        config_schema: {},
+        config_schema: {}
       });
     }
   };
@@ -60,7 +57,7 @@ export const AgentTriggersConfiguration: React.FC<
     try {
       await deleteTriggerMutation.mutateAsync({
         triggerId: trigger.trigger_id,
-        agentId: trigger.agent_id,
+        agentId: trigger.agent_id
       });
       toast.success('Task deleted successfully');
     } catch (error) {
@@ -119,13 +116,9 @@ export const AgentTriggersConfiguration: React.FC<
             <Zap className="h-5 w-5 text-destructive" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-destructive">
-              Error Loading Triggers
-            </h3>
+            <h3 className="text-lg font-semibold text-destructive">Error Loading Triggers</h3>
             <p className="text-sm text-muted-foreground">
-              {error instanceof Error
-                ? error.message
-                : 'Failed to load triggers'}
+              {error instanceof Error ? error.message : 'Failed to load triggers'}
             </p>
           </div>
         </div>
@@ -136,16 +129,14 @@ export const AgentTriggersConfiguration: React.FC<
   return (
     <div className="space-y-4">
       <OneClickIntegrations agentId={agentId} />
-
+      
       {triggers.length > 0 && (
         <ConfiguredTriggersList
           triggers={triggers}
           onEdit={handleEditTrigger}
           onRemove={handleRemoveTrigger}
           onToggle={handleToggleTrigger}
-          isLoading={
-            deleteTriggerMutation.isPending || toggleTriggerMutation.isPending
-          }
+          isLoading={deleteTriggerMutation.isPending || toggleTriggerMutation.isPending}
         />
       )}
 
@@ -162,24 +153,19 @@ export const AgentTriggersConfiguration: React.FC<
           </p>
         </div>
       )}
-
+      
       {configuringProvider && (
-        <Dialog
-          open={!!configuringProvider}
-          onOpenChange={() => setConfiguringProvider(null)}
-        >
+        <Dialog open={!!configuringProvider} onOpenChange={() => setConfiguringProvider(null)}>
           <TriggerConfigDialog
             provider={configuringProvider}
             existingConfig={editingTrigger}
             onSave={handleSaveTrigger}
             onCancel={() => setConfiguringProvider(null)}
-            isLoading={
-              createTriggerMutation.isPending || updateTriggerMutation.isPending
-            }
+            isLoading={createTriggerMutation.isPending || updateTriggerMutation.isPending}
             agentId={agentId}
           />
         </Dialog>
       )}
     </div>
   );
-};
+}; 

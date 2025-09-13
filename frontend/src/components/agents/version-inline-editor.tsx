@@ -14,10 +14,7 @@ interface VersionInlineEditorProps {
   versionName: string;
   changeDescription?: string;
   isActive?: boolean;
-  onUpdate?: (updatedVersion: {
-    versionName: string;
-    changeDescription?: string;
-  }) => void;
+  onUpdate?: (updatedVersion: { versionName: string; changeDescription?: string }) => void;
 }
 
 export function VersionInlineEditor({
@@ -26,13 +23,11 @@ export function VersionInlineEditor({
   versionName,
   changeDescription,
   isActive = false,
-  onUpdate,
+  onUpdate
 }: VersionInlineEditorProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(versionName);
-  const [editedDescription, setEditedDescription] = useState(
-    changeDescription || '',
-  );
+  const [editedDescription, setEditedDescription] = useState(changeDescription || '');
   const [hasChanges, setHasChanges] = useState(false);
 
   const updateVersionMutation = useUpdateVersionDetails();
@@ -63,13 +58,12 @@ export function VersionInlineEditor({
     }
 
     try {
-      const updateData: { version_name?: string; change_description?: string } =
-        {};
-
+      const updateData: { version_name?: string; change_description?: string } = {};
+      
       if (editedName !== versionName) {
         updateData.version_name = editedName;
       }
-
+      
       if (editedDescription !== (changeDescription || '')) {
         updateData.change_description = editedDescription;
       }
@@ -77,13 +71,13 @@ export function VersionInlineEditor({
       await updateVersionMutation.mutateAsync({
         agentId,
         versionId,
-        data: updateData,
+        data: updateData
       });
 
       setIsEditing(false);
       onUpdate?.({
         versionName: editedName,
-        changeDescription: editedDescription,
+        changeDescription: editedDescription
       });
     } catch (error) {
       // Error is handled by the mutation hook
@@ -159,7 +153,10 @@ export function VersionInlineEditor({
   return (
     <div className="group space-y-1">
       <div className="flex items-center gap-2">
-        <span className={cn('font-medium', isActive && 'text-primary')}>
+        <span className={cn(
+          "font-medium",
+          isActive && "text-primary"
+        )}>
           {versionName}
         </span>
         <Button
@@ -181,4 +178,4 @@ export function VersionInlineEditor({
       )}
     </div>
   );
-}
+} 

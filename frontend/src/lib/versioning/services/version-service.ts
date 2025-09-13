@@ -4,27 +4,17 @@ import {
   CreateVersionRequest,
   UpdateVersionDetailsRequest,
   VersionComparison,
-  VersionDifference,
+  VersionDifference
 } from '../types';
 
 export interface IVersionService {
   getAllVersions(agentId: string): Promise<AgentVersion[]>;
   getVersion(agentId: string, versionId: string): Promise<AgentVersion>;
-  createVersion(
-    agentId: string,
-    request: CreateVersionRequest,
-  ): Promise<AgentVersion>;
+  createVersion(agentId: string, request: CreateVersionRequest): Promise<AgentVersion>;
   activateVersion(agentId: string, versionId: string): Promise<void>;
-  updateVersionDetails(
-    agentId: string,
-    versionId: string,
-    request: UpdateVersionDetailsRequest,
-  ): Promise<AgentVersion>;
+  updateVersionDetails(agentId: string, versionId: string, request: UpdateVersionDetailsRequest): Promise<AgentVersion>;
   getActiveVersion(agentId: string): Promise<AgentVersion | null>;
-  getVersionByNumber(
-    agentId: string,
-    versionNumber: number,
-  ): Promise<AgentVersion | null>;
+  getVersionByNumber(agentId: string, versionNumber: number): Promise<AgentVersion | null>;
 }
 
 export class VersionService implements IVersionService {
@@ -32,9 +22,7 @@ export class VersionService implements IVersionService {
 
   async getAllVersions(agentId: string): Promise<AgentVersion[]> {
     const versions = await this.repository.getAllVersions(agentId);
-    return versions.sort(
-      (a, b) => b.versionNumber.value - a.versionNumber.value,
-    );
+    return versions.sort((a, b) => b.versionNumber.value - a.versionNumber.value);
   }
 
   async getVersion(agentId: string, versionId: string): Promise<AgentVersion> {
@@ -43,7 +31,7 @@ export class VersionService implements IVersionService {
 
   async createVersion(
     agentId: string,
-    request: CreateVersionRequest,
+    request: CreateVersionRequest
   ): Promise<AgentVersion> {
     const newVersion = await this.repository.createVersion(agentId, request);
     return newVersion;
@@ -56,54 +44,42 @@ export class VersionService implements IVersionService {
   async compareVersions(
     agentId: string,
     version1Id: string,
-    version2Id: string,
+    version2Id: string
   ): Promise<VersionComparison> {
     return this.repository.compareVersions(agentId, version1Id, version2Id);
   }
 
   async rollbackToVersion(
     agentId: string,
-    versionId: string,
+    versionId: string
   ): Promise<AgentVersion> {
-    const newVersion = await this.repository.rollbackToVersion(
-      agentId,
-      versionId,
-    );
+    const newVersion = await this.repository.rollbackToVersion(agentId, versionId);
     return newVersion;
   }
 
   async updateVersionDetails(
     agentId: string,
     versionId: string,
-    request: UpdateVersionDetailsRequest,
+    request: UpdateVersionDetailsRequest
   ): Promise<AgentVersion> {
-    const updatedVersion = await this.repository.updateVersionDetails(
-      agentId,
-      versionId,
-      request,
-    );
+    const updatedVersion = await this.repository.updateVersionDetails(agentId, versionId, request);
     return updatedVersion;
   }
 
   async getActiveVersion(agentId: string): Promise<AgentVersion | null> {
     const versions = await this.getAllVersions(agentId);
-    return versions.find((v) => v.isActive) || null;
+    return versions.find(v => v.isActive) || null;
   }
 
   async getVersionByNumber(
     agentId: string,
-    versionNumber: number,
+    versionNumber: number
   ): Promise<AgentVersion | null> {
     const versions = await this.getAllVersions(agentId);
-    return (
-      versions.find((v) => v.versionNumber.value === versionNumber) || null
-    );
+    return versions.find(v => v.versionNumber.value === versionNumber) || null;
   }
 
-  calculateDifferences(
-    v1: AgentVersion,
-    v2: AgentVersion,
-  ): VersionDifference[] {
+  calculateDifferences(v1: AgentVersion, v2: AgentVersion): VersionDifference[] {
     const differences: VersionDifference[] = [];
 
     if (v1.systemPrompt !== v2.systemPrompt) {
@@ -111,7 +87,7 @@ export class VersionService implements IVersionService {
         field: 'systemPrompt',
         type: 'modified',
         oldValue: v1.systemPrompt,
-        newValue: v2.systemPrompt,
+        newValue: v2.systemPrompt
       });
     }
 
@@ -120,7 +96,7 @@ export class VersionService implements IVersionService {
         field: 'model',
         type: 'modified',
         oldValue: v1.model,
-        newValue: v2.model,
+        newValue: v2.model
       });
     }
 
@@ -132,7 +108,7 @@ export class VersionService implements IVersionService {
         differences.push({
           field: `tool.${tool}`,
           type: 'added',
-          newValue: v2.toolConfiguration.tools[tool],
+          newValue: v2.toolConfiguration.tools[tool]
         });
       }
     }
@@ -142,26 +118,24 @@ export class VersionService implements IVersionService {
         differences.push({
           field: `tool.${tool}`,
           type: 'removed',
-          oldValue: v1.toolConfiguration.tools[tool],
+          oldValue: v1.toolConfiguration.tools[tool]
         });
       }
     }
 
     for (const tool of v1Tools) {
-      if (
-        v2Tools.has(tool) &&
-        JSON.stringify(v1.toolConfiguration.tools[tool]) !==
-          JSON.stringify(v2.toolConfiguration.tools[tool])
-      ) {
+      if (v2Tools.has(tool) &&
+          JSON.stringify(v1.toolConfiguration.tools[tool]) !== 
+          JSON.stringify(v2.toolConfiguration.tools[tool])) {
         differences.push({
           field: `tool.${tool}`,
           type: 'modified',
           oldValue: v1.toolConfiguration.tools[tool],
-          newValue: v2.toolConfiguration.tools[tool],
+          newValue: v2.toolConfiguration.tools[tool]
         });
       }
     }
 
     return differences;
   }
-}
+} 

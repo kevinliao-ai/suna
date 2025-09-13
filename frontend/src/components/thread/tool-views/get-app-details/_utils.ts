@@ -33,31 +33,21 @@ const parseContent = (content: any): any => {
 
 const extractFromNewFormat = (content: any): GetAppDetailsData => {
   const parsedContent = parseContent(content);
-
+  
   if (!parsedContent || typeof parsedContent !== 'object') {
-    return {
-      toolkit_slug: null,
-      message: null,
-      toolkit: null,
-      supports_oauth: false,
-      auth_schemes: [],
-      success: undefined,
-      timestamp: undefined,
-    };
+    return { toolkit_slug: null, message: null, toolkit: null, supports_oauth: false, auth_schemes: [], success: undefined, timestamp: undefined };
   }
 
-  if (
-    'tool_execution' in parsedContent &&
-    typeof parsedContent.tool_execution === 'object'
-  ) {
+  if ('tool_execution' in parsedContent && typeof parsedContent.tool_execution === 'object') {
     const toolExecution = parsedContent.tool_execution;
     const args = toolExecution.arguments || {};
-
+    
     let parsedOutput = toolExecution.result?.output;
     if (typeof parsedOutput === 'string') {
       try {
         parsedOutput = JSON.parse(parsedOutput);
-      } catch (e) {}
+      } catch (e) {
+      }
     }
     parsedOutput = parsedOutput || {};
 
@@ -68,7 +58,7 @@ const extractFromNewFormat = (content: any): GetAppDetailsData => {
       supports_oauth: parsedOutput.supports_oauth || false,
       auth_schemes: parsedOutput.auth_schemes || [],
       success: toolExecution.result?.success,
-      timestamp: toolExecution.execution_details?.timestamp,
+      timestamp: toolExecution.execution_details?.timestamp
     };
 
     return extractedData;
@@ -82,7 +72,7 @@ const extractFromNewFormat = (content: any): GetAppDetailsData => {
       supports_oauth: parsedContent.output?.supports_oauth || false,
       auth_schemes: parsedContent.output?.auth_schemes || [],
       success: parsedContent.success,
-      timestamp: undefined,
+      timestamp: undefined
     };
 
     return extractedData;
@@ -92,31 +82,21 @@ const extractFromNewFormat = (content: any): GetAppDetailsData => {
     return extractFromNewFormat(parsedContent.content);
   }
 
-  return {
-    toolkit_slug: null,
-    message: null,
-    toolkit: null,
-    supports_oauth: false,
-    auth_schemes: [],
-    success: undefined,
-    timestamp: undefined,
-  };
+  return { toolkit_slug: null, message: null, toolkit: null, supports_oauth: false, auth_schemes: [], success: undefined, timestamp: undefined };
 };
 
-const extractFromLegacyFormat = (
-  content: any,
-): Omit<GetAppDetailsData, 'success' | 'timestamp'> => {
+const extractFromLegacyFormat = (content: any): Omit<GetAppDetailsData, 'success' | 'timestamp'> => {
   const toolData = extractToolData(content);
-
+  
   if (toolData.toolResult) {
     const args = toolData.arguments || {};
-
+    
     return {
       toolkit_slug: args.toolkit_slug || null,
       message: null,
       toolkit: null,
       supports_oauth: false,
-      auth_schemes: [],
+      auth_schemes: []
     };
   }
 
@@ -125,7 +105,7 @@ const extractFromLegacyFormat = (
     message: null,
     toolkit: null,
     supports_oauth: false,
-    auth_schemes: [],
+    auth_schemes: []
   };
 };
 
@@ -134,7 +114,7 @@ export function extractGetAppDetailsData(
   toolContent: any,
   isSuccess: boolean,
   toolTimestamp?: string,
-  assistantTimestamp?: string,
+  assistantTimestamp?: string
 ): {
   toolkit_slug: string | null;
   message: string | null;
@@ -146,7 +126,7 @@ export function extractGetAppDetailsData(
   actualAssistantTimestamp?: string;
 } {
   let data: GetAppDetailsData;
-
+  
   if (toolContent) {
     data = extractFromNewFormat(toolContent);
     if (data.success !== undefined || data.toolkit) {
@@ -154,7 +134,7 @@ export function extractGetAppDetailsData(
         ...data,
         actualIsSuccess: data.success !== undefined ? data.success : isSuccess,
         actualToolTimestamp: data.timestamp || toolTimestamp,
-        actualAssistantTimestamp: assistantTimestamp,
+        actualAssistantTimestamp: assistantTimestamp
       };
     }
   }
@@ -166,7 +146,7 @@ export function extractGetAppDetailsData(
         ...data,
         actualIsSuccess: data.success !== undefined ? data.success : isSuccess,
         actualToolTimestamp: toolTimestamp,
-        actualAssistantTimestamp: data.timestamp || assistantTimestamp,
+        actualAssistantTimestamp: data.timestamp || assistantTimestamp
       };
     }
   }
@@ -179,14 +159,11 @@ export function extractGetAppDetailsData(
     message: toolLegacy.message || assistantLegacy.message,
     toolkit: toolLegacy.toolkit || assistantLegacy.toolkit,
     supports_oauth: toolLegacy.supports_oauth || assistantLegacy.supports_oauth,
-    auth_schemes:
-      toolLegacy.auth_schemes.length > 0
-        ? toolLegacy.auth_schemes
-        : assistantLegacy.auth_schemes,
+    auth_schemes: toolLegacy.auth_schemes.length > 0 ? toolLegacy.auth_schemes : assistantLegacy.auth_schemes,
     actualIsSuccess: isSuccess,
     actualToolTimestamp: toolTimestamp,
-    actualAssistantTimestamp: assistantTimestamp,
+    actualAssistantTimestamp: assistantTimestamp
   };
 
   return combinedData;
-}
+} 

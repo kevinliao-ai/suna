@@ -1,12 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { ToolCallInput } from '@/components/thread/tool-call-side-panel';
-import {
-  UnifiedMessage,
-  ParsedMetadata,
-  StreamingToolCall,
-  AgentStatus,
-} from '../_types';
+import { UnifiedMessage, ParsedMetadata, StreamingToolCall, AgentStatus } from '../_types';
 import { safeJsonParse } from '@/components/thread/utils';
 import { ParsedContent } from '@/components/thread/types';
 import { extractToolName } from '@/components/thread/tool-views/xml-parser';
@@ -24,10 +19,7 @@ interface UseToolCallsReturn {
   setAutoOpenedPanel: React.Dispatch<React.SetStateAction<boolean>>;
   externalNavIndex: number | undefined;
   setExternalNavIndex: React.Dispatch<React.SetStateAction<number | undefined>>;
-  handleToolClick: (
-    clickedAssistantMessageId: string | null,
-    clickedToolName: string,
-  ) => void;
+  handleToolClick: (clickedAssistantMessageId: string | null, clickedToolName: string) => void;
   handleStreamingToolCall: (toolCall: StreamingToolCall | null) => void;
   toggleSidePanel: () => void;
   handleSidePanelNavigate: (newIndex: number) => void;
@@ -42,9 +34,8 @@ function parseToolContent(content: any): {
 } | null {
   try {
     // First try to parse as JSON if it's a string
-    const parsed =
-      typeof content === 'string' ? safeJsonParse(content, content) : content;
-
+    const parsed = typeof content === 'string' ? safeJsonParse(content, content) : content;
+    
     // Check if it's the new structured format
     if (parsed && typeof parsed === 'object') {
       // New format: { tool_name, xml_tag_name, parameters, result }
@@ -52,19 +43,18 @@ function parseToolContent(content: any): {
         return {
           toolName: parsed.tool_name || parsed.xml_tag_name || 'unknown',
           parameters: parsed.parameters || {},
-          result: parsed.result || null,
+          result: parsed.result || null
         };
       }
-
+      
       // Check if it has a content field that might contain the structured data
       if ('content' in parsed && typeof parsed.content === 'object') {
         const innerContent = parsed.content;
         if ('tool_name' in innerContent || 'xml_tag_name' in innerContent) {
           return {
-            toolName:
-              innerContent.tool_name || innerContent.xml_tag_name || 'unknown',
+            toolName: innerContent.tool_name || innerContent.xml_tag_name || 'unknown',
             parameters: innerContent.parameters || {},
-            result: innerContent.result || null,
+            result: innerContent.result || null
           };
         }
       }
@@ -72,20 +62,16 @@ function parseToolContent(content: any): {
   } catch (e) {
     // Continue with old format parsing
   }
-
+  
   return null;
 }
 
 // Helper function to check if an ask tool should be filtered out (no attachments)
-function shouldFilterAskTool(
-  toolName: string,
-  assistantContent: any,
-  toolContent: any,
-): boolean {
+function shouldFilterAskTool(toolName: string, assistantContent: any, toolContent: any): boolean {
   if (toolName.toLowerCase() !== 'ask') {
     return false; // Not an ask tool, don't filter
   }
-
+  
   const { attachments } = extractAskData(assistantContent, toolContent, true);
   return !attachments || attachments.length === 0;
 }
@@ -94,15 +80,13 @@ export function useToolCalls(
   messages: UnifiedMessage[],
   setLeftSidebarOpen: (open: boolean) => void,
   agentStatus?: AgentStatus,
-  compact?: boolean,
+  compact?: boolean
 ): UseToolCallsReturn {
   const [toolCalls, setToolCalls] = useState<ToolCallInput[]>([]);
   const [currentToolIndex, setCurrentToolIndex] = useState<number>(0);
   const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
   const [autoOpenedPanel, setAutoOpenedPanel] = useState(false);
-  const [externalNavIndex, setExternalNavIndex] = useState<number | undefined>(
-    undefined,
-  );
+  const [externalNavIndex, setExternalNavIndex] = useState<number | undefined>(undefined);
   const userClosedPanelRef = useRef(false);
   const userNavigatedRef = useRef(false); // Track if user manually navigated
   const isMobile = useIsMobile();
@@ -131,18 +115,11 @@ export function useToolCalls(
   useEffect(() => {
     const historicalToolPairs: ToolCallInput[] = [];
     const messageIdToIndex = new Map<string, number>();
-    const assistantMessages = messages.filter(
-      (m) => m.type === 'assistant' && m.message_id,
-    );
+    const assistantMessages = messages.filter(m => m.type === 'assistant' && m.message_id);
 
-    assistantMessages.forEach((assistantMsg) => {
-      const resultMessage = messages.find((toolMsg) => {
-        if (
-          toolMsg.type !== 'tool' ||
-          !toolMsg.metadata ||
-          !assistantMsg.message_id
-        )
-          return false;
+    assistantMessages.forEach(assistantMsg => {
+      const resultMessage = messages.find(toolMsg => {
+        if (toolMsg.type !== 'tool' || !toolMsg.metadata || !assistantMsg.message_id) return false;
         try {
           const metadata = safeJsonParse<ParsedMetadata>(toolMsg.metadata, {});
           return metadata.assistant_message_id === assistantMsg.message_id;
@@ -154,21 +131,16 @@ export function useToolCalls(
       if (resultMessage) {
         let toolName = 'unknown';
         let isSuccess = true;
-
+        
         // First try to parse the new format from the tool message
         const toolContentParsed = parseToolContent(resultMessage.content);
-
+        
         if (toolContentParsed) {
           // New format detected
-          toolName = toolContentParsed.toolName
-            .replace(/_/g, '-')
-            .toLowerCase();
-
+          toolName = toolContentParsed.toolName.replace(/_/g, '-').toLowerCase();
+          
           // Extract success status from the result
-          if (
-            toolContentParsed.result &&
-            typeof toolContentParsed.result === 'object'
-          ) {
+          if (toolContentParsed.result && typeof toolContentParsed.result === 'object') {
             isSuccess = toolContentParsed.result.success !== false;
           }
         } else {
@@ -176,80 +148,58 @@ export function useToolCalls(
           try {
             const assistantContent = (() => {
               try {
-                const parsed = safeJsonParse<ParsedContent>(
-                  assistantMsg.content,
-                  {},
-                );
+                const parsed = safeJsonParse<ParsedContent>(assistantMsg.content, {});
                 return parsed.content || assistantMsg.content;
               } catch {
                 return assistantMsg.content;
               }
             })();
-
+            
             const extractedToolName = extractToolName(assistantContent);
             if (extractedToolName) {
               toolName = extractedToolName;
             } else {
               const assistantContentParsed = safeJsonParse<{
-                tool_calls?: Array<{
-                  function?: { name?: string };
-                  name?: string;
-                }>;
+                tool_calls?: Array<{ function?: { name?: string }; name?: string }>;
               }>(assistantMsg.content, {});
               if (
                 assistantContentParsed.tool_calls &&
                 assistantContentParsed.tool_calls.length > 0
               ) {
                 const firstToolCall = assistantContentParsed.tool_calls[0];
-                const rawName =
-                  firstToolCall.function?.name ||
-                  firstToolCall.name ||
-                  'unknown';
+                const rawName = firstToolCall.function?.name || firstToolCall.name || 'unknown';
                 toolName = rawName.replace(/_/g, '-').toLowerCase();
               }
             }
-          } catch {}
+          } catch { }
 
           // Parse success status from old format
           try {
             const toolResultContent = (() => {
               try {
-                const parsed = safeJsonParse<ParsedContent>(
-                  resultMessage.content,
-                  {},
-                );
+                const parsed = safeJsonParse<ParsedContent>(resultMessage.content, {});
                 return parsed.content || resultMessage.content;
               } catch {
                 return resultMessage.content;
               }
             })();
-
+            
             if (toolResultContent && typeof toolResultContent === 'string') {
-              const toolResultMatch = toolResultContent.match(
-                /ToolResult\s*\(\s*success\s*=\s*(True|False|true|false)/i,
-              );
+              const toolResultMatch = toolResultContent.match(/ToolResult\s*\(\s*success\s*=\s*(True|False|true|false)/i);
               if (toolResultMatch) {
                 isSuccess = toolResultMatch[1].toLowerCase() === 'true';
               } else {
                 const toolContent = toolResultContent.toLowerCase();
-                isSuccess = !(
-                  toolContent.includes('failed') ||
+                isSuccess = !(toolContent.includes('failed') ||
                   toolContent.includes('error') ||
-                  toolContent.includes('failure')
-                );
+                  toolContent.includes('failure'));
               }
             }
-          } catch {}
+          } catch { }
         }
 
         // Check if this ask tool should be filtered out
-        if (
-          shouldFilterAskTool(
-            toolName,
-            assistantMsg.content,
-            resultMessage.content,
-          )
-        ) {
+        if (shouldFilterAskTool(toolName, assistantMsg.content, resultMessage.content)) {
           // Skip this tool call - don't add it to historicalToolPairs
           return;
         }
@@ -281,32 +231,15 @@ export function useToolCalls(
     if (historicalToolPairs.length > 0) {
       if (agentStatus === 'running' && !userNavigatedRef.current) {
         setCurrentToolIndex(historicalToolPairs.length - 1);
-      } else if (
-        isSidePanelOpen &&
-        !userClosedPanelRef.current &&
-        !userNavigatedRef.current
-      ) {
+      } else if (isSidePanelOpen && !userClosedPanelRef.current && !userNavigatedRef.current) {
         setCurrentToolIndex(historicalToolPairs.length - 1);
-      } else if (
-        !isSidePanelOpen &&
-        !autoOpenedPanel &&
-        !userClosedPanelRef.current &&
-        !isMobile &&
-        !compact
-      ) {
+      } else if (!isSidePanelOpen && !autoOpenedPanel && !userClosedPanelRef.current && !isMobile && !compact) {
         setCurrentToolIndex(historicalToolPairs.length - 1);
         setIsSidePanelOpen(true);
         setAutoOpenedPanel(true);
       }
     }
-  }, [
-    messages,
-    isSidePanelOpen,
-    autoOpenedPanel,
-    agentStatus,
-    isMobile,
-    compact,
-  ]);
+  }, [messages, isSidePanelOpen, autoOpenedPanel, agentStatus, isMobile, compact]);
 
   // Reset user navigation flag when agent stops
   useEffect(() => {
@@ -321,74 +254,60 @@ export function useToolCalls(
     }
   }, [isSidePanelOpen]);
 
-  const handleToolClick = useCallback(
-    (clickedAssistantMessageId: string | null, clickedToolName: string) => {
-      if (!clickedAssistantMessageId) {
-        console.warn(
-          'Clicked assistant message ID is null. Cannot open side panel.',
-        );
-        toast.warning('Cannot view details: Assistant message ID is missing.');
-        return;
-      }
+  const handleToolClick = useCallback((clickedAssistantMessageId: string | null, clickedToolName: string) => {
+    if (!clickedAssistantMessageId) {
+      console.warn("Clicked assistant message ID is null. Cannot open side panel.");
+      toast.warning("Cannot view details: Assistant message ID is missing.");
+      return;
+    }
 
-      userClosedPanelRef.current = false;
-      userNavigatedRef.current = true; // Mark that user manually navigated
+    userClosedPanelRef.current = false;
+    userNavigatedRef.current = true; // Mark that user manually navigated
 
-      // Use the pre-computed mapping for faster lookup
-      const toolIndex = assistantMessageToToolIndex.current.get(
-        clickedAssistantMessageId,
+    // Use the pre-computed mapping for faster lookup
+    const toolIndex = assistantMessageToToolIndex.current.get(clickedAssistantMessageId);
+
+    if (toolIndex !== undefined) {
+      setExternalNavIndex(toolIndex);
+      setCurrentToolIndex(toolIndex);
+      setIsSidePanelOpen(true);
+
+      setTimeout(() => setExternalNavIndex(undefined), 100);
+    } else {
+      console.warn(
+        `[PAGE] Could not find matching tool call in toolCalls array for assistant message ID: ${clickedAssistantMessageId}`,
       );
-
-      if (toolIndex !== undefined) {
-        setExternalNavIndex(toolIndex);
-        setCurrentToolIndex(toolIndex);
-        setIsSidePanelOpen(true);
-
-        setTimeout(() => setExternalNavIndex(undefined), 100);
-      } else {
-        console.warn(
-          `[PAGE] Could not find matching tool call in toolCalls array for assistant message ID: ${clickedAssistantMessageId}`,
-        );
-
-        // Fallback: Try to find by matching the tool name and approximate position
-        const assistantMessage = messages.find(
-          (m) =>
-            m.message_id === clickedAssistantMessageId &&
-            m.type === 'assistant',
-        );
-
-        if (assistantMessage) {
-          // Find the index of this assistant message among all assistant messages
-          const assistantMessages = messages.filter(
-            (m) => m.type === 'assistant' && m.message_id,
-          );
-          const messageIndex = assistantMessages.findIndex(
-            (m) => m.message_id === clickedAssistantMessageId,
-          );
-
-          // Check if we have a tool call at this index
-          if (messageIndex !== -1 && messageIndex < toolCalls.length) {
-            setExternalNavIndex(messageIndex);
-            setCurrentToolIndex(messageIndex);
-            setIsSidePanelOpen(true);
-            setTimeout(() => setExternalNavIndex(undefined), 100);
-            return;
-          }
+      
+      // Fallback: Try to find by matching the tool name and approximate position
+      const assistantMessage = messages.find(
+        m => m.message_id === clickedAssistantMessageId && m.type === 'assistant'
+      );
+      
+      if (assistantMessage) {
+        // Find the index of this assistant message among all assistant messages
+        const assistantMessages = messages.filter(m => m.type === 'assistant' && m.message_id);
+        const messageIndex = assistantMessages.findIndex(m => m.message_id === clickedAssistantMessageId);
+        
+        // Check if we have a tool call at this index
+        if (messageIndex !== -1 && messageIndex < toolCalls.length) {
+          setExternalNavIndex(messageIndex);
+          setCurrentToolIndex(messageIndex);
+          setIsSidePanelOpen(true);
+          setTimeout(() => setExternalNavIndex(undefined), 100);
+          return;
         }
-
-        toast.info('Could not find details for this tool call.');
       }
-    },
-    [messages, toolCalls],
-  );
+      
+      toast.info('Could not find details for this tool call.');
+    }
+  }, [messages, toolCalls]);
 
   const handleStreamingToolCall = useCallback(
     (toolCall: StreamingToolCall | null) => {
       if (!toolCall) return;
 
       // Get the raw tool name and ensure it uses hyphens
-      const rawToolName =
-        toolCall.name || toolCall.xml_tag_name || 'Unknown Tool';
+      const rawToolName = toolCall.name || toolCall.xml_tag_name || 'Unknown Tool';
       const toolName = rawToolName.replace(/_/g, '-').toLowerCase();
 
       if (userClosedPanelRef.current) return;
@@ -407,25 +326,16 @@ export function useToolCalls(
         toolName === 'full-file-rewrite' ||
         toolName === 'edit-file'
       ) {
-        const fileOpTags = [
-          'create-file',
-          'delete-file',
-          'full-file-rewrite',
-          'edit-file',
-        ];
+        const fileOpTags = ['create-file', 'delete-file', 'full-file-rewrite', 'edit-file'];
         const matchingTag = fileOpTags.find((tag) => toolName === tag);
         if (matchingTag) {
-          if (
-            !toolArguments.includes(`<${matchingTag}>`) &&
-            !toolArguments.includes('file_path=') &&
-            !toolArguments.includes('target_file=')
-          ) {
+          if (!toolArguments.includes(`<${matchingTag}>`) && !toolArguments.includes('file_path=') && !toolArguments.includes('target_file=')) {
             const filePath = toolArguments.trim();
             if (filePath && !filePath.startsWith('<')) {
               if (matchingTag === 'edit-file') {
                 formattedContent = `<${matchingTag} target_file="${filePath}">`;
               } else {
-                formattedContent = `<${matchingTag} file_path="${filePath}">`;
+              formattedContent = `<${matchingTag} file_path="${filePath}">`;
               }
             } else {
               formattedContent = `<${matchingTag}>${toolArguments}</${matchingTag}>`;
@@ -438,7 +348,7 @@ export function useToolCalls(
 
       const newToolCall: ToolCallInput = {
         assistantCall: {
-          name: toolName,
+          name: toolName, 
           content: formattedContent,
           timestamp: new Date().toISOString(),
         },
@@ -452,13 +362,10 @@ export function useToolCalls(
       setToolCalls((prev) => {
         // Check if we're updating an existing streaming tool or adding a new one
         const existingStreamingIndex = prev.findIndex(
-          (tc) => tc.toolResult?.content === 'STREAMING',
+          tc => tc.toolResult?.content === 'STREAMING'
         );
-
-        if (
-          existingStreamingIndex !== -1 &&
-          prev[existingStreamingIndex].assistantCall.name === toolName
-        ) {
+        
+        if (existingStreamingIndex !== -1 && prev[existingStreamingIndex].assistantCall.name === toolName) {
           // Update existing streaming tool
           const updated = [...prev];
           updated[existingStreamingIndex] = {
@@ -477,12 +384,12 @@ export function useToolCalls(
 
       // If agent is running and user hasn't manually navigated, show the latest tool
       if (!userNavigatedRef.current) {
-        setCurrentToolIndex((prev) => {
+        setCurrentToolIndex(prev => {
           const newLength = toolCalls.length + 1; // Account for the new tool being added
           return newLength - 1;
         });
       }
-
+      
       if (!compact) {
         setIsSidePanelOpen(true);
       }
@@ -508,3 +415,5 @@ export function useToolCalls(
     userClosedPanelRef,
   };
 }
+
+

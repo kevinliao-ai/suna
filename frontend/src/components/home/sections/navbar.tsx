@@ -30,7 +30,7 @@ const drawerVariants = {
     y: 0,
     rotate: 0,
     transition: {
-      type: 'spring' as const,
+      type: 'spring',
       damping: 15,
       stiffness: 200,
       staggerChildren: 0.03,
@@ -61,10 +61,7 @@ export function Navbar() {
   const { theme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const { user } = useAuth();
-  const { formattedStars, loading: starsLoading } = useGitHubStars(
-    'bilibili',
-    'Index-anisora',
-  );
+  const { formattedStars, loading: starsLoading } = useGitHubStars('bilibili', 'Index-anisora');
   const router = useRouter();
   const pathname = usePathname();
 
@@ -132,8 +129,10 @@ export function Navbar() {
               : 'shadow-none px-3 md:px-7',
           )}
         >
-          <div className="flex h-[56px] items-center justify-between p-4">
-            <Link href="/" className="flex items-center gap-3">
+          <div className="flex h-[56px] items-center p-2 md:p-4">
+            {/* Left Section - Logo */}
+            <div className="flex items-center justify-start flex-shrink-0 w-auto md:w-[200px]">
+              <Link href="/" className="flex items-center gap-3">
               <Image
                 src={logoSrc}
                 alt="AniSora Logo"
@@ -141,8 +140,8 @@ export function Navbar() {
                 height={22}
                 priority
               />
-              {/* <span className="font-medium text-primary text-sm">AniSora</span> */}
-            </Link>
+              </Link>
+            </div>
 
             {/* Center Section - Navigation Menu */}
             <div className="hidden md:flex items-center justify-center flex-grow">
@@ -161,9 +160,7 @@ export function Navbar() {
                     aria-label="GitHub Repository"
                   >
                     <Github className="size-3.5" />
-                    <span
-                      className={`text-xs font-medium transition-opacity duration-200 ${starsLoading ? 'opacity-50' : 'opacity-100'}`}
-                    >
+                    <span className={`text-xs font-medium transition-opacity duration-200 ${starsLoading ? 'opacity-50' : 'opacity-100'}`}>
                       {formattedStars}
                     </span>
                   </Link>
@@ -227,13 +224,13 @@ export function Navbar() {
                   <Link href="/" className="flex items-center gap-3">
                     <Image
                       src={logoSrc}
-                      alt="Anisora Logo"
+                      alt="Kortix Logo"
                       width={120}
                       height={22}
                       priority
                     />
                     <span className="font-medium text-primary text-sm">
-                      / AniSora
+                      / Suna
                     </span>
                   </Link>
                   <button
@@ -263,16 +260,16 @@ export function Navbar() {
                               setIsDrawerOpen(false);
                               return;
                             }
-
+                            
                             e.preventDefault();
-
+                            
                             // If we're not on the homepage, redirect to homepage with the section
                             if (pathname !== '/') {
                               router.push(`/${item.href}`);
                               setIsDrawerOpen(false);
                               return;
                             }
-
+                            
                             const element = document.getElementById(
                               item.href.substring(1),
                             );
@@ -280,10 +277,7 @@ export function Navbar() {
                             setIsDrawerOpen(false);
                           }}
                           className={`underline-offset-4 hover:text-primary/80 transition-colors ${
-                            (item.href.startsWith('#') &&
-                              pathname === '/' &&
-                              activeSection === item.href.substring(1)) ||
-                            item.href === pathname
+                            (item.href.startsWith('#') && pathname === '/' && activeSection === item.href.substring(1)) || (item.href === pathname)
                               ? 'text-primary font-medium'
                               : 'text-primary/60'
                           }`}
@@ -304,9 +298,7 @@ export function Navbar() {
                   aria-label="GitHub Repository"
                 >
                   <Github className="size-3.5" />
-                  <span
-                    className={`text-xs font-medium transition-opacity duration-200 ${starsLoading ? 'opacity-50' : 'opacity-100'}`}
-                  >
+                  <span className={`text-xs font-medium transition-opacity duration-200 ${starsLoading ? 'opacity-50' : 'opacity-100'}`}>
                     ⭐ {formattedStars}
                   </span>
                 </Link>
@@ -338,5 +330,5 @@ export function Navbar() {
         )}
       </AnimatePresence>
     </header>
-  );
+  ); 
 }

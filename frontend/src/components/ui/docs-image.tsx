@@ -6,8 +6,7 @@ import { Button } from '@/components/ui/button';
 import { ZoomIn, ExternalLink, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export interface DocsImageProps
-  extends Omit<React.ImgHTMLAttributes<HTMLImageElement>, 'size'> {
+export interface DocsImageProps extends Omit<React.ImgHTMLAttributes<HTMLImageElement>, 'size'> {
   caption?: string;
   credit?: string;
   badge?: string;
@@ -30,34 +29,31 @@ export interface DocsImageProps
 }
 
 export const DocsImage = React.forwardRef<HTMLDivElement, DocsImageProps>(
-  (
-    {
-      src,
-      alt,
-      caption,
-      credit,
-      badge,
-      badgeVariant = 'secondary',
-      size = 'default',
-      aspect = 'auto',
-      rounded = true,
-      shadow = false,
-      border = false,
-      zoom = false,
-      download = false,
-      external = false,
-      loading = 'lazy',
-      placeholder,
-      containerClassName,
-      captionClassName,
-      className,
-      onZoom,
-      onDownload,
-      onExternal,
-      ...props
-    },
-    ref,
-  ) => {
+  ({
+    src,
+    alt,
+    caption,
+    credit,
+    badge,
+    badgeVariant = 'secondary',
+    size = 'default',
+    aspect = 'auto',
+    rounded = true,
+    shadow = false,
+    border = false,
+    zoom = false,
+    download = false,
+    external = false,
+    loading = 'lazy',
+    placeholder,
+    containerClassName,
+    captionClassName,
+    className,
+    onZoom,
+    onDownload,
+    onExternal,
+    ...props
+  }, ref) => {
     const [imageLoading, setImageLoading] = React.useState(true);
     const [imageError, setImageError] = React.useState(false);
 
@@ -66,7 +62,7 @@ export const DocsImage = React.forwardRef<HTMLDivElement, DocsImageProps>(
       default: 'w-full max-w-md',
       lg: 'w-full max-w-lg',
       xl: 'w-full max-w-xl',
-      full: 'w-full',
+      full: 'w-full'
     };
 
     const aspectClasses = {
@@ -74,7 +70,7 @@ export const DocsImage = React.forwardRef<HTMLDivElement, DocsImageProps>(
       video: 'aspect-video',
       wide: 'aspect-[16/9]',
       tall: 'aspect-[4/5]',
-      auto: '',
+      auto: ''
     };
 
     const handleImageLoad = () => {
@@ -110,20 +106,21 @@ export const DocsImage = React.forwardRef<HTMLDivElement, DocsImageProps>(
     };
 
     return (
-      <figure ref={ref} className={cn('relative group', containerClassName)}>
-        <div
-          className={cn(
-            'relative overflow-hidden border border-muted/50',
-            sizeClasses[size],
-            aspectClasses[aspect],
-            rounded && 'rounded-lg',
-            border && 'border',
-            shadow && 'shadow-md',
-            className,
-          )}
-        >
+      <figure 
+        ref={ref} 
+        className={cn("relative group", containerClassName)}
+      >
+        <div className={cn(
+          "relative overflow-hidden border border-muted/50",
+          sizeClasses[size],
+          aspectClasses[aspect],
+          rounded && "rounded-lg",
+          border && "border",
+          shadow && "shadow-md",
+          className
+        )}>
           {badge && (
-            <Badge
+            <Badge 
               variant={badgeVariant}
               className="absolute top-2 left-2 z-10"
             >
@@ -171,9 +168,7 @@ export const DocsImage = React.forwardRef<HTMLDivElement, DocsImageProps>(
           {imageLoading && (
             <div className="absolute inset-0 bg-muted animate-pulse flex items-center justify-center">
               {placeholder ? (
-                <span className="text-muted-foreground text-sm">
-                  {placeholder}
-                </span>
+                <span className="text-muted-foreground text-sm">{placeholder}</span>
               ) : (
                 <div className="w-8 h-8 bg-muted-foreground/20 rounded" />
               )}
@@ -183,9 +178,7 @@ export const DocsImage = React.forwardRef<HTMLDivElement, DocsImageProps>(
           {/* Error state */}
           {imageError && (
             <div className="absolute inset-0 bg-muted flex items-center justify-center">
-              <span className="text-muted-foreground text-sm">
-                Failed to load image
-              </span>
+              <span className="text-muted-foreground text-sm">Failed to load image</span>
             </div>
           )}
 
@@ -198,9 +191,9 @@ export const DocsImage = React.forwardRef<HTMLDivElement, DocsImageProps>(
               onLoad={handleImageLoad}
               onError={handleImageError}
               className={cn(
-                'w-full h-full object-cover transition-transform',
-                zoom && 'group-hover:scale-105 cursor-zoom-in',
-                imageLoading && 'opacity-0',
+                "w-full h-full object-cover transition-transform",
+                zoom && "group-hover:scale-105 cursor-zoom-in",
+                imageLoading && "opacity-0"
               )}
               {...props}
             />
@@ -209,19 +202,21 @@ export const DocsImage = React.forwardRef<HTMLDivElement, DocsImageProps>(
 
         {/* Caption */}
         {(caption || credit) && (
-          <figcaption
-            className={cn(
-              'mt-2 text-sm text-muted-foreground text-center space-y-1',
-              captionClassName,
+          <figcaption className={cn(
+            "mt-2 text-sm text-muted-foreground text-center space-y-1",
+            captionClassName
+          )}>
+            {caption && (
+              <p className="leading-relaxed">{caption}</p>
             )}
-          >
-            {caption && <p className="leading-relaxed">{caption}</p>}
-            {credit && <p className="text-xs italic">Credit: {credit}</p>}
+            {credit && (
+              <p className="text-xs italic">Credit: {credit}</p>
+            )}
           </figcaption>
         )}
       </figure>
     );
-  },
+  }
 );
 
-DocsImage.displayName = 'DocsImage';
+DocsImage.displayName = 'DocsImage'; 

@@ -27,11 +27,9 @@ export const supabaseMFAService = {
   /**
    * Enroll phone number for SMS-based 2FA
    */
-  async enrollPhoneNumber(
-    data: PhoneVerificationEnroll,
-  ): Promise<EnrollFactorResponse> {
+  async enrollPhoneNumber(data: PhoneVerificationEnroll): Promise<EnrollFactorResponse> {
     const supabase = createClient();
-
+    
     try {
       const response = await supabase.auth.mfa.enroll({
         factorType: 'phone',
@@ -63,11 +61,9 @@ export const supabaseMFAService = {
   /**
    * Create a challenge for an enrolled phone factor (sends SMS)
    */
-  async createChallenge(
-    data: PhoneVerificationChallenge,
-  ): Promise<ChallengeResponse> {
+  async createChallenge(data: PhoneVerificationChallenge): Promise<ChallengeResponse> {
     const supabase = createClient();
-
+    
     try {
       const response = await supabase.auth.mfa.challenge({
         factorId: data.factor_id,
@@ -83,9 +79,7 @@ export const supabaseMFAService = {
 
       return {
         id: response.data.id,
-        expires_at: response.data.expires_at
-          ? new Date(response.data.expires_at * 1000).toISOString()
-          : undefined,
+        expires_at: response.data.expires_at ? new Date(response.data.expires_at * 1000).toISOString() : undefined,
       };
     } catch (error: any) {
       console.error('❌ Create SMS challenge failed:', error);
@@ -96,11 +90,9 @@ export const supabaseMFAService = {
   /**
    * Verify SMS code for phone verification
    */
-  async verifyChallenge(
-    data: PhoneVerificationVerify,
-  ): Promise<PhoneVerificationResponse> {
+  async verifyChallenge(data: PhoneVerificationVerify): Promise<PhoneVerificationResponse> {
     const supabase = createClient();
-
+    
     try {
       const response = await supabase.auth.mfa.verify({
         factorId: data.factor_id,
@@ -125,11 +117,9 @@ export const supabaseMFAService = {
   /**
    * Create challenge and verify in one step
    */
-  async challengeAndVerify(
-    data: PhoneVerificationChallengeAndVerify,
-  ): Promise<PhoneVerificationResponse> {
+  async challengeAndVerify(data: PhoneVerificationChallengeAndVerify): Promise<PhoneVerificationResponse> {
     const supabase = createClient();
-
+    
     try {
       const response = await supabase.auth.mfa.challengeAndVerify({
         factorId: data.factor_id,
@@ -155,7 +145,7 @@ export const supabaseMFAService = {
    */
   async resendSMS(factorId: string): Promise<ChallengeResponse> {
     const supabase = createClient();
-
+    
     try {
       const response = await supabase.auth.mfa.challenge({
         factorId: factorId,
@@ -171,9 +161,7 @@ export const supabaseMFAService = {
 
       return {
         id: response.data.id,
-        expires_at: response.data.expires_at
-          ? new Date(response.data.expires_at * 1000).toISOString()
-          : undefined,
+        expires_at: response.data.expires_at ? new Date(response.data.expires_at * 1000).toISOString() : undefined,
       };
     } catch (error: any) {
       console.error('❌ Resend SMS failed:', error);
@@ -186,13 +174,10 @@ export const supabaseMFAService = {
    */
   async listFactors(): Promise<ListFactorsResponse> {
     const supabase = createClient();
-
+    
     try {
-      const {
-        data: { user },
-        error,
-      } = await supabase.auth.getUser();
-
+      const { data: { user }, error } = await supabase.auth.getUser();
+      
       if (error) {
         throw new Error(error.message);
       }
@@ -202,7 +187,7 @@ export const supabaseMFAService = {
       }
 
       const factors: FactorInfo[] = [];
-
+      
       if (user.factors) {
         for (const factor of user.factors) {
           factors.push({
@@ -229,7 +214,7 @@ export const supabaseMFAService = {
    */
   async unenrollFactor(factorId: string): Promise<PhoneVerificationResponse> {
     const supabase = createClient();
-
+    
     try {
       const response = await supabase.auth.mfa.unenroll({
         factorId: factorId,
@@ -254,20 +239,16 @@ export const supabaseMFAService = {
    */
   async getAAL(): Promise<AALResponse> {
     const supabase = createClient();
-
+    
     try {
-      const aalResponse =
-        await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-
+      const aalResponse = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      
       if (aalResponse.error) {
         throw new Error(aalResponse.error.message);
       }
 
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
-
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
       if (userError) {
         throw new Error(userError.message);
       }
@@ -286,8 +267,7 @@ export const supabaseMFAService = {
         }
       }
 
-      const isNewUser =
-        userCreatedAt && userCreatedAt >= PHONE_VERIFICATION_CUTOFF_DATE;
+      const isNewUser = userCreatedAt && userCreatedAt >= PHONE_VERIFICATION_CUTOFF_DATE;
 
       const factors: any[] = [];
       const phoneFactors: any[] = [];
@@ -349,18 +329,13 @@ export const supabaseMFAService = {
         verificationRequired = actionRequired === 'verify_mfa';
       }
 
-      const phoneVerificationRequired =
-        isNewUser && isPhoneVerificationMandatory();
-      verificationRequired =
-        isNewUser && verificationRequired && isPhoneVerificationMandatory();
+      const phoneVerificationRequired = isNewUser && isPhoneVerificationMandatory();
+      verificationRequired = isNewUser && verificationRequired && isPhoneVerificationMandatory();
 
       return {
         current_level: current,
         next_level: nextLevel,
-        current_authentication_methods:
-          aalResponse.data?.currentAuthenticationMethods?.map(
-            (m) => m.method,
-          ) || [],
+        current_authentication_methods: aalResponse.data?.currentAuthenticationMethods?.map(m => m.method) || [],
         action_required: actionRequired,
         message: message,
         phone_verification_required: phoneVerificationRequired,
@@ -375,4 +350,4 @@ export const supabaseMFAService = {
       throw new Error(`Failed to get AAL: ${error.message}`);
     }
   },
-};
+}; 

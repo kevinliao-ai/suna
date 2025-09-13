@@ -1,15 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import {
-  Key,
-  Plus,
-  Trash2,
-  Copy,
-  Shield,
-  ExternalLink,
-  Sparkles,
-} from 'lucide-react';
+import { Key, Plus, Trash2, Copy, Shield, ExternalLink, Sparkles } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
@@ -75,6 +67,7 @@ export default function APIKeysPage() {
     useState<APIKeyCreateResponse | null>(null);
   const [showCreatedKey, setShowCreatedKey] = useState(false);
   const queryClient = useQueryClient();
+
 
   // Fetch API keys
   const {
@@ -208,6 +201,7 @@ export default function APIKeysPage() {
     return new Date(expiresAt) < new Date();
   };
 
+
   return (
     <div className="container mx-auto max-w-6xl px-6 py-6">
       <div className="space-y-6">
@@ -230,10 +224,7 @@ export default function APIKeysPage() {
                   <Sparkles className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div className="absolute -top-1 -right-1">
-                  <Badge
-                    variant="secondary"
-                    className="h-5 px-1.5 text-xs bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700"
-                  >
+                  <Badge variant="secondary" className="h-5 px-1.5 text-xs bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700">
                     Beta
                   </Badge>
                 </div>
@@ -244,15 +235,14 @@ export default function APIKeysPage() {
                     Suna SDK & API
                   </h3>
                   <p className="text-sm text-blue-700 dark:text-blue-300 leading-relaxed">
-                    Our SDK and API are currently in beta. Use these API keys to
-                    integrate with our programmatic interface for building
-                    custom applications and automations.
+                    Our SDK and API are currently in beta. Use these API keys to integrate with our 
+                    programmatic interface for building custom applications and automations.
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <a
-                    href="https://github.com/kortix-ai/suna/tree/main/sdk"
-                    target="_blank"
+                  <a 
+                    href="https://github.com/kortix-ai/suna/tree/main/sdk" 
+                    target="_blank" 
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
                   >

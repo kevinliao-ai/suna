@@ -42,7 +42,7 @@ const handleLocalFiles = (
       path: `/workspace/${normalizedName}`,
       size: file.size,
       type: file.type || 'application/octet-stream',
-      localUrl: URL.createObjectURL(file),
+      localUrl: URL.createObjectURL(file)
     };
   });
 
@@ -77,9 +77,8 @@ const uploadFiles = async (
       const uploadPath = `/workspace/${normalizedName}`;
 
       // Check if this filename already exists in chat messages
-      const isFileInChat = messages.some((message) => {
-        const content =
-          typeof message.content === 'string' ? message.content : '';
+      const isFileInChat = messages.some(message => {
+        const content = typeof message.content === 'string' ? message.content : '';
         return content.includes(`[Uploaded File: ${uploadPath}]`);
       });
 
@@ -113,20 +112,13 @@ const uploadFiles = async (
       // If file was already in chat and we have queryClient, invalidate its cache
       if (isFileInChat && queryClient) {
         // Invalidate all content types for this file
-        ['text', 'blob', 'json'].forEach((contentType) => {
-          const queryKey = fileQueryKeys.content(
-            sandboxId,
-            uploadPath,
-            contentType,
-          );
+        ['text', 'blob', 'json'].forEach(contentType => {
+          const queryKey = fileQueryKeys.content(sandboxId, uploadPath, contentType);
           queryClient.removeQueries({ queryKey });
         });
 
         // Also invalidate directory listing
-        const directoryPath = uploadPath.substring(
-          0,
-          uploadPath.lastIndexOf('/'),
-        );
+        const directoryPath = uploadPath.substring(0, uploadPath.lastIndexOf('/'));
         queryClient.invalidateQueries({
           queryKey: fileQueryKeys.directory(sandboxId, directoryPath),
         });
@@ -168,14 +160,7 @@ const handleFiles = async (
 ) => {
   if (sandboxId) {
     // If we have a sandboxId, upload files directly
-    await uploadFiles(
-      files,
-      sandboxId,
-      setUploadedFiles,
-      setIsUploading,
-      messages,
-      queryClient,
-    );
+    await uploadFiles(files, sandboxId, setUploadedFiles, setIsUploading, messages, queryClient);
   } else {
     // Otherwise, store files locally
     handleLocalFiles(files, setPendingFiles, setUploadedFiles);
@@ -219,8 +204,8 @@ export const FileUploadHandler = forwardRef<
     useEffect(() => {
       return () => {
         // Clean up any object URLs to avoid memory leaks
-        setUploadedFiles((prev) => {
-          prev.forEach((file) => {
+        setUploadedFiles(prev => {
+          prev.forEach(file => {
             if (file.localUrl) {
               URL.revokeObjectURL(file.localUrl);
             }
@@ -269,10 +254,7 @@ export const FileUploadHandler = forwardRef<
                   size="sm"
                   className="h-8 px-3 py-2 bg-transparent border border-border rounded-xl text-muted-foreground hover:text-foreground hover:bg-accent/50 flex items-center gap-2"
                   disabled={
-                    !isLoggedIn ||
-                    loading ||
-                    (disabled && !isAgentRunning) ||
-                    isUploading
+                    !isLoggedIn || loading || (disabled && !isAgentRunning) || isUploading
                   }
                 >
                   {isUploading ? (
@@ -285,9 +267,7 @@ export const FileUploadHandler = forwardRef<
               </span>
             </TooltipTrigger>
             <TooltipContent side="top">
-              <p>
-                {isLoggedIn ? 'Attach files' : 'Please login to attach files'}
-              </p>
+              <p>{isLoggedIn ? 'Attach files' : 'Please login to attach files'}</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>

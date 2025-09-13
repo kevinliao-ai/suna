@@ -3,5 +3,5 @@ export const ModalProviders = () => {
     <>
       {/* Modal providers - currently empty as modals are handled directly by components */}
     </>
-  );
-};
+  )
+}

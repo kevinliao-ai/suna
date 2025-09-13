@@ -7,12 +7,14 @@ import {
   Project,
   Message as BaseApiMessageType,
 } from '@/lib/api';
-import { UnifiedMessage, ParsedMetadata } from '@/components/thread/types';
+import {
+  UnifiedMessage,
+  ParsedMetadata,
+} from '@/components/thread/types';
 
 // Error code mappings for share page
 const threadErrorCodeMessages: Record<string, string> = {
-  PGRST116:
-    'The requested chat does not exist, has been deleted, or you do not have access to it.',
+  PGRST116: 'The requested chat does not exist, has been deleted, or you do not have access to it.',
 };
 
 interface ApiMessageType extends BaseApiMessageType {
@@ -60,7 +62,7 @@ export function useShareThreadData(threadId: string): UseShareThreadDataReturn {
   const [agentStatus, setAgentStatus] = useState<AgentStatus>('idle');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
+  
   const initialLoadCompleted = useRef<boolean>(false);
 
   useEffect(() => {
@@ -92,9 +94,9 @@ export function useShareThreadData(threadId: string): UseShareThreadDataReturn {
 
         const projectData = threadData?.project_id
           ? await getProject(threadData.project_id).catch((err) => {
-              console.warn('[SHARE] Could not load project data:', err);
-              return null;
-            })
+            console.warn('[SHARE] Could not load project data:', err);
+            return null;
+          })
           : null;
 
         if (isMounted) {
@@ -130,10 +132,7 @@ export function useShareThreadData(threadId: string): UseShareThreadDataReturn {
                 thread_id: msg.thread_id || threadId,
                 type: (msg.type || 'system') as UnifiedMessage['type'],
                 is_llm_message: Boolean(msg.is_llm_message),
-                content:
-                  typeof finalContent === 'string'
-                    ? finalContent
-                    : JSON.stringify(finalContent),
+                content: typeof finalContent === 'string' ? finalContent : JSON.stringify(finalContent),
                 metadata: msg.metadata || '{}',
                 created_at: msg.created_at || new Date().toISOString(),
                 updated_at: msg.updated_at || new Date().toISOString(),
@@ -157,7 +156,7 @@ export function useShareThreadData(threadId: string): UseShareThreadDataReturn {
         if (isMounted) setIsLoading(false);
       }
     }
-
+    
     loadData();
     return () => {
       isMounted = false;

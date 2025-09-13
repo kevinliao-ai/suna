@@ -11,7 +11,7 @@ import {
   ChevronRight,
   Link2,
   Zap,
-  Filter,
+  Filter
 } from 'lucide-react';
 import { ToolViewProps } from '../types';
 import { formatTimestamp, getToolTitle } from '../utils';
@@ -19,14 +19,10 @@ import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { LoadingState } from '../shared/LoadingState';
-import { Separator } from '@/components/ui/separator';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
+import { Separator } from "@/components/ui/separator";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { extractSearchMcpServersData } from './_utils';
 import { useComposioToolkitIcon } from '@/hooks/react-query/composio/use-composio';
 
@@ -39,6 +35,7 @@ export function SearchMcpServersForAgentToolView({
   isSuccess = true,
   isStreaming = false,
 }: ToolViewProps) {
+
   const [isResultsExpanded, setIsResultsExpanded] = useState(true);
 
   const {
@@ -47,13 +44,13 @@ export function SearchMcpServersForAgentToolView({
     total_found,
     actualIsSuccess,
     actualToolTimestamp,
-    actualAssistantTimestamp,
+    actualAssistantTimestamp
   } = extractSearchMcpServersData(
     assistantContent,
     toolContent,
     isSuccess,
     toolTimestamp,
-    assistantTimestamp,
+    assistantTimestamp
   );
 
   const toolTitle = getToolTitle(name);
@@ -77,10 +74,10 @@ export function SearchMcpServersForAgentToolView({
             <Badge
               variant="secondary"
               className={cn(
-                'text-xs font-medium',
+                "text-xs font-medium",
                 actualIsSuccess
-                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800'
-                  : 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800',
+                  ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800"
+                  : "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800"
               )}
             >
               {actualIsSuccess ? (
@@ -122,16 +119,13 @@ export function SearchMcpServersForAgentToolView({
                       </p>
                     </div>
                   </div>
-
+                  
                   <div className="flex items-center gap-2">
                     <Badge variant="outline" className="text-xs">
                       <Filter className="w-3 h-3 mr-1" />
                       {search_query}
                     </Badge>
-                    <Badge
-                      variant="secondary"
-                      className="text-xs bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800"
-                    >
+                    <Badge variant="secondary" className="text-xs bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">
                       <Package className="w-3 h-3 mr-1" />
                       {total_found} found
                     </Badge>
@@ -151,7 +145,7 @@ export function SearchMcpServersForAgentToolView({
                       <div>Results: {total_found}</div>
                     </div>
                   </div>
-
+                  
                   <div className="space-y-2">
                     <h4 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
                       <Package className="w-4 h-4" />
@@ -167,15 +161,9 @@ export function SearchMcpServersForAgentToolView({
 
               {toolkits && toolkits.length > 0 && (
                 <div className="border rounded-xl p-4 space-y-4">
-                  <Collapsible
-                    open={isResultsExpanded}
-                    onOpenChange={setIsResultsExpanded}
-                  >
+                  <Collapsible open={isResultsExpanded} onOpenChange={setIsResultsExpanded}>
                     <CollapsibleTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        className="w-full justify-between p-0 h-auto"
-                      >
+                      <Button variant="ghost" className="w-full justify-between p-0 h-auto">
                         <div className="flex items-center gap-2">
                           <Package className="w-4 h-4" />
                           <h4 className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
@@ -189,7 +177,7 @@ export function SearchMcpServersForAgentToolView({
                         )}
                       </Button>
                     </CollapsibleTrigger>
-
+                    
                     <CollapsibleContent className="space-y-3 mt-3">
                       <div className="grid gap-3">
                         {toolkits.map((toolkit, index) => (
@@ -206,8 +194,7 @@ export function SearchMcpServersForAgentToolView({
           <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg m-4">
             <p className="text-sm text-red-800 dark:text-red-200 flex items-center gap-2">
               <AlertTriangle className="h-4 w-4" />
-              No MCP servers found{search_query ? ` for "${search_query}"` : ''}
-              . Try a different search term.
+              No MCP servers found{search_query ? ` for "${search_query}"` : ''}. Try a different search term.
             </p>
           </div>
         )}
@@ -216,18 +203,9 @@ export function SearchMcpServersForAgentToolView({
   );
 }
 
-function ToolkitCard({
-  toolkit,
-}: {
-  toolkit: {
-    name: string;
-    slug: string;
-    description?: string;
-    categories?: string[];
-  };
-}) {
+function ToolkitCard({ toolkit }: { toolkit: { name: string; slug: string; description?: string; categories?: string[] } }) {
   const { data: iconData } = useComposioToolkitIcon(toolkit.slug, {
-    enabled: !!toolkit.slug,
+    enabled: !!toolkit.slug
   });
 
   return (
@@ -262,19 +240,19 @@ function ToolkitCard({
             </p>
           </div>
         </div>
-
+        
         <Badge variant="outline" className="text-xs">
           <Zap className="w-3 h-3 mr-1" />
           MCP
         </Badge>
       </div>
-
+      
       {toolkit.description && (
         <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
           {toolkit.description}
         </p>
       )}
-
+      
       {toolkit.categories && toolkit.categories.length > 0 && (
         <div className="flex flex-wrap gap-1">
           {toolkit.categories.slice(0, 3).map((category) => (
@@ -292,4 +270,4 @@ function ToolkitCard({
       )}
     </div>
   );
-}
+} 

@@ -2,13 +2,13 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  Presentation,
-  Clock,
-  BookOpen,
-  CheckCircle,
+import { 
+  Presentation, 
+  Clock, 
+  BookOpen, 
+  CheckCircle, 
   AlertTriangle,
-  Loader2,
+  Loader2
 } from 'lucide-react';
 import { ToolViewProps } from '../types';
 import { formatTimestamp, extractToolData } from '../utils';
@@ -26,16 +26,12 @@ export function PresentationOutlineToolView({
   project,
 }: ToolViewProps) {
   const { toolResult } = extractToolData(toolContent);
-
+  
   let outlineData: any = null;
   let error: string | null = null;
 
   try {
-    if (
-      toolResult &&
-      toolResult.toolOutput &&
-      toolResult.toolOutput !== 'STREAMING'
-    ) {
+    if (toolResult && toolResult.toolOutput && toolResult.toolOutput !== 'STREAMING') {
       const output = toolResult.toolOutput;
       if (typeof output === 'string') {
         try {
@@ -112,8 +108,7 @@ export function PresentationOutlineToolView({
               {error || 'Failed to create presentation outline'}
             </h3>
             <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center max-w-md">
-              There was an error creating the presentation outline. Please try
-              again.
+              There was an error creating the presentation outline. Please try again.
             </p>
           </div>
         ) : (
@@ -124,25 +119,23 @@ export function PresentationOutlineToolView({
                   <div
                     key={index}
                     className={cn(
-                      'group relative rounded-xl border bg-card hover:bg-muted/30 transition-all duration-200',
-                      'hover:shadow-sm hover:border-primary/30',
+                      "group relative rounded-xl border bg-card hover:bg-muted/30 transition-all duration-200",
+                      "hover:shadow-sm hover:border-primary/30"
                     )}
                   >
                     <div className="p-4">
                       <div className="flex items-start gap-3">
                         <div className="flex-shrink-0 mt-1">
-                          <div
-                            className={cn(
-                              'w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold',
-                              index === 0
-                                ? 'bg-primary text-primary-foreground'
-                                : 'bg-muted text-muted-foreground',
-                            )}
-                          >
+                          <div className={cn(
+                            "w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold",
+                            index === 0 
+                              ? "bg-primary text-primary-foreground" 
+                              : "bg-muted text-muted-foreground"
+                          )}>
                             {index + 1}
                           </div>
                         </div>
-
+                        
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between mb-0.5">
                             <h3 className="text-base font-medium text-foreground group-hover:text-primary transition-colors line-clamp-2">
@@ -154,22 +147,18 @@ export function PresentationOutlineToolView({
                               </Badge>
                             )}
                           </div>
-
+                          
                           <p className="text-sm text-muted-foreground leading-relaxed mb-3 line-clamp-3">
                             {slide.description}
                           </p>
-
+                          
                           {slide.notes && (
                             <div className="bg-muted/50 rounded-xl p-3 border border-muted">
                               <div className="flex items-center gap-2 mb-2">
                                 <BookOpen className="h-3.5 w-3.5 text-muted-foreground" />
-                                <span className="text-xs font-medium text-muted-foreground">
-                                  Speaker Notes
-                                </span>
+                                <span className="text-xs font-medium text-muted-foreground">Speaker Notes</span>
                               </div>
-                              <p className="text-xs text-muted-foreground line-clamp-2">
-                                {slide.notes}
-                              </p>
+                              <p className="text-xs text-muted-foreground line-clamp-2">{slide.notes}</p>
                             </div>
                           )}
                         </div>
@@ -197,4 +186,4 @@ export function PresentationOutlineToolView({
       </div>
     </Card>
   );
-}
+} 

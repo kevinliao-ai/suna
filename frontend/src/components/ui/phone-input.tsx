@@ -1,9 +1,9 @@
-import * as React from 'react';
-import { CheckIcon, ChevronsUpDown } from 'lucide-react';
-import * as RPNInput from 'react-phone-number-input';
-import flags from 'react-phone-number-input/flags';
+import * as React from "react";
+import { CheckIcon, ChevronsUpDown } from "lucide-react";
+import * as RPNInput from "react-phone-number-input";
+import flags from "react-phone-number-input/flags";
 
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 import {
   Command,
   CommandEmpty,
@@ -11,21 +11,21 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from '@/components/ui/command';
-import { Input } from '@/components/ui/input';
+} from "@/components/ui/command";
+import { Input } from "@/components/ui/input";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { cn } from '@/lib/utils';
+} from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
 
 type PhoneInputProps = Omit<
-  React.ComponentProps<'input'>,
-  'onChange' | 'value' | 'ref'
+  React.ComponentProps<"input">,
+  "onChange" | "value" | "ref"
 > &
-  Omit<RPNInput.Props<typeof RPNInput.default>, 'onChange'> & {
+  Omit<RPNInput.Props<typeof RPNInput.default>, "onChange"> & {
     onChange?: (value: RPNInput.Value) => void;
   };
 
@@ -35,7 +35,7 @@ const PhoneInput: React.ForwardRefExoticComponent<PhoneInputProps> =
       return (
         <RPNInput.default
           ref={ref}
-          className={cn('flex', className)}
+          className={cn("flex", className)}
           flagComponent={FlagComponent}
           countrySelectComponent={CountrySelect}
           inputComponent={InputComponent}
@@ -50,27 +50,27 @@ const PhoneInput: React.ForwardRefExoticComponent<PhoneInputProps> =
            *
            * @param {E164Number | undefined} value - The entered value
            */
-          onChange={(value) => onChange?.(value || ('' as RPNInput.Value))}
+          onChange={(value) => onChange?.(value || ("" as RPNInput.Value))}
           {...props}
         />
       );
     },
   );
 
-PhoneInput.displayName = 'PhoneInput';
+PhoneInput.displayName = "PhoneInput";
 
 const InputComponent = React.forwardRef<
   HTMLInputElement,
-  React.ComponentProps<'input'>
+  React.ComponentProps<"input">
 >(({ className, ...props }, ref) => (
   <Input
-    className={cn('rounded-e-lg rounded-s-none', className)}
+    className={cn("rounded-e-lg rounded-s-none", className)}
     {...props}
     ref={ref}
   />
 ));
 
-InputComponent.displayName = 'InputComponent';
+InputComponent.displayName = "InputComponent";
 
 type CountryEntry = { label: string; value: RPNInput.Country | undefined };
 
@@ -91,13 +91,17 @@ const CountrySelect = ({
   const [isOpen, setIsOpen] = React.useState(false);
 
   return (
-    <Popover open={isOpen} modal onOpenChange={setIsOpen}>
+    <Popover
+      open={isOpen}
+      modal
+      onOpenChange={setIsOpen}
+    >
       <PopoverTrigger asChild>
         <Button
           type="button"
           variant="outline"
-          className={cn('flex gap-1 rounded-e-none rounded-s-lg px-3', {
-            'opacity-50 cursor-not-allowed': disabled,
+          className={cn("flex gap-1 rounded-e-none rounded-s-lg px-3", {
+            "opacity-50 cursor-not-allowed": disabled,
           })}
           disabled={disabled}
         >
@@ -106,7 +110,10 @@ const CountrySelect = ({
             countryName={selectedCountry}
           />
           <ChevronsUpDown
-            className={cn('h-4 w-4 opacity-50', disabled ? 'hidden' : 'flex')}
+            className={cn(
+              "h-4 w-4 opacity-50",
+              disabled ? "hidden" : "flex",
+            )}
           />
         </Button>
       </PopoverTrigger>
@@ -115,16 +122,18 @@ const CountrySelect = ({
           filter={(value, search) => {
             const searchLower = search.toLowerCase();
             const valueLower = value.toLowerCase();
-
+            
             // Check if search matches country name, calling code, or country code
             if (valueLower.includes(searchLower)) {
               return 1;
             }
-
+            
             return 0;
           }}
         >
-          <CommandInput placeholder="Search country..." />
+          <CommandInput
+            placeholder="Search country..."
+          />
           <CommandList>
             <ScrollArea ref={scrollAreaRef} className="h-72">
               <CommandEmpty>No country found.</CommandEmpty>
@@ -171,8 +180,8 @@ const CountrySelectOption = ({
   };
 
   return (
-    <CommandItem
-      className="gap-2"
+    <CommandItem 
+      className="gap-2" 
       onSelect={handleSelect}
       value={`${countryName} +${RPNInput.getCountryCallingCode(country)} ${country}`}
     >
@@ -183,20 +192,14 @@ const CountrySelectOption = ({
       </span>
       <CheckIcon
         className={`ml-auto size-4 ${
-          country === selectedCountry ? 'opacity-100' : 'opacity-0'
+          country === selectedCountry ? "opacity-100" : "opacity-0"
         }`}
       />
     </CommandItem>
   );
 };
 
-const FlagComponent = ({
-  country,
-  countryName,
-}: {
-  country: RPNInput.Country;
-  countryName?: string;
-}) => {
+const FlagComponent = ({ country, countryName }: { country: RPNInput.Country; countryName?: string }) => {
   const Flag = flags[country];
 
   return (
@@ -206,4 +209,4 @@ const FlagComponent = ({
   );
 };
 
-export { PhoneInput };
+export { PhoneInput }; 

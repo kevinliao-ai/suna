@@ -177,10 +177,11 @@ export const MessageInput = forwardRef<HTMLTextAreaElement, MessageInputProps>(
           />
         </div>
       );
-    };
+    }
 
     return (
       <div className="relative flex flex-col w-full h-full gap-2 justify-between">
+
         <div className="flex flex-col gap-1 px-2">
           <Textarea
             ref={ref}
@@ -197,6 +198,7 @@ export const MessageInput = forwardRef<HTMLTextAreaElement, MessageInputProps>(
             rows={1}
           />
         </div>
+
 
         <div className="flex items-center justify-between mt-0 mb-1 px-2">
           <div className="flex items-center gap-3">
@@ -215,6 +217,7 @@ export const MessageInput = forwardRef<HTMLTextAreaElement, MessageInputProps>(
                 isLoggedIn={isLoggedIn}
               />
             )}
+
           </div>
 
           {/* {subscriptionStatus === 'no_subscription' && !isLocalMode() &&
@@ -224,28 +227,24 @@ export const MessageInput = forwardRef<HTMLTextAreaElement, MessageInputProps>(
                   <p role='button' className='text-sm text-amber-500 hidden sm:block cursor-pointer' onClick={() => setBillingModalOpen(true)}>Upgrade for more usage</p>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>The free tier is severely limited by the amount of usage. Upgrade to experience the full power of Suna.</p>
+                  <p>Your current plan has limited usage. Upgrade to experience the full power of Suna.</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
           } */}
 
-          <div className="flex items-center gap-2">
+          <div className='flex items-center gap-2'>
             {renderDropdown()}
             <BillingModal
               open={billingModalOpen}
               onOpenChange={setBillingModalOpen}
-              returnUrl={
-                typeof window !== 'undefined' ? window.location.href : '/'
-              }
+              returnUrl={typeof window !== 'undefined' ? window.location.href : '/'}
             />
 
-            {isLoggedIn && (
-              <VoiceRecorder
-                onTranscription={onTranscription}
-                disabled={loading || (disabled && !isAgentRunning)}
-              />
-            )}
+            {isLoggedIn && <VoiceRecorder
+              onTranscription={onTranscription}
+              disabled={loading || (disabled && !isAgentRunning)}
+            />}
 
             <Button
               type="submit"
@@ -253,18 +252,14 @@ export const MessageInput = forwardRef<HTMLTextAreaElement, MessageInputProps>(
               size="sm"
               className={cn(
                 'w-8 h-8 flex-shrink-0 self-end rounded-xl',
-                (!value.trim() &&
-                  uploadedFiles.length === 0 &&
-                  !isAgentRunning) ||
+                (!value.trim() && uploadedFiles.length === 0 && !isAgentRunning) ||
                   loading ||
                   (disabled && !isAgentRunning)
                   ? 'opacity-50'
                   : '',
               )}
               disabled={
-                (!value.trim() &&
-                  uploadedFiles.length === 0 &&
-                  !isAgentRunning) ||
+                (!value.trim() && uploadedFiles.length === 0 && !isAgentRunning) ||
                 loading ||
                 (disabled && !isAgentRunning)
               }

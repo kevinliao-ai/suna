@@ -12,13 +12,8 @@ export default function PersonalAccountSettingsPage({
 }) {
   const pathname = usePathname();
   const items = [
-    // { name: "Profile", href: "/settings" },
-    // { name: "Teams", href: "/settings/teams" },
     { name: 'Billing', href: '/settings/billing' },
-    { name: 'Usage Logs', href: '/settings/usage-logs' },
-    ...(isLocalMode()
-      ? [{ name: 'Local .Env Manager', href: '/settings/env-manager' }]
-      : []),
+    { name: 'Transactions', href: '/settings/transactions' },
   ];
   return (
     <>
@@ -31,18 +26,16 @@ export default function PersonalAccountSettingsPage({
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    pathname === item.href
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${pathname === item.href
                       ? 'bg-accent text-accent-foreground'
-                      : 'text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground'
-                  }`}
+                      : 'text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground'}`}
                 >
                   {item.name}
                 </Link>
               ))}
             </nav>
           </aside>
-          <div className="flex-1 bg-card-bg dark:bg-background-secondary p-6 rounded-2xl border border-subtle dark:border-white/10 shadow-custom">
+          <div className="flex-1 bg-card-bg dark:bg-background-secondary rounded-2xl">
             {children}
           </div>
         </div>

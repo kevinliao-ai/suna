@@ -48,25 +48,14 @@ export function LoadingState({
   return (
     <div className="flex flex-col items-center justify-center h-full min-h-[400px] overflow-hidden scrollbar-hide py-12 px-6">
       <div className="text-center w-full max-w-sm">
-        <div
-          className={cn(
-            'w-16 h-16 rounded-full mx-auto mb-6 flex items-center justify-center',
-            bgColor,
-          )}
-        >
-          <Icon
-            className={cn(
-              'h-8 w-8',
-              iconColor,
-              Icon === Loader2 && 'animate-spin',
-            )}
-          />
+        <div className={cn("w-16 h-16 rounded-full mx-auto mb-6 flex items-center justify-center", bgColor)}>
+          <Icon className={cn("h-8 w-8", iconColor, Icon === Loader2 && "animate-spin")} />
         </div>
-
+        
         <h3 className="text-xl font-semibold mb-4 text-zinc-900 dark:text-zinc-100">
           {title}
         </h3>
-
+        
         {filePath && (
           <div className="bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-4 w-full text-center mb-6 shadow-sm">
             <code className="text-sm font-mono text-zinc-700 dark:text-zinc-300 break-all">
@@ -74,19 +63,17 @@ export function LoadingState({
             </code>
           </div>
         )}
-
+        
         {showProgress && (
           <div className="space-y-3">
             <Progress value={Math.min(progress, 100)} className="w-full h-1" />
             <div className="flex justify-between items-center text-xs text-zinc-500 dark:text-zinc-400">
               <span>{progressText || 'Processing...'}</span>
-              <span className="font-mono">
-                {Math.round(Math.min(progress, 100))}%
-              </span>
+              <span className="font-mono">{Math.round(Math.min(progress, 100))}%</span>
             </div>
           </div>
         )}
-
+        
         {subtitle && (
           <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-4">
             {subtitle}
@@ -95,4 +82,4 @@ export function LoadingState({
       </div>
     </div>
   );
-}
+} 

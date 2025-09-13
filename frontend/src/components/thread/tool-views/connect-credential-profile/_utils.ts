@@ -27,35 +27,33 @@ const parseContent = (content: any): any => {
 
 const extractFromNewFormat = (content: any): ConnectCredentialProfileData => {
   const parsedContent = parseContent(content);
-
+  
   if (!parsedContent || typeof parsedContent !== 'object') {
-    return {
-      profile_id: null,
-      message: null,
-      profile_name: null,
-      app_name: null,
+    return { 
+      profile_id: null, 
+      message: null, 
+      profile_name: null, 
+      app_name: null, 
       app_slug: null,
-      connection_link: null,
-      external_user_id: null,
-      expires_at: null,
-      instructions: null,
-      success: undefined,
-      timestamp: undefined,
+      connection_link: null, 
+      external_user_id: null, 
+      expires_at: null, 
+      instructions: null, 
+      success: undefined, 
+      timestamp: undefined 
     };
   }
 
-  if (
-    'tool_execution' in parsedContent &&
-    typeof parsedContent.tool_execution === 'object'
-  ) {
+  if ('tool_execution' in parsedContent && typeof parsedContent.tool_execution === 'object') {
     const toolExecution = parsedContent.tool_execution;
     const args = toolExecution.arguments || {};
-
+    
     let parsedOutput = toolExecution.result?.output;
     if (typeof parsedOutput === 'string') {
       try {
         parsedOutput = JSON.parse(parsedOutput);
-      } catch (e) {}
+      } catch (e) {
+      }
     }
     parsedOutput = parsedOutput || {};
 
@@ -70,7 +68,7 @@ const extractFromNewFormat = (content: any): ConnectCredentialProfileData => {
       expires_at: parsedOutput.expires_at || null,
       instructions: parsedOutput.instructions || null,
       success: toolExecution.result?.success,
-      timestamp: toolExecution.execution_details?.timestamp,
+      timestamp: toolExecution.execution_details?.timestamp
     };
 
     return extractedData;
@@ -88,7 +86,7 @@ const extractFromNewFormat = (content: any): ConnectCredentialProfileData => {
       expires_at: parsedContent.output?.expires_at || null,
       instructions: parsedContent.output?.instructions || null,
       success: parsedContent.success,
-      timestamp: undefined,
+      timestamp: undefined
     };
 
     return extractedData;
@@ -98,29 +96,27 @@ const extractFromNewFormat = (content: any): ConnectCredentialProfileData => {
     return extractFromNewFormat(parsedContent.content);
   }
 
-  return {
-    profile_id: null,
-    message: null,
-    profile_name: null,
-    app_name: null,
+  return { 
+    profile_id: null, 
+    message: null, 
+    profile_name: null, 
+    app_name: null, 
     app_slug: null,
-    connection_link: null,
-    external_user_id: null,
-    expires_at: null,
-    instructions: null,
-    success: undefined,
-    timestamp: undefined,
+    connection_link: null, 
+    external_user_id: null, 
+    expires_at: null, 
+    instructions: null, 
+    success: undefined, 
+    timestamp: undefined 
   };
 };
 
-const extractFromLegacyFormat = (
-  content: any,
-): Omit<ConnectCredentialProfileData, 'success' | 'timestamp'> => {
+const extractFromLegacyFormat = (content: any): Omit<ConnectCredentialProfileData, 'success' | 'timestamp'> => {
   const toolData = extractToolData(content);
-
+  
   if (toolData.toolResult) {
     const args = toolData.arguments || {};
-
+    
     return {
       profile_id: args.profile_id || null,
       message: null,
@@ -130,7 +126,7 @@ const extractFromLegacyFormat = (
       connection_link: null,
       external_user_id: null,
       expires_at: null,
-      instructions: null,
+      instructions: null
     };
   }
 
@@ -143,7 +139,7 @@ const extractFromLegacyFormat = (
     connection_link: null,
     external_user_id: null,
     expires_at: null,
-    instructions: null,
+    instructions: null
   };
 };
 
@@ -152,7 +148,7 @@ export function extractConnectCredentialProfileData(
   toolContent: any,
   isSuccess: boolean,
   toolTimestamp?: string,
-  assistantTimestamp?: string,
+  assistantTimestamp?: string
 ): {
   profile_id: string | null;
   message: string | null;
@@ -176,19 +172,19 @@ export function extractConnectCredentialProfileData(
         ...data,
         actualIsSuccess: data.success !== undefined ? data.success : isSuccess,
         actualToolTimestamp: data.timestamp || toolTimestamp,
-        actualAssistantTimestamp: assistantTimestamp,
+        actualAssistantTimestamp: assistantTimestamp
       };
     }
   }
 
   if (assistantContent) {
     data = extractFromNewFormat(assistantContent);
-    if (data.success !== undefined || data.connection_link) {
+    if (data.success !== undefined || data.connection_link) { 
       return {
         ...data,
         actualIsSuccess: data.success !== undefined ? data.success : isSuccess,
         actualToolTimestamp: toolTimestamp,
-        actualAssistantTimestamp: data.timestamp || assistantTimestamp,
+        actualAssistantTimestamp: data.timestamp || assistantTimestamp
       };
     }
   }
@@ -202,16 +198,14 @@ export function extractConnectCredentialProfileData(
     profile_name: toolLegacy.profile_name || assistantLegacy.profile_name,
     app_name: toolLegacy.app_name || assistantLegacy.app_name,
     app_slug: toolLegacy.app_slug || assistantLegacy.app_slug,
-    connection_link:
-      toolLegacy.connection_link || assistantLegacy.connection_link,
-    external_user_id:
-      toolLegacy.external_user_id || assistantLegacy.external_user_id,
+    connection_link: toolLegacy.connection_link || assistantLegacy.connection_link,
+    external_user_id: toolLegacy.external_user_id || assistantLegacy.external_user_id,
     expires_at: toolLegacy.expires_at || assistantLegacy.expires_at,
     instructions: toolLegacy.instructions || assistantLegacy.instructions,
     actualIsSuccess: isSuccess,
     actualToolTimestamp: toolTimestamp,
-    actualAssistantTimestamp: assistantTimestamp,
+    actualAssistantTimestamp: assistantTimestamp
   };
 
   return combinedData;
-}
+} 

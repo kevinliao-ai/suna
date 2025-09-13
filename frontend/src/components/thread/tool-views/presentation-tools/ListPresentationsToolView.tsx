@@ -1,5 +1,10 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -43,16 +48,12 @@ export function ListPresentationsToolView({
   project,
 }: ToolViewProps) {
   const { toolResult } = extractToolData(toolContent);
-
+  
   let presentationsData: ListPresentationsData | null = null;
   let error: string | null = null;
 
   try {
-    if (
-      toolResult &&
-      toolResult.toolOutput &&
-      toolResult.toolOutput !== 'STREAMING'
-    ) {
+    if (toolResult && toolResult.toolOutput && toolResult.toolOutput !== 'STREAMING') {
       const output = toolResult.toolOutput;
       if (typeof output === 'string') {
         try {
@@ -160,8 +161,7 @@ export function ListPresentationsToolView({
               No presentations found
             </h3>
             <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center max-w-md">
-              You haven't created any presentations yet. Use the create_slide
-              tool to start building your first presentation.
+              You haven't created any presentations yet. Use the create_slide tool to start building your first presentation.
             </p>
           </div>
         ) : (
@@ -180,33 +180,28 @@ export function ListPresentationsToolView({
             <ScrollArea className="flex-1">
               <div className="p-4 space-y-4">
                 {presentationsData.presentations.map((presentation) => (
-                  <Card
-                    key={presentation.folder}
-                    className="p-6 hover:shadow-md transition-shadow"
-                  >
+                  <Card key={presentation.folder} className="p-6 hover:shadow-md transition-shadow">
                     <div className="flex items-start justify-between">
                       <div className="flex items-start gap-4 flex-1">
                         <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-blue-100 dark:bg-blue-900/20 flex-shrink-0">
                           <Presentation className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                         </div>
-
+                        
                         <div className="flex-1 min-w-0">
                           <h4 className="font-semibold text-lg text-zinc-900 dark:text-zinc-100 mb-1">
                             {presentation.title}
                           </h4>
-
+                          
                           {presentation.description && (
                             <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-3 line-clamp-2">
                               {presentation.description}
                             </p>
                           )}
-
+                          
                           <div className="flex items-center gap-4 text-sm text-zinc-500 dark:text-zinc-400">
                             <div className="flex items-center gap-1">
                               <FileText className="h-3 w-3" />
-                              <span className="font-medium">
-                                {presentation.folder}
-                              </span>
+                              <span className="font-medium">{presentation.folder}</span>
                             </div>
                             <div className="flex items-center gap-1">
                               <Presentation className="h-3 w-3" />
@@ -217,22 +212,20 @@ export function ListPresentationsToolView({
                               Created {formatDate(presentation.created_at)}
                             </div>
                           </div>
-
-                          {presentation.updated_at !==
-                            presentation.created_at && (
+                          
+                          {presentation.updated_at !== presentation.created_at && (
                             <div className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">
-                              Last updated:{' '}
-                              {formatDateTime(presentation.updated_at)}
+                              Last updated: {formatDateTime(presentation.updated_at)}
                             </div>
                           )}
                         </div>
                       </div>
-
+                      
                       <div className="flex items-center gap-2 ml-4">
-                        <Badge
-                          variant="outline"
+                        <Badge 
+                          variant="outline" 
                           className={`h-6 py-0.5 ${
-                            presentation.total_slides > 0
+                            presentation.total_slides > 0 
                               ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300'
                               : 'bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800'
                           }`}
@@ -252,7 +245,9 @@ export function ListPresentationsToolView({
       <div className="px-4 py-2 h-10 bg-gradient-to-r from-zinc-50/90 to-zinc-100/90 dark:from-zinc-900/90 dark:to-zinc-800/90 backdrop-blur-sm border-t border-zinc-200 dark:border-zinc-800 flex justify-end items-center">
         <div className="flex items-center gap-2 text-xs text-zinc-400 dark:text-zinc-500">
           <Clock className="h-3 w-3" />
-          <span>{formatTimestamp(toolTimestamp)}</span>
+          <span>
+            {formatTimestamp(toolTimestamp)}
+          </span>
         </div>
       </div>
     </Card>

@@ -2,17 +2,13 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ToggleLeft, ToggleRight } from 'lucide-react';
+import {
+  ToggleLeft,
+  ToggleRight,
+} from 'lucide-react';
 import { toast } from 'sonner';
-import {
-  useCreateAgentWorkflow,
-  useUpdateAgentWorkflow,
-  useAgentWorkflows,
-} from '@/hooks/react-query/agents/use-agent-workflows';
-import {
-  CreateWorkflowRequest,
-  UpdateWorkflowRequest,
-} from '@/hooks/react-query/agents/workflow-utils';
+import { useCreateAgentWorkflow, useUpdateAgentWorkflow, useAgentWorkflows } from '@/hooks/react-query/agents/use-agent-workflows';
+import { CreateWorkflowRequest, UpdateWorkflowRequest } from '@/hooks/react-query/agents/workflow-utils';
 import { useAgentTools } from '@/hooks/react-query/agents/use-agent-tools';
 import { useAgent } from '@/hooks/react-query/agents/use-agents';
 import { ConditionalStep } from '@/components/agents/workflows/conditional-workflow-builder';
@@ -30,7 +26,7 @@ const convertToNestedJSON = (steps: ConditionalStep[]): any[] => {
         description: step.description,
         type: step.type,
         config: step.config || {},
-        order: globalOrder++,
+        order: globalOrder++
       };
 
       if (step.type === 'condition' && step.conditions) {
@@ -55,17 +51,15 @@ const convertToNestedJSON = (steps: ConditionalStep[]): any[] => {
 const reconstructFromNestedJSON = (nestedSteps: any[]): ConditionalStep[] => {
   if (!nestedSteps || nestedSteps.length === 0) {
     // Return default root structure if no steps
-    return [
-      {
-        id: 'start-node',
-        name: 'Start',
-        description: 'Click to add steps or use the Add Node button',
-        type: 'instruction',
-        config: {},
-        order: 0,
-        children: [],
-      },
-    ];
+    return [{
+      id: 'start-node',
+      name: 'Start',
+      description: 'Click to add steps or use the Add Node button',
+      type: 'instruction',
+      config: {},
+      order: 0,
+      children: []
+    }];
   }
 
   const convertStepsFromNested = (stepList: any[]): ConditionalStep[] => {
@@ -79,7 +73,7 @@ const reconstructFromNestedJSON = (nestedSteps: any[]): ConditionalStep[] => {
         order: step.order || 0, // Preserve order from backend
         enabled: step.enabled !== false,
         hasIssues: step.hasIssues || false,
-        children: [], // Initialize children array
+        children: [] // Initialize children array
       };
 
       // Handle condition metadata
@@ -93,11 +87,7 @@ const reconstructFromNestedJSON = (nestedSteps: any[]): ConditionalStep[] => {
       }
 
       // Handle children - this is crucial for nested conditions
-      if (
-        step.children &&
-        Array.isArray(step.children) &&
-        step.children.length > 0
-      ) {
+      if (step.children && Array.isArray(step.children) && step.children.length > 0) {
         conditionalStep.children = convertStepsFromNested(step.children);
       }
 
@@ -108,27 +98,22 @@ const reconstructFromNestedJSON = (nestedSteps: any[]): ConditionalStep[] => {
   const reconstructedSteps = convertStepsFromNested(nestedSteps);
 
   // Make sure we have proper root structure
-  if (
-    reconstructedSteps.length > 0 &&
+  if (reconstructedSteps.length > 0 &&
     reconstructedSteps[0].name === 'Start' &&
-    reconstructedSteps[0].description ===
-      'Click to add steps or use the Add Node button'
-  ) {
+    reconstructedSteps[0].description === 'Click to add steps or use the Add Node button') {
     return reconstructedSteps;
   }
 
   // If not proper structure, wrap in root node
-  return [
-    {
-      id: 'start-node',
-      name: 'Start',
-      description: 'Click to add steps or use the Add Node button',
-      type: 'instruction',
-      config: {},
-      order: 0,
-      children: reconstructedSteps,
-    },
-  ];
+  return [{
+    id: 'start-node',
+    name: 'Start',
+    description: 'Click to add steps or use the Add Node button',
+    type: 'instruction',
+    config: {},
+    order: 0,
+    children: reconstructedSteps
+  }];
 };
 
 const reconstructFromFlatJSON = (flatSteps: any[]): ConditionalStep[] => {
@@ -145,7 +130,7 @@ const reconstructFromFlatJSON = (flatSteps: any[]): ConditionalStep[] => {
         config: flatStep.config || {},
         conditions: flatStep.conditions,
         order: flatStep.order || flatStep.step_order,
-        children: [],
+        children: []
       };
       conditionSteps.set(conditionStep.id, conditionStep);
     }
@@ -153,10 +138,7 @@ const reconstructFromFlatJSON = (flatSteps: any[]): ConditionalStep[] => {
   for (const flatStep of flatSteps) {
     if (flatStep.type !== 'condition' && flatStep.conditions) {
       for (const [conditionId, conditionStep] of conditionSteps) {
-        if (
-          JSON.stringify(conditionStep.conditions) ===
-          JSON.stringify(flatStep.conditions)
-        ) {
+        if (JSON.stringify(conditionStep.conditions) === JSON.stringify(flatStep.conditions)) {
           const childStep: ConditionalStep = {
             id: flatStep.id, // Always preserve existing ID
             name: flatStep.name,
@@ -164,7 +146,7 @@ const reconstructFromFlatJSON = (flatSteps: any[]): ConditionalStep[] => {
             type: flatStep.type || 'instruction',
             config: flatStep.config || {},
             order: flatStep.order || flatStep.step_order,
-            children: [],
+            children: []
           };
           conditionStep.children!.push(childStep);
           break;
@@ -173,9 +155,7 @@ const reconstructFromFlatJSON = (flatSteps: any[]): ConditionalStep[] => {
     }
   }
 
-  const sortedSteps = [...flatSteps].sort(
-    (a, b) => (a.order || a.step_order || 0) - (b.order || b.step_order || 0),
-  );
+  const sortedSteps = [...flatSteps].sort((a, b) => (a.order || a.step_order || 0) - (b.order || b.step_order || 0));
   let i = 0;
 
   while (i < sortedSteps.length) {
@@ -190,11 +170,9 @@ const reconstructFromFlatJSON = (flatSteps: any[]): ConditionalStep[] => {
         i++;
       }
       conditionGroup.sort((a, b) => {
-        const typeOrder = { if: 0, elseif: 1, else: 2 };
-        return (
-          (typeOrder[a.conditions?.type as keyof typeof typeOrder] || 0) -
-          (typeOrder[b.conditions?.type as keyof typeof typeOrder] || 0)
-        );
+        const typeOrder = { 'if': 0, 'elseif': 1, 'else': 2 };
+        return (typeOrder[a.conditions?.type as keyof typeof typeOrder] || 0) -
+          (typeOrder[b.conditions?.type as keyof typeof typeOrder] || 0);
       });
 
       result.push(...conditionGroup);
@@ -206,7 +184,7 @@ const reconstructFromFlatJSON = (flatSteps: any[]): ConditionalStep[] => {
         type: flatStep.type || 'instruction',
         config: flatStep.config || {},
         order: flatStep.order || flatStep.step_order,
-        children: [],
+        children: []
       };
       result.push(step);
       i++;
@@ -219,7 +197,7 @@ const reconstructFromFlatJSON = (flatSteps: any[]): ConditionalStep[] => {
 };
 
 const convertToLLMFormat = (steps: ConditionalStep[]): any[] => {
-  return steps.map((step) => {
+  return steps.map(step => {
     const llmStep: any = {
       step: step.name,
       description: step.description || undefined,
@@ -237,8 +215,8 @@ const convertToLLMFormat = (steps: ConditionalStep[]): any[] => {
     if (step.children && step.children.length > 0) {
       llmStep.then = convertToLLMFormat(step.children);
     }
-    Object.keys(llmStep).forEach(
-      (key) => llmStep[key] === undefined && delete llmStep[key],
+    Object.keys(llmStep).forEach(key =>
+      llmStep[key] === undefined && delete llmStep[key]
     );
     return llmStep;
   });
@@ -250,12 +228,10 @@ export default function WorkflowPage() {
   const agentId = params.agentId as string;
   const workflowId = params.workflowId as string;
 
-  const { data: workflows = [], isLoading: isLoadingWorkflows } =
-    useAgentWorkflows(agentId);
+  const { data: workflows = [], isLoading: isLoadingWorkflows } = useAgentWorkflows(agentId);
   const createWorkflowMutation = useCreateAgentWorkflow();
   const updateWorkflowMutation = useUpdateAgentWorkflow();
-  const { data: agentTools, isLoading: isLoadingTools } =
-    useAgentTools(agentId);
+  const { data: agentTools, isLoading: isLoadingTools } = useAgentTools(agentId);
   const { data: agent, refetch: refetchAgent } = useAgent(agentId);
 
   const isEditing = !!workflowId;
@@ -265,12 +241,12 @@ export default function WorkflowPage() {
   const [triggerPhrase, setTriggerPhrase] = useState('');
   const [isDefault, setIsDefault] = useState(false);
   const [steps, setSteps] = useState<ConditionalStep[]>([]);
-
+  
   // Execution state
   const [isExecuteDialogOpen, setIsExecuteDialogOpen] = useState(false);
   const [currentWorkflow, setCurrentWorkflow] = useState<any>(null);
 
-  // Wrapper for setSteps
+  // Wrapper for setSteps  
   const setStepsWithDebug = useCallback((newSteps: ConditionalStep[]) => {
     setSteps(newSteps);
   }, []);
@@ -278,15 +254,13 @@ export default function WorkflowPage() {
   const [isLoading, setIsLoading] = useState(isEditing);
 
   // Create version data for tools manager
-  const versionData = agent
-    ? {
-        version_id: (agent as any).version_id || 'current',
-        configured_mcps: agent.configured_mcps || [],
-        custom_mcps: agent.custom_mcps || [],
-        system_prompt: agent.system_prompt || '',
-        agentpress_tools: agent.agentpress_tools || {},
-      }
-    : undefined;
+  const versionData = agent ? {
+    version_id: (agent as any).version_id || 'current',
+    configured_mcps: agent.configured_mcps || [],
+    custom_mcps: agent.custom_mcps || [],
+    system_prompt: agent.system_prompt || '',
+    agentpress_tools: agent.agentpress_tools || {}
+  } : undefined;
 
   const handleToolsUpdate = useCallback(async () => {
     await refetchAgent();
@@ -294,7 +268,7 @@ export default function WorkflowPage() {
 
   useEffect(() => {
     if (isEditing && workflows.length > 0) {
-      const workflow = workflows.find((w) => w.id === workflowId);
+      const workflow = workflows.find(w => w.id === workflowId);
       if (workflow) {
         setWorkflowName(workflow.name);
         setWorkflowDescription(workflow.description || '');
@@ -304,12 +278,7 @@ export default function WorkflowPage() {
         let treeSteps: ConditionalStep[];
         try {
           // Check if workflow has proper nested structure
-          const hasNestedStructure = workflow.steps.some(
-            (step: any) =>
-              step.children &&
-              Array.isArray(step.children) &&
-              step.children.length > 0,
-          );
+          const hasNestedStructure = workflow.steps.some((step: any) => step.children && Array.isArray(step.children) && step.children.length > 0);
 
           if (hasNestedStructure) {
             treeSteps = reconstructFromNestedJSON(workflow.steps);
@@ -317,10 +286,7 @@ export default function WorkflowPage() {
             treeSteps = reconstructFromFlatJSON(workflow.steps);
           }
         } catch (error) {
-          console.warn(
-            'Error reconstructing workflow steps, using fallback:',
-            error,
-          );
+          console.warn('Error reconstructing workflow steps, using fallback:', error);
           treeSteps = reconstructFromFlatJSON(workflow.steps);
         }
 
@@ -349,13 +315,9 @@ export default function WorkflowPage() {
           description: workflowDescription,
           trigger_phrase: triggerPhrase || undefined,
           is_default: isDefault,
-          steps: nestedSteps,
+          steps: nestedSteps
         };
-        await updateWorkflowMutation.mutateAsync({
-          agentId,
-          workflowId,
-          workflow: updateRequest,
-        });
+        await updateWorkflowMutation.mutateAsync({ agentId, workflowId, workflow: updateRequest });
         toast.success('Workflow updated successfully');
       } else {
         const createRequest: CreateWorkflowRequest = {
@@ -363,17 +325,14 @@ export default function WorkflowPage() {
           description: workflowDescription,
           trigger_phrase: triggerPhrase || undefined,
           is_default: isDefault,
-          steps: nestedSteps,
+          steps: nestedSteps
         };
-        const newWorkflow = await createWorkflowMutation.mutateAsync({
-          agentId,
-          workflow: createRequest,
-        });
+        const newWorkflow = await createWorkflowMutation.mutateAsync({ agentId, workflow: createRequest });
         try {
           await updateWorkflowMutation.mutateAsync({
             agentId,
             workflowId: newWorkflow.id,
-            workflow: { status: 'active' },
+            workflow: { status: 'active' }
           });
         } catch (activationError) {
           console.warn('Failed to auto-activate workflow:', activationError);
@@ -384,22 +343,10 @@ export default function WorkflowPage() {
     } catch (error) {
       toast.error(`Failed to ${isEditing ? 'update' : 'create'} workflow`);
     }
-  }, [
-    workflowName,
-    workflowDescription,
-    triggerPhrase,
-    isDefault,
-    steps,
-    agentId,
-    workflowId,
-    isEditing,
-    createWorkflowMutation,
-    updateWorkflowMutation,
-    router,
-  ]);
+  }, [workflowName, workflowDescription, triggerPhrase, isDefault, steps, agentId, workflowId, isEditing, createWorkflowMutation, updateWorkflowMutation, router]);
 
   const handleExecute = useCallback(() => {
-    const workflow = workflows.find((w) => w.id === workflowId);
+    const workflow = workflows.find(w => w.id === workflowId);
     if (workflow) {
       setCurrentWorkflow(workflow);
       setIsExecuteDialogOpen(true);
@@ -438,15 +385,13 @@ export default function WorkflowPage() {
         workflowName={workflowName}
         workflowDescription={workflowDescription}
         onSave={handleSave}
-        isSaving={
-          createWorkflowMutation.isPending || updateWorkflowMutation.isPending
-        }
+        isSaving={createWorkflowMutation.isPending || updateWorkflowMutation.isPending}
         onExecute={isEditing ? handleExecute : undefined}
         isExecuting={false}
         onNameChange={setWorkflowName}
         onDescriptionChange={setWorkflowDescription}
       />
-
+      
       <WorkflowExecutionDialog
         open={isExecuteDialogOpen}
         onOpenChange={setIsExecuteDialogOpen}
@@ -456,4 +401,4 @@ export default function WorkflowPage() {
       />
     </>
   );
-}
+} 

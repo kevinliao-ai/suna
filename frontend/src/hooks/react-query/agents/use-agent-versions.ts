@@ -2,5 +2,5 @@ export {
   useAgentVersions,
   useAgentVersion,
   useCreateAgentVersion,
-  useActivateAgentVersion,
-} from '@/lib/versioning';
+  useActivateAgentVersion
+} from '@/lib/versioning'; 

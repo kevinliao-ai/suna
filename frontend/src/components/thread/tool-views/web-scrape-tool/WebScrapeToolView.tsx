@@ -9,10 +9,13 @@ import {
   Calendar,
   Check,
   ArrowUpRight,
-  Zap,
+  Zap
 } from 'lucide-react';
 import { ToolViewProps } from '../types';
-import { formatTimestamp, getToolTitle } from '../utils';
+import {
+  formatTimestamp,
+  getToolTitle,
+} from '../utils';
 import { extractWebScrapeData } from './_utils';
 import { cn, truncateString } from '@/lib/utils';
 import { useTheme } from 'next-themes';
@@ -20,13 +23,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export function WebScrapeToolView({
   name = 'scrape-webpage',
@@ -46,13 +44,13 @@ export function WebScrapeToolView({
     files,
     actualIsSuccess,
     actualToolTimestamp,
-    actualAssistantTimestamp,
+    actualAssistantTimestamp
   } = extractWebScrapeData(
     assistantContent,
     toolContent,
     isSuccess,
     toolTimestamp,
-    assistantTimestamp,
+    assistantTimestamp
   );
 
   const toolTitle = getToolTitle(name);
@@ -114,7 +112,7 @@ export function WebScrapeToolView({
       timestamp: timestampMatch ? timestampMatch[1] : '',
       domain: domainMatch ? domainMatch[1] : 'unknown',
       fileName,
-      fullPath: filePath,
+      fullPath: filePath
     };
   };
 
@@ -139,8 +137,8 @@ export function WebScrapeToolView({
               variant="secondary"
               className={
                 actualIsSuccess
-                  ? 'bg-gradient-to-b from-emerald-200 to-emerald-100 text-emerald-700 dark:from-emerald-800/50 dark:to-emerald-900/60 dark:text-emerald-300'
-                  : 'bg-gradient-to-b from-rose-200 to-rose-100 text-rose-700 dark:from-rose-800/50 dark:to-rose-900/60 dark:text-rose-300'
+                  ? "bg-gradient-to-b from-emerald-200 to-emerald-100 text-emerald-700 dark:from-emerald-800/50 dark:to-emerald-900/60 dark:text-emerald-300"
+                  : "bg-gradient-to-b from-rose-200 to-rose-100 text-rose-700 dark:from-rose-800/50 dark:to-rose-900/60 dark:text-rose-300"
               }
             >
               {actualIsSuccess ? (
@@ -165,13 +163,10 @@ export function WebScrapeToolView({
                 Extracting Content
               </h3>
               <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6">
-                Analyzing and processing{' '}
-                <span className="font-mono text-xs break-all">{domain}</span>
+                Analyzing and processing <span className="font-mono text-xs break-all">{domain}</span>
               </p>
               <Progress value={progress} className="w-full h-1" />
-              <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-2">
-                {progress}% complete
-              </p>
+              <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-2">{progress}% complete</p>
             </div>
           </div>
         ) : url ? (
@@ -197,12 +192,8 @@ export function WebScrapeToolView({
                       />
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="font-mono text-sm text-zinc-900 dark:text-zinc-100 truncate">
-                        {truncateString(url, 70)}
-                      </p>
-                      <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-                        {domain}
-                      </p>
+                      <p className="font-mono text-sm text-zinc-900 dark:text-zinc-100 truncate">{truncateString(url, 70)}</p>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">{domain}</p>
                     </div>
                     <Button
                       variant="ghost"
@@ -249,17 +240,11 @@ export function WebScrapeToolView({
 
                             <div className="flex-1 min-w-0 space-y-2">
                               <div className="flex items-center gap-2 flex-wrap">
-                                <Badge
-                                  variant="outline"
-                                  className="text-xs font-normal"
-                                >
+                                <Badge variant="outline" className="text-xs font-normal">
                                   JSON
                                 </Badge>
                                 {fileInfo.timestamp && (
-                                  <Badge
-                                    variant="outline"
-                                    className="text-xs font-normal"
-                                  >
+                                  <Badge variant="outline" className="text-xs font-normal">
                                     <Calendar className="w-3 h-3 mr-1" />
                                     {fileInfo.timestamp.replace('_', ' ')}
                                   </Badge>
@@ -283,8 +268,8 @@ export function WebScrapeToolView({
                                     variant="ghost"
                                     size="sm"
                                     className={cn(
-                                      'opacity-0 group-hover:opacity-100 transition-all duration-200',
-                                      isCopied && 'opacity-100',
+                                      "opacity-0 group-hover:opacity-100 transition-all duration-200",
+                                      isCopied && "opacity-100"
                                     )}
                                     onClick={() => copyFilePath(filePath)}
                                   >
@@ -296,9 +281,7 @@ export function WebScrapeToolView({
                                   </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                  <p>
-                                    {isCopied ? 'Copied!' : 'Copy file path'}
-                                  </p>
+                                  <p>{isCopied ? 'Copied!' : 'Copy file path'}</p>
                                 </TooltipContent>
                               </Tooltip>
                             </TooltipProvider>

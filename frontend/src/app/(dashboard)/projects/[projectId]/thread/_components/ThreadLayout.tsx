@@ -30,14 +30,8 @@ interface ThreadLayoutProps {
   currentToolIndex: number;
   onSidePanelNavigate: (index: number) => void;
   onSidePanelClose: () => void;
-  renderAssistantMessage: (
-    assistantContent?: string,
-    toolContent?: string,
-  ) => React.ReactNode;
-  renderToolResult: (
-    toolContent?: string,
-    isSuccess?: boolean,
-  ) => React.ReactNode;
+  renderAssistantMessage: (assistantContent?: string, toolContent?: string) => React.ReactNode;
+  renderToolResult: (toolContent?: string, isSuccess?: boolean) => React.ReactNode;
   isLoading: boolean;
   showBillingAlert: boolean;
   billingData: BillingData;
@@ -83,10 +77,10 @@ export function ThreadLayout({
   initialLoadCompleted,
   agentName,
   disableInitialAnimation = false,
-  compact = false,
+  compact = false
 }: ThreadLayoutProps) {
   const isActuallyMobile = useIsMobile();
-
+  
   // Compact mode for embedded use
   if (compact) {
     return (
@@ -99,7 +93,9 @@ export function ThreadLayout({
           )}
 
           {/* Main content - always full width */}
-          <div className="flex flex-col h-full overflow-hidden">{children}</div>
+          <div className="flex flex-col h-full overflow-hidden">
+            {children}
+          </div>
 
           {/* Tool Call Side Panel - Full replacement overlay for compact */}
           {isSidePanelOpen && initialLoadCompleted && (
@@ -160,11 +156,10 @@ export function ThreadLayout({
       )}
 
       <div
-        className={`flex flex-col flex-1 overflow-hidden transition-all duration-200 ease-in-out ${
-          !initialLoadCompleted || (isSidePanelOpen && !isActuallyMobile)
-            ? 'mr-[90%] sm:mr-[450px] md:mr-[500px] lg:mr-[550px] xl:mr-[650px]'
-            : ''
-        }`}
+        className={`flex flex-col flex-1 overflow-hidden transition-all duration-200 ease-in-out ${(!initialLoadCompleted || (isSidePanelOpen && !isActuallyMobile))
+          ? 'mr-[90%] sm:mr-[450px] md:mr-[500px] lg:mr-[550px] xl:mr-[650px]'
+          : ''
+          }`}
       >
         <SiteHeader
           threadId={threadId}
@@ -219,4 +214,4 @@ export function ThreadLayout({
       />
     </div>
   );
-}
+} 

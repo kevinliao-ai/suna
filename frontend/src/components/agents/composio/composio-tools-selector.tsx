@@ -15,15 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Search,
-  Save,
-  AlertCircle,
-  Loader2,
-  Filter,
-  X,
-  ChevronDown,
-} from 'lucide-react';
+import { Search, Save, AlertCircle, Loader2, Filter, X, ChevronDown } from 'lucide-react';
 import { backendApi } from '@/lib/api-client';
 import { useComposioTools } from '@/hooks/react-query/composio/use-composio';
 import { cn } from '@/lib/utils';
@@ -44,12 +36,7 @@ interface ComposioToolsSelectorProps {
   searchPlaceholder?: string;
 }
 
-const ToolCard = ({
-  tool,
-  isSelected,
-  onToggle,
-  searchTerm,
-}: {
+const ToolCard = ({ tool, isSelected, onToggle, searchTerm }: {
   tool: ComposioTool;
   isSelected: boolean;
   onToggle: () => void;
@@ -60,23 +47,15 @@ const ToolCard = ({
     const regex = new RegExp(`(${term})`, 'gi');
     const parts = text.split(regex);
     return parts.map((part, i) =>
-      regex.test(part) ? (
-        <mark key={i} className="bg-yellow-200 dark:bg-yellow-900/50">
-          {part}
-        </mark>
-      ) : (
-        part
-      ),
+      regex.test(part) ? <mark key={i} className="bg-yellow-200 dark:bg-yellow-900/50">{part}</mark> : part
     );
   };
 
   return (
-    <Card
-      className={cn(
-        'group cursor-pointer transition-all p-0 shadow-none bg-card hover:bg-muted/50',
-        isSelected && 'bg-primary/10 ring-1 ring-primary/20',
-      )}
-    >
+    <Card className={cn(
+      "group cursor-pointer transition-all p-0 shadow-none bg-card hover:bg-muted/50",
+      isSelected && "bg-primary/10 ring-1 ring-primary/20"
+    )}>
       <CardContent className="p-4" onClick={onToggle}>
         <div className="flex items-start gap-3">
           <div className="flex-1 min-w-0">
@@ -85,20 +64,14 @@ const ToolCard = ({
                 {highlightText(tool.name, searchTerm)}
               </h3>
               {tool.tags?.includes('important') && (
-                <Badge
-                  variant="secondary"
-                  className="text-xs bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300"
-                >
+                <Badge variant="secondary" className="text-xs bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300">
                   Important
                 </Badge>
               )}
             </div>
 
             <p className="text-xs text-muted-foreground line-clamp-2 mb-2">
-              {highlightText(
-                tool.description || 'No description available',
-                searchTerm,
-              )}
+              {highlightText(tool.description || 'No description available', searchTerm)}
             </p>
 
             <div className="flex items-center gap-2 flex-wrap">
@@ -107,23 +80,19 @@ const ToolCard = ({
                   {Object.keys(tool.input_parameters.properties).length} params
                 </Badge>
               )}
-              {tool.tags
-                ?.filter((tag) => tag !== 'important')
-                .slice(0, 2)
-                .map((tag) => (
-                  <Badge
-                    key={tag}
-                    variant="outline"
-                    className="text-xs text-muted-foreground"
-                  >
-                    {tag}
-                  </Badge>
-                ))}
+              {tool.tags?.filter(tag => tag !== 'important').slice(0, 2).map(tag => (
+                <Badge key={tag} variant="outline" className="text-xs text-muted-foreground">
+                  {tag}
+                </Badge>
+              ))}
             </div>
           </div>
 
           <div className="flex-shrink-0 ml-2">
-            <Checkbox checked={isSelected} onCheckedChange={onToggle} />
+            <Checkbox
+              checked={isSelected}
+              onCheckedChange={onToggle}
+            />
           </div>
         </div>
       </CardContent>
@@ -157,20 +126,14 @@ export const ComposioToolsSelector: React.FC<ComposioToolsSelectorProps> = ({
   onCancel,
   showSaveButton = true,
   className,
-  searchPlaceholder = 'Search tools...',
+  searchPlaceholder = "Search tools..."
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isSaving, setIsSaving] = useState(false);
-  const [selectedTagFilters, setSelectedTagFilters] = useState<Set<string>>(
-    new Set(),
-  );
+  const [selectedTagFilters, setSelectedTagFilters] = useState<Set<string>>(new Set());
   const initializedRef = useRef(false);
 
-  const {
-    data: toolsResponse,
-    isLoading,
-    error,
-  } = useComposioTools(toolkitSlug, { enabled: !!toolkitSlug });
+  const { data: toolsResponse, isLoading, error } = useComposioTools(toolkitSlug, { enabled: !!toolkitSlug });
 
   // DEDUPE: Remove duplicate tools by name, prioritizing ones with "important" tag
   const availableTools = useMemo(() => {
@@ -178,7 +141,7 @@ export const ComposioToolsSelector: React.FC<ComposioToolsSelectorProps> = ({
     const toolMap = new Map();
 
     // First pass: add all tools
-    rawTools.forEach((tool) => {
+    rawTools.forEach(tool => {
       const existing = toolMap.get(tool.name);
       if (!existing) {
         toolMap.set(tool.name, tool);
@@ -206,22 +169,16 @@ export const ComposioToolsSelector: React.FC<ComposioToolsSelectorProps> = ({
 
       if (response.success && response.data) {
         const agent = response.data;
-        const composioMcps =
-          agent.custom_mcps?.filter(
-            (mcp: any) =>
-              mcp.type === 'composio' && mcp.config?.profile_id === profileId,
-          ) || [];
+        const composioMcps = agent.custom_mcps?.filter((mcp: any) =>
+          mcp.type === 'composio' && mcp.config?.profile_id === profileId
+        ) || [];
 
-        const enabledTools = composioMcps.flatMap(
-          (mcp: any) => mcp.enabledTools || [],
-        );
+        const enabledTools = composioMcps.flatMap((mcp: any) => mcp.enabledTools || []);
 
         // If no existing tools found, auto-select important tools
         if (enabledTools.length === 0 && availableTools.length > 0) {
-          const importantTools = availableTools.filter((tool) =>
-            tool.tags?.includes('important'),
-          );
-          const importantToolSlugs = importantTools.map((tool) => tool.slug);
+          const importantTools = availableTools.filter(tool => tool.tags?.includes('important'));
+          const importantToolSlugs = importantTools.map(tool => tool.slug);
 
           if (importantToolSlugs.length > 0) {
             onToolsChange(importantToolSlugs);
@@ -238,10 +195,8 @@ export const ComposioToolsSelector: React.FC<ComposioToolsSelectorProps> = ({
       console.error('Failed to load current agent tools:', err);
       // If API call fails, fall back to important tools
       if (availableTools.length > 0) {
-        const importantTools = availableTools.filter((tool) =>
-          tool.tags?.includes('important'),
-        );
-        const importantToolSlugs = importantTools.map((tool) => tool.slug);
+        const importantTools = availableTools.filter(tool => tool.tags?.includes('important'));
+        const importantToolSlugs = importantTools.map(tool => tool.slug);
         if (importantToolSlugs.length > 0) {
           onToolsChange(importantToolSlugs);
         } else {
@@ -261,10 +216,8 @@ export const ComposioToolsSelector: React.FC<ComposioToolsSelectorProps> = ({
 
     // Only auto-select important tools for NEW agents (no agentId) when no tools are selected
     if (!agentId && availableTools.length > 0) {
-      const importantTools = availableTools.filter((tool) =>
-        tool.tags?.includes('important'),
-      );
-      const importantToolSlugs = importantTools.map((tool) => tool.slug);
+      const importantTools = availableTools.filter(tool => tool.tags?.includes('important'));
+      const importantToolSlugs = importantTools.map(tool => tool.slug);
 
       return importantToolSlugs;
     }
@@ -277,8 +230,8 @@ export const ComposioToolsSelector: React.FC<ComposioToolsSelectorProps> = ({
   // Get all unique tags
   const allTags = useMemo(() => {
     const tags = new Set<string>();
-    availableTools.forEach((tool) => {
-      tool.tags?.forEach((tag) => tags.add(tag));
+    availableTools.forEach(tool => {
+      tool.tags?.forEach(tag => tags.add(tag));
     });
     return Array.from(tags).sort((a, b) => {
       // Put "important" first, then alphabetical
@@ -299,8 +252,8 @@ export const ComposioToolsSelector: React.FC<ComposioToolsSelectorProps> = ({
       } else if (selectedTools.length === 0) {
         // For new agents, sync the important tools selection
         const importantToolSlugs = availableTools
-          .filter((tool) => tool.tags?.includes('important'))
-          .map((tool) => tool.slug);
+          .filter(tool => tool.tags?.includes('important'))
+          .map(tool => tool.slug);
 
         if (importantToolSlugs.length > 0) {
           onToolsChange(importantToolSlugs);
@@ -315,21 +268,18 @@ export const ComposioToolsSelector: React.FC<ComposioToolsSelectorProps> = ({
 
     // Filter by tags if any are selected
     if (selectedTagFilters.size > 0) {
-      tools = tools.filter(
-        (tool) =>
-          tool.tags?.some((tag) => selectedTagFilters.has(tag)) ||
-          (selectedTagFilters.has('untagged') &&
-            (!tool.tags || tool.tags.length === 0)),
+      tools = tools.filter(tool =>
+        tool.tags?.some(tag => selectedTagFilters.has(tag)) ||
+        (selectedTagFilters.has('untagged') && (!tool.tags || tool.tags.length === 0))
       );
     }
 
     // Filter by search term
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      tools = tools.filter(
-        (tool) =>
-          tool.name.toLowerCase().includes(term) ||
-          tool.description.toLowerCase().includes(term),
+      tools = tools.filter(tool =>
+        tool.name.toLowerCase().includes(term) ||
+        tool.description.toLowerCase().includes(term)
       );
     }
 
@@ -339,13 +289,13 @@ export const ComposioToolsSelector: React.FC<ComposioToolsSelectorProps> = ({
   const handleToolToggle = (toolSlug: string) => {
     const effectiveSelected = getEffectiveSelectedTools;
     const newTools = effectiveSelected.includes(toolSlug)
-      ? effectiveSelected.filter((t) => t !== toolSlug)
+      ? effectiveSelected.filter(t => t !== toolSlug)
       : [...effectiveSelected, toolSlug];
     onToolsChange(newTools);
   };
 
   const handleSelectAll = () => {
-    const allToolSlugs = filteredTools.map((tool) => tool.slug);
+    const allToolSlugs = filteredTools.map(tool => tool.slug);
     onToolsChange(allToolSlugs);
   };
 
@@ -385,7 +335,7 @@ export const ComposioToolsSelector: React.FC<ComposioToolsSelectorProps> = ({
   const totalTools = availableTools.length;
 
   return (
-    <div className={cn('flex flex-col h-full', className)}>
+    <div className={cn("flex flex-col h-full", className)}>
       {/* Search and Controls Bar */}
       <div className="px-6 py-3 border-b bg-muted/20 flex-shrink-0">
         <div className="flex items-center gap-3 mb-3">
@@ -406,18 +356,13 @@ export const ComposioToolsSelector: React.FC<ComposioToolsSelectorProps> = ({
                 variant="outline"
                 size="sm"
                 className={cn(
-                  'h-9 gap-2 shadow-none',
-                  selectedTagFilters.size > 0 &&
-                    'border-primary/50 bg-primary/5',
+                  "h-9 gap-2 shadow-none",
+                  selectedTagFilters.size > 0 && "border-primary/50 bg-primary/5"
                 )}
               >
                 <Filter className="h-4 w-4" />
-                <span>
-                  Filter
-                  <span className="text-muted-foreground">
-                    {' '}
-                    ({selectedTagFilters.size || 0})
-                  </span>
+                <span>Filter
+                  <span className="text-muted-foreground"> ({selectedTagFilters.size || 0})</span>
                 </span>
 
                 <ChevronDown className="h-3 w-3 opacity-50" />
@@ -445,11 +390,9 @@ export const ComposioToolsSelector: React.FC<ComposioToolsSelectorProps> = ({
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <div className="max-h-56 overflow-y-auto">
-                {allTags.map((tag) => {
+                {allTags.map(tag => {
                   const isSelected = selectedTagFilters.has(tag);
-                  const toolsWithTag = availableTools.filter((tool) =>
-                    tool.tags?.includes(tag),
-                  );
+                  const toolsWithTag = availableTools.filter(tool => tool.tags?.includes(tag));
 
                   return (
                     <DropdownMenuItem
@@ -470,18 +413,13 @@ export const ComposioToolsSelector: React.FC<ComposioToolsSelectorProps> = ({
                       />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
-                          <span
-                            className={cn(
-                              'text-sm font-medium truncate',
-                              tag === 'important' && 'text-orange-600',
-                            )}
-                          >
+                          <span className={cn(
+                            "text-sm font-medium truncate",
+                            tag === 'important' && "text-orange-600"
+                          )}>
                             {tag}
                           </span>
-                          <Badge
-                            variant="outline"
-                            className="text-xs ml-2 shrink-0"
-                          >
+                          <Badge variant="outline" className="text-xs ml-2 shrink-0">
                             {toolsWithTag.length}
                           </Badge>
                         </div>
@@ -492,6 +430,7 @@ export const ComposioToolsSelector: React.FC<ComposioToolsSelectorProps> = ({
               </div>
             </DropdownMenuContent>
           </DropdownMenu>
+
         </div>
 
         {/* Compact Filter + Quick Actions */}
@@ -500,7 +439,7 @@ export const ComposioToolsSelector: React.FC<ComposioToolsSelectorProps> = ({
             Showing {filteredTools.length} of {availableTools.length} tools
           </span>
 
-          <div className="flex items-center gap-2">
+          <div className='flex items-center gap-2'>
             <div className="h-4 w-px bg-border" />
 
             {/* Quick Actions */}
@@ -524,6 +463,7 @@ export const ComposioToolsSelector: React.FC<ComposioToolsSelectorProps> = ({
             </Button>
           </div>
         </div>
+
       </div>
 
       {/* Tools List */}
@@ -532,9 +472,7 @@ export const ComposioToolsSelector: React.FC<ComposioToolsSelectorProps> = ({
           {error && (
             <Alert className="mb-6">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                {error.message || 'Failed to load tools'}
-              </AlertDescription>
+              <AlertDescription>{error.message || 'Failed to load tools'}</AlertDescription>
             </Alert>
           )}
 
@@ -566,7 +504,8 @@ export const ComposioToolsSelector: React.FC<ComposioToolsSelectorProps> = ({
                   ? `No tools found matching "${searchTerm}"`
                   : selectedTagFilters.size > 0
                     ? 'No tools match the selected filters'
-                    : 'No tools available'}
+                    : 'No tools available'
+                }
               </p>
               {selectedTagFilters.size > 0 && (
                 <Button
@@ -588,9 +527,11 @@ export const ComposioToolsSelector: React.FC<ComposioToolsSelectorProps> = ({
         <div className="p-6 pt-4 border-t bg-muted/20 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="text-sm text-muted-foreground">
-              {getEffectiveSelectedTools.length > 0
-                ? `${getEffectiveSelectedTools.length} tool${getEffectiveSelectedTools.length === 1 ? '' : 's'} will be added to your agent`
-                : 'No tools selected'}
+              {getEffectiveSelectedTools.length > 0 ? (
+                `${getEffectiveSelectedTools.length} tool${getEffectiveSelectedTools.length === 1 ? '' : 's'} will be added to your agent`
+              ) : (
+                'No tools selected'
+              )}
             </div>
             <div className="flex gap-3">
               {onCancel && (

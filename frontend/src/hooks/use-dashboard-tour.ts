@@ -55,21 +55,21 @@ const useDashboardTourStore = create<DashboardTourState>()(
       partialize: (state) => ({
         hasSeenTour: state.hasSeenTour,
       }),
-    },
-  ),
+    }
+  )
 );
 
 export const useDashboardTour = () => {
   const pathname = usePathname();
   const isDashboardRoute = pathname === '/dashboard';
-
+  
   const {
     toursEnabled,
     showWelcome,
     handleWelcomeAccept,
     handleWelcomeDecline,
   } = useTourPermissions(isDashboardRoute);
-
+  
   const {
     hasSeenTour,
     run,
@@ -86,7 +86,7 @@ export const useDashboardTour = () => {
       const timer = setTimeout(() => {
         startTour();
       }, 500);
-
+      
       return () => clearTimeout(timer);
     }
   }, [isDashboardRoute, toursEnabled, hasSeenTour, run, startTour]);
@@ -100,7 +100,7 @@ export const useDashboardTour = () => {
           run,
           stepIndex,
           toursEnabled,
-        }),
+        })
       };
     }
   }, [hasSeenTour, run, stepIndex, toursEnabled, resetTour]);

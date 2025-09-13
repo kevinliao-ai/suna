@@ -39,7 +39,7 @@ export function extractCreateAgentScheduledTriggerData(
   toolContent?: any,
   isSuccess?: boolean,
   toolTimestamp?: string,
-  assistantTimestamp?: string,
+  assistantTimestamp?: string
 ): CreateAgentScheduledTriggerData & {
   actualIsSuccess: boolean;
   actualToolTimestamp: string | undefined;
@@ -61,13 +61,13 @@ export function extractCreateAgentScheduledTriggerData(
     trigger: null,
     actualIsSuccess: isSuccess || false,
     actualToolTimestamp: toolTimestamp,
-    actualAssistantTimestamp: assistantTimestamp,
+    actualAssistantTimestamp: assistantTimestamp
   };
 
   try {
     if (toolContent) {
       let content = toolContent;
-
+      
       if (typeof toolContent === 'string') {
         try {
           content = JSON.parse(toolContent);
@@ -78,12 +78,10 @@ export function extractCreateAgentScheduledTriggerData(
 
       if (content && typeof content === 'object' && content.content) {
         try {
-          const nestedContent =
-            typeof content.content === 'string'
-              ? JSON.parse(content.content)
-              : content.content;
+          const nestedContent = typeof content.content === 'string' ? JSON.parse(content.content) : content.content;
           content = nestedContent;
-        } catch (e) {}
+        } catch (e) {
+        }
       }
 
       if (content && typeof content === 'object' && content.tool_execution) {
@@ -104,7 +102,7 @@ export function extractCreateAgentScheduledTriggerData(
               workflow_input: args.workflow_input || null,
               agent_prompt: args.agent_prompt || null,
               trigger: output.trigger,
-              actualIsSuccess: true,
+              actualIsSuccess: true
             };
           }
         }
@@ -129,7 +127,7 @@ export function extractCreateAgentScheduledTriggerData(
             workflow_input: args.workflow_input || null,
             agent_prompt: args.agent_prompt || null,
             trigger: toolOutput.trigger,
-            actualIsSuccess: true,
+            actualIsSuccess: true
           };
         }
       }
@@ -137,10 +135,7 @@ export function extractCreateAgentScheduledTriggerData(
 
     return defaultResult;
   } catch (error) {
-    console.error(
-      'Error extracting create agent scheduled trigger data:',
-      error,
-    );
+    console.error('Error extracting create agent scheduled trigger data:', error);
     return defaultResult;
   }
-}
+} 

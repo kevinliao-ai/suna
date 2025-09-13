@@ -67,9 +67,8 @@ export function createMutationHook<
     },
   ) => {
     const { errorContext: baseErrorContext, ...baseOptions } = options || {};
-    const { errorContext: customErrorContext, ...customMutationOptions } =
-      customOptions || {};
-
+    const { errorContext: customErrorContext, ...customMutationOptions } = customOptions || {};
+    
     return useMutation<TData, TError, TVariables, TContext>({
       mutationFn,
       onError: (error, variables, context) => {

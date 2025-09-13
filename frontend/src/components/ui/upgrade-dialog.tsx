@@ -28,38 +28,35 @@ interface DialogAction {
 interface UpgradeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-
+  
   icon: LucideIcon;
   title: string;
   description: string;
   theme?: DialogTheme;
-
+  
   children?: ReactNode;
   size?: DialogSize;
-
+  
   actions?: DialogAction[];
-
+  
   className?: string;
   headerClassName?: string;
   contentClassName?: string;
-
+  
   preventOutsideClick?: boolean;
 }
 
 const themeConfig = {
   warning: {
-    iconContainer:
-      'bg-amber-100 dark:bg-amber-900 border-amber-300 dark:border-amber-900',
+    iconContainer: 'bg-amber-100 dark:bg-amber-900 border-amber-300 dark:border-amber-900',
     iconColor: 'text-amber-600 dark:text-amber-400',
   },
   destructive: {
-    iconContainer:
-      'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800',
+    iconContainer: 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800',
     iconColor: 'text-red-500 dark:text-red-400',
   },
   primary: {
-    iconContainer:
-      'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800',
+    iconContainer: 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800',
     iconColor: 'text-blue-500 dark:text-blue-400',
   },
   info: {
@@ -93,27 +90,27 @@ export const UpgradeDialog: React.FC<UpgradeDialogProps> = ({
   const themeStyles = themeConfig[theme];
   const sizeClass = sizeConfig[size];
 
-  const handleOutsideClick = preventOutsideClick
-    ? (e: Event) => e.preventDefault()
+  const handleOutsideClick = preventOutsideClick 
+    ? (e: Event) => e.preventDefault() 
     : undefined;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
+      <DialogContent 
         className={cn(sizeClass, 'h-auto overflow-y-auto', className)}
         onPointerDownOutside={handleOutsideClick}
       >
         <DialogHeader className={headerClassName}>
           <div className="flex items-center gap-2">
-            <div
-              className={cn(
-                'flex h-8 w-8 items-center justify-center rounded-full border',
-                themeStyles.iconContainer,
-              )}
-            >
+            <div className={cn(
+              'flex h-8 w-8 items-center justify-center rounded-full border',
+              themeStyles.iconContainer
+            )}>
               <Icon className={cn('h-4 w-4', themeStyles.iconColor)} />
             </div>
-            <DialogTitle className="text-lg font-semibold">{title}</DialogTitle>
+            <DialogTitle className="text-lg font-semibold">
+              {title}
+            </DialogTitle>
           </div>
           <DialogDescription className="text-sm text-muted-foreground">
             {description}
@@ -121,7 +118,9 @@ export const UpgradeDialog: React.FC<UpgradeDialogProps> = ({
         </DialogHeader>
 
         {children && (
-          <div className={cn('space-y-4', contentClassName)}>{children}</div>
+          <div className={cn('space-y-4', contentClassName)}>
+            {children}
+          </div>
         )}
 
         {actions.length > 0 && (
@@ -139,9 +138,7 @@ export const UpgradeDialog: React.FC<UpgradeDialogProps> = ({
                   {action.loading && (
                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
                   )}
-                  {ActionIcon && !action.loading && (
-                    <ActionIcon className="h-4 w-4" />
-                  )}
+                  {ActionIcon && !action.loading && <ActionIcon className="h-4 w-4" />}
                   {action.label}
                 </Button>
               );
@@ -151,4 +148,4 @@ export const UpgradeDialog: React.FC<UpgradeDialogProps> = ({
       </DialogContent>
     </Dialog>
   );
-};
+}; 

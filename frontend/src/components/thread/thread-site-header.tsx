@@ -1,25 +1,25 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { FolderOpen, ExternalLink, Monitor, Copy, Check } from 'lucide-react';
-import { usePathname } from 'next/navigation';
-import { toast } from 'sonner';
+import { Button } from "@/components/ui/button"
+import { FolderOpen, ExternalLink, Monitor, Copy, Check } from "lucide-react"
+import { usePathname } from "next/navigation"
+import { toast } from "sonner"
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { useState, useRef, KeyboardEvent } from 'react';
-import { Input } from '@/components/ui/input';
-import { useUpdateProject } from '@/hooks/react-query';
-import { Skeleton } from '@/components/ui/skeleton';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { cn } from '@/lib/utils';
-import { ShareModal } from '@/components/sidebar/share-modal';
-import { useQueryClient } from '@tanstack/react-query';
-import { projectKeys } from '@/hooks/react-query/sidebar/keys';
-import { threadKeys } from '@/hooks/react-query/threads/keys';
+} from "@/components/ui/tooltip"
+import { useState, useRef, KeyboardEvent } from "react"
+import { Input } from "@/components/ui/input"
+import { useUpdateProject } from "@/hooks/react-query"
+import { Skeleton } from "@/components/ui/skeleton"
+import { useIsMobile } from "@/hooks/use-mobile"
+import { cn } from "@/lib/utils"
+import { ShareModal } from "@/components/sidebar/share-modal"
+import { useQueryClient } from "@tanstack/react-query";
+import { projectKeys } from "@/hooks/react-query/sidebar/keys";
+import { threadKeys } from "@/hooks/react-query/threads/keys";
 
 interface ThreadSiteHeaderProps {
   threadId?: string;
@@ -44,34 +44,34 @@ export function SiteHeader({
   debugMode,
   variant = 'default',
 }: ThreadSiteHeaderProps) {
-  const pathname = usePathname();
-  const [isEditing, setIsEditing] = useState(false);
-  const [editName, setEditName] = useState(projectName);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const pathname = usePathname()
+  const [isEditing, setIsEditing] = useState(false)
+  const [editName, setEditName] = useState(projectName)
+  const inputRef = useRef<HTMLInputElement>(null)
   const [showShareModal, setShowShareModal] = useState(false);
   const [showKnowledgeBase, setShowKnowledgeBase] = useState(false);
   const [copied, setCopied] = useState(false);
   const queryClient = useQueryClient();
 
-  const isMobile = useIsMobile() || isMobileView;
-  const updateProjectMutation = useUpdateProject();
+  const isMobile = useIsMobile() || isMobileView
+  const updateProjectMutation = useUpdateProject()
 
   const openShareModal = () => {
-    setShowShareModal(true);
-  };
+    setShowShareModal(true)
+  }
 
   const openKnowledgeBase = () => {
-    setShowKnowledgeBase(true);
-  };
+    setShowKnowledgeBase(true)
+  }
 
   const copyShareLink = async () => {
     try {
       await navigator.clipboard.writeText(window.location.href);
       setCopied(true);
-      toast.success('Share link copied to clipboard!');
+      toast.success("Share link copied to clipboard!");
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      toast.error('Failed to copy link');
+      toast.error("Failed to copy link");
     }
   };
 
@@ -107,13 +107,11 @@ export function SiteHeader({
 
         const updatedProject = await updateProjectMutation.mutateAsync({
           projectId,
-          data: { name: editName },
-        });
+          data: { name: editName }
+        })
         if (updatedProject) {
           onProjectRenamed?.(editName);
-          queryClient.invalidateQueries({
-            queryKey: threadKeys.project(projectId),
-          });
+          queryClient.invalidateQueries({ queryKey: threadKeys.project(projectId) });
         } else {
           throw new Error('Failed to update project');
         }
@@ -126,8 +124,8 @@ export function SiteHeader({
       }
     }
 
-    setIsEditing(false);
-  };
+    setIsEditing(false)
+  }
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
@@ -139,12 +137,12 @@ export function SiteHeader({
 
   return (
     <>
-      <header
-        className={cn(
-          'bg-background sticky top-0 flex h-14 shrink-0 items-center gap-2 z-20 w-full',
-          isMobile && 'px-2',
-        )}
-      >
+      <header className={cn(
+        "bg-background sticky top-0 flex h-14 shrink-0 items-center gap-2 z-20 w-full",
+        isMobile && "px-2"
+      )}>
+
+
         <div className="flex flex-1 items-center gap-2 px-3">
           {variant === 'shared' ? (
             <div className="text-base font-medium text-muted-foreground flex items-center gap-2">
@@ -194,15 +192,11 @@ export function SiteHeader({
                     onClick={copyShareLink}
                     className="h-9 px-3 cursor-pointer gap-2"
                   >
-                    {copied ? (
-                      <Check className="h-4 w-4" />
-                    ) : (
-                      <Copy className="h-4 w-4" />
-                    )}
+                    {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                     <span>{copied ? 'Copied!' : 'Copy Link'}</span>
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent side={isMobile ? 'bottom' : 'bottom'}>
+                <TooltipContent side={isMobile ? "bottom" : "bottom"}>
                   <p>Copy share link</p>
                 </TooltipContent>
               </Tooltip>
@@ -228,10 +222,12 @@ export function SiteHeader({
                   <FolderOpen className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side={isMobile ? 'bottom' : 'bottom'}>
+              <TooltipContent side={isMobile ? "bottom" : "bottom"}>
                 <p>View Files in Task</p>
               </TooltipContent>
             </Tooltip>
+
+
 
             <Tooltip>
               <TooltipTrigger asChild>
@@ -244,7 +240,7 @@ export function SiteHeader({
                   <Monitor className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side={isMobile ? 'bottom' : 'bottom'}>
+              <TooltipContent side={isMobile ? "bottom" : "bottom"}>
                 <p>Toggle Computer Preview (CMD+I)</p>
               </TooltipContent>
             </Tooltip>
@@ -260,5 +256,5 @@ export function SiteHeader({
         />
       )}
     </>
-  );
-}
+  )
+} 

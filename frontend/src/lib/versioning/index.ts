@@ -7,7 +7,7 @@ export {
   useAgentVersions,
   useAgentVersion,
   useCreateAgentVersion,
-  useActivateAgentVersion,
+  useActivateAgentVersion
 } from './hooks/use-versions';
 
-export { useVersionStore } from './stores/version-store';
+export { useVersionStore } from './stores/version-store'; 

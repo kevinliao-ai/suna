@@ -54,10 +54,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         switch (event) {
           case 'SIGNED_IN':
             if (newSession?.user) {
-              await checkAndInstallSunaAgent(
-                newSession.user.id,
-                newSession.user.created_at,
-              );
+              await checkAndInstallSunaAgent(newSession.user.id, newSession.user.created_at);
             }
             break;
           case 'SIGNED_OUT':

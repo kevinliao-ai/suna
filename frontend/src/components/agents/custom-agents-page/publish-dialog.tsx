@@ -2,14 +2,7 @@
 
 import React from 'react';
 import { Globe, Loader2, AlertTriangle } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
@@ -29,7 +22,7 @@ export const PublishDialog = ({
   publishDialog,
   templatesActioningId,
   onClose,
-  onPublish,
+  onPublish
 }: PublishDialogProps) => {
   return (
     <Dialog open={!!publishDialog} onOpenChange={onClose}>
@@ -37,8 +30,7 @@ export const PublishDialog = ({
         <DialogHeader>
           <DialogTitle>Publish Template to Marketplace</DialogTitle>
           <DialogDescription>
-            Make "{publishDialog?.templateName}" available for the community to
-            discover and install.
+            Make "{publishDialog?.templateName}" available for the community to discover and install.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
@@ -49,7 +41,10 @@ export const PublishDialog = ({
           >
             Cancel
           </Button>
-          <Button onClick={onPublish} disabled={!!templatesActioningId}>
+          <Button
+            onClick={onPublish}
+            disabled={!!templatesActioningId}
+          >
             {templatesActioningId ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -66,4 +61,4 @@ export const PublishDialog = ({
       </DialogContent>
     </Dialog>
   );
-};
+}; 

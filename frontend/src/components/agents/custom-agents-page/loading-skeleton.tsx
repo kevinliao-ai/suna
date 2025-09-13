@@ -11,10 +11,7 @@ export const LoadingSkeleton = ({ count = 6 }: LoadingSkeletonProps) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {Array.from({ length: count }).map((_, index) => (
-        <div
-          key={index}
-          className="p-2 bg-neutral-100 dark:bg-sidebar rounded-2xl overflow-hidden group"
-        >
+        <div key={index} className="p-2 bg-neutral-100 dark:bg-sidebar rounded-2xl overflow-hidden group">
           <div className="h-24 flex items-center justify-center relative bg-gradient-to-br from-opacity-90 to-opacity-100">
             <Skeleton className="h-24 w-full rounded-xl" />
           </div>
@@ -26,4 +23,4 @@ export const LoadingSkeleton = ({ count = 6 }: LoadingSkeletonProps) => {
       ))}
     </div>
   );
-};
+}; 

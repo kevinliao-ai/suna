@@ -1,7 +1,8 @@
 export default function ThreadLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return <>{children}</>;
-}
+    children,
+  }: {
+    children: React.ReactNode;
+  }) {
+    return <>{children}</>;
+  }
+  

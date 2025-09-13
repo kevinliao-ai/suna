@@ -6,22 +6,22 @@ import { Switch } from '@/components/ui/switch';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
   DialogDescription,
-  DialogFooter,
+  DialogFooter
 } from '@/components/ui/dialog';
-import {
-  Loader2,
-  CheckCircle2,
-  XCircle,
-  Zap,
+import { 
+  Loader2, 
+  CheckCircle2, 
+  XCircle, 
+  Zap, 
   Info,
   RefreshCw,
-  Save,
+  Save
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -53,26 +53,15 @@ interface CustomToolsManagerProps extends BaseToolsManagerProps {
 type ToolsManagerProps = CustomToolsManagerProps;
 
 export const ToolsManager: React.FC<ToolsManagerProps> = (props) => {
-  const {
-    agentId,
-    open,
-    onOpenChange,
-    onToolsUpdate,
-    mode,
-    versionData,
-    saveMode = 'direct',
-    versionId,
-    initialEnabledTools,
-  } = props;
-
+  const { agentId, open, onOpenChange, onToolsUpdate, mode, versionData, saveMode = 'direct', versionId, initialEnabledTools } = props;
+  
   const customResult = useCustomMCPToolsData(
     agentId,
-    (props as CustomToolsManagerProps).mcpConfig,
+    (props as CustomToolsManagerProps).mcpConfig
   );
 
-  const { data, isLoading, error, updateMutation, isUpdating, refetch } =
-    customResult;
-
+  const { data, isLoading, error, updateMutation, isUpdating, refetch } = customResult;
+  
   const [localTools, setLocalTools] = useState<Record<string, boolean>>({});
   const [hasChanges, setHasChanges] = useState(false);
 
@@ -87,7 +76,7 @@ export const ToolsManager: React.FC<ToolsManagerProps> = (props) => {
       data.tools.forEach((tool: { name: string; enabled: boolean }) => {
         toolsMap[tool.name] = tool.enabled;
       });
-
+      
       setLocalTools(toolsMap);
       setHasChanges(false);
     }
@@ -98,12 +87,12 @@ export const ToolsManager: React.FC<ToolsManagerProps> = (props) => {
   }, [localTools]);
 
   const totalCount = data?.tools?.length || 0;
-
+  
   const displayName = (props as CustomToolsManagerProps).mcpName;
   const contextName = 'Server';
 
   const handleToolToggle = (toolName: string) => {
-    setLocalTools((prev) => {
+    setLocalTools(prev => {
       const newValue = !prev[toolName];
       const updated = { ...prev, [toolName]: newValue };
       const comparisonState: Record<string, boolean> = {};
@@ -114,9 +103,7 @@ export const ToolsManager: React.FC<ToolsManagerProps> = (props) => {
           comparisonState[tool.name] = tool.enabled;
         }
       });
-      const hasChanges = Object.keys(updated).some(
-        (key) => updated[key] !== comparisonState[key],
-      );
+      const hasChanges = Object.keys(updated).some(key => updated[key] !== comparisonState[key]);
       setHasChanges(hasChanges);
       return updated;
     });
@@ -137,7 +124,7 @@ export const ToolsManager: React.FC<ToolsManagerProps> = (props) => {
     const enabledTools = Object.entries(localTools)
       .filter(([_, enabled]) => enabled)
       .map(([name]) => name);
-
+    
     if (saveMode === 'callback') {
       if (onToolsUpdate) {
         onToolsUpdate(enabledTools);
@@ -185,15 +172,14 @@ export const ToolsManager: React.FC<ToolsManagerProps> = (props) => {
               Failed to load {displayName} tools
             </DialogDescription>
           </DialogHeader>
-
+          
           <Alert variant="destructive">
             <XCircle className="h-4 w-4" />
             <AlertDescription>
-              {error?.message ||
-                'An unexpected error occurred while loading tools.'}
+              {error?.message || 'An unexpected error occurred while loading tools.'}
             </AlertDescription>
           </Alert>
-
+          
           <DialogFooter>
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Close
@@ -224,15 +210,9 @@ export const ToolsManager: React.FC<ToolsManagerProps> = (props) => {
                 Changes will make a new version of the agent.
               </span>
             ) : saveMode === 'callback' ? (
-              <span>
-                Choose which {displayName} tools are available to your agent.
-                Changes will be saved when you save the agent configuration.
-              </span>
+              <span>Choose which {displayName} tools are available to your agent. Changes will be saved when you save the agent configuration.</span>
             ) : (
-              <span>
-                Choose which {displayName} tools are available to your agent.
-                Changes will be saved immediately.
-              </span>
+              <span>Choose which {displayName} tools are available to your agent. Changes will be saved immediately.</span>
             )}
           </DialogDescription>
         </DialogHeader>
@@ -269,28 +249,24 @@ export const ToolsManager: React.FC<ToolsManagerProps> = (props) => {
                     </p>
                   </div>
                 </div>
-
+                
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={handleSelectAll}
                   disabled={isUpdating}
                 >
-                  {data.tools.every((tool: any) => localTools[tool.name])
-                    ? 'Deselect All'
-                    : 'Select All'}
+                  {data.tools.every((tool: any) => localTools[tool.name]) ? 'Deselect All' : 'Select All'}
                 </Button>
               </div>
 
               <div className="flex-1 overflow-y-auto space-y-3">
                 {data.tools.map((tool: any) => (
-                  <Card
+                  <Card 
                     key={tool.name}
                     className={cn(
-                      'transition-colors cursor-pointer',
-                      localTools[tool.name]
-                        ? 'bg-muted/50'
-                        : 'hover:bg-muted/20',
+                      "transition-colors cursor-pointer",
+                      localTools[tool.name] ? "bg-muted/50" : "hover:bg-muted/20"
                     )}
                     onClick={() => handleToolToggle(tool.name)}
                   >
@@ -322,16 +298,14 @@ export const ToolsManager: React.FC<ToolsManagerProps> = (props) => {
         <DialogFooter>
           <div className="flex items-center justify-between w-full">
             <div className="flex items-center gap-2">
-              {!data?.has_mcp_config &&
-                data?.tools?.length > 0 &&
-                saveMode === 'direct' && (
-                  <Alert className="p-2">
-                    <Info className="h-3 w-3" />
-                    <AlertDescription className="text-xs">
-                      This will update the MCP configuration for your agent
-                    </AlertDescription>
-                  </Alert>
-                )}
+              {!data?.has_mcp_config && data?.tools?.length > 0 && saveMode === 'direct' && (
+                <Alert className="p-2">
+                  <Info className="h-3 w-3" />
+                  <AlertDescription className="text-xs">
+                    This will update the MCP configuration for your agent
+                  </AlertDescription>
+                </Alert>
+              )}
             </div>
             <div className="flex items-center gap-2">
               <Button
@@ -341,9 +315,12 @@ export const ToolsManager: React.FC<ToolsManagerProps> = (props) => {
               >
                 {hasChanges ? 'Cancel' : 'Close'}
               </Button>
-
+              
               {hasChanges && (
-                <Button onClick={handleSave} disabled={isUpdating}>
+                <Button
+                  onClick={handleSave}
+                  disabled={isUpdating}
+                >
                   {isUpdating ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -368,4 +345,4 @@ export const ToolsManager: React.FC<ToolsManagerProps> = (props) => {
       </DialogContent>
     </Dialog>
   );
-};
+}; 

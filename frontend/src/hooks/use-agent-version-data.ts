@@ -43,37 +43,38 @@ interface UseAgentVersionDataReturn {
   error: Error | null;
 }
 
+
 function normalizeCustomMcps(mcps: any): NormalizedMCP[] {
   if (!mcps || !Array.isArray(mcps)) {
     return [];
   }
-
-  return mcps.map((mcp) => {
+  
+  return mcps.map(mcp => {
     if (!mcp || typeof mcp !== 'object') {
       return {
         name: 'Unknown MCP',
         type: 'sse',
         customType: 'sse',
         config: {},
-        enabledTools: [],
+        enabledTools: []
       };
     }
-
+    
     return {
       name: mcp.name || 'Unnamed MCP',
       type: mcp.type || mcp.customType || 'sse',
       customType: mcp.customType || mcp.type || 'sse',
       config: mcp.config || {},
-      enabledTools: mcp.enabledTools || mcp.enabled_tools || [],
+      enabledTools: mcp.enabledTools || mcp.enabled_tools || []
     };
   });
 }
 
 function normalizeVersionData(version: any): NormalizedVersionData | null {
   if (!version) return null;
-
+  
   const isApiFormat = 'version_id' in version;
-
+  
   if (isApiFormat) {
     return {
       version_id: version.version_id,
@@ -82,19 +83,16 @@ function normalizeVersionData(version: any): NormalizedVersionData | null {
       version_name: version.version_name,
       system_prompt: version.system_prompt || '',
       model: version.model,
-      configured_mcps: Array.isArray(version.configured_mcps)
-        ? version.configured_mcps
-        : [],
+      configured_mcps: Array.isArray(version.configured_mcps) ? version.configured_mcps : [],
       custom_mcps: normalizeCustomMcps(version.custom_mcps),
-      agentpress_tools:
-        version.agentpress_tools && typeof version.agentpress_tools === 'object'
-          ? version.agentpress_tools
-          : {},
+      agentpress_tools: version.agentpress_tools && typeof version.agentpress_tools === 'object' 
+        ? version.agentpress_tools 
+        : {},
       is_active: version.is_active ?? true,
       created_at: version.created_at,
       updated_at: version.updated_at || version.created_at,
       created_by: version.created_by,
-      change_description: version.change_description,
+      change_description: version.change_description
     };
   } else {
     return {
@@ -103,55 +101,39 @@ function normalizeVersionData(version: any): NormalizedVersionData | null {
       version_number: version.versionNumber?.value || version.versionNumber,
       version_name: version.versionName,
       system_prompt: version.systemPrompt || '',
-      model: version.model, // Add model field
-      configured_mcps: Array.isArray(version.configuredMcps)
-        ? version.configuredMcps
-        : [],
+      model: version.model,  // Add model field
+      configured_mcps: Array.isArray(version.configuredMcps) ? version.configuredMcps : [],
       custom_mcps: normalizeCustomMcps(version.customMcps),
-      agentpress_tools:
-        version.agentpress_tools || version.toolConfiguration?.tools || {},
+      agentpress_tools: version.agentpress_tools || version.toolConfiguration?.tools || {},
       is_active: version.isActive ?? true,
-      created_at:
-        version.createdAt instanceof Date
-          ? version.createdAt.toISOString()
-          : version.createdAt,
-      updated_at:
-        (version.updatedAt instanceof Date
-          ? version.updatedAt.toISOString()
-          : version.updatedAt) || version.created_at,
+      created_at: version.createdAt instanceof Date ? version.createdAt.toISOString() : version.createdAt,
+      updated_at: (version.updatedAt instanceof Date ? version.updatedAt.toISOString() : version.updatedAt) || version.created_at,
       created_by: version.createdBy?.value || version.createdBy,
-      change_description: version.changeDescription,
+      change_description: version.changeDescription
     };
   }
 }
 
-export function useAgentVersionData({
-  agentId,
-}: UseAgentVersionDataProps): UseAgentVersionDataReturn {
+export function useAgentVersionData({ agentId }: UseAgentVersionDataProps): UseAgentVersionDataReturn {
   const searchParams = useSearchParams();
   const versionParam = searchParams.get('version');
-
-  const {
-    data: agent,
-    isLoading: agentLoading,
-    error: agentError,
-  } = useAgent(agentId);
+  
+  const { data: agent, isLoading: agentLoading, error: agentError } = useAgent(agentId);
   const shouldLoadVersion = versionParam || agent?.current_version_id;
   const versionToLoad = versionParam || agent?.current_version_id || '';
-
-  const {
-    data: rawVersionData,
-    isLoading: versionLoading,
-    error: versionError,
-  } = useAgentVersion(agentId, shouldLoadVersion ? versionToLoad : null);
-
+  
+  const { data: rawVersionData, isLoading: versionLoading, error: versionError } = useAgentVersion(
+    agentId,
+    shouldLoadVersion ? versionToLoad : null
+  );
+  
   const { setCurrentVersion, clearVersionState } = useVersionStore();
-
+  
   const versionData = useMemo(() => {
     const normalized = normalizeVersionData(rawVersionData);
     return normalized;
   }, [rawVersionData]);
-
+  
   const isViewingOldVersion = useMemo(() => {
     return Boolean(versionParam && versionParam !== agent?.current_version_id);
   }, [versionParam, agent?.current_version_id]);
@@ -183,16 +165,15 @@ export function useAgentVersionData({
       clearVersionState();
     };
   }, [versionData, versionParam, setCurrentVersion, clearVersionState]);
-
-  const isLoading =
-    agentLoading || (shouldLoadVersion ? versionLoading : false);
+  
+  const isLoading = agentLoading || (shouldLoadVersion ? versionLoading : false);
   const error = agentError || versionError;
-
+  
   return {
     agent,
     versionData,
     isViewingOldVersion,
     isLoading,
-    error,
+    error
   };
-}
+} 
