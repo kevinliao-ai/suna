@@ -20,4 +20,7 @@ export {
 } from './use-file-mutations';
 
 // Utility functions for compatibility
-export { getCachedFile, fetchFileContent } from './use-file-queries';
+export {
+  getCachedFile,
+  fetchFileContent,
+} from './use-file-queries'; 

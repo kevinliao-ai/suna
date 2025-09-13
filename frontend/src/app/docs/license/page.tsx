@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import {
+import { 
   DocsHeader,
   DocsCard,
   DocsBody,
@@ -14,8 +14,8 @@ import { Ripple } from '@/components/ui/ripple';
 import { Icon } from 'lucide-react';
 
 const breadcrumbs = [
-  { title: 'Docs', onClick: () => (window.location.href = '/docs') },
-  { title: 'License' },
+  { title: 'Docs', onClick: () => window.location.href = '/docs' },
+  { title: 'License' }
 ];
 
 export default function LicensePage() {
@@ -32,28 +32,22 @@ export default function LicensePage() {
       />
       <DocsBody className="w-full h-[40vh] px-8 py-16 relative overflow-hidden rounded-3xl flex items-center justify-center border bg-background mb-12">
         <h1 className="text-xl tracking-tight text-foreground text-center">
-          <span className="font-semibold text-3xl">
-            Suna is open source under the Apache 2.0 License. You can see the
-            source code, self-host & contribute.
-          </span>
-        </h1>
-        <Ripple />
+            <span className="font-semibold text-3xl">Suna is open source under the Apache 2.0 License. You can see the source code, self-host & contribute.</span>
+        </h1> 
+        <Ripple/>
       </DocsBody>
       <section className="mb-12">
         <DocsBody className="mb-8">
           <h2 id="overview">Overview</h2>
           <p className="text-lg mb-6">
-            Suna is distributed under the Apache License 2.0, one of the most
-            permissive and business-friendly open source licenses available.
-            This license allows you to use, modify, distribute, and sublicense
-            Suna for both commercial and non-commercial purposes.
+            Suna is distributed under the Apache License 2.0, one of the most permissive and business-friendly open source licenses available.
+            This license allows you to use, modify, distribute, and sublicense Suna for both commercial and non-commercial purposes.
           </p>
         </DocsBody>
 
         <Alert className="mb-8">
           <AlertDescription>
-            The Apache 2.0 License is approved by the Open Source Initiative
-            (OSI) and is compatible with the GPL version 3.
+            The Apache 2.0 License is approved by the Open Source Initiative (OSI) and is compatible with the GPL version 3.
           </AlertDescription>
         </Alert>
       </section>
@@ -144,10 +138,8 @@ export default function LicensePage() {
 
         <Alert className="mb-8">
           <AlertDescription>
-            <strong>Patent Retaliation Clause:</strong> If you initiate patent
-            litigation against any entity alleging that Suna constitutes patent
-            infringement, your patent licenses under this license will
-            terminate.
+            <strong>Patent Retaliation Clause:</strong> If you initiate patent litigation against any entity alleging that Suna constitutes patent infringement, 
+            your patent licenses under this license will terminate.
           </AlertDescription>
         </Alert>
       </section>
@@ -156,46 +148,33 @@ export default function LicensePage() {
         <DocsBody className="mb-8">
           <h2 id="faq">Frequently Asked Questions</h2>
         </DocsBody>
-
+        
         <div className="space-y-6">
           <div className="border-l-4 border-primary pl-6">
-            <h3 className="font-semibold mb-2">
-              Can I use Suna in my commercial product?
-            </h3>
+            <h3 className="font-semibold mb-2">Can I use Suna in my commercial product?</h3>
             <p className="text-muted-foreground">
-              Yes! The Apache 2.0 license allows commercial use without any fees
-              or restrictions.
+              Yes! The Apache 2.0 license allows commercial use without any fees or restrictions.
             </p>
           </div>
-
+          
           <div className="border-l-4 border-primary pl-6">
-            <h3 className="font-semibold mb-2">
-              Do I need to open source my modifications?
-            </h3>
+            <h3 className="font-semibold mb-2">Do I need to open source my modifications?</h3>
             <p className="text-muted-foreground">
-              No, you're not required to open source your modifications.
-              However, you must indicate what changes you've made if you
-              distribute the modified version.
+              No, you're not required to open source your modifications. However, you must indicate what changes you've made if you distribute the modified version.
             </p>
           </div>
-
+          
           <div className="border-l-4 border-primary pl-6">
-            <h3 className="font-semibold mb-2">
-              Can I change the license for my derivative work?
-            </h3>
+            <h3 className="font-semibold mb-2">Can I change the license for my derivative work?</h3>
             <p className="text-muted-foreground">
-              You can apply different license terms to your modifications, but
-              the original Suna code remains under Apache 2.0.
+              You can apply different license terms to your modifications, but the original Suna code remains under Apache 2.0.
             </p>
           </div>
-
+          
           <div className="border-l-4 border-primary pl-6">
-            <h3 className="font-semibold mb-2">
-              What about patent protection?
-            </h3>
+            <h3 className="font-semibold mb-2">What about patent protection?</h3>
             <p className="text-muted-foreground">
-              The Apache 2.0 license includes an express grant of patent rights
-              from contributors to users, protecting you from patent litigation.
+              The Apache 2.0 license includes an express grant of patent rights from contributors to users, protecting you from patent litigation.
             </p>
           </div>
         </div>
@@ -214,15 +193,11 @@ export default function LicensePage() {
             description="Read the complete Apache License 2.0 text on GitHub"
             clickable
             actions={[
-              {
-                label: 'View License',
+              { 
+                label: 'View License', 
                 variant: 'default',
-                onClick: () =>
-                  window.open(
-                    'https://github.com/kortix-ai/suna/blob/main/LICENSE',
-                    '_blank',
-                  ),
-              },
+                onClick: () => window.open('https://github.com/kortix-ai/suna/blob/main/LICENSE', '_blank')
+              }
             ]}
           />
           <DocsCard
@@ -230,19 +205,15 @@ export default function LicensePage() {
             description="Official Apache Foundation FAQ about the license"
             clickable
             actions={[
-              {
-                label: 'Learn More',
+              { 
+                label: 'Learn More', 
                 variant: 'default',
-                onClick: () =>
-                  window.open(
-                    'https://www.apache.org/licenses/LICENSE-2.0',
-                    '_blank',
-                  ),
-              },
+                onClick: () => window.open('https://www.apache.org/licenses/LICENSE-2.0', '_blank')
+              }
             ]}
           />
         </div>
       </section>
     </>
   );
-}
+} 

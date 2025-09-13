@@ -4,48 +4,29 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  Search,
-  Zap,
-  X,
-  Settings,
-  ChevronDown,
-  ChevronUp,
-  Loader2,
-  Server,
-} from 'lucide-react';
-import {
-  useComposioCategories,
-  useComposioToolkitsInfinite,
-} from '@/hooks/react-query/composio/use-composio';
+import { Search, Zap, X, Settings, ChevronDown, ChevronUp, Loader2, Server } from 'lucide-react';
+import { useComposioCategories, useComposioToolkitsInfinite } from '@/hooks/react-query/composio/use-composio';
 import { useComposioProfiles } from '@/hooks/react-query/composio/use-composio-profiles';
 import { useAgent } from '@/hooks/react-query/agents/use-agents';
 import { useUpdateAgentMCPs } from '@/hooks/react-query/agents/use-update-agent-mcps';
 import { ComposioConnector } from './composio-connector';
 import { ComposioToolsManager } from './composio-tools-manager';
-import type {
-  ComposioToolkit,
-  ComposioProfile,
-} from '@/hooks/react-query/composio/utils';
+import type { ComposioToolkit, ComposioProfile } from '@/hooks/react-query/composio/utils';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useQueryClient } from '@tanstack/react-query';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { CustomMCPDialog } from '../mcp/custom-mcp-dialog';
 
 const CATEGORY_EMOJIS: Record<string, string> = {
-  popular: '🔥',
-  productivity: '📊',
-  crm: '👥',
-  marketing: '📢',
-  analytics: '📈',
-  communication: '💬',
+  'popular': '🔥',
+  'productivity': '📊',
+  'crm': '👥',
+  'marketing': '📢',
+  'analytics': '📈',
+  'communication': '💬',
   'project-management': '📋',
-  scheduling: '📅',
+  'scheduling': '📅',
 };
 
 interface ConnectedApp {
@@ -60,12 +41,7 @@ interface ConnectedApp {
 }
 
 interface ComposioRegistryProps {
-  onToolsSelected?: (
-    profileId: string,
-    selectedTools: string[],
-    appName: string,
-    appSlug: string,
-  ) => void;
+  onToolsSelected?: (profileId: string, selectedTools: string[], appName: string, appSlug: string) => void;
   onAppSelected?: (app: ComposioToolkit) => void;
   mode?: 'full' | 'profile-only';
   onClose?: () => void;
@@ -77,23 +53,21 @@ interface ComposioRegistryProps {
 const getAgentConnectedApps = (
   agent: any,
   profiles: ComposioProfile[],
-  toolkits: ComposioToolkit[],
+  toolkits: ComposioToolkit[]
 ): ConnectedApp[] => {
   if (!agent?.custom_mcps || !profiles?.length || !toolkits?.length) return [];
 
   const connectedApps: ConnectedApp[] = [];
-
+  
   agent.custom_mcps.forEach((mcpConfig: any) => {
     if (mcpConfig.config?.profile_id) {
-      const profile = profiles.find(
-        (p) => p.profile_id === mcpConfig.config.profile_id,
-      );
-      const toolkit = toolkits.find((t) => t.slug === profile?.toolkit_slug);
+      const profile = profiles.find(p => p.profile_id === mcpConfig.config.profile_id);
+      const toolkit = toolkits.find(t => t.slug === profile?.toolkit_slug);
       if (profile && toolkit) {
         connectedApps.push({
           toolkit,
           profile,
-          mcpConfig,
+          mcpConfig
         });
       }
     }
@@ -105,15 +79,13 @@ const getAgentConnectedApps = (
 const isAppConnectedToAgent = (
   agent: any,
   appSlug: string,
-  profiles: ComposioProfile[],
+  profiles: ComposioProfile[]
 ): boolean => {
   if (!agent?.custom_mcps) return false;
 
   return agent.custom_mcps.some((mcpConfig: any) => {
     if (mcpConfig.config?.profile_id) {
-      const profile = profiles.find(
-        (p) => p.profile_id === mcpConfig.config.profile_id,
-      );
+      const profile = profiles.find(p => p.profile_id === mcpConfig.config.profile_id);
       return profile?.toolkit_slug === appSlug;
     }
     return false;
@@ -156,12 +128,12 @@ const ConnectedAppSkeleton = () => (
   </div>
 );
 
-const ConnectedAppCard = ({
-  connectedApp,
-  onToggleTools,
+const ConnectedAppCard = ({ 
+  connectedApp, 
+  onToggleTools, 
   onConfigure,
   onManageTools,
-  isUpdating,
+  isUpdating 
 }: {
   connectedApp: ConnectedApp;
   onToggleTools: (profileId: string, enabled: boolean) => void;
@@ -170,29 +142,22 @@ const ConnectedAppCard = ({
   isUpdating: boolean;
 }) => {
   const { toolkit, profile, mcpConfig } = connectedApp;
-  const hasEnabledTools =
-    mcpConfig.enabledTools && mcpConfig.enabledTools.length > 0;
+  const hasEnabledTools = mcpConfig.enabledTools && mcpConfig.enabledTools.length > 0;
 
   return (
-    <div className="group border bg-card rounded-2xl p-4 transition-all duration-200 cursor-pointer">
+    <div 
+      className="group border bg-card rounded-2xl p-4 transition-all duration-200 cursor-pointer"
+    >
       <div className="flex items-start gap-3 mb-3">
         {toolkit.logo ? (
-          <img
-            src={toolkit.logo}
-            alt={toolkit.name}
-            className="w-10 h-10 rounded-lg object-cover p-2 bg-muted rounded-xl border"
-          />
+          <img src={toolkit.logo} alt={toolkit.name} className="w-10 h-10 rounded-lg object-cover p-2 bg-muted rounded-xl border" />
         ) : (
           <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-            <span className="text-primary text-sm font-medium">
-              {toolkit.name.charAt(0)}
-            </span>
+            <span className="text-primary text-sm font-medium">{toolkit.name.charAt(0)}</span>
           </div>
         )}
         <div className="flex-1 min-w-0">
-          <h3 className="font-medium text-sm leading-tight truncate mb-1">
-            {toolkit.name}
-          </h3>
+          <h3 className="font-medium text-sm leading-tight truncate mb-1">{toolkit.name}</h3>
           <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
             Connected as "{profile.profile_name}"
           </p>
@@ -209,14 +174,12 @@ const ConnectedAppCard = ({
           </Button>
         </div>
       </div>
-
+      
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
             <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-            {hasEnabledTools
-              ? `${mcpConfig.enabledTools.length} tools enabled`
-              : 'Connected (no tools)'}
+            {hasEnabledTools ? `${mcpConfig.enabledTools.length} tools enabled` : 'Connected (no tools)'}
           </div>
         </div>
       </div>
@@ -224,16 +187,8 @@ const ConnectedAppCard = ({
   );
 };
 
-const AppCard = ({
-  app,
-  profiles,
-  onConnect,
-  onConfigure,
-  isConnectedToAgent,
-  currentAgentId,
-  mode,
-}: {
-  app: ComposioToolkit;
+const AppCard = ({ app, profiles, onConnect, onConfigure, isConnectedToAgent, currentAgentId, mode }: {
+  app: ComposioToolkit; 
   profiles: ComposioProfile[];
   onConnect: () => void;
   onConfigure: (profile: ComposioProfile) => void;
@@ -241,59 +196,37 @@ const AppCard = ({
   currentAgentId?: string;
   mode?: 'full' | 'profile-only';
 }) => {
-  const connectedProfiles = profiles.filter((p) => p.is_connected);
-  const canConnect =
-    mode === 'profile-only' ? true : !isConnectedToAgent && currentAgentId;
-
+  const connectedProfiles = profiles.filter(p => p.is_connected);
+  const canConnect = mode === 'profile-only' ? true : (!isConnectedToAgent && currentAgentId);
+  
   return (
-    <div
-      onClick={
-        canConnect
-          ? connectedProfiles.length > 0
-            ? () => onConfigure(connectedProfiles[0])
-            : onConnect
-          : undefined
-      }
+    <div 
+      onClick={canConnect ? (connectedProfiles.length > 0 ? () => onConfigure(connectedProfiles[0]) : onConnect) : undefined}
       className={cn(
-        'group border bg-card rounded-2xl p-4 transition-all duration-200',
-        canConnect
-          ? 'hover:bg-muted cursor-pointer'
-          : 'opacity-60 cursor-not-allowed',
+        "group border bg-card rounded-2xl p-4 transition-all duration-200",
+        canConnect ? "hover:bg-muted cursor-pointer" : "opacity-60 cursor-not-allowed"
       )}
     >
       <div className="flex items-start gap-3 mb-3">
         {app.logo ? (
-          <img
-            src={app.logo}
-            alt={app.name}
-            className="w-10 h-10 rounded-lg object-cover p-2 bg-muted rounded-xl border"
-          />
+          <img src={app.logo} alt={app.name} className="w-10 h-10 rounded-lg object-cover p-2 bg-muted rounded-xl border" />
         ) : (
           <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-            <span className="text-primary text-sm font-medium">
-              {app.name.charAt(0)}
-            </span>
+            <span className="text-primary text-sm font-medium">{app.name.charAt(0)}</span>
           </div>
         )}
         <div className="flex-1 min-w-0">
-          <h3 className="font-medium text-sm leading-tight truncate mb-1">
-            {app.name}
-          </h3>
+          <h3 className="font-medium text-sm leading-tight truncate mb-1">{app.name}</h3>
           <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-            {app.description ||
-              `Connect your ${app.name} account to access its features.`}
+            {app.description || `Connect your ${app.name} account to access its features.`}
           </p>
         </div>
       </div>
-
+      
       {app.tags.length > 0 && (
         <div className="flex flex-wrap gap-1 mb-3">
           {app.tags.slice(0, 2).map((tag, index) => (
-            <Badge
-              key={index}
-              variant="secondary"
-              className="text-xs px-1.5 py-0.5 h-auto"
-            >
+            <Badge key={index} variant="secondary" className="text-xs px-1.5 py-0.5 h-auto">
               {tag}
             </Badge>
           ))}
@@ -304,15 +237,13 @@ const AppCard = ({
           )}
         </div>
       )}
-
+      
       <div className="flex justify-between items-center">
         {mode === 'profile-only' ? (
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
               <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/50" />
-              {connectedProfiles.length > 0
-                ? `${connectedProfiles.length} existing profile${connectedProfiles.length !== 1 ? 's' : ''}`
-                : 'Click to connect'}
+              {connectedProfiles.length > 0 ? `${connectedProfiles.length} existing profile${connectedProfiles.length !== 1 ? 's' : ''}` : 'Click to connect'}
             </div>
           </div>
         ) : isConnectedToAgent ? (
@@ -357,39 +288,31 @@ export const ComposioRegistry: React.FC<ComposioRegistryProps> = ({
   const [showConnector, setShowConnector] = useState(false);
   const [showConnectedApps, setShowConnectedApps] = useState(true);
   const [showToolsManager, setShowToolsManager] = useState(false);
-  const [selectedConnectedApp, setSelectedConnectedApp] =
-    useState<ConnectedApp | null>(null);
+  const [selectedConnectedApp, setSelectedConnectedApp] = useState<ConnectedApp | null>(null);
   const [showCustomMCPDialog, setShowCustomMCPDialog] = useState(false);
-
-  const [internalSelectedAgentId, setInternalSelectedAgentId] = useState<
-    string | undefined
-  >(selectedAgentId);
+  
+  const [internalSelectedAgentId, setInternalSelectedAgentId] = useState<string | undefined>(selectedAgentId);
   const queryClient = useQueryClient();
-
-  const { data: categoriesData, isLoading: isLoadingCategories } =
-    useComposioCategories();
+  
+  const { data: categoriesData, isLoading: isLoadingCategories } = useComposioCategories();
   const {
     data: toolkitsInfiniteData,
     isLoading,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-    isError,
+    isError
   } = useComposioToolkitsInfinite(search, selectedCategory);
-  const { data: profiles, isLoading: isLoadingProfiles } =
-    useComposioProfiles();
-
+  const { data: profiles, isLoading: isLoadingProfiles } = useComposioProfiles();
+  
   const allToolkits = useMemo(() => {
     if (!toolkitsInfiniteData?.pages) return [];
-    return toolkitsInfiniteData.pages.flatMap((page) => page.toolkits || []);
+    return toolkitsInfiniteData.pages.flatMap(page => page.toolkits || []);
   }, [toolkitsInfiniteData]);
 
   const currentAgentId = selectedAgentId ?? internalSelectedAgentId;
-  const { data: agent, isLoading: isLoadingAgent } = useAgent(
-    currentAgentId || '',
-  );
-  const { mutate: updateAgent, isPending: isUpdatingAgent } =
-    useUpdateAgentMCPs(); // Use the MCP-specific hook
+  const { data: agent, isLoading: isLoadingAgent } = useAgent(currentAgentId || '');
+  const { mutate: updateAgent, isPending: isUpdatingAgent } = useUpdateAgentMCPs(); // Use the MCP-specific hook
 
   const handleAgentSelect = (agentId: string | undefined) => {
     if (onAgentChange) {
@@ -401,7 +324,7 @@ export const ComposioRegistry: React.FC<ComposioRegistryProps> = ({
 
   const profilesByToolkit = useMemo(() => {
     const grouped: Record<string, ComposioProfile[]> = {};
-    profiles?.forEach((profile) => {
+    profiles?.forEach(profile => {
       if (profile.is_connected) {
         if (!grouped[profile.toolkit_slug]) {
           grouped[profile.toolkit_slug] = [];
@@ -417,8 +340,7 @@ export const ComposioRegistry: React.FC<ComposioRegistryProps> = ({
     return getAgentConnectedApps(agent, profiles || [], allToolkits);
   }, [agent, profiles, allToolkits, currentAgentId]);
 
-  const isLoadingConnectedApps =
-    currentAgentId && (isLoadingAgent || isLoadingProfiles || isLoading);
+  const isLoadingConnectedApps = currentAgentId && (isLoadingAgent || isLoadingProfiles || isLoading);
 
   const filteredToolkits = useMemo(() => {
     if (!allToolkits) return [];
@@ -443,34 +365,30 @@ export const ComposioRegistry: React.FC<ComposioRegistryProps> = ({
     setShowConnector(true);
   };
 
-  const handleToggleTools = (profileId: string, enabled: boolean) => {
+    const handleToggleTools = (profileId: string, enabled: boolean) => {
     if (!currentAgentId || !agent) return;
 
-    const updatedCustomMcps =
-      agent.custom_mcps?.map((mcpConfig: any) => {
-        if (mcpConfig.config?.profile_id === profileId) {
-          return {
-            ...mcpConfig,
-            enabledTools: enabled ? mcpConfig.enabledTools || [] : [],
-          };
-        }
-        return mcpConfig;
-      }) || [];
+    const updatedCustomMcps = agent.custom_mcps?.map((mcpConfig: any) => {
+      if (mcpConfig.config?.profile_id === profileId) {
+        return {
+          ...mcpConfig,
+          enabledTools: enabled ? mcpConfig.enabledTools || [] : []
+        };
+      }
+      return mcpConfig;
+    }) || [];
 
-    updateAgent(
-      {
-        agentId: currentAgentId,
-        custom_mcps: updatedCustomMcps,
+    updateAgent({
+      agentId: currentAgentId,
+      custom_mcps: updatedCustomMcps
+    }, {
+      onSuccess: () => {
+        toast.success(enabled ? 'Tools enabled' : 'Tools disabled');
       },
-      {
-        onSuccess: () => {
-          toast.success(enabled ? 'Tools enabled' : 'Tools disabled');
-        },
-        onError: (error: any) => {
-          toast.error(error.message || 'Failed to update tools');
-        },
-      },
-    );
+      onError: (error: any) => {
+        toast.error(error.message || 'Failed to update tools');
+      }
+    });
   };
 
   const handleManageTools = (connectedApp: ConnectedApp) => {
@@ -478,20 +396,14 @@ export const ComposioRegistry: React.FC<ComposioRegistryProps> = ({
     setShowToolsManager(true);
   };
 
-  const handleConnectionComplete = (
-    profileId: string,
-    appName: string,
-    appSlug: string,
-  ) => {
+  const handleConnectionComplete = (profileId: string, appName: string, appSlug: string) => {
     setShowConnector(false);
     queryClient.invalidateQueries({ queryKey: ['composio', 'profiles'] });
-
+    
     if (currentAgentId) {
-      queryClient.invalidateQueries({
-        queryKey: ['agents', 'detail', currentAgentId],
-      });
+      queryClient.invalidateQueries({ queryKey: ['agents', 'detail', currentAgentId] });
     }
-
+    
     if (onToolsSelected) {
       onToolsSelected(profileId, [], appName, appSlug);
     }
@@ -516,27 +428,20 @@ export const ComposioRegistry: React.FC<ComposioRegistryProps> = ({
 
     // Return a promise that resolves/rejects based on the mutation result
     return new Promise((resolve, reject) => {
-      updateAgent(
-        {
-          agentId: currentAgentId,
-          custom_mcps: updatedCustomMcps,
-          replace_mcps: true, // Use replace mode to ensure proper updates
+      updateAgent({
+        agentId: currentAgentId,
+        custom_mcps: updatedCustomMcps,
+        replace_mcps: true  // Use replace mode to ensure proper updates
+      }, {
+        onSuccess: () => {
+          toast.success(`Custom MCP "${customConfig.name}" added successfully`);
+          queryClient.invalidateQueries({ queryKey: ['agents', 'detail', currentAgentId] });
+          resolve();
         },
-        {
-          onSuccess: () => {
-            toast.success(
-              `Custom MCP "${customConfig.name}" added successfully`,
-            );
-            queryClient.invalidateQueries({
-              queryKey: ['agents', 'detail', currentAgentId],
-            });
-            resolve();
-          },
-          onError: (error: any) => {
-            reject(new Error(error.message || 'Failed to add custom MCP'));
-          },
-        },
-      );
+        onError: (error: any) => {
+          reject(new Error(error.message || 'Failed to add custom MCP'));
+        }
+      });
     });
   };
 
@@ -603,14 +508,13 @@ export const ComposioRegistry: React.FC<ComposioRegistryProps> = ({
             <div className="flex items-start justify-between mb-4">
               <div className="flex-1 min-w-0 pr-4">
                 <h2 className="text-xl font-semibold">
-                  {mode === 'profile-only'
-                    ? 'Connect New App'
-                    : 'App Integrations'}
+                  {mode === 'profile-only' ? 'Connect New App' : 'App Integrations'}
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                  {mode === 'profile-only'
+                  {mode === 'profile-only' 
                     ? 'Create a connection profile for your favorite apps'
-                    : `Connect your favorite apps with ${currentAgentId ? 'this agent' : 'your agent'}`}
+                    : `Connect your favorite apps with ${currentAgentId ? 'this agent' : 'your agent'}`
+                  }
                 </p>
               </div>
               <div className="flex-shrink-0">
@@ -625,7 +529,7 @@ export const ComposioRegistry: React.FC<ComposioRegistryProps> = ({
                 </div>
               </div>
             </div>
-
+            
             <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <div className="relative flex-1">
@@ -638,8 +542,8 @@ export const ComposioRegistry: React.FC<ComposioRegistryProps> = ({
                   />
                 </div>
                 {mode !== 'profile-only' && currentAgentId && (
-                  <Button
-                    variant="outline"
+                  <Button 
+                    variant="outline" 
                     onClick={() => setShowCustomMCPDialog(true)}
                     className="flex items-center gap-2 whitespace-nowrap h-10"
                   >
@@ -651,17 +555,10 @@ export const ComposioRegistry: React.FC<ComposioRegistryProps> = ({
 
               {selectedCategory && (
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">
-                    Filtered by:
-                  </span>
-                  <Badge
-                    variant="outline"
-                    className="gap-1 bg-muted-foreground/20 text-muted-foreground"
-                  >
+                  <span className="text-xs text-muted-foreground">Filtered by:</span>
+                  <Badge variant="outline" className="gap-1 bg-muted-foreground/20 text-muted-foreground">
                     <span>{CATEGORY_EMOJIS[selectedCategory] || '📁'}</span>
-                    <span>
-                      {categories.find((c) => c.id === selectedCategory)?.name}
-                    </span>
+                    <span>{categories.find(c => c.id === selectedCategory)?.name}</span>
                     <button
                       onClick={() => setSelectedCategory('')}
                       className="ml-1 hover:bg-muted rounded-full p-0.5"
@@ -678,24 +575,17 @@ export const ComposioRegistry: React.FC<ComposioRegistryProps> = ({
             <ScrollArea className="h-full">
               <div className="p-6 space-y-6">
                 {currentAgentId && (
-                  <Collapsible
-                    open={showConnectedApps}
-                    onOpenChange={setShowConnectedApps}
-                  >
+                  <Collapsible open={showConnectedApps} onOpenChange={setShowConnectedApps}>
                     <CollapsibleTrigger asChild>
                       <div className="w-full hover:underline flex items-center justify-between p-0 h-auto">
                         <div className="flex items-center gap-2">
-                          <h3 className="text-lg font-medium">
-                            Connected to this agent
-                          </h3>
+                          <h3 className="text-lg font-medium">Connected to this agent</h3>
                           {isLoadingConnectedApps ? (
                             <Skeleton className="w-6 h-5 rounded ml-2" />
-                          ) : (
-                            connectedApps.length > 0 && (
-                              <Badge variant="outline" className="ml-2">
-                                {connectedApps.length}
-                              </Badge>
-                            )
+                          ) : connectedApps.length > 0 && (
+                            <Badge variant="outline" className="ml-2">
+                              {connectedApps.length}
+                            </Badge>
                           )}
                         </div>
                         {showConnectedApps ? (
@@ -717,12 +607,8 @@ export const ComposioRegistry: React.FC<ComposioRegistryProps> = ({
                           <div className="w-16 h-16 rounded-2xl bg-muted/50 flex items-center justify-center mb-4 mx-auto">
                             <Zap className="h-8 w-8 text-muted-foreground" />
                           </div>
-                          <h4 className="text-sm font-medium mb-2">
-                            No connected apps
-                          </h4>
-                          <p className="text-xs">
-                            Connect apps below to manage tools for this agent.
-                          </p>
+                          <h4 className="text-sm font-medium mb-2">No connected apps</h4>
+                          <p className="text-xs">Connect apps below to manage tools for this agent.</p>
                         </div>
                       ) : (
                         <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-4 gap-4">
@@ -745,7 +631,7 @@ export const ComposioRegistry: React.FC<ComposioRegistryProps> = ({
                   <h3 className="text-lg font-medium mb-4">
                     {currentAgentId ? 'Available Apps' : 'Browse Apps'}
                   </h3>
-
+                  
                   {isLoading ? (
                     <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
                       {Array.from({ length: 12 }).map((_, i) => (
@@ -757,13 +643,9 @@ export const ComposioRegistry: React.FC<ComposioRegistryProps> = ({
                       <div className="w-16 h-16 rounded-2xl bg-muted/50 flex items-center justify-center mb-4">
                         <Search className="h-8 w-8 text-muted-foreground" />
                       </div>
-                      <h3 className="text-lg font-medium mb-2">
-                        No apps found
-                      </h3>
+                      <h3 className="text-lg font-medium mb-2">No apps found</h3>
                       <p className="text-muted-foreground">
-                        {search
-                          ? `No apps match "${search}"`
-                          : 'No apps available in this category'}
+                        {search ? `No apps match "${search}"` : 'No apps available in this category'}
                       </p>
                     </div>
                   ) : (
@@ -775,14 +657,8 @@ export const ComposioRegistry: React.FC<ComposioRegistryProps> = ({
                             app={app}
                             profiles={profilesByToolkit[app.slug] || []}
                             onConnect={() => handleConnect(app)}
-                            onConfigure={(profile) =>
-                              handleConfigure(app, profile)
-                            }
-                            isConnectedToAgent={isAppConnectedToAgent(
-                              agent,
-                              app.slug,
-                              profiles || [],
-                            )}
+                            onConfigure={(profile) => handleConfigure(app, profile)}
+                            isConnectedToAgent={isAppConnectedToAgent(agent, app.slug, profiles || [])}
                             currentAgentId={currentAgentId}
                             mode={mode}
                           />
@@ -794,6 +670,7 @@ export const ComposioRegistry: React.FC<ComposioRegistryProps> = ({
                             variant="outline"
                             onClick={() => fetchNextPage()}
                             disabled={isFetchingNextPage}
+
                           >
                             {isFetchingNextPage ? (
                               <>
@@ -839,9 +716,7 @@ export const ComposioRegistry: React.FC<ComposioRegistryProps> = ({
           }}
           appLogo={selectedConnectedApp.toolkit.logo}
           onToolsUpdate={() => {
-            queryClient.invalidateQueries({
-              queryKey: ['agents', 'detail', currentAgentId],
-            });
+            queryClient.invalidateQueries({ queryKey: ['agents', 'detail', currentAgentId] });
           }}
         />
       )}
@@ -852,4 +727,4 @@ export const ComposioRegistry: React.FC<ComposioRegistryProps> = ({
       />
     </div>
   );
-};
+}; 

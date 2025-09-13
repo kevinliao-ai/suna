@@ -29,15 +29,10 @@ export const AGENTPRESS_TOOL_DEFINITIONS: Record<string, { enabled: boolean; des
     'trigger_tool': { enabled: true, description: 'Set up event triggers and scheduled automation', icon: '⏰', color: 'bg-amber-100 dark:bg-amber-800/50' },
 };
 
-export const DEFAULT_AGENTPRESS_TOOLS: Record<string, boolean> = Object.entries(
-  AGENTPRESS_TOOL_DEFINITIONS,
-).reduce(
-  (acc, [key, value]) => {
-    acc[key] = value.enabled;
-    return acc;
-  },
-  {} as Record<string, boolean>,
-);
+export const DEFAULT_AGENTPRESS_TOOLS: Record<string, boolean> = Object.entries(AGENTPRESS_TOOL_DEFINITIONS).reduce((acc, [key, value]) => {
+  acc[key] = value.enabled;
+  return acc;
+}, {} as Record<string, boolean>);
 
 export const getToolDisplayName = (toolName: string): string => {
     const displayNames: Record<string, string> = {

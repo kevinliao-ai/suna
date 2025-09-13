@@ -1,24 +1,12 @@
-'use client';
+"use client";
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -32,7 +20,7 @@ import {
   FileText,
   Users,
   Globe,
-  Clock,
+  Clock
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TriggerProvider, EventTriggerConfig } from '../types';
@@ -54,39 +42,19 @@ interface EventTriggerConfigFormProps {
 
 const getEventIcon = (triggerSlug: string) => {
   const slug = triggerSlug.toLowerCase();
-  if (
-    slug.includes('gmail') ||
-    slug.includes('email') ||
-    slug.includes('mail')
-  ) {
+  if (slug.includes('gmail') || slug.includes('email') || slug.includes('mail')) {
     return <Mail className="h-4 w-4" />;
   }
-  if (
-    slug.includes('slack') ||
-    slug.includes('message') ||
-    slug.includes('chat')
-  ) {
+  if (slug.includes('slack') || slug.includes('message') || slug.includes('chat')) {
     return <MessageSquare className="h-4 w-4" />;
   }
-  if (
-    slug.includes('calendar') ||
-    slug.includes('event') ||
-    slug.includes('meeting')
-  ) {
+  if (slug.includes('calendar') || slug.includes('event') || slug.includes('meeting')) {
     return <CalendarIcon className="h-4 w-4" />;
   }
-  if (
-    slug.includes('document') ||
-    slug.includes('file') ||
-    slug.includes('doc')
-  ) {
+  if (slug.includes('document') || slug.includes('file') || slug.includes('doc')) {
     return <FileText className="h-4 w-4" />;
   }
-  if (
-    slug.includes('user') ||
-    slug.includes('member') ||
-    slug.includes('contact')
-  ) {
+  if (slug.includes('user') || slug.includes('member') || slug.includes('contact')) {
     return <Users className="h-4 w-4" />;
   }
   if (slug.includes('web') || slug.includes('http') || slug.includes('url')) {
@@ -98,7 +66,7 @@ const getEventIcon = (triggerSlug: string) => {
 const formatEventName = (triggerSlug: string) => {
   return triggerSlug
     .split('_')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(' ');
 };
 
@@ -135,21 +103,17 @@ export const EventTriggerConfigForm: React.FC<EventTriggerConfigFormProps> = ({
   isActive,
   onActiveChange,
 }) => {
-  const { data: workflows = [], isLoading: isLoadingWorkflows } =
-    useAgentWorkflows(agentId);
+  const { data: workflows = [], isLoading: isLoadingWorkflows } = useAgentWorkflows(agentId);
 
   const selectedWorkflow = useMemo(() => {
     return (workflows || []).find((w) => w.id === config.workflow_id);
   }, [workflows, config.workflow_id]);
 
   const { variableSpecs, templateText } = useMemo(() => {
-    if (!selectedWorkflow)
-      return { variableSpecs: [] as VariableSpec[], templateText: '' };
+    if (!selectedWorkflow) return { variableSpecs: [] as VariableSpec[], templateText: '' };
     const stepsAny = ((selectedWorkflow as any)?.steps as any[]) || [];
     const start = stepsAny.find(
-      (s: any) =>
-        s?.name === 'Start' &&
-        s?.description === 'Click to add steps or use the Add Node button',
+      (s: any) => s?.name === 'Start' && s?.description === 'Click to add steps or use the Add Node button',
     );
     const child = start?.children?.[0] ?? stepsAny[0];
     const vars = (child?.config?.playbook?.variables as VariableSpec[]) || [];
@@ -163,10 +127,7 @@ export const EventTriggerConfigForm: React.FC<EventTriggerConfigFormProps> = ({
     if (!variableSpecs || variableSpecs.length === 0) return;
     const defaults: Record<string, any> = {};
     for (const v of variableSpecs) {
-      if (
-        v.default !== undefined &&
-        config.workflow_input?.[v.key] === undefined
-      ) {
+      if (v.default !== undefined && (config.workflow_input?.[v.key] === undefined)) {
         defaults[v.key] = v.default;
       }
     }
@@ -179,15 +140,12 @@ export const EventTriggerConfigForm: React.FC<EventTriggerConfigFormProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedWorkflow?.id, config.execution_type]);
 
-  const handleVarChange = useCallback(
-    (key: string, value: any) => {
-      onChange({
-        ...config,
-        workflow_input: { ...(config.workflow_input || {}), [key]: value },
-      });
-    },
-    [config, onChange],
-  );
+  const handleVarChange = useCallback((key: string, value: any) => {
+    onChange({
+      ...config,
+      workflow_input: { ...(config.workflow_input || {}), [key]: value },
+    });
+  }, [config, onChange]);
 
   const handleAgentPromptChange = (value: string) => {
     onChange({
@@ -225,12 +183,8 @@ export const EventTriggerConfigForm: React.FC<EventTriggerConfigFormProps> = ({
     });
   };
 
-  const eventType = config.trigger_slug
-    ? getEventTypeFromSlug(config.trigger_slug)
-    : '';
-  const eventName = config.trigger_slug
-    ? formatEventName(config.trigger_slug)
-    : '';
+  const eventType = config.trigger_slug ? getEventTypeFromSlug(config.trigger_slug) : '';
+  const eventName = config.trigger_slug ? formatEventName(config.trigger_slug) : '';
 
   return (
     <div className="space-y-6">
@@ -249,10 +203,7 @@ export const EventTriggerConfigForm: React.FC<EventTriggerConfigFormProps> = ({
                       value={name}
                       onChange={(e) => onNameChange(e.target.value)}
                       placeholder="Trigger name"
-                      className={cn(
-                        'w-full',
-                        errors.name && 'border-destructive',
-                      )}
+                      className={cn("w-full", errors.name && 'border-destructive')}
                     />
                   </div>
 
@@ -267,16 +218,8 @@ export const EventTriggerConfigForm: React.FC<EventTriggerConfigFormProps> = ({
                   </div>
 
                   <div>
-                    <Label className="text-sm font-medium mb-2 block">
-                      Status
-                    </Label>
-                    <Tabs
-                      value={isActive ? 'enabled' : 'disabled'}
-                      onValueChange={(value) =>
-                        onActiveChange(value === 'enabled')
-                      }
-                      className="w-full"
-                    >
+                    <Label className="text-sm font-medium mb-2 block">Status</Label>
+                    <Tabs value={isActive ? 'enabled' : 'disabled'} onValueChange={(value) => onActiveChange(value === 'enabled')} className="w-full">
                       <TabsList className="grid w-full grid-cols-2">
                         <TabsTrigger value="enabled">Enabled</TabsTrigger>
                         <TabsTrigger value="disabled">Disabled</TabsTrigger>
@@ -295,11 +238,7 @@ export const EventTriggerConfigForm: React.FC<EventTriggerConfigFormProps> = ({
                   Execution Configuration
                 </h3>
                 <div className="space-y-3">
-                  <Tabs
-                    value={config.execution_type || 'agent'}
-                    onValueChange={handleExecutionTypeChange}
-                    className="w-full"
-                  >
+                  <Tabs value={config.execution_type || 'agent'} onValueChange={handleExecutionTypeChange} className="w-full">
                     <TabsList className="grid w-full grid-cols-2">
                       <TabsTrigger value="agent">Agent</TabsTrigger>
                       <TabsTrigger value="workflow">Workflow</TabsTrigger>
@@ -307,44 +246,26 @@ export const EventTriggerConfigForm: React.FC<EventTriggerConfigFormProps> = ({
 
                     <TabsContent value="workflow" className="mt-3">
                       <div className="space-y-3">
-                        <Select
-                          value={config.workflow_id || ''}
-                          onValueChange={handleWorkflowChange}
-                        >
-                          <SelectTrigger
-                            className={
-                              errors.workflow_id ? 'border-destructive' : ''
-                            }
-                          >
+                        <Select value={config.workflow_id || ''} onValueChange={handleWorkflowChange}>
+                          <SelectTrigger className={errors.workflow_id ? 'border-destructive' : ''}>
                             <SelectValue placeholder="Select workflow" />
                           </SelectTrigger>
                           <SelectContent>
                             {isLoadingWorkflows ? (
-                              <SelectItem value="__loading__" disabled>
-                                Loading...
-                              </SelectItem>
+                              <SelectItem value="__loading__" disabled>Loading...</SelectItem>
                             ) : workflows.length === 0 ? (
-                              <SelectItem value="__no_workflows__" disabled>
-                                No workflows
-                              </SelectItem>
+                              <SelectItem value="__no_workflows__" disabled>No workflows</SelectItem>
                             ) : (
-                              workflows
-                                .filter((w) => w.status === 'active')
-                                .map((workflow) => (
-                                  <SelectItem
-                                    key={workflow.id}
-                                    value={workflow.id}
-                                  >
-                                    {workflow.name}
-                                  </SelectItem>
-                                ))
+                              workflows.filter(w => w.status === 'active').map((workflow) => (
+                                <SelectItem key={workflow.id} value={workflow.id}>
+                                  {workflow.name}
+                                </SelectItem>
+                              ))
                             )}
                           </SelectContent>
                         </Select>
                         {errors.workflow_id && (
-                          <p className="text-xs text-destructive">
-                            {errors.workflow_id}
-                          </p>
+                          <p className="text-xs text-destructive">{errors.workflow_id}</p>
                         )}
 
                         {variableSpecs && variableSpecs.length > 0 ? (
@@ -354,27 +275,14 @@ export const EventTriggerConfigForm: React.FC<EventTriggerConfigFormProps> = ({
                                 key={v.key}
                                 type={v.type === 'number' ? 'number' : 'text'}
                                 placeholder={v.label}
-                                value={
-                                  (config.workflow_input?.[v.key] ?? '') as any
-                                }
-                                onChange={(e) =>
-                                  handleVarChange(
-                                    v.key,
-                                    v.type === 'number'
-                                      ? Number(e.target.value)
-                                      : e.target.value,
-                                  )
-                                }
+                                value={(config.workflow_input?.[v.key] ?? '') as any}
+                                onChange={(e) => handleVarChange(v.key, v.type === 'number' ? Number(e.target.value) : e.target.value)}
                               />
                             ))}
                           </div>
                         ) : (
                           <Textarea
-                            value={
-                              config.workflow_input?.prompt ||
-                              config.workflow_input?.message ||
-                              ''
-                            }
+                            value={config.workflow_input?.prompt || config.workflow_input?.message || ''}
                             onChange={(e) => {
                               onChange({
                                 ...config,
@@ -383,15 +291,11 @@ export const EventTriggerConfigForm: React.FC<EventTriggerConfigFormProps> = ({
                             }}
                             placeholder="Instructions for workflow"
                             rows={2}
-                            className={
-                              errors.workflow_input ? 'border-destructive' : ''
-                            }
+                            className={errors.workflow_input ? 'border-destructive' : ''}
                           />
                         )}
                         {errors.workflow_input && (
-                          <p className="text-xs text-destructive">
-                            {errors.workflow_input}
-                          </p>
+                          <p className="text-xs text-destructive">{errors.workflow_input}</p>
                         )}
                       </div>
                     </TabsContent>
@@ -399,19 +303,13 @@ export const EventTriggerConfigForm: React.FC<EventTriggerConfigFormProps> = ({
                     <TabsContent value="agent" className="mt-3">
                       <Textarea
                         value={config.agent_prompt || ''}
-                        onChange={(e) =>
-                          handleAgentPromptChange(e.target.value)
-                        }
+                        onChange={(e) => handleAgentPromptChange(e.target.value)}
                         placeholder="Agent prompt"
                         rows={2}
-                        className={
-                          errors.agent_prompt ? 'border-destructive' : ''
-                        }
+                        className={errors.agent_prompt ? 'border-destructive' : ''}
                       />
                       {errors.agent_prompt && (
-                        <p className="text-xs text-destructive">
-                          {errors.agent_prompt}
-                        </p>
+                        <p className="text-xs text-destructive">{errors.agent_prompt}</p>
                       )}
                     </TabsContent>
                   </Tabs>
@@ -454,17 +352,13 @@ export const EventTriggerConfigForm: React.FC<EventTriggerConfigFormProps> = ({
                         </div>
 
                         <div className="text-sm text-muted-foreground">
-                          This trigger will automatically activate whenever a{' '}
-                          <strong>{eventName}</strong> event occurs in your{' '}
-                          {provider.name} account.
+                          This trigger will automatically activate whenever a <strong>{eventName}</strong> event occurs in your {provider.name} account.
                         </div>
 
                         {config.composio_trigger_id && (
                           <div className="pt-2 border-t">
                             <div className="flex items-center justify-between">
-                              <span className="text-xs text-muted-foreground">
-                                Event ID
-                              </span>
+                              <span className="text-xs text-muted-foreground">Event ID</span>
                               <code className="text-xs bg-muted px-2 py-1 rounded">
                                 {config.trigger_slug}
                               </code>
@@ -484,24 +378,15 @@ export const EventTriggerConfigForm: React.FC<EventTriggerConfigFormProps> = ({
                   <div className="space-y-2 text-sm text-muted-foreground">
                     <div className="flex items-start gap-2">
                       <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
-                      <span>
-                        When the event occurs in {provider.name}, a webhook
-                        notification is sent instantly
-                      </span>
+                      <span>When the event occurs in {provider.name}, a webhook notification is sent instantly</span>
                     </div>
                     <div className="flex items-start gap-2">
                       <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
-                      <span>
-                        Your agent receives the event data and executes the
-                        configured action
-                      </span>
+                      <span>Your agent receives the event data and executes the configured action</span>
                     </div>
                     <div className="flex items-start gap-2">
                       <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
-                      <span>
-                        No polling or manual checking required - everything
-                        happens automatically
-                      </span>
+                      <span>No polling or manual checking required - everything happens automatically</span>
                     </div>
                   </div>
                 </div>
@@ -514,16 +399,13 @@ export const EventTriggerConfigForm: React.FC<EventTriggerConfigFormProps> = ({
                     </h4>
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">
-                          Profile ID
-                        </span>
+                        <span className="text-sm text-muted-foreground">Profile ID</span>
                         <code className="text-xs bg-muted px-2 py-1 rounded">
                           {config.profile_id}
                         </code>
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        Events will be monitored for this connected{' '}
-                        {provider.name} account.
+                        Events will be monitored for this connected {provider.name} account.
                       </p>
                     </div>
                   </div>

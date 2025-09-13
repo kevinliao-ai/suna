@@ -24,12 +24,7 @@ import { useComposioToolkitIcon } from '@/hooks/react-query/composio/use-composi
 import { Skeleton } from '@/components/ui/skeleton';
 
 import { IntegrationsRegistry } from '@/components/agents/integrations-registry';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useSubscriptionData } from '@/contexts/SubscriptionContext';
 import { isLocalMode } from '@/lib/config';
 import { BillingModal } from '@/components/billing/billing-modal';
@@ -90,6 +85,8 @@ export interface UploadedFile {
   type: string;
   localUrl?: string;
 }
+
+
 
 export const ChatInput = forwardRef<ChatInputHandles, ChatInputProps>(
   (
@@ -162,59 +159,36 @@ export const ChatInput = forwardRef<ChatInputHandles, ChatInputProps>(
 
     // Fetch integration icons only when logged in and advanced config UI is in use
     const shouldFetchIcons = isLoggedIn && !!enableAdvancedConfig;
-    const { data: googleDriveIcon } = useComposioToolkitIcon('googledrive', {
-      enabled: shouldFetchIcons,
-    });
-    const { data: slackIcon } = useComposioToolkitIcon('slack', {
-      enabled: shouldFetchIcons,
-    });
-    const { data: notionIcon } = useComposioToolkitIcon('notion', {
-      enabled: shouldFetchIcons,
-    });
+    const { data: googleDriveIcon } = useComposioToolkitIcon('googledrive', { enabled: shouldFetchIcons });
+    const { data: slackIcon } = useComposioToolkitIcon('slack', { enabled: shouldFetchIcons });
+    const { data: notionIcon } = useComposioToolkitIcon('notion', { enabled: shouldFetchIcons });
 
     // Show usage preview logic:
     // - Always show to free users when showToLowCreditUsers is true
     // - For paid users, only show when they're at 70% or more of their cost limit (30% or below remaining)
-    const shouldShowUsage =
-      !isLocalMode() &&
-      subscriptionData &&
-      showToLowCreditUsers &&
-      (() => {
-        // Free users: always show
-        if (subscriptionStatus === 'no_subscription') {
-          return true;
-        }
+    const shouldShowUsage = !isLocalMode() && subscriptionData && showToLowCreditUsers && (() => {
+      // Free users: always show
+      if (subscriptionStatus === 'no_subscription') {
+        return true;
+      }
 
-        // Paid users: only show when at 70% or more of cost limit
-        const currentUsage = subscriptionData.current_usage || 0;
-        const costLimit = subscriptionData.cost_limit || 0;
+      // Paid users: only show when at 70% or more of cost limit
+      const currentUsage = subscriptionData.current_usage || 0;
+      const costLimit = subscriptionData.cost_limit || 0;
 
-        if (costLimit === 0) return false; // No limit set
+      if (costLimit === 0) return false; // No limit set
 
-        return currentUsage >= costLimit * 0.7; // 70% or more used (30% or less remaining)
-      })();
+      return currentUsage >= (costLimit * 0.7); // 70% or more used (30% or less remaining)
+    })();
 
     // Auto-show usage preview when we have subscription data
     useEffect(() => {
-      if (
-        shouldShowUsage &&
-        defaultShowSnackbar !== false &&
-        !userDismissedUsage &&
-        (showSnackbar === false || showSnackbar === defaultShowSnackbar)
-      ) {
+      if (shouldShowUsage && defaultShowSnackbar !== false && !userDismissedUsage && (showSnackbar === false || showSnackbar === defaultShowSnackbar)) {
         setShowSnackbar('upgrade');
       } else if (!shouldShowUsage && showSnackbar !== false) {
         setShowSnackbar(false);
       }
-    }, [
-      subscriptionData,
-      showSnackbar,
-      defaultShowSnackbar,
-      shouldShowUsage,
-      subscriptionStatus,
-      showToLowCreditUsers,
-      userDismissedUsage,
-    ]);
+    }, [subscriptionData, showSnackbar, defaultShowSnackbar, shouldShowUsage, subscriptionStatus, showToLowCreditUsers, userDismissedUsage]);
 
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -233,6 +207,8 @@ export const ChatInput = forwardRef<ChatInputHandles, ChatInputProps>(
         initializeFromAgents(agents);
       }
     }, [agents, onAgentSelect, initializeFromAgents]);
+
+
 
     useEffect(() => {
       if (autoFocus && textareaRef.current) {
@@ -266,13 +242,11 @@ export const ChatInput = forwardRef<ChatInputHandles, ChatInputProps>(
       let baseModelName = getActualModelId(selectedModel);
       let thinkingEnabled = false;
       if (selectedModel.endsWith('-thinking')) {
-        baseModelName = getActualModelId(
-          selectedModel.replace(/-thinking$/, ''),
-        );
+        baseModelName = getActualModelId(selectedModel.replace(/-thinking$/, ''));
         thinkingEnabled = true;
       }
 
-      posthog.capture('task_prompt_submitted', { message });
+      posthog.capture("task_prompt_submitted", { message });
 
       onSubmit(message, {
         agent_id: selectedAgentId,
@@ -298,9 +272,7 @@ export const ChatInput = forwardRef<ChatInputHandles, ChatInputProps>(
 
     const handleTranscription = (transcribedText: string) => {
       const currentValue = isControlled ? controlledValue : uncontrolledValue;
-      const newValue = currentValue
-        ? `${currentValue} ${transcribedText}`
-        : transcribedText;
+      const newValue = currentValue ? `${currentValue} ${transcribedText}` : transcribedText;
 
       if (isControlled) {
         controlledOnChange(newValue);
@@ -324,25 +296,21 @@ export const ChatInput = forwardRef<ChatInputHandles, ChatInputProps>(
       }
 
       // Check if file is referenced in existing chat messages before deleting from server
-      const isFileUsedInChat = messages.some((message) => {
-        const content =
-          typeof message.content === 'string' ? message.content : '';
+      const isFileUsedInChat = messages.some(message => {
+        const content = typeof message.content === 'string' ? message.content : '';
         return content.includes(`[Uploaded File: ${fileToRemove.path}]`);
       });
 
       // Only delete from server if file is not referenced in chat history
       if (sandboxId && fileToRemove.path && !isFileUsedInChat) {
-        deleteFileMutation.mutate(
-          {
-            sandboxId,
-            filePath: fileToRemove.path,
-          },
-          {
-            onError: (error) => {
-              console.error('Failed to delete file from server:', error);
-            },
-          },
-        );
+        deleteFileMutation.mutate({
+          sandboxId,
+          filePath: fileToRemove.path,
+        }, {
+          onError: (error) => {
+            console.error('Failed to delete file from server:', error);
+          }
+        });
       } else {
         // File exists in chat history, don't delete from server
       }
@@ -360,6 +328,8 @@ export const ChatInput = forwardRef<ChatInputHandles, ChatInputProps>(
       setIsDraggingOver(false);
     };
 
+
+
     return (
       <div className="mx-auto w-full max-w-4xl relative">
         <div className="relative">
@@ -371,10 +341,7 @@ export const ChatInput = forwardRef<ChatInputHandles, ChatInputProps>(
             showToolPreview={showToolPreview}
             showUsagePreview={showSnackbar}
             subscriptionData={subscriptionData}
-            onCloseUsage={() => {
-              setShowSnackbar(false);
-              setUserDismissedUsage(true);
-            }}
+            onCloseUsage={() => { setShowSnackbar(false); setUserDismissedUsage(true); }}
             onOpenUpgrade={() => setBillingModalOpen(true)}
             isVisible={showToolPreview || !!showSnackbar}
           />
@@ -383,9 +350,8 @@ export const ChatInput = forwardRef<ChatInputHandles, ChatInputProps>(
           {showScrollToBottomIndicator && onScrollToBottom && (
             <button
               onClick={onScrollToBottom}
-              className={`absolute cursor-pointer right-3 z-50 w-8 h-8 rounded-full bg-card border border-border transition-all duration-200 hover:scale-105 flex items-center justify-center ${
-                showToolPreview || !!showSnackbar ? '-top-12' : '-top-5'
-              }`}
+              className={`absolute cursor-pointer right-3 z-50 w-8 h-8 rounded-full bg-card border border-border transition-all duration-200 hover:scale-105 flex items-center justify-center ${showToolPreview || !!showSnackbar ? '-top-12' : '-top-5'
+                }`}
               title="Scroll to bottom"
             >
               <ArrowDown className="w-4 h-4 text-muted-foreground" />
@@ -414,9 +380,7 @@ export const ChatInput = forwardRef<ChatInputHandles, ChatInputProps>(
             }}
           >
             <div className="w-full text-sm flex flex-col justify-between items-start rounded-lg">
-              <CardContent
-                className={`w-full p-1.5 pb-2 ${bgColor} border rounded-3xl`}
-              >
+              <CardContent className={`w-full p-1.5 pb-2 ${bgColor} border rounded-3xl`}>
                 <AttachmentGroup
                   files={uploadedFiles || []}
                   sandboxId={sandboxId}
@@ -438,6 +402,7 @@ export const ChatInput = forwardRef<ChatInputHandles, ChatInputProps>(
                   onStopAgent={onStopAgent}
                   isDraggingOver={isDraggingOver}
                   uploadedFiles={uploadedFiles}
+
                   fileInputRef={fileInputRef}
                   isUploading={isUploading}
                   sandboxId={sandboxId}
@@ -446,6 +411,7 @@ export const ChatInput = forwardRef<ChatInputHandles, ChatInputProps>(
                   setIsUploading={setIsUploading}
                   hideAttachments={hideAttachments}
                   messages={messages}
+
                   selectedModel={selectedModel}
                   onModelChange={handleModelChange}
                   modelOptions={modelOptions}
@@ -453,6 +419,7 @@ export const ChatInput = forwardRef<ChatInputHandles, ChatInputProps>(
                   canAccessModel={canAccessModel}
                   refreshCustomModels={refreshCustomModels}
                   isLoggedIn={isLoggedIn}
+
                   selectedAgentId={selectedAgentId}
                   onAgentSelect={onAgentSelect}
                   hideAgentSelection={hideAgentSelection}
@@ -470,33 +437,19 @@ export const ChatInput = forwardRef<ChatInputHandles, ChatInputProps>(
                     className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-all duration-200 px-2.5 py-1.5 rounded-lg hover:bg-muted/50 border border-transparent hover:border-border/30 flex-shrink-0 cursor-pointer relative pointer-events-auto"
                   >
                     <div className="flex items-center -space-x-0.5">
-                      {googleDriveIcon?.icon_url &&
-                      slackIcon?.icon_url &&
-                      notionIcon?.icon_url ? (
+                      {googleDriveIcon?.icon_url && slackIcon?.icon_url && notionIcon?.icon_url ? (
                         <>
                           <div className="w-4 h-4 bg-white dark:bg-muted border border-border rounded-full flex items-center justify-center shadow-sm">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={googleDriveIcon.icon_url}
-                              className="w-2.5 h-2.5"
-                              alt="Google Drive"
-                            />
+                            <img src={googleDriveIcon.icon_url} className="w-2.5 h-2.5" alt="Google Drive" />
                           </div>
                           <div className="w-4 h-4 bg-white dark:bg-muted border border-border rounded-full flex items-center justify-center shadow-sm">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={slackIcon.icon_url}
-                              className="w-2.5 h-2.5"
-                              alt="Slack"
-                            />
+                            <img src={slackIcon.icon_url} className="w-2.5 h-2.5" alt="Slack" />
                           </div>
                           <div className="w-4 h-4 bg-white dark:bg-muted border border-border rounded-full flex items-center justify-center shadow-sm">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={notionIcon.icon_url}
-                              className="w-2.5 h-2.5"
-                              alt="Notion"
-                            />
+                            <img src={notionIcon.icon_url} className="w-2.5 h-2.5" alt="Notion" />
                           </div>
                         </>
                       ) : (
@@ -516,44 +469,28 @@ export const ChatInput = forwardRef<ChatInputHandles, ChatInputProps>(
                     <span className="text-xs font-medium">Integrations</span>
                   </button>
                   <button
-                    onClick={() =>
-                      router.push(
-                        `/agents/config/${selectedAgentId}?tab=configuration&accordion=instructions`,
-                      )
-                    }
+                    onClick={() => router.push(`/agents/config/${selectedAgentId}?tab=configuration&accordion=instructions`)}
                     className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-all duration-200 px-2.5 py-1.5 rounded-lg hover:bg-muted/50 border border-transparent hover:border-border/30 flex-shrink-0 cursor-pointer relative pointer-events-auto"
                   >
                     <Brain className="h-3.5 w-3.5 flex-shrink-0" />
                     <span className="text-xs font-medium">Instructions</span>
                   </button>
                   <button
-                    onClick={() =>
-                      router.push(
-                        `/agents/config/${selectedAgentId}?tab=configuration&accordion=knowledge`,
-                      )
-                    }
+                    onClick={() => router.push(`/agents/config/${selectedAgentId}?tab=configuration&accordion=knowledge`)}
                     className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-all duration-200 px-2.5 py-1.5 rounded-lg hover:bg-muted/50 border border-transparent hover:border-border/30 flex-shrink-0 cursor-pointer relative pointer-events-auto"
                   >
                     <Database className="h-3.5 w-3.5 flex-shrink-0" />
                     <span className="text-xs font-medium">Knowledge</span>
                   </button>
                   <button
-                    onClick={() =>
-                      router.push(
-                        `/agents/config/${selectedAgentId}?tab=configuration&accordion=triggers`,
-                      )
-                    }
+                    onClick={() => router.push(`/agents/config/${selectedAgentId}?tab=configuration&accordion=triggers`)}
                     className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-all duration-200 px-2.5 py-1.5 rounded-lg hover:bg-muted/50 border border-transparent hover:border-border/30 flex-shrink-0 cursor-pointer relative pointer-events-auto"
                   >
                     <Zap className="h-3.5 w-3.5 flex-shrink-0" />
                     <span className="text-xs font-medium">Triggers</span>
                   </button>
                   <button
-                    onClick={() =>
-                      router.push(
-                        `/agents/config/${selectedAgentId}?tab=configuration&accordion=workflows`,
-                      )
-                    }
+                    onClick={() => router.push(`/agents/config/${selectedAgentId}?tab=configuration&accordion=workflows`)}
                     className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-all duration-200 px-2.5 py-1.5 rounded-lg hover:bg-muted/50 border border-transparent hover:border-border/30 flex-shrink-0 cursor-pointer relative pointer-events-auto"
                   >
                     <Workflow className="h-3.5 w-3.5 flex-shrink-0" />
@@ -564,10 +501,7 @@ export const ChatInput = forwardRef<ChatInputHandles, ChatInputProps>(
             </div>
           )}
 
-          <Dialog
-            open={registryDialogOpen}
-            onOpenChange={setRegistryDialogOpen}
-          >
+          <Dialog open={registryDialogOpen} onOpenChange={setRegistryDialogOpen}>
             <DialogContent className="p-0 max-w-6xl h-[90vh] overflow-hidden">
               <DialogHeader className="sr-only">
                 <DialogTitle>Integrations</DialogTitle>
@@ -576,12 +510,7 @@ export const ChatInput = forwardRef<ChatInputHandles, ChatInputProps>(
                 showAgentSelector={true}
                 selectedAgentId={selectedAgentId}
                 onAgentChange={onAgentSelect}
-                onToolsSelected={(
-                  profileId,
-                  selectedTools,
-                  appName,
-                  appSlug,
-                ) => {
+                onToolsSelected={(profileId, selectedTools, appName, appSlug) => {
                   // Save to workflow or perform other action here
                 }}
               />

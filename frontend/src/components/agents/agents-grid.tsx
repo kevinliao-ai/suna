@@ -1,42 +1,11 @@
 import React, { useState } from 'react';
-import {
-  Settings,
-  Trash2,
-  Star,
-  MessageCircle,
-  Wrench,
-  Globe,
-  GlobeLock,
-  Download,
-  Shield,
-  AlertTriangle,
-  GitBranch,
-} from 'lucide-react';
+import { Settings, Trash2, Star, MessageCircle, Wrench, Globe, GlobeLock, Download, Shield, AlertTriangle, GitBranch } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogHeader,
-  DialogDescription,
-} from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Dialog, DialogContent, DialogTitle, DialogHeader, DialogDescription } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { useRouter } from 'next/navigation';
-import {
-  useCreateTemplate,
-  useUnpublishTemplate,
-} from '@/hooks/react-query/secure-mcp/use-secure-mcp';
+import { useCreateTemplate, useUnpublishTemplate } from '@/hooks/react-query/secure-mcp/use-secure-mcp';
 import { toast } from 'sonner';
 import { AgentCard } from './custom-agents-page/agent-card';
 import { KortixLogo } from '../sidebar/kortix-logo';
@@ -104,21 +73,21 @@ interface AgentModalProps {
   isUnpublishing: boolean;
 }
 
-const AgentModal: React.FC<AgentModalProps> = ({
-  agent,
-  isOpen,
-  onClose,
-  onCustomize,
-  onChat,
-  onPublish,
-  onUnpublish,
-  isPublishing,
-  isUnpublishing,
+const AgentModal: React.FC<AgentModalProps> = ({ 
+  agent, 
+  isOpen, 
+  onClose, 
+  onCustomize, 
+  onChat, 
+  onPublish, 
+  onUnpublish, 
+  isPublishing, 
+  isUnpublishing 
 }) => {
   if (!agent) return null;
 
   const isSunaAgent = agent.metadata?.is_suna_default || false;
-
+  
   const truncateDescription = (text?: string, maxLength = 120) => {
     if (!text || text.length <= maxLength) return text || 'Try out this agent';
     return text.substring(0, maxLength) + '...';
@@ -135,27 +104,21 @@ const AgentModal: React.FC<AgentModalProps> = ({
                 <KortixLogo size={48} />
               </div>
             ) : agent.icon_name ? (
-              <div
+              <div 
                 className="h-16 w-16 rounded-xl flex items-center justify-center"
                 style={{ backgroundColor: agent.icon_background || '#F3F4F6' }}
               >
-                <DynamicIcon
-                  name={agent.icon_name as any}
-                  size={32}
+                <DynamicIcon 
+                  name={agent.icon_name as any} 
+                  size={32} 
                   color={agent.icon_color || '#000000'}
                 />
               </div>
             ) : agent.profile_image_url ? (
-              <img
-                src={agent.profile_image_url}
-                alt={agent.name}
-                className="h-16 w-16 rounded-xl object-cover"
-              />
+              <img src={agent.profile_image_url} alt={agent.name} className="h-16 w-16 rounded-xl object-cover" />
             ) : (
               <div className="h-16 w-16 rounded-xl bg-muted flex items-center justify-center">
-                <span className="text-lg font-semibold">
-                  {agent.name.charAt(0).toUpperCase()}
-                </span>
+                <span className="text-lg font-semibold">{agent.name.charAt(0).toUpperCase()}</span>
               </div>
             )}
           </div>
@@ -260,20 +223,20 @@ const AgentModal: React.FC<AgentModalProps> = ({
   );
 };
 
-export const AgentsGrid: React.FC<AgentsGridProps> = ({
-  agents,
-  onEditAgent,
-  onDeleteAgent,
+export const AgentsGrid: React.FC<AgentsGridProps> = ({ 
+  agents, 
+  onEditAgent, 
+  onDeleteAgent, 
   onToggleDefault,
   deleteAgentMutation,
   isDeletingAgent,
   onPublish,
-  publishingId: externalPublishingId,
+  publishingId: externalPublishingId
 }) => {
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [unpublishingId, setUnpublishingId] = useState<string | null>(null);
   const router = useRouter();
-
+  
   const unpublishAgentMutation = useUnpublishTemplate();
 
   const handleAgentClick = (agent: Agent) => {
@@ -291,7 +254,7 @@ export const AgentsGrid: React.FC<AgentsGridProps> = ({
   };
 
   const handlePublish = (agentId: string) => {
-    const agent = agents.find((a) => a.agent_id === agentId);
+    const agent = agents.find(a => a.agent_id === agentId);
     if (agent && onPublish) {
       onPublish(agent);
       setSelectedAgent(null);
@@ -311,37 +274,31 @@ export const AgentsGrid: React.FC<AgentsGridProps> = ({
     }
   };
 
+
   return (
     <>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {agents.map((agent) => {
           const agentData = {
             ...agent,
-            id: agent.agent_id,
+            id: agent.agent_id
           };
-
+          
           const isDeleting = isDeletingAgent?.(agent.agent_id) || false;
           const isGloballyDeleting = deleteAgentMutation?.isPending || false;
-
+          
           return (
-            <div
-              key={agent.agent_id}
-              className="relative group flex flex-col h-full"
-            >
+            <div key={agent.agent_id} className="relative group flex flex-col h-full">
               {isDeleting && (
                 <div className="absolute inset-0 bg-destructive/10 backdrop-blur-sm rounded-lg z-20 flex items-center justify-center">
                   <div className="bg-background/95 backdrop-blur-sm rounded-lg px-4 py-3 flex items-center gap-2 shadow-lg border">
                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-destructive border-t-transparent" />
-                    <span className="text-sm font-medium text-destructive">
-                      Deleting...
-                    </span>
+                    <span className="text-sm font-medium text-destructive">Deleting...</span>
                   </div>
                 </div>
               )}
-
-              <div
-                className={`transition-all duration-200 ${isDeleting ? 'opacity-60 scale-95' : ''}`}
-              >
+              
+              <div className={`transition-all duration-200 ${isDeleting ? 'opacity-60 scale-95' : ''}`}>
                 <AgentCard
                   mode="agent"
                   data={agentData}
@@ -349,14 +306,12 @@ export const AgentsGrid: React.FC<AgentsGridProps> = ({
                   onClick={() => !isDeleting && handleAgentClick(agent)}
                 />
               </div>
-              <div
-                className={`absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity ${isDeleting ? 'pointer-events-none' : ''}`}
-              >
+              <div className={`absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity ${isDeleting ? 'pointer-events-none' : ''}`}>
                 {!agent.is_default && (
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button
-                        variant="ghost"
+                      <Button 
+                        variant="ghost" 
                         size="sm"
                         className="h-7 w-7 p-0 hover:bg-destructive/10 hover:text-destructive text-muted-foreground"
                         disabled={isDeleting || isGloballyDeleting}
@@ -372,17 +327,12 @@ export const AgentsGrid: React.FC<AgentsGridProps> = ({
                     </AlertDialogTrigger>
                     <AlertDialogContent className="max-w-md">
                       <AlertDialogHeader>
-                        <AlertDialogTitle className="text-xl">
-                          Delete Agent
-                        </AlertDialogTitle>
+                        <AlertDialogTitle className="text-xl">Delete Agent</AlertDialogTitle>
                         <AlertDialogDescription>
-                          Are you sure you want to delete &quot;{agent.name}
-                          &quot;? This action cannot be undone.
+                          Are you sure you want to delete &quot;{agent.name}&quot;? This action cannot be undone.
                           {agent.is_public && (
                             <span className="block mt-2 text-amber-600 dark:text-amber-400">
-                              Note: This agent is currently published to the
-                              marketplace and will be removed from there as
-                              well.
+                              Note: This agent is currently published to the marketplace and will be removed from there as well.
                             </span>
                           )}
                         </AlertDialogDescription>

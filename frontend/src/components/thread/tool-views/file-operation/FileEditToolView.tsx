@@ -32,7 +32,12 @@ import { cn } from '@/lib/utils';
 import { useTheme } from 'next-themes';
 import { CodeBlockCode } from '@/components/ui/code-block';
 import { constructHtmlPreviewUrl } from '@/lib/utils/url';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -61,10 +66,7 @@ import { LoadingState } from '../shared/LoadingState';
 import { toast } from 'sonner';
 import ReactDiffViewer from 'react-diff-viewer-continued';
 
-const UnifiedDiffView: React.FC<{ oldCode: string; newCode: string }> = ({
-  oldCode,
-  newCode,
-}) => (
+const UnifiedDiffView: React.FC<{ oldCode: string; newCode: string }> = ({ oldCode, newCode }) => (
   <ReactDiffViewer
     oldValue={oldCode}
     newValue={newCode}
@@ -105,7 +107,7 @@ const ErrorState: React.FC<{ message?: string }> = ({ message }) => (
         Invalid File Edit
       </h3>
       <p className="text-sm text-zinc-500 dark:text-zinc-400">
-        {message || 'Could not extract the file changes from the tool result.'}
+        {message || "Could not extract the file changes from the tool result."}
       </p>
     </div>
   </div>
@@ -123,7 +125,7 @@ export function FileEditToolView({
 }: ToolViewProps): JSX.Element {
   const { resolvedTheme } = useTheme();
   const isDarkTheme = resolvedTheme === 'dark';
-
+  
   // Add copy functionality state
   const [isCopyingContent, setIsCopyingContent] = useState(false);
 
@@ -168,7 +170,7 @@ export function FileEditToolView({
     toolContent,
     isSuccess,
     toolTimestamp,
-    assistantTimestamp,
+    assistantTimestamp
   );
 
   const toolTitle = getToolTitle(name);
@@ -192,17 +194,10 @@ export function FileEditToolView({
 
   const FileIcon = getFileIcon(fileName);
 
-  const lineDiff =
-    originalContent && updatedContent
-      ? generateLineDiff(originalContent, updatedContent)
-      : [];
+  const lineDiff = originalContent && updatedContent ? generateLineDiff(originalContent, updatedContent) : [];
   const stats: DiffStats = calculateDiffStats(lineDiff);
 
-  const shouldShowError =
-    !isStreaming &&
-    (!actualIsSuccess ||
-      (actualIsSuccess &&
-        (originalContent === null || updatedContent === null)));
+  const shouldShowError = !isStreaming && (!actualIsSuccess || (actualIsSuccess && (originalContent === null || updatedContent === null)));
 
   if (!isStreaming && !processedFilePath && !updatedContent) {
     return (
@@ -224,9 +219,7 @@ export function FileEditToolView({
         <div className="flex items-center justify-center h-full p-12">
           <div className="text-center">
             <FileIcon className="h-12 w-12 mx-auto mb-4 text-zinc-400" />
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              No content to preview
-            </p>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">No content to preview</p>
           </div>
         </div>
       );
@@ -271,7 +264,7 @@ export function FileEditToolView({
       return (
         <div className="h-full w-full p-4">
           <div className="h-[calc(100vh-17rem)] w-full bg-muted/20 border rounded-xl overflow-auto">
-            <XlsxRenderer
+            <XlsxRenderer 
               content={updatedContent}
               filePath={processedFilePath}
               fileName={fileName}
@@ -284,7 +277,7 @@ export function FileEditToolView({
 
     return (
       <div className="p-4">
-        <div className="w-full h-full bg-muted/20 border rounded-xl px-4 py-2 pb-6">
+        <div className='w-full h-full bg-muted/20 border rounded-xl px-4 py-2 pb-6'>
           <pre className="text-sm font-mono text-zinc-800 dark:text-zinc-300 whitespace-pre-wrap break-words">
             {processUnicodeContent(updatedContent)}
           </pre>
@@ -299,9 +292,7 @@ export function FileEditToolView({
         <div className="flex items-center justify-center h-full p-12">
           <div className="text-center">
             <FileIcon className="h-12 w-12 mx-auto mb-4 text-zinc-400" />
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              No diff to display
-            </p>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">No diff to display</p>
           </div>
         </div>
       );
@@ -317,12 +308,7 @@ export function FileEditToolView({
 
   return (
     <Card className="flex border shadow-none border-t border-b-0 border-x-0 p-0 rounded-none flex-col h-full overflow-hidden bg-card">
-      <Tabs
-        defaultValue={
-          isMarkdown || isHtml || isCsv || isXlsx ? 'preview' : 'code'
-        }
-        className="w-full h-full"
-      >
+      <Tabs defaultValue={isMarkdown || isHtml || isCsv || isXlsx ? 'preview' : 'code'} className="w-full h-full">
         <CardHeader className="h-14 bg-zinc-50/80 dark:bg-zinc-900/80 backdrop-blur-sm border-b p-2 px-4 space-y-2 mb-0">
           <div className="flex flex-row items-center justify-between">
             <div className="flex items-center gap-2">
@@ -335,19 +321,10 @@ export function FileEditToolView({
                 </CardTitle>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className='flex items-center gap-2'>
               {isHtml && htmlPreviewUrl && !isStreaming && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-8 text-xs bg-white dark:bg-muted/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 shadow-none"
-                  asChild
-                >
-                  <a
-                    href={htmlPreviewUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
+                <Button variant="outline" size="sm" className="h-8 text-xs bg-white dark:bg-muted/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 shadow-none" asChild>
+                  <a href={htmlPreviewUrl} target="_blank" rel="noopener noreferrer">
                     <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
                     Open in Browser
                   </a>
@@ -376,9 +353,7 @@ export function FileEditToolView({
                 <div className="flex items-center gap-2">
                   <div className="flex items-center text-xs text-zinc-500 dark:text-zinc-400 gap-3">
                     {stats.additions === 0 && stats.deletions === 0 && (
-                      <Badge variant="outline" className="text-xs font-normal">
-                        No changes
-                      </Badge>
+                      <Badge variant="outline" className="text-xs font-normal">No changes</Badge>
                     )}
                   </div>
                 </div>
@@ -453,9 +428,7 @@ export function FileEditToolView({
           <div className="h-full flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
             <Badge variant="outline" className="py-0.5 h-6">
               <FileIcon className="h-3 w-3" />
-              {hasHighlighting
-                ? language.toUpperCase()
-                : fileExtension.toUpperCase() || 'TEXT'}
+              {hasHighlighting ? language.toUpperCase() : fileExtension.toUpperCase() || 'TEXT'}
             </Badge>
           </div>
 

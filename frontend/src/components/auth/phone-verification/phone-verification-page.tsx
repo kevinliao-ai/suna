@@ -273,13 +273,17 @@ export function PhoneVerificationPage({
 
         {error && (
           <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
+            <AlertDescription>
+              {error}
+            </AlertDescription>
           </Alert>
         )}
 
         {success && (
           <Alert>
-            <AlertDescription>{success}</AlertDescription>
+            <AlertDescription>
+              {success}
+            </AlertDescription>
           </Alert>
         )}
 

@@ -59,8 +59,7 @@ export interface DocsSidebarData {
   searchPlaceholder?: string;
 }
 
-export interface DocsSidebarPropsLegacy
-  extends React.HTMLAttributes<HTMLDivElement> {
+export interface DocsSidebarPropsLegacy extends React.HTMLAttributes<HTMLDivElement> {
   title?: string;
   subtitle?: string;
   version?: string;
@@ -73,8 +72,7 @@ export interface DocsSidebarPropsLegacy
   sidebarWidth?: string;
 }
 
-export interface DocsSidebarPropsNew
-  extends React.ComponentProps<typeof Sidebar> {
+export interface DocsSidebarPropsNew extends React.ComponentProps<typeof Sidebar> {
   data: DocsSidebarData;
   onNavigate?: (url: string) => void;
   onSearch?: () => void;
@@ -89,16 +87,9 @@ interface NavigationItemProps {
   activeItemId?: string;
 }
 
-const NavigationItem = ({
-  item,
-  onNavigate,
-  onNavigateLegacy,
-  activeItemId,
-}: NavigationItemProps) => {
-  const hasChildren =
-    (item.items && item.items.length > 0) ||
-    (item.children && item.children.length > 0);
-  const isActive = item.isActive || item.id === activeItemId;
+const NavigationItem = ({ item, onNavigate, onNavigateLegacy, activeItemId }: NavigationItemProps) => {
+  const hasChildren = (item.items && item.items.length > 0) || (item.children && item.children.length > 0);
+  const isActive = item.isActive || (item.id === activeItemId);
   const itemUrl = item.url || item.href;
   const childItems = item.items || item.children || [];
 
@@ -113,14 +104,14 @@ const NavigationItem = ({
   if (hasChildren) {
     return (
       <SidebarMenuItem>
-        <SidebarMenuButton tooltip={item.title} isActive={isActive}>
+        <SidebarMenuButton 
+          tooltip={item.title}
+          isActive={isActive}
+        >
           {item.icon && <item.icon />}
           <span>{item.title}</span>
           {item.badge && (
-            <Badge
-              variant="outline"
-              className="ml-auto h-5 text-xs border-border/50 text-muted-foreground"
-            >
+            <Badge variant="outline" className="ml-auto h-5 text-xs border-border/50 text-muted-foreground">
               {item.badge}
             </Badge>
           )}
@@ -128,10 +119,8 @@ const NavigationItem = ({
         </SidebarMenuButton>
         <SidebarMenuSub>
           {childItems.map((child) => (
-            <SidebarMenuSubItem
-              key={child.id || child.url || child.href || child.title}
-            >
-              <SidebarMenuSubButton
+            <SidebarMenuSubItem key={child.id || child.url || child.href || child.title}>
+              <SidebarMenuSubButton 
                 onClick={() => {
                   if (onNavigateLegacy) {
                     onNavigateLegacy(child);
@@ -140,14 +129,11 @@ const NavigationItem = ({
                     if (childUrl) onNavigate?.(childUrl);
                   }
                 }}
-                isActive={child.isActive || child.id === activeItemId}
+                isActive={child.isActive || (child.id === activeItemId)}
               >
                 <span>{child.title}</span>
                 {child.badge && (
-                  <Badge
-                    variant="outline"
-                    className="ml-auto h-5 text-xs border-border/50 text-muted-foreground"
-                  >
+                  <Badge variant="outline" className="ml-auto h-5 text-xs border-border/50 text-muted-foreground">
                     {child.badge}
                   </Badge>
                 )}
@@ -161,7 +147,7 @@ const NavigationItem = ({
 
   return (
     <SidebarMenuItem>
-      <SidebarMenuButton
+      <SidebarMenuButton 
         onClick={handleClick}
         tooltip={item.title}
         isActive={isActive}
@@ -169,10 +155,7 @@ const NavigationItem = ({
         {item.icon && <item.icon />}
         <span>{item.title}</span>
         {item.badge && (
-          <Badge
-            variant="outline"
-            className="ml-auto h-5 text-xs border-border/50 text-muted-foreground"
-          >
+          <Badge variant="outline" className="ml-auto h-5 text-xs border-border/50 text-muted-foreground">
             {item.badge}
           </Badge>
         )}
@@ -205,12 +188,7 @@ export const DocsSidebar = React.forwardRef<
     } = props;
 
     return (
-      <div
-        className={cn(
-          'flex h-screen flex-col border-r bg-card w-68',
-          className,
-        )}
-      >
+      <div className={cn("flex h-screen flex-col border-r bg-card w-68", className)}>
         <div className="p-6 pb-4 border-b border-border/40">
           {title && (
             <div className="mb-4">
@@ -235,7 +213,7 @@ export const DocsSidebar = React.forwardRef<
               className="w-full justify-start px-3 text-sm text-muted-foreground border-border/60 hover:border-border hover:bg-accent/50 transition-all duration-200"
             >
               <Search className="mr-2 h-4 w-4" />
-              {searchPlaceholder || 'Search docs...'}
+              {searchPlaceholder || "Search docs..."}
             </Button>
           )}
         </div>
@@ -256,22 +234,15 @@ export const DocsSidebar = React.forwardRef<
                       variant="ghost"
                       onClick={() => onNavigate?.(item)}
                       className={cn(
-                        'w-full justify-start h-9 px-3 font-normal text-sm transition-all duration-200',
-                        item.href &&
-                          'hover:bg-accent/80 hover:text-accent-foreground',
-                        (item.id === activeItemId || item.isActive) &&
-                          'bg-primary text-primary-foreground font-medium hover:bg-primary/90',
+                        "w-full justify-start h-9 px-3 font-normal text-sm transition-all duration-200",
+                        item.href && "hover:bg-accent/80 hover:text-accent-foreground",
+                        (item.id === activeItemId || item.isActive) && "bg-primary text-primary-foreground font-medium hover:bg-primary/90"
                       )}
                     >
                       {item.icon && <item.icon className="mr-2 h-4 w-4" />}
-                      <span className="flex-1 text-left truncate">
-                        {item.title}
-                      </span>
+                      <span className="flex-1 text-left truncate">{item.title}</span>
                       {item.badge && (
-                        <Badge
-                          variant="outline"
-                          className="ml-2 h-5 text-xs border-border/50 text-muted-foreground"
-                        >
+                        <Badge variant="outline" className="ml-2 h-5 text-xs border-border/50 text-muted-foreground">
                           {item.badge}
                         </Badge>
                       )}
@@ -285,10 +256,7 @@ export const DocsSidebar = React.forwardRef<
 
         {version && (
           <div className="p-6 pt-4 border-t border-border/40">
-            <Badge
-              variant="outline"
-              className="text-xs border-border/50 text-muted-foreground/80"
-            >
+            <Badge variant="outline" className="text-xs border-border/50 text-muted-foreground/80">
               {version}
             </Badge>
           </div>
@@ -297,8 +265,7 @@ export const DocsSidebar = React.forwardRef<
     );
   }
 
-  const { data, onNavigate, onSearch, ...restProps } =
-    props as DocsSidebarPropsNew;
+  const { data, onNavigate, onSearch, ...restProps } = props as DocsSidebarPropsNew;
 
   return (
     <Sidebar collapsible="icon" ref={ref} {...restProps}>
@@ -327,7 +294,7 @@ export const DocsSidebar = React.forwardRef<
               className="w-full justify-start px-3 text-sm text-muted-foreground border-border/60 hover:border-border hover:bg-accent/50 transition-all duration-200"
             >
               <Search className="mr-2 h-4 w-4" />
-              {data?.searchPlaceholder || 'Search docs...'}
+              {data?.searchPlaceholder || "Search docs..."}
             </Button>
           </div>
         )}
@@ -352,10 +319,7 @@ export const DocsSidebar = React.forwardRef<
       {data?.version && (
         <SidebarFooter className="border-t border-border/40">
           <div className="px-2 py-2">
-            <Badge
-              variant="outline"
-              className="text-xs border-border/50 text-muted-foreground/80"
-            >
+            <Badge variant="outline" className="text-xs border-border/50 text-muted-foreground/80">
               {data.version}
             </Badge>
           </div>
@@ -366,4 +330,4 @@ export const DocsSidebar = React.forwardRef<
   );
 });
 
-DocsSidebar.displayName = 'DocsSidebar';
+DocsSidebar.displayName = 'DocsSidebar'; 

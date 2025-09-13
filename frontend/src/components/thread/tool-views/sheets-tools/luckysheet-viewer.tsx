@@ -33,79 +33,30 @@ function loadStyle(href: string): void {
 
 function argbToHex(argb?: string | number): string | undefined {
   if (!argb) return undefined;
-
+  
   if (typeof argb === 'number') {
     const indexColors: Record<number, string> = {
-      0: '#000000',
-      1: '#FFFFFF',
-      2: '#FF0000',
-      3: '#00FF00',
-      4: '#0000FF',
-      5: '#FFFF00',
-      6: '#FF00FF',
-      7: '#00FFFF',
-      8: '#000000',
-      9: '#FFFFFF',
-      10: '#FF0000',
-      11: '#00FF00',
-      12: '#0000FF',
-      13: '#FFFF00',
-      14: '#FF00FF',
-      15: '#00FFFF',
-      16: '#800000',
-      17: '#008000',
-      18: '#000080',
-      19: '#808000',
-      20: '#800080',
-      21: '#008080',
-      22: '#C0C0C0',
-      23: '#808080',
-      24: '#9999FF',
-      25: '#993366',
-      26: '#FFFFCC',
-      27: '#CCFFFF',
-      28: '#660066',
-      29: '#FF8080',
-      30: '#0066CC',
-      31: '#CCCCFF',
-      32: '#000080',
-      33: '#FF00FF',
-      34: '#FFFF00',
-      35: '#00FFFF',
-      36: '#800080',
-      37: '#800000',
-      38: '#008080',
-      39: '#0000FF',
-      40: '#00CCFF',
-      41: '#CCFFFF',
-      42: '#CCFFCC',
-      43: '#FFFF99',
-      44: '#99CCFF',
-      45: '#FF99CC',
-      46: '#CC99FF',
-      47: '#FFCC99',
-      48: '#3366FF',
-      49: '#33CCCC',
-      50: '#99CC00',
-      51: '#FFCC00',
-      52: '#FF9900',
-      53: '#FF6600',
-      54: '#666699',
-      55: '#969696',
-      56: '#003366',
-      57: '#339966',
-      58: '#003300',
-      59: '#333300',
-      60: '#993300',
-      61: '#993366',
-      62: '#333399',
-      63: '#333333',
-      64: '#000000',
-      65: '#FFFFFF',
+      0: '#000000', 1: '#FFFFFF', 2: '#FF0000', 3: '#00FF00',
+      4: '#0000FF', 5: '#FFFF00', 6: '#FF00FF', 7: '#00FFFF',
+      8: '#000000', 9: '#FFFFFF', 10: '#FF0000', 11: '#00FF00',
+      12: '#0000FF', 13: '#FFFF00', 14: '#FF00FF', 15: '#00FFFF',
+      16: '#800000', 17: '#008000', 18: '#000080', 19: '#808000',
+      20: '#800080', 21: '#008080', 22: '#C0C0C0', 23: '#808080',
+      24: '#9999FF', 25: '#993366', 26: '#FFFFCC', 27: '#CCFFFF',
+      28: '#660066', 29: '#FF8080', 30: '#0066CC', 31: '#CCCCFF',
+      32: '#000080', 33: '#FF00FF', 34: '#FFFF00', 35: '#00FFFF',
+      36: '#800080', 37: '#800000', 38: '#008080', 39: '#0000FF',
+      40: '#00CCFF', 41: '#CCFFFF', 42: '#CCFFCC', 43: '#FFFF99',
+      44: '#99CCFF', 45: '#FF99CC', 46: '#CC99FF', 47: '#FFCC99',
+      48: '#3366FF', 49: '#33CCCC', 50: '#99CC00', 51: '#FFCC00',
+      52: '#FF9900', 53: '#FF6600', 54: '#666699', 55: '#969696',
+      56: '#003366', 57: '#339966', 58: '#003300', 59: '#333300',
+      60: '#993300', 61: '#993366', 62: '#333399', 63: '#333333',
+      64: '#000000', 65: '#FFFFFF'
     };
     return indexColors[argb] || undefined;
   }
-
+  
   const v = String(argb).replace(/^#/, '').toUpperCase();
   if (v.length === 8) {
     return `#${v.slice(2)}`;
@@ -121,15 +72,15 @@ function argbToHex(argb?: string | number): string | undefined {
 
 function mapType(t: string | undefined): string {
   switch (t) {
-    case 'n':
-    case 'd':
-    case 'b':
-    case 's':
+    case 'n': 
+    case 'd': 
+    case 'b': 
+    case 's': 
     case 'str':
-    case 'e':
+    case 'e': 
       return t;
     default:
-      return 'g';
+      return 'g'; 
   }
 }
 
@@ -153,32 +104,32 @@ function convertNumberFormat(fmt?: string): string {
 function extractBorders(borders: any): any {
   if (!borders) return null;
   const borderConfig: any = {};
-
+  
   if (borders.top) {
     borderConfig.t = {
       style: borders.top.style === 'thin' ? 1 : 2,
-      color: argbToHex(borders.top.color?.rgb) || '#000000',
+      color: argbToHex(borders.top.color?.rgb) || '#000000'
     };
   }
   if (borders.bottom) {
     borderConfig.b = {
       style: borders.bottom.style === 'thin' ? 1 : 2,
-      color: argbToHex(borders.bottom.color?.rgb) || '#000000',
+      color: argbToHex(borders.bottom.color?.rgb) || '#000000'
     };
   }
   if (borders.left) {
     borderConfig.l = {
       style: borders.left.style === 'thin' ? 1 : 2,
-      color: argbToHex(borders.left.color?.rgb) || '#000000',
+      color: argbToHex(borders.left.color?.rgb) || '#000000'
     };
   }
   if (borders.right) {
     borderConfig.r = {
       style: borders.right.style === 'thin' ? 1 : 2,
-      color: argbToHex(borders.right.color?.rgb) || '#000000',
+      color: argbToHex(borders.right.color?.rgb) || '#000000'
     };
   }
-
+  
   return Object.keys(borderConfig).length > 0 ? borderConfig : null;
 }
 
@@ -189,18 +140,11 @@ export interface LuckysheetViewerProps {
   height?: number | string;
 }
 
-export function LuckysheetViewer({
-  xlsxPath,
-  sandboxId,
-  className,
-  height,
-}: LuckysheetViewerProps) {
+export function LuckysheetViewer({ xlsxPath, sandboxId, className, height }: LuckysheetViewerProps) {
   const { session } = useAuth();
   const wrapperRef = React.useRef<HTMLDivElement | null>(null);
   const containerRef = React.useRef<HTMLDivElement | null>(null);
-  const containerIdRef = React.useRef<string>(
-    `luckysheet-${Math.random().toString(36).slice(2)}`,
-  );
+  const containerIdRef = React.useRef<string>(`luckysheet-${Math.random().toString(36).slice(2)}`);
   const [error, setError] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState<boolean>(true);
   const [measuredHeight, setMeasuredHeight] = React.useState<number>(0);
@@ -211,9 +155,7 @@ export function LuckysheetViewer({
     const ro = new ResizeObserver(() => {
       const rect = el.getBoundingClientRect();
       setMeasuredHeight(Math.max(0, rect.height));
-      try {
-        window.luckysheet?.resize?.();
-      } catch {}
+      try { window.luckysheet?.resize?.(); } catch {}
     });
     ro.observe(el);
     const rect = el.getBoundingClientRect();
@@ -227,37 +169,18 @@ export function LuckysheetViewer({
       try {
         setLoading(true);
         setError(null);
+        
+        loadStyle('https://cdn.jsdelivr.net/npm/luckysheet@latest/dist/plugins/css/pluginsCss.css');
+        loadStyle('https://cdn.jsdelivr.net/npm/luckysheet@latest/dist/plugins/plugins.css');
+        loadStyle('https://cdn.jsdelivr.net/npm/luckysheet@latest/dist/css/luckysheet.css');
+        loadStyle('https://cdn.jsdelivr.net/npm/luckysheet@latest/dist/fonts/iconfont.css');
 
-        loadStyle(
-          'https://cdn.jsdelivr.net/npm/luckysheet@latest/dist/plugins/css/pluginsCss.css',
-        );
-        loadStyle(
-          'https://cdn.jsdelivr.net/npm/luckysheet@latest/dist/plugins/plugins.css',
-        );
-        loadStyle(
-          'https://cdn.jsdelivr.net/npm/luckysheet@latest/dist/css/luckysheet.css',
-        );
-        loadStyle(
-          'https://cdn.jsdelivr.net/npm/luckysheet@latest/dist/fonts/iconfont.css',
-        );
-
-        await loadScript(
-          'https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js',
-        );
-        if (!window.$ && (window as any).jQuery)
-          window.$ = (window as any).jQuery;
-        await loadScript(
-          'https://cdn.jsdelivr.net/npm/jquery-mousewheel@3.1.13/jquery.mousewheel.min.js',
-        );
-        await loadScript(
-          'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js',
-        );
-        await loadScript(
-          'https://cdn.jsdelivr.net/npm/luckysheet@latest/dist/plugins/js/plugin.js',
-        );
-        await loadScript(
-          'https://cdn.jsdelivr.net/npm/luckysheet@latest/dist/luckysheet.umd.js',
-        );
+        await loadScript('https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js');
+        if (!window.$ && (window as any).jQuery) window.$ = (window as any).jQuery;
+        await loadScript('https://cdn.jsdelivr.net/npm/jquery-mousewheel@3.1.13/jquery.mousewheel.min.js');
+        await loadScript('https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js');
+        await loadScript('https://cdn.jsdelivr.net/npm/luckysheet@latest/dist/plugins/js/plugin.js');
+        await loadScript('https://cdn.jsdelivr.net/npm/luckysheet@latest/dist/luckysheet.umd.js');
         if (disposed) return;
 
         let ab: ArrayBuffer;
@@ -266,7 +189,7 @@ export function LuckysheetViewer({
             sandboxId,
             xlsxPath,
             'blob',
-            session.access_token,
+            session.access_token
           )) as Blob;
           ab = await blob.arrayBuffer();
         } else {
@@ -276,13 +199,13 @@ export function LuckysheetViewer({
         }
 
         const XLSX = window.XLSX;
-        const wb = XLSX.read(ab, {
-          type: 'array',
-          cellStyles: true,
-          cellDates: true,
-          cellNF: true,
-          sheetStubs: true,
-          raw: false,
+        const wb = XLSX.read(ab, { 
+          type: 'array', 
+          cellStyles: true,  
+          cellDates: true,   
+          cellNF: true,      
+          sheetStubs: true,  
+          raw: false         
         });
 
         const sheetsForLucky: any[] = [];
@@ -298,32 +221,28 @@ export function LuckysheetViewer({
               const addr = XLSX.utils.encode_cell({ r, c });
               const cell = ws[addr];
               if (!cell) continue;
-
+              
               const v: any = {
                 v: cell.v,
-                m: cell.w ?? String(cell.v ?? ''),
-                ct: {
-                  t: mapType(cell.t),
-                  fa: convertNumberFormat(cell.z) || 'General',
+                m: (cell.w ?? String(cell.v ?? '')),
+                ct: { 
+                  t: mapType(cell.t), 
+                  fa: convertNumberFormat(cell.z) || 'General' 
                 },
               };
-
+              
               const cellStyle = cell.s || {};
               const isHeader = r === 0;
-
+              
               if (cellStyle && typeof cellStyle === 'object') {
-                if (
-                  cellStyle.fgColor ||
-                  cellStyle.bgColor ||
-                  cellStyle.patternType
-                ) {
+                if (cellStyle.fgColor || cellStyle.bgColor || cellStyle.patternType) {
                   let bgColor = null;
                   if (cellStyle.fgColor?.rgb) {
                     bgColor = cellStyle.fgColor.rgb;
                   } else if (cellStyle.bgColor?.rgb) {
                     bgColor = cellStyle.bgColor.rgb;
                   }
-
+                  
                   if (bgColor) {
                     bgColor = bgColor.replace(/^#/, '').toUpperCase();
                     if (bgColor.length === 8) {
@@ -336,14 +255,13 @@ export function LuckysheetViewer({
                     }
                   }
                 }
-
+                
                 if (cellStyle.font) {
                   if (cellStyle.font.bold) v.bl = 1;
                   if (cellStyle.font.italic) v.it = 1;
                   if (cellStyle.font.underline) v.un = 1;
                   if (cellStyle.font.strike) v.cl = 1;
-                  if (cellStyle.font.sz)
-                    v.fs = Math.round(Number(cellStyle.font.sz));
+                  if (cellStyle.font.sz) v.fs = Math.round(Number(cellStyle.font.sz));
                   if (cellStyle.font.name) v.ff = cellStyle.font.name;
                   if (cellStyle.font.color?.rgb) {
                     let fc = cellStyle.font.color.rgb;
@@ -358,18 +276,18 @@ export function LuckysheetViewer({
                     }
                   }
                 }
-
+                
                 if (cellStyle.alignment) {
                   const htMap: Record<string, number> = {
-                    left: 1,
-                    center: 0,
-                    right: 2,
+                    'left': 1,
+                    'center': 0,
+                    'right': 2,
                   };
                   const vtMap: Record<string, number> = {
-                    top: 0,
-                    middle: 1,
-                    center: 1,
-                    bottom: 2,
+                    'top': 0,
+                    'middle': 1,
+                    'center': 1,
+                    'bottom': 2,
                   };
                   if (cellStyle.alignment.horizontal) {
                     v.ht = htMap[cellStyle.alignment.horizontal] ?? 0;
@@ -384,12 +302,8 @@ export function LuckysheetViewer({
                 const xfIndex = cellStyle;
                 if (wb.Styles.CellXf && wb.Styles.CellXf[xfIndex]) {
                   const xf = wb.Styles.CellXf[xfIndex];
-
-                  if (
-                    xf.fontId !== undefined &&
-                    wb.Styles.Fonts &&
-                    wb.Styles.Fonts[xf.fontId]
-                  ) {
+                  
+                  if (xf.fontId !== undefined && wb.Styles.Fonts && wb.Styles.Fonts[xf.fontId]) {
                     const font = wb.Styles.Fonts[xf.fontId];
                     if (font.bold) v.bl = 1;
                     if (font.italic) v.it = 1;
@@ -410,13 +324,8 @@ export function LuckysheetViewer({
                       }
                     }
                   }
-
-                  if (
-                    xf.fillId !== undefined &&
-                    xf.fillId > 0 &&
-                    wb.Styles.Fills &&
-                    wb.Styles.Fills[xf.fillId]
-                  ) {
+                  
+                  if (xf.fillId !== undefined && xf.fillId > 0 && wb.Styles.Fills && wb.Styles.Fills[xf.fillId]) {
                     const fill = wb.Styles.Fills[xf.fillId];
                     if (fill.fgColor?.rgb || fill.bgColor?.rgb) {
                       let bg = fill.fgColor?.rgb || fill.bgColor?.rgb;
@@ -431,18 +340,18 @@ export function LuckysheetViewer({
                       }
                     }
                   }
-
+                  
                   if (xf.alignment) {
                     const htMap: Record<string, number> = {
-                      left: 1,
-                      center: 0,
-                      right: 2,
+                      'left': 1,
+                      'center': 0,
+                      'right': 2,
                     };
                     const vtMap: Record<string, number> = {
-                      top: 0,
-                      middle: 1,
-                      center: 1,
-                      bottom: 2,
+                      'top': 0,
+                      'middle': 1,
+                      'center': 1,
+                      'bottom': 2,
                     };
                     if (xf.alignment.horizontal) {
                       v.ht = htMap[xf.alignment.horizontal] ?? 0;
@@ -454,9 +363,9 @@ export function LuckysheetViewer({
                   }
                 }
               }
-
+              
               if (isHeader) {
-                v.bl = 1;
+                v.bl = 1; 
               }
               celldata.push({ r, c, v });
             }
@@ -473,26 +382,14 @@ export function LuckysheetViewer({
           const columnlen: Record<number, number> = {};
           const cols = ws['!cols'] || [];
           cols.forEach((col: any, i: number) => {
-            const wpx =
-              col.wpx ||
-              (col.wch
-                ? Math.round(col.wch * 7.5)
-                : col.width
-                  ? col.width * 7
-                  : undefined);
+            const wpx = col.wpx || (col.wch ? Math.round(col.wch * 7.5) : col.width ? col.width * 7 : undefined);
             if (wpx) columnlen[i] = wpx;
           });
 
           const rowlen: Record<number, number> = {};
           const rows = ws['!rows'] || [];
           rows.forEach((row: any, i: number) => {
-            const hpx =
-              row.hpx ||
-              (row.hpt
-                ? Math.round(row.hpt * 1.33)
-                : row.h
-                  ? row.h
-                  : undefined);
+            const hpx = row.hpx || (row.hpt ? Math.round(row.hpt * 1.33) : row.h ? row.h : undefined);
             if (hpx) rowlen[i] = hpx;
           });
 
@@ -524,13 +421,13 @@ export function LuckysheetViewer({
             zoomRatio: 1,
             image: [],
             showGridLines: 1,
-            dataVerification: {},
+            dataVerification: {}
           });
         });
 
         if (!containerRef.current) return;
         containerRef.current.innerHTML = '';
-
+        
         window.luckysheet?.create({
           container: containerIdRef.current,
           data: sheetsForLucky,
@@ -569,10 +466,10 @@ export function LuckysheetViewer({
             image: false,
             link: false,
             data: false,
-            cellFormat: true,
-          },
+            cellFormat: true
+          }
         });
-
+        
         if (!disposed) setLoading(false);
       } catch (e: any) {
         if (!disposed) {
@@ -582,39 +479,21 @@ export function LuckysheetViewer({
       }
     }
     init();
-    return () => {
-      disposed = true;
-    };
+    return () => { disposed = true; };
   }, [xlsxPath, sandboxId, session?.access_token]);
 
   const resolvedHeight = height ?? measuredHeight ?? 0;
 
   return (
-    <div
-      ref={wrapperRef}
-      className={className}
-      style={{
-        height: height
-          ? typeof height === 'number'
-            ? `${height}px`
-            : height
-          : undefined,
-      }}
-    >
+    <div ref={wrapperRef} className={className} style={{ height: height ? (typeof height === 'number' ? `${height}px` : height) : undefined }}>
       {error ? (
         <div className="text-sm text-red-600">{error}</div>
       ) : (
-        <div
-          id={containerIdRef.current}
-          ref={containerRef}
-          style={{ height: resolvedHeight, width: '100%' }}
-        />
+        <div id={containerIdRef.current} ref={containerRef} style={{ height: resolvedHeight, width: '100%' }} />
       )}
       {loading && !error && (
-        <div className="text-xs text-muted-foreground mt-2">
-          Loading formatted viewer…
-        </div>
+        <div className="text-xs text-muted-foreground mt-2">Loading formatted viewer…</div>
       )}
     </div>
   );
-}
+} 

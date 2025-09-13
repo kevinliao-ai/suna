@@ -12,17 +12,17 @@ interface AgentAvatarProps {
   fallbackName?: string;
 }
 
-export const AgentAvatar: React.FC<AgentAvatarProps> = ({
-  agentId,
-  size = 16,
-  className = '',
-  fallbackName = 'Suna',
+export const AgentAvatar: React.FC<AgentAvatarProps> = ({ 
+  agentId, 
+  size = 16, 
+  className = "", 
+  fallbackName = "Suna" 
 }) => {
   const { data: agent, isLoading } = useAgent(agentId || '');
 
   if (isLoading && agentId) {
     return (
-      <div
+      <div 
         className={`bg-muted animate-pulse rounded ${className}`}
         style={{ width: size, height: size }}
       />
@@ -40,17 +40,17 @@ export const AgentAvatar: React.FC<AgentAvatarProps> = ({
 
   if (agent?.icon_name) {
     return (
-      <div
+      <div 
         className={`flex items-center justify-center rounded ${className}`}
-        style={{
-          width: size,
+        style={{ 
+          width: size, 
           height: size,
-          backgroundColor: agent.icon_background || '#F3F4F6',
+          backgroundColor: agent.icon_background || '#F3F4F6'
         }}
       >
-        <DynamicIcon
-          name={agent.icon_name as any}
-          size={size * 0.6}
+        <DynamicIcon 
+          name={agent.icon_name as any} 
+          size={size * 0.6} 
           color={agent.icon_color || '#000000'}
         />
       </div>
@@ -59,8 +59,8 @@ export const AgentAvatar: React.FC<AgentAvatarProps> = ({
 
   if (agent?.profile_image_url) {
     return (
-      <img
-        src={agent.profile_image_url}
+      <img 
+        src={agent.profile_image_url} 
         alt={agent.name || fallbackName}
         className={`rounded object-cover ${className}`}
         style={{ width: size, height: size }}
@@ -76,9 +76,9 @@ interface AgentNameProps {
   fallback?: string;
 }
 
-export const AgentName: React.FC<AgentNameProps> = ({
-  agentId,
-  fallback = 'Suna',
+export const AgentName: React.FC<AgentNameProps> = ({ 
+  agentId, 
+  fallback = "Suna" 
 }) => {
   const { data: agent, isLoading } = useAgent(agentId || '');
 
@@ -87,4 +87,4 @@ export const AgentName: React.FC<AgentNameProps> = ({
   }
 
   return <span>{agent?.name || fallback}</span>;
-};
+}; 

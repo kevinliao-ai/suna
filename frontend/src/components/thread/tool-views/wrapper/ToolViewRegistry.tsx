@@ -49,11 +49,9 @@ import CreateAgentWorkflowToolView from '../create-agent-workflow/create-agent-w
 import ActivateAgentWorkflowToolView from '../activate-agent-workflow/activate-agent-workflow';
 import CreateAgentScheduledTriggerToolView from '../create-agent-scheduled-trigger/create-agent-scheduled-trigger';
 import ListAgentWorkflowsToolView from '../list-agent-workflows/list-agent-workflows';
-import {
-  createPresentationViewerToolContent,
-  parsePresentationSlidePath,
-} from '../utils/presentation-utils';
+import { createPresentationViewerToolContent, parsePresentationSlidePath } from '../utils/presentation-utils';
 import { extractToolData } from '../utils';
+
 
 export type ToolViewComponent = React.ComponentType<ToolViewProps>;
 
@@ -99,19 +97,20 @@ const defaultRegistry: ToolViewRegistryType = {
   'delete-tasks': TaskListToolView,
   'clear-all': TaskListToolView,
 
+
   'expose-port': ExposePortToolView,
 
   'see-image': SeeImageToolView,
   'image-edit-or-generate': ImageEditGenerateToolView,
 
-  ask: AskToolView,
-  complete: CompleteToolView,
+  'ask': AskToolView,
+  'complete': CompleteToolView,
 
-  deploy: DeployToolView,
+  'deploy': DeployToolView,
 
   'create-presentation-outline': PresentationOutlineToolView,
   'list-presentation-templates': ListPresentationTemplatesToolView,
-
+  
   // New per-slide presentation tools
   'create-slide': PresentationViewer,
   'list-slides': PresentationViewer,
@@ -120,7 +119,7 @@ const defaultRegistry: ToolViewRegistryType = {
   'delete-presentation': DeletePresentationToolView,
   'presentation-styles': PresentationStylesToolView,
   'present-presentation': PresentPresentationToolView,
-
+  
   'create-sheet': SheetsToolView,
   'update-sheet': SheetsToolView,
   'view-sheet': SheetsToolView,
@@ -152,8 +151,7 @@ const defaultRegistry: ToolViewRegistryType = {
 
   'create-new-agent': CreateNewAgentToolView,
   'search-mcp-servers-for-agent': SearchMcpServersForAgentToolView,
-  'create-credential-profile-for-agent':
-    CreateCredentialProfileForAgentToolView,
+  'create-credential-profile-for-agent': CreateCredentialProfileForAgentToolView,
   'discover-mcp-tools-for-agent': DiscoverMcpToolsForAgentToolView,
   'configure-agent-integration': ConfigureAgentIntegrationToolView,
   'create-agent-workflow': CreateAgentWorkflowToolView,
@@ -192,7 +190,7 @@ class ToolViewRegistry {
   }
 
   getToolNames(): string[] {
-    return Object.keys(this.registry).filter((key) => key !== 'default');
+    return Object.keys(this.registry).filter(key => key !== 'default');
   }
 
   clear(): void {
@@ -206,12 +204,9 @@ export function useToolView(toolName: string): ToolViewComponent {
   return useMemo(() => toolViewRegistry.get(toolName), [toolName]);
 }
 
-export function ToolView({
-  name = 'default',
-  assistantContent,
-  toolContent,
-  ...props
-}: ToolViewProps) {
+
+
+export function ToolView({ name = 'default', assistantContent, toolContent, ...props }: ToolViewProps) {
   const toolToolData = extractToolData(toolContent);
 
   // find the file path from the tool arguments
@@ -219,11 +214,7 @@ export function ToolView({
   const filePath = toolArguments.file_path || toolArguments.target_file;
 
   // check if the file path is a presentation slide
-  const {
-    isValid: isPresentationSlide,
-    presentationName,
-    slideNumber,
-  } = parsePresentationSlidePath(filePath);
+  const { isValid: isPresentationSlide, presentationName, slideNumber } = parsePresentationSlidePath(filePath);
   let modifiedToolContent = toolContent;
 
   // define presentation-related tools that shouldn't be transformed
@@ -234,36 +225,19 @@ export function ToolView({
     'delete-presentation',
     'presentation-styles',
     'present-presentation',
-  ];
+  ]
 
   const isAlreadyPresentationTool = presentationTools.includes(name);
 
   // if the file path is a presentation slide, we need to modify the tool content to match the expected structure for PresentationViewer
-  if (
-    isPresentationSlide &&
-    filePath &&
-    presentationName &&
-    slideNumber &&
-    !isAlreadyPresentationTool
-  ) {
-    modifiedToolContent = createPresentationViewerToolContent(
-      presentationName,
-      filePath,
-      slideNumber,
-    );
+  if (isPresentationSlide && filePath && presentationName && slideNumber && !isAlreadyPresentationTool) {
+    modifiedToolContent = createPresentationViewerToolContent(presentationName, filePath, slideNumber);
   }
-
+  
   // determine the effective tool name
-  const effectiveToolName =
-    isPresentationSlide && !isAlreadyPresentationTool ? 'create-slide' : name;
+  const effectiveToolName = (isPresentationSlide && !isAlreadyPresentationTool) ? 'create-slide' : name;
 
   // use the tool view component
   const ToolViewComponent = useToolView(effectiveToolName);
-  return (
-    <ToolViewComponent
-      name={effectiveToolName}
-      toolContent={modifiedToolContent}
-      {...props}
-    />
-  );
+  return <ToolViewComponent name={effectiveToolName} toolContent={modifiedToolContent} {...props} />;
 }

@@ -5,11 +5,7 @@ import { AlertTriangle, ExternalLink, X, Square, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { UpgradeDialog } from '@/components/ui/upgrade-dialog';
 import Link from 'next/link';
 import { useStopAgentMutation } from '@/hooks/react-query/threads/use-agent-run';
@@ -43,22 +39,22 @@ const RunningThreadItem: React.FC<RunningThreadItemProps> = ({
 
   const handleStop = async () => {
     if (!threadInfo.agentRun?.id) return;
-
+    
     try {
       await stopAgentMutation.mutateAsync(threadInfo.agentRun.id);
-
+      
       // Invalidate relevant queries to refetch updated data
       await Promise.all([
         // Refetch agent runs for this thread to update the running status
         queryClient.invalidateQueries({
-          queryKey: threadKeys.agentRuns(threadInfo.threadId),
+          queryKey: threadKeys.agentRuns(threadInfo.threadId)
         }),
         // Refetch thread details in case the status affects the thread
         queryClient.invalidateQueries({
-          queryKey: threadKeys.details(threadInfo.threadId),
-        }),
+          queryKey: threadKeys.details(threadInfo.threadId)
+        })
       ]);
-
+      
       toast.success('Agent stopped successfully');
       onThreadStopped();
     } catch (error) {
@@ -78,9 +74,7 @@ const RunningThreadItem: React.FC<RunningThreadItemProps> = ({
     if (threadInfo.projectName && threadInfo.projectName.trim()) {
       return threadInfo.projectName;
     }
-    return threadInfo.projectId
-      ? `Project ${threadInfo.projectId.slice(0, 8)}...`
-      : 'No Project';
+    return threadInfo.projectId ? `Project ${threadInfo.projectId.slice(0, 8)}...` : 'No Project';
   };
 
   return (
@@ -96,7 +90,7 @@ const RunningThreadItem: React.FC<RunningThreadItemProps> = ({
           </code>
         </div>
       </div>
-
+      
       <div className="flex items-center gap-1">
         {threadInfo.agentRun && (
           <Tooltip>
@@ -119,7 +113,7 @@ const RunningThreadItem: React.FC<RunningThreadItemProps> = ({
             <TooltipContent>Stop this agent</TooltipContent>
           </Tooltip>
         )}
-
+        
         {threadInfo.projectId && (
           <Tooltip>
             <TooltipTrigger asChild>
@@ -129,10 +123,7 @@ const RunningThreadItem: React.FC<RunningThreadItemProps> = ({
                 size="sm"
                 className="h-7 w-7 p-0 hover:bg-background"
               >
-                <Link
-                  href={`/projects/${threadInfo.projectId}/thread/${threadInfo.threadId}`}
-                  target="_blank"
-                >
+                <Link href={`/projects/${threadInfo.projectId}/thread/${threadInfo.threadId}`} target="_blank">
                   <ExternalLink className="h-3 w-3" />
                   <span className="sr-only">Open thread</span>
                 </Link>
@@ -164,38 +155,36 @@ export const AgentRunLimitDialog: React.FC<AgentRunLimitDialogProps> = ({
   // Use the exact same query keys as existing hooks for perfect cache consistency with sidebar
   // This means data fetched by the sidebar is immediately available here without additional requests
   const threadQueries = useQueries({
-    queries: runningThreadIds.map((threadId) => ({
+    queries: runningThreadIds.map(threadId => ({
       queryKey: threadKeys.details(threadId),
       queryFn: () => getThread(threadId),
       enabled: open && !!threadId,
       retry: 1,
-    })),
+    }))
   });
 
   const agentRunQueries = useQueries({
-    queries: runningThreadIds.map((threadId) => ({
+    queries: runningThreadIds.map(threadId => ({
       queryKey: threadKeys.agentRuns(threadId), // This matches useAgentRunsQuery exactly
       queryFn: () => getAgentRuns(threadId),
       enabled: open && !!threadId,
       retry: 1,
-    })),
+    }))
   });
 
   // Use the same query keys as useProjectQuery for cache consistency
   const projectQueries = useQueries({
-    queries: runningThreadIds.map((threadId) => {
-      const threadQuery = threadQueries.find(
-        (_, index) => runningThreadIds[index] === threadId,
-      );
+    queries: runningThreadIds.map(threadId => {
+      const threadQuery = threadQueries.find((_, index) => runningThreadIds[index] === threadId);
       const projectId = threadQuery?.data?.project_id;
-
+      
       return {
-        queryKey: threadKeys.project(projectId || ''),
-        queryFn: () => (projectId ? getProject(projectId) : null),
+        queryKey: threadKeys.project(projectId || ""),
+        queryFn: () => projectId ? getProject(projectId) : null,
         enabled: open && !!projectId,
         retry: 1,
       };
-    }),
+    })
   });
 
   // Process the React Query results into our thread info structure
@@ -204,25 +193,17 @@ export const AgentRunLimitDialog: React.FC<AgentRunLimitDialogProps> = ({
       const threadQuery = threadQueries[index];
       const agentRunQuery = agentRunQueries[index];
       const projectQuery = projectQueries[index];
-
-      const isLoading =
-        threadQuery.isLoading ||
-        agentRunQuery.isLoading ||
-        projectQuery.isLoading;
-      const hasError =
-        threadQuery.isError || agentRunQuery.isError || projectQuery.isError;
-
+      
+      const isLoading = threadQuery.isLoading || agentRunQuery.isLoading || projectQuery.isLoading;
+      const hasError = threadQuery.isError || agentRunQuery.isError || projectQuery.isError;
+      
       // Find the running agent run for this thread
-      const runningAgentRun =
-        agentRunQuery.data?.find((run: AgentRun) => run.status === 'running') ||
-        null;
-
+      const runningAgentRun = agentRunQuery.data?.find((run: AgentRun) => run.status === 'running') || null;
+      
       // Get thread name from first user message if available
       let threadName = '';
       if (threadQuery.data?.messages?.length > 0) {
-        const firstUserMessage = threadQuery.data.messages.find(
-          (msg: any) => msg.type === 'user',
-        );
+        const firstUserMessage = threadQuery.data.messages.find((msg: any) => msg.type === 'user');
         if (firstUserMessage?.content) {
           threadName = firstUserMessage.content.substring(0, 50);
           if (firstUserMessage.content.length > 50) threadName += '...';
@@ -245,10 +226,7 @@ export const AgentRunLimitDialog: React.FC<AgentRunLimitDialogProps> = ({
     });
   }, [runningThreadIds, threadQueries, agentRunQueries, projectQueries]);
 
-  const isLoadingThreads =
-    threadQueries.some((q) => q.isLoading) ||
-    agentRunQueries.some((q) => q.isLoading) ||
-    projectQueries.some((q) => q.isLoading);
+  const isLoadingThreads = threadQueries.some(q => q.isLoading) || agentRunQueries.some(q => q.isLoading) || projectQueries.some(q => q.isLoading);
 
   const handleClose = () => {
     onOpenChange(false);
@@ -270,10 +248,10 @@ export const AgentRunLimitDialog: React.FC<AgentRunLimitDialogProps> = ({
       size="sm"
       actions={[
         {
-          label: 'Got it',
+          label: "Got it",
           onClick: handleClose,
-          variant: 'outline',
-        },
+          variant: "outline"
+        }
       ]}
     >
       {(runningThreadIds.length > 0 || runningCount > 0) && (
@@ -281,23 +259,16 @@ export const AgentRunLimitDialog: React.FC<AgentRunLimitDialogProps> = ({
           <div className="flex items-center gap-2">
             <h4 className="text-sm font-medium">Currently Running Agents</h4>
           </div>
-
+          
           {isLoadingThreads ? (
             <div className="flex items-center justify-center py-4">
               <Loader2 className="h-4 w-4 animate-spin" />
-              <span className="ml-2 text-sm text-muted-foreground">
-                Loading threads...
-              </span>
+              <span className="ml-2 text-sm text-muted-foreground">Loading threads...</span>
             </div>
           ) : runningThreadIds.length === 0 ? (
             <div className="text-center py-4 text-sm text-muted-foreground">
-              <p>
-                Found {runningCount} running agents but unable to load thread
-                details.
-              </p>
-              <p className="text-xs mt-1">
-                Thread IDs: {JSON.stringify(runningThreadIds)}
-              </p>
+              <p>Found {runningCount} running agents but unable to load thread details.</p>
+              <p className="text-xs mt-1">Thread IDs: {JSON.stringify(runningThreadIds)}</p>
             </div>
           ) : (
             <div className="space-y-2 max-h-64 overflow-y-auto">
@@ -308,7 +279,7 @@ export const AgentRunLimitDialog: React.FC<AgentRunLimitDialogProps> = ({
                   onThreadStopped={handleThreadStopped}
                 />
               ))}
-
+              
               {runningThreadsInfo.length > 5 && (
                 <div className="text-center py-2">
                   <Badge variant="outline" className="text-xs">
@@ -328,10 +299,7 @@ export const AgentRunLimitDialog: React.FC<AgentRunLimitDialogProps> = ({
         <ul className="space-y-2 text-sm text-muted-foreground">
           <li className="flex items-start gap-2">
             <div className="h-1.5 w-1.5 rounded-full bg-muted-foreground mt-2 flex-shrink-0" />
-            <span>
-              Click the <Square className="h-3 w-3 inline mx-1" /> button to
-              stop running agents
-            </span>
+            <span>Click the <Square className="h-3 w-3 inline mx-1" /> button to stop running agents</span>
           </li>
           <li className="flex items-start gap-2">
             <div className="h-1.5 w-1.5 rounded-full bg-muted-foreground mt-2 flex-shrink-0" />

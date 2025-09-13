@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Palette, Layout, Sparkles, Building2, Brush } from 'lucide-react';
 import { ToolViewProps } from '../types';
@@ -38,12 +32,9 @@ const templateIcons = {
 };
 
 const templateColors = {
-  minimal:
-    'bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800',
-  corporate:
-    'bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800',
-  creative:
-    'bg-purple-50 border-purple-200 dark:bg-purple-950/30 dark:border-purple-800',
+  minimal: 'bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800',
+  corporate: 'bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800',
+  creative: 'bg-purple-50 border-purple-200 dark:bg-purple-950/30 dark:border-purple-800',
 };
 
 const templateAccents = {
@@ -52,20 +43,14 @@ const templateAccents = {
   creative: 'text-purple-600 dark:text-purple-400',
 };
 
-export function ListPresentationTemplatesToolView({
-  toolContent,
-}: ToolViewProps) {
+export function ListPresentationTemplatesToolView({ toolContent }: ToolViewProps) {
   const { toolResult } = extractToolData(toolContent);
-
+  
   let templatesData: TemplatesData | null = null;
   let error: string | null = null;
 
   try {
-    if (
-      toolResult &&
-      toolResult.toolOutput &&
-      toolResult.toolOutput !== 'STREAMING'
-    ) {
+    if (toolResult && toolResult.toolOutput && toolResult.toolOutput !== 'STREAMING') {
       const output = toolResult.toolOutput;
       if (typeof output === 'string') {
         try {
@@ -110,31 +95,19 @@ export function ListPresentationTemplatesToolView({
 
       <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-3">
         {Object.entries(templates).map(([key, template]) => {
-          const IconComponent =
-            templateIcons[key as keyof typeof templateIcons] || Sparkles;
-          const cardClass =
-            templateColors[key as keyof typeof templateColors] ||
-            templateColors.minimal;
-          const accentClass =
-            templateAccents[key as keyof typeof templateAccents] ||
-            templateAccents.minimal;
+          const IconComponent = templateIcons[key as keyof typeof templateIcons] || Sparkles;
+          const cardClass = templateColors[key as keyof typeof templateColors] || templateColors.minimal;
+          const accentClass = templateAccents[key as keyof typeof templateAccents] || templateAccents.minimal;
 
           return (
-            <Card
-              key={key}
-              className={`transition-all duration-300 hover:shadow-lg ${cardClass}`}
-            >
+            <Card key={key} className={`transition-all duration-300 hover:shadow-lg ${cardClass}`}>
               <CardHeader className="pb-3">
                 <div className="flex items-center gap-3">
-                  <div
-                    className={`p-2 rounded-lg bg-white/60 dark:bg-gray-800/60`}
-                  >
+                  <div className={`p-2 rounded-lg bg-white/60 dark:bg-gray-800/60`}>
                     <IconComponent className={`h-6 w-6 ${accentClass}`} />
                   </div>
                   <div>
-                    <CardTitle className="text-xl capitalize">
-                      {template.name}
-                    </CardTitle>
+                    <CardTitle className="text-xl capitalize">{template.name}</CardTitle>
                     <CardDescription className="text-sm mt-1">
                       {template.description}
                     </CardDescription>
@@ -147,15 +120,13 @@ export function ListPresentationTemplatesToolView({
                 <div>
                   <div className="flex items-center gap-2 mb-2">
                     <Layout className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm font-medium">
-                      Available Layouts
-                    </span>
+                    <span className="text-sm font-medium">Available Layouts</span>
                   </div>
                   <div className="flex flex-wrap gap-1">
                     {template.layouts.map((layout) => (
-                      <Badge
-                        key={layout}
-                        variant="secondary"
+                      <Badge 
+                        key={layout} 
+                        variant="secondary" 
                         className="text-xs px-2 py-1"
                       >
                         {layout}
@@ -172,29 +143,25 @@ export function ListPresentationTemplatesToolView({
                   </div>
                   <div className="space-y-2">
                     {template.color_schemes.map((scheme) => (
-                      <div
-                        key={scheme.name}
+                      <div 
+                        key={scheme.name} 
                         className="flex items-center justify-between p-2 rounded-lg bg-white/40 dark:bg-gray-800/40"
                       >
-                        <span className="text-sm font-medium">
-                          {scheme.name}
-                        </span>
+                        <span className="text-sm font-medium">{scheme.name}</span>
                         <div className="flex gap-1">
-                          <div
-                            className="w-4 h-4 rounded-full border border-gray-300 dark:border-gray-600"
+                          <div 
+                            className="w-4 h-4 rounded-full border border-gray-300 dark:border-gray-600" 
                             style={{ backgroundColor: scheme.colors.primary }}
                             title={`Primary: ${scheme.colors.primary}`}
                           />
-                          <div
-                            className="w-4 h-4 rounded-full border border-gray-300 dark:border-gray-600"
+                          <div 
+                            className="w-4 h-4 rounded-full border border-gray-300 dark:border-gray-600" 
                             style={{ backgroundColor: scheme.colors.accent }}
                             title={`Accent: ${scheme.colors.accent}`}
                           />
-                          <div
-                            className="w-4 h-4 rounded-full border border-gray-300 dark:border-gray-600"
-                            style={{
-                              backgroundColor: scheme.colors.background,
-                            }}
+                          <div 
+                            className="w-4 h-4 rounded-full border border-gray-300 dark:border-gray-600" 
+                            style={{ backgroundColor: scheme.colors.background }}
                             title={`Background: ${scheme.colors.background}`}
                           />
                         </div>
@@ -211,26 +178,11 @@ export function ListPresentationTemplatesToolView({
       <div className="mt-8 p-4 bg-muted/50 rounded-lg">
         <h3 className="font-semibold mb-2">Template Selection Guide:</h3>
         <div className="text-sm text-muted-foreground space-y-1">
-          <div>
-            <strong className="text-blue-600 dark:text-blue-400">
-              Minimal:
-            </strong>{' '}
-            Keynote-style presentations, tech demos, startup pitches
-          </div>
-          <div>
-            <strong className="text-emerald-600 dark:text-emerald-400">
-              Corporate:
-            </strong>{' '}
-            Business reports, quarterly reviews, data-heavy content
-          </div>
-          <div>
-            <strong className="text-purple-600 dark:text-purple-400">
-              Creative:
-            </strong>{' '}
-            Brand stories, portfolio showcases, artistic presentations
-          </div>
+          <div><strong className="text-blue-600 dark:text-blue-400">Minimal:</strong> Keynote-style presentations, tech demos, startup pitches</div>
+          <div><strong className="text-emerald-600 dark:text-emerald-400">Corporate:</strong> Business reports, quarterly reviews, data-heavy content</div>
+          <div><strong className="text-purple-600 dark:text-purple-400">Creative:</strong> Brand stories, portfolio showcases, artistic presentations</div>
         </div>
       </div>
     </div>
   );
-}
+} 

@@ -7,16 +7,16 @@ import {
   Play,
   FileText,
   Bot,
-  Zap,
+  Zap
 } from 'lucide-react';
 import { ToolViewProps } from '../types';
 import { formatTimestamp, getToolTitle } from '../utils';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { LoadingState } from '../shared/LoadingState';
-import { Separator } from '@/components/ui/separator';
+import { Separator } from "@/components/ui/separator";
 import { extractCreateAgentScheduledTriggerData } from './_utils';
 
 export default function CreateAgentScheduledTriggerToolView({
@@ -40,13 +40,13 @@ export default function CreateAgentScheduledTriggerToolView({
     trigger,
     actualIsSuccess,
     actualToolTimestamp,
-    actualAssistantTimestamp,
+    actualAssistantTimestamp
   } = extractCreateAgentScheduledTriggerData(
     assistantContent,
     toolContent,
     isSuccess,
     toolTimestamp,
-    assistantTimestamp,
+    assistantTimestamp
   );
 
   const toolTitle = getToolTitle(name);
@@ -62,7 +62,7 @@ export default function CreateAgentScheduledTriggerToolView({
       '*/30 * * * *': 'Every 30 minutes',
       '0 */6 * * *': 'Every 6 hours',
     };
-
+    
     return cronMap[cron] || `Custom schedule: ${cron}`;
   };
 
@@ -85,10 +85,10 @@ export default function CreateAgentScheduledTriggerToolView({
             <Badge
               variant="secondary"
               className={cn(
-                'text-xs font-medium',
+                "text-xs font-medium",
                 actualIsSuccess
-                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800'
-                  : 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800',
+                  ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800"
+                  : "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800"
               )}
             >
               {actualIsSuccess ? (
@@ -122,13 +122,9 @@ export default function CreateAgentScheduledTriggerToolView({
                       <Clock className="h-6 w-6 text-purple-600" />
                     </div>
                     <div className="space-y-1">
-                      <h3 className="font-semibold text-foreground">
-                        {trigger.name}
-                      </h3>
+                      <h3 className="font-semibold text-foreground">{trigger.name}</h3>
                       {trigger.description && (
-                        <p className="text-sm text-muted-foreground">
-                          {trigger.description}
-                        </p>
+                        <p className="text-sm text-muted-foreground">{trigger.description}</p>
                       )}
                     </div>
                   </div>
@@ -137,10 +133,7 @@ export default function CreateAgentScheduledTriggerToolView({
                       <Play className="h-3 w-3 mr-1" />
                       {trigger.is_active ? 'Active' : 'Inactive'}
                     </Badge>
-                    <Badge
-                      variant="outline"
-                      className="text-xs border-purple-200 text-purple-700 bg-purple-50"
-                    >
+                    <Badge variant="outline" className="text-xs border-purple-200 text-purple-700 bg-purple-50">
                       {isWorkflowExecution ? (
                         <FileText className="h-3 w-3 mr-1" />
                       ) : (
@@ -155,15 +148,11 @@ export default function CreateAgentScheduledTriggerToolView({
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <p className="text-sm font-medium text-foreground">
-                      Schedule
-                    </p>
+                    <p className="text-sm font-medium text-foreground">Schedule</p>
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4 text-muted-foreground" />
                       <div>
-                        <p className="text-sm text-foreground font-mono">
-                          {trigger.cron_expression}
-                        </p>
+                        <p className="text-sm text-foreground font-mono">{trigger.cron_expression}</p>
                         <p className="text-xs text-muted-foreground">
                           {formatCronExpression(trigger.cron_expression)}
                         </p>
@@ -171,9 +160,7 @@ export default function CreateAgentScheduledTriggerToolView({
                     </div>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-sm font-medium text-foreground">
-                      Created
-                    </p>
+                    <p className="text-sm font-medium text-foreground">Created</p>
                     <div className="flex items-center gap-2">
                       <Clock className="h-4 w-4 text-muted-foreground" />
                       <p className="text-sm text-muted-foreground">
@@ -184,45 +171,30 @@ export default function CreateAgentScheduledTriggerToolView({
                   </div>
                 </div>
 
-                {isWorkflowExecution &&
-                  workflow_input &&
-                  Object.keys(workflow_input).length > 0 && (
-                    <>
-                      <Separator />
-                      <div className="space-y-3">
-                        <p className="text-sm font-medium text-foreground">
-                          Workflow Input Parameters
-                        </p>
-                        <div className="space-y-2">
-                          {Object.entries(workflow_input).map(
-                            ([key, value]) => (
-                              <div
-                                key={key}
-                                className="flex items-center justify-between p-3 bg-muted rounded-lg"
-                              >
-                                <div className="flex-1">
-                                  <p className="text-sm font-medium text-foreground">
-                                    {key}
-                                  </p>
-                                  <p className="text-xs text-muted-foreground font-mono">
-                                    {String(value)}
-                                  </p>
-                                </div>
-                              </div>
-                            ),
-                          )}
-                        </div>
+                {isWorkflowExecution && workflow_input && Object.keys(workflow_input).length > 0 && (
+                  <>
+                    <Separator />
+                    <div className="space-y-3">
+                      <p className="text-sm font-medium text-foreground">Workflow Input Parameters</p>
+                      <div className="space-y-2">
+                        {Object.entries(workflow_input).map(([key, value]) => (
+                          <div key={key} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                            <div className="flex-1">
+                              <p className="text-sm font-medium text-foreground">{key}</p>
+                              <p className="text-xs text-muted-foreground font-mono">{String(value)}</p>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    </>
-                  )}
+                    </div>
+                  </>
+                )}
 
                 {!isWorkflowExecution && agent_prompt && (
                   <>
                     <Separator />
                     <div className="space-y-3">
-                      <p className="text-sm font-medium text-foreground">
-                        Agent Prompt
-                      </p>
+                      <p className="text-sm font-medium text-foreground">Agent Prompt</p>
                       <div className="p-3 bg-muted border border-border rounded-lg text-sm text-foreground">
                         {agent_prompt}
                       </div>
@@ -233,8 +205,7 @@ export default function CreateAgentScheduledTriggerToolView({
                 <div className="pt-2 border-t border-border">
                   <div className="flex items-center gap-2 text-sm text-purple-700 dark:text-purple-400">
                     <div className="w-2 h-2 bg-purple-500 rounded-full" />
-                    The scheduled trigger is now active and will run
-                    automatically according to the schedule.
+                    The scheduled trigger is now active and will run automatically according to the schedule.
                   </div>
                 </div>
               </div>
@@ -244,16 +215,12 @@ export default function CreateAgentScheduledTriggerToolView({
           <div className="p-4 text-center">
             <div className="space-y-2">
               <AlertTriangle className="h-8 w-8 text-red-500 mx-auto" />
-              <p className="text-sm font-medium text-foreground">
-                Failed to create scheduled trigger
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Please check the trigger configuration and try again.
-              </p>
+              <p className="text-sm font-medium text-foreground">Failed to create scheduled trigger</p>
+              <p className="text-xs text-muted-foreground">Please check the trigger configuration and try again.</p>
             </div>
           </div>
         )}
       </CardContent>
     </Card>
   );
-}
+} 

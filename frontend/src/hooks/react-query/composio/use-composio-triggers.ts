@@ -48,29 +48,20 @@ export const useComposioAppsWithTriggers = () => {
   return useQuery({
     queryKey: ['composio', 'apps-with-triggers'],
     queryFn: async (): Promise<ComposioAppsWithTriggersResponse> => {
-      const res = await backendApi.get<ComposioAppsWithTriggersResponse>(
-        '/composio/triggers/apps',
-      );
-      if (!res.success)
-        throw new Error(res.error?.message || 'Failed to load apps');
+      const res = await backendApi.get<ComposioAppsWithTriggersResponse>('/composio/triggers/apps');
+      if (!res.success) throw new Error(res.error?.message || 'Failed to load apps');
       return res.data!;
     },
     staleTime: 5 * 60 * 1000,
   });
 };
 
-export const useComposioAppTriggers = (
-  toolkitSlug?: string,
-  enabled: boolean = true,
-) => {
+export const useComposioAppTriggers = (toolkitSlug?: string, enabled: boolean = true) => {
   return useQuery({
     queryKey: ['composio', 'app-triggers', toolkitSlug],
     queryFn: async (): Promise<ComposioAppTriggersResponse> => {
-      const res = await backendApi.get<ComposioAppTriggersResponse>(
-        `/composio/triggers/apps/${toolkitSlug}`,
-      );
-      if (!res.success)
-        throw new Error(res.error?.message || 'Failed to load triggers');
+      const res = await backendApi.get<ComposioAppTriggersResponse>(`/composio/triggers/apps/${toolkitSlug}`);
+      if (!res.success) throw new Error(res.error?.message || 'Failed to load triggers');
       return res.data!;
     },
     enabled: enabled && !!toolkitSlug,
@@ -105,11 +96,11 @@ export const useCreateComposioEventTrigger = () => {
     onSuccess: (data) => {
       const agentId = (data?.agent_id as string) || undefined;
       if (agentId) {
-        queryClient.invalidateQueries({
-          queryKey: ['agent-triggers', agentId],
-        });
+        queryClient.invalidateQueries({ queryKey: ['agent-triggers', agentId] });
       }
       queryClient.invalidateQueries({ queryKey: ['all-triggers'] });
-    },
+    }
   });
 };
+
+

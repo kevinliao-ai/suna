@@ -32,15 +32,26 @@ export const metadata: Metadata = {
     default: siteConfig.name,
     template: `%s - ${siteConfig.name}`,
   },
-  description: siteConfig.description,
-  keywords: siteConfig.keywords,
-  authors: [
-    { name: 'AniSora Team', url: 'https://github.com/bilibili/Index-anisora' },
+  description:
+    'Kortix is a fully open source AI assistant that helps you accomplish real-world tasks with ease. Through natural conversation, Kortix becomes your digital companion for research, data analysis, and everyday challenges.',
+  keywords: [
+    'AI',
+    'artificial intelligence',
+    'browser automation',
+    'web scraping',
+    'file management',
+    'AI assistant',
+    'open source',
+    'research',
+    'data analysis',
   ],
-  creator: 'AniSora Team',
-  publisher: 'Bilibili',
-  applicationName: 'AniSora',
+  authors: [{ name: 'Kortix Team', url: 'https://suna.so' }],
+  creator:
+    'Kortix Team',
+  publisher:
+    'Kortix Team',
   category: 'Technology',
+  applicationName: 'Suna',
   formatDetection: {
     telephone: false,
     email: false,
@@ -52,53 +63,49 @@ export const metadata: Metadata = {
     googleBot: {
       index: true,
       follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
     },
   },
   openGraph: {
-    title: siteConfig.title,
-    description: siteConfig.description,
+    title: 'Suna - Open Source Generalist AI Worker',
+    description:
+      'Suna is a fully open source AI assistant that helps you accomplish real-world tasks with ease through natural conversation.',
     url: siteConfig.url,
-    siteName: siteConfig.siteName,
-    locale: siteConfig.locale,
-    type: 'website',
+    siteName: 'Suna',
     images: [
       {
         url: '/banner.png',
         width: 1200,
         height: 630,
-        alt: 'AniSora - Open Source Generalist AI Agent',
+        alt: 'Suna - Open Source Generalist AI Worker',
         type: 'image/png',
       },
     ],
+    locale: 'en_US',
+    type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: siteConfig.title,
-    description: siteConfig.description,
-    creator: '@bilibili',
-    site: '@bilibili',
+    title: 'Suna - Open Source Generalist AI Worker',
+    description:
+      'Suna is a fully open source AI assistant that helps you accomplish real-world tasks with ease through natural conversation.',
+    creator: '@kortixai',
+    site: '@kortixai',
     images: [
       {
         url: '/banner.png',
         width: 1200,
         height: 630,
-        alt: 'AniSora - Open Source Generalist AI Agent',
+        alt: 'Suna - Open Source Generalist AI Worker',
       },
     ],
   },
   icons: {
-    icon: [{ url: '/faviconHerd.png', sizes: 'any' }],
-    shortcut: '/faviconHerd.png',
+    icon: [{ url: '/favicon.png', sizes: 'any' }],
+    shortcut: '/favicon.png',
   },
   // manifest: "/manifest.json",
   alternates: {
     canonical: siteConfig.url,
-    types: {
-      'application/rss+xml': [{ url: '/rss.xml', title: 'AniSora RSS Feed' }],
-    },
   },
 };
 
@@ -118,27 +125,7 @@ export default function RootLayout({
           'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
           })(window,document,'script','dataLayer','GTM-PCHSN4M2');`}
         </Script>
-        <Script
-          async
-          src="https://cdn.tolt.io/tolt.js"
-          data-tolt={process.env.NEXT_PUBLIC_TOLT_REFERRAL_ID}
-        ></Script>
-        {/* Google AdSense */}
-        <Script
-          id="google-adsense"
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4146045147843356"
-          strategy="afterInteractive"
-          crossOrigin="anonymous"
-          async
-        />
-        {/* End Google AdSense */}
-        {/* Google AdSense */}
-        <Script
-          src="https://cdn.ampproject.org/v0/amp-auto-ads-0.1.js"
-          async
-          custom-element="amp-auto-ads"
-        />
-        {/* End Google AdSense */}
+        <Script async src="https://cdn.tolt.io/tolt.js" data-tolt={process.env.NEXT_PUBLIC_TOLT_REFERRAL_ID}></Script>
       </head>
 
       <body
@@ -146,7 +133,7 @@ export default function RootLayout({
       >
         <noscript>
           <iframe
-            src="https://www.googletagmanager.com/ns.html?id=GTM-MPT74VX8"
+            src="https://www.googletagmanager.com/ns.html?id=GTM-PCHSN4M2"
             height="0"
             width="0"
             style={{ display: 'none', visibility: 'hidden' }}

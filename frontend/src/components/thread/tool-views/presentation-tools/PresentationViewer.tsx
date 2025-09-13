@@ -1,5 +1,10 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
@@ -25,10 +30,7 @@ import {
 } from 'lucide-react';
 import { ToolViewProps } from '../types';
 import { formatTimestamp, extractToolData, getToolTitle } from '../utils';
-import {
-  downloadPresentation,
-  handleGoogleSlidesUpload,
-} from '../utils/presentation-utils';
+import { downloadPresentation, handleGoogleSlidesUpload } from '../utils/presentation-utils';
 import { constructHtmlPreviewUrl } from '@/lib/utils/url';
 import { CodeBlockCode } from '@/components/ui/code-block';
 import { LoadingState } from '../shared/LoadingState';
@@ -54,6 +56,7 @@ interface PresentationMetadata {
 
 interface PresentationViewerProps extends ToolViewProps {
   // All data will be extracted from toolContent
+  showHeader?: boolean;
 }
 
 export function PresentationViewer({
@@ -65,22 +68,19 @@ export function PresentationViewer({
   isStreaming = false,
   name,
   project,
+  showHeader = true,
 }: PresentationViewerProps) {
   const [metadata, setMetadata] = useState<PresentationMetadata | null>(null);
 
   const [isLoadingMetadata, setIsLoadingMetadata] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [retryAttempt, setRetryAttempt] = useState(0);
-  const [hasScrolledToCurrentSlide, setHasScrolledToCurrentSlide] =
-    useState(false);
-  const [backgroundRetryInterval, setBackgroundRetryInterval] =
-    useState<NodeJS.Timeout | null>(null);
+  const [hasScrolledToCurrentSlide, setHasScrolledToCurrentSlide] = useState(false);
+  const [backgroundRetryInterval, setBackgroundRetryInterval] = useState<NodeJS.Timeout | null>(null);
 
   const [visibleSlide, setVisibleSlide] = useState<number | null>(null);
   const [isFullScreenOpen, setIsFullScreenOpen] = useState(false);
-  const [fullScreenInitialSlide, setFullScreenInitialSlide] = useState<
-    number | null
-  >(null);
+  const [fullScreenInitialSlide, setFullScreenInitialSlide] = useState<number | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
 
   // Extract presentation info from tool data
@@ -91,20 +91,13 @@ export function PresentationViewer({
   let presentationTitle: string | undefined;
   let toolExecutionError: string | undefined;
 
-  if (
-    toolResult &&
-    toolResult.toolOutput &&
-    toolResult.toolOutput !== 'STREAMING'
-  ) {
+  if (toolResult && toolResult.toolOutput && toolResult.toolOutput !== 'STREAMING') {
     try {
       let output;
-
+      
       if (typeof toolResult.toolOutput === 'string') {
         // Check if the string looks like an error message
-        if (
-          toolResult.toolOutput.startsWith('Error') ||
-          toolResult.toolOutput.includes('exec')
-        ) {
+        if (toolResult.toolOutput.startsWith('Error') || toolResult.toolOutput.includes('exec')) {
           console.error('Tool execution error:', toolResult.toolOutput);
           toolExecutionError = toolResult.toolOutput;
           // Don't return early - let the component render the error state
@@ -122,7 +115,7 @@ export function PresentationViewer({
       } else {
         output = toolResult.toolOutput;
       }
-
+      
       // Only extract data if we have a valid parsed object
       if (output && typeof output === 'object') {
         extractedPresentationName = output.presentation_name;
@@ -149,72 +142,67 @@ export function PresentationViewer({
   // Load metadata.json for the presentation with retry logic
   const loadMetadata = async (retryCount = 0, maxRetries = 5) => {
     if (!extractedPresentationName || !project?.sandbox?.sandbox_url) return;
-
+    
     setIsLoadingMetadata(true);
     setError(null);
     setRetryAttempt(retryCount);
-
+    
     try {
       // Sanitize the presentation name to match backend directory creation
-      const sanitizedPresentationName = sanitizeFilename(
-        extractedPresentationName,
-      );
-
+      const sanitizedPresentationName = sanitizeFilename(extractedPresentationName);
+      
       const metadataUrl = constructHtmlPreviewUrl(
-        project.sandbox.sandbox_url,
-        `presentations/${sanitizedPresentationName}/metadata.json`,
+        project.sandbox.sandbox_url, 
+        `presentations/${sanitizedPresentationName}/metadata.json`
       );
-
+      
       // Add cache-busting parameter to ensure fresh data
       const urlWithCacheBust = `${metadataUrl}?t=${Date.now()}`;
-
-      console.log(
-        `Loading presentation metadata (attempt ${retryCount + 1}/${maxRetries + 1}):`,
-        urlWithCacheBust,
-      );
-
+      
+      console.log(`Loading presentation metadata (attempt ${retryCount + 1}/${maxRetries + 1}):`, urlWithCacheBust);
+      
       const response = await fetch(urlWithCacheBust, {
         cache: 'no-cache',
         headers: {
-          'Cache-Control': 'no-cache',
-        },
+          'Cache-Control': 'no-cache'
+        }
       });
-
+      
       if (response.ok) {
         const data = await response.json();
         setMetadata(data);
         console.log('Successfully loaded presentation metadata:', data);
         setIsLoadingMetadata(false);
-
+        
         // Clear background retry interval on success
         if (backgroundRetryInterval) {
           clearInterval(backgroundRetryInterval);
           setBackgroundRetryInterval(null);
         }
-
+        
         return; // Success, exit early
       } else {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
     } catch (err) {
       console.error(`Error loading metadata (attempt ${retryCount + 1}):`, err);
-
+      
       // If we haven't reached max retries, try again with exponential backoff
       if (retryCount < maxRetries) {
         const delay = Math.min(1000 * Math.pow(2, retryCount), 10000); // Cap at 10 seconds
         console.log(`Retrying in ${delay}ms...`);
-
+        
         setTimeout(() => {
           loadMetadata(retryCount + 1, maxRetries);
         }, delay);
-
+        
         return; // Don't set error state yet, we're retrying
       }
-
+      
       // All retries exhausted, set error and start background retry
       setError('Failed to load presentation metadata after multiple attempts');
       setIsLoadingMetadata(false);
-
+      
       // Start background retry every 10 seconds
       if (!backgroundRetryInterval) {
         const interval = setInterval(() => {
@@ -264,12 +252,7 @@ export function PresentationViewer({
 
   // Additional effect to scroll when slides are actually rendered
   useEffect(() => {
-    if (
-      slides.length > 0 &&
-      currentSlideNumber &&
-      metadata &&
-      !hasScrolledToCurrentSlide
-    ) {
+    if (slides.length > 0 && currentSlideNumber && metadata && !hasScrolledToCurrentSlide) {
       // Extra delay to ensure DOM is fully rendered
       const timer = setTimeout(() => {
         scrollToCurrentSlide(100);
@@ -288,15 +271,13 @@ export function PresentationViewer({
     setVisibleSlide(slides[0].number);
 
     const handleScroll = () => {
-      const scrollArea = document.querySelector(
-        '[data-radix-scroll-area-viewport]',
-      );
+      
+      const scrollArea = document.querySelector('[data-radix-scroll-area-viewport]');
       if (!scrollArea || slides.length === 0) return;
 
       const { scrollTop, scrollHeight, clientHeight } = scrollArea;
       const scrollViewportRect = scrollArea.getBoundingClientRect();
-      const viewportCenter =
-        scrollViewportRect.top + scrollViewportRect.height / 2;
+      const viewportCenter = scrollViewportRect.top + scrollViewportRect.height / 2;
 
       // Check if we're at the very top (first slide)
       if (scrollTop <= 10) {
@@ -323,9 +304,8 @@ export function PresentationViewer({
         const distanceFromCenter = Math.abs(slideCenter - viewportCenter);
 
         // Only consider slides that are at least partially visible
-        const isPartiallyVisible =
-          slideRect.bottom > scrollViewportRect.top &&
-          slideRect.top < scrollViewportRect.bottom;
+        const isPartiallyVisible = slideRect.bottom > scrollViewportRect.top && 
+                                 slideRect.top < scrollViewportRect.bottom;
 
         if (isPartiallyVisible && distanceFromCenter < smallestDistance) {
           smallestDistance = distanceFromCenter;
@@ -343,9 +323,7 @@ export function PresentationViewer({
       scrollTimeout = setTimeout(handleScroll, 50);
     };
 
-    const scrollArea = document.querySelector(
-      '[data-radix-scroll-area-viewport]',
-    );
+    const scrollArea = document.querySelector('[data-radix-scroll-area-viewport]');
     if (scrollArea) {
       scrollArea.addEventListener('scroll', debouncedHandleScroll);
       // Run once immediately to set initial state
@@ -363,29 +341,25 @@ export function PresentationViewer({
   // Helper function to scroll to current slide
   const scrollToCurrentSlide = (delay: number = 200) => {
     if (!currentSlideNumber || !metadata) return;
-
+    
     setTimeout(() => {
-      const slideElement = document.getElementById(
-        `slide-${currentSlideNumber}`,
-      );
-
+      const slideElement = document.getElementById(`slide-${currentSlideNumber}`);
+      
       if (slideElement) {
-        slideElement.scrollIntoView({
-          behavior: 'smooth',
+        slideElement.scrollIntoView({ 
+          behavior: 'smooth', 
           block: 'center',
-          inline: 'nearest',
+          inline: 'nearest'
         });
       } else {
         // Fallback: try again after a longer delay if element not found yet
         setTimeout(() => {
-          const retryElement = document.getElementById(
-            `slide-${currentSlideNumber}`,
-          );
+          const retryElement = document.getElementById(`slide-${currentSlideNumber}`);
           if (retryElement) {
-            retryElement.scrollIntoView({
-              behavior: 'smooth',
+            retryElement.scrollIntoView({ 
+              behavior: 'smooth', 
               block: 'center',
-              inline: 'nearest',
+              inline: 'nearest'
             });
           }
         }, 500);
@@ -398,65 +372,57 @@ export function PresentationViewer({
 
   // Memoized slide iframe component to prevent unnecessary re-renders
   const SlideIframe = useMemo(() => {
-    const SlideIframeComponent = React.memo(
-      ({ slide }: { slide: SlideMetadata & { number: number } }) => {
-        const [containerRef, setContainerRef] = useState<HTMLDivElement | null>(
-          null,
-        );
-        const [scale, setScale] = useState(1);
+    const SlideIframeComponent = React.memo(({ slide }: { slide: SlideMetadata & { number: number } }) => {
+      const [containerRef, setContainerRef] = useState<HTMLDivElement | null>(null);
+      const [scale, setScale] = useState(1);
 
-        useEffect(() => {
-          if (containerRef) {
-            const updateScale = () => {
-              const containerWidth = containerRef.offsetWidth;
-              const containerHeight = containerRef.offsetHeight;
+      useEffect(() => {
+        if (containerRef) {
+          const updateScale = () => {
+            const containerWidth = containerRef.offsetWidth;
+            const containerHeight = containerRef.offsetHeight;
+            
+            // Calculate scale to fit 1920x1080 into container while maintaining aspect ratio
+            const scaleX = containerWidth / 1920;
+            const scaleY = containerHeight / 1080;
+            const newScale = Math.min(scaleX, scaleY);
+            
+            // Only update if scale actually changed to prevent unnecessary re-renders
+            if (Math.abs(newScale - scale) > 0.001) {
+              setScale(newScale);
+            }
+          };
 
-              // Calculate scale to fit 1920x1080 into container while maintaining aspect ratio
-              const scaleX = containerWidth / 1920;
-              const scaleY = containerHeight / 1080;
-              const newScale = Math.min(scaleX, scaleY);
+          // Use a debounced version for resize events to prevent excessive updates
+          let resizeTimeout: NodeJS.Timeout;
+          const debouncedUpdateScale = () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(updateScale, 100);
+          };
 
-              // Only update if scale actually changed to prevent unnecessary re-renders
-              if (Math.abs(newScale - scale) > 0.001) {
-                setScale(newScale);
-              }
-            };
-
-            // Use a debounced version for resize events to prevent excessive updates
-            let resizeTimeout: NodeJS.Timeout;
-            const debouncedUpdateScale = () => {
-              clearTimeout(resizeTimeout);
-              resizeTimeout = setTimeout(updateScale, 100);
-            };
-
-            updateScale();
-            window.addEventListener('resize', debouncedUpdateScale);
-            return () => {
-              window.removeEventListener('resize', debouncedUpdateScale);
-              clearTimeout(resizeTimeout);
-            };
-          }
-        }, [containerRef, scale]);
-
-        if (!project?.sandbox?.sandbox_url) {
-          return (
-            <div className="flex items-center justify-center h-full">
-              <div className="text-center">
-                <Presentation className="h-12 w-12 mx-auto mb-4 text-zinc-400" />
-                <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                  No slide content to preview
-                </p>
-              </div>
-            </div>
-          );
+          updateScale();
+          window.addEventListener('resize', debouncedUpdateScale);
+          return () => {
+            window.removeEventListener('resize', debouncedUpdateScale);
+            clearTimeout(resizeTimeout);
+          };
         }
+      }, [containerRef, scale]);
 
-        const slideUrl = constructHtmlPreviewUrl(
-          project.sandbox.sandbox_url,
-          slide.file_path,
+      if (!project?.sandbox?.sandbox_url) {
+        return (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+              <Presentation className="h-12 w-12 mx-auto mb-4 text-zinc-400" />
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">No slide content to preview</p>
+            </div>
+          </div>
         );
-        // Add cache-busting to iframe src to ensure fresh content
-        const slideUrlWithCacheBust = `${slideUrl}?t=${refreshTimestamp}`;
+      }
+
+      const slideUrl = constructHtmlPreviewUrl(project.sandbox.sandbox_url, slide.file_path);
+      // Add cache-busting to iframe src to ensure fresh content
+      const slideUrlWithCacheBust = `${slideUrl}?t=${refreshTimestamp}`;
 
       return (
         <div className="w-full h-full flex items-center justify-center bg-transparent">
@@ -503,37 +469,24 @@ export function PresentationViewer({
   }, [project?.sandbox?.sandbox_url, refreshTimestamp]);
 
   // Render individual slide using the original approach
-  const renderSlidePreview = useCallback(
-    (slide: SlideMetadata & { number: number }) => {
-      return <SlideIframe slide={slide} />;
-    },
-    [SlideIframe],
-  );
+  const renderSlidePreview = useCallback((slide: SlideMetadata & { number: number }) => {
+    return <SlideIframe slide={slide} />;
+  }, [SlideIframe]);
 
-  const handleDownload = async (
-    setIsDownloading: (isDownloading: boolean) => void,
-    format: DownloadFormat,
-  ) => {
+  const handleDownload = async (setIsDownloading: (isDownloading: boolean) => void, format: DownloadFormat) => {
+    
     if (!project?.sandbox?.sandbox_url || !extractedPresentationName) return;
 
     setIsDownloading(true);
-    try {
-      if (format === DownloadFormat.GOOGLE_SLIDES) {
-        const result = await handleGoogleSlidesUpload(
-          project!.sandbox!.sandbox_url,
-          `/workspace/presentations/${extractedPresentationName}`,
-        );
+    try{
+      if (format === DownloadFormat.GOOGLE_SLIDES){
+        const result = await handleGoogleSlidesUpload(project!.sandbox!.sandbox_url, `/workspace/presentations/${extractedPresentationName}`);
         // If redirected to auth, don't show error
         if (result?.redirected_to_auth) {
           return; // Don't set loading false, user is being redirected
         }
-      } else {
-        await downloadPresentation(
-          format,
-          project.sandbox.sandbox_url,
-          `/workspace/presentations/${extractedPresentationName}`,
-          extractedPresentationName,
-        );
+      } else{
+        await downloadPresentation(format, project.sandbox.sandbox_url, `/workspace/presentations/${extractedPresentationName}`, extractedPresentationName);
       }
     } catch (error) {
       console.error('Error downloading PDF:', error);
@@ -541,10 +494,11 @@ export function PresentationViewer({
       setIsDownloading(false);
     }
   };
+  
 
   return (
     <Card className="gap-0 flex border shadow-none border-t border-b-0 border-x-0 p-0 rounded-none flex-col h-full overflow-hidden bg-card">
-      <CardHeader className="h-14 bg-zinc-50/80 dark:bg-zinc-900/80 backdrop-blur-sm border-b p-2 px-4 space-y-2">
+      {showHeader && <CardHeader className="h-14 bg-zinc-50/80 dark:bg-zinc-900/80 backdrop-blur-sm border-b p-2 px-4 space-y-2">
         <div className="flex flex-row items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="relative p-2 rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-600/10 border border-blue-500/20">
@@ -565,12 +519,7 @@ export function PresentationViewer({
                   variant="ghost"
                   size="sm"
                   onClick={() => {
-                    setFullScreenInitialSlide(
-                      visibleSlide ||
-                        currentSlideNumber ||
-                        slides[0]?.number ||
-                        1,
-                    );
+                    setFullScreenInitialSlide(visibleSlide || currentSlideNumber || slides[0]?.number || 1);
                     setIsFullScreenOpen(true);
                   }}
                   className="h-8 w-8 p-0"
@@ -578,12 +527,12 @@ export function PresentationViewer({
                 >
                   <ExternalLink className="h-3.5 w-3.5" />
                 </Button>
-
+                
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
                       className="h-8 w-8 p-0"
                       title="Export presentation"
                       disabled={isDownloading}
@@ -596,33 +545,24 @@ export function PresentationViewer({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-32">
-                    <DropdownMenuItem
-                      onClick={() =>
-                        handleDownload(setIsDownloading, DownloadFormat.PDF)
-                      }
+                    <DropdownMenuItem 
+                      onClick={() => handleDownload(setIsDownloading, DownloadFormat.PDF)}
                       className="cursor-pointer"
                       disabled={isDownloading}
                     >
                       <FileText className="h-4 w-4 mr-2" />
                       PDF
                     </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() =>
-                        handleDownload(setIsDownloading, DownloadFormat.PPTX)
-                      }
+                    <DropdownMenuItem 
+                      onClick={() => handleDownload(setIsDownloading, DownloadFormat.PPTX)}
                       className="cursor-pointer"
                       disabled={isDownloading}
                     >
                       <Presentation className="h-4 w-4 mr-2" />
                       PPTX
                     </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() =>
-                        handleDownload(
-                          setIsDownloading,
-                          DownloadFormat.GOOGLE_SLIDES,
-                        )
-                      }
+                    <DropdownMenuItem 
+                      onClick={() => handleDownload(setIsDownloading, DownloadFormat.GOOGLE_SLIDES)}
                       className="cursor-pointer"
                       disabled={isDownloading}
                     >
@@ -652,20 +592,18 @@ export function PresentationViewer({
             )}
           </div>
         </div>
-      </CardHeader>
+      </CardHeader>}
+
+
 
       <CardContent className="p-0 h-full flex-1 overflow-hidden relative">
-        {isStreaming || (isLoadingMetadata && !metadata) ? (
+        {(isStreaming || (isLoadingMetadata && !metadata)) ? (
           <LoadingState
             icon={Presentation}
             iconColor="text-blue-500 dark:text-blue-400"
             bgColor="bg-gradient-to-b from-blue-100 to-blue-50 shadow-inner dark:from-blue-800/40 dark:to-blue-900/60 dark:shadow-blue-950/20"
             title="Loading presentation"
-            filePath={
-              retryAttempt > 0
-                ? `Retrying... (attempt ${retryAttempt + 1})`
-                : 'Loading slides...'
-            }
+            filePath={retryAttempt > 0 ? `Retrying... (attempt ${retryAttempt + 1})` : "Loading slides..."}
             showProgress={true}
           />
         ) : error || toolExecutionError || !metadata ? (
@@ -674,15 +612,11 @@ export function PresentationViewer({
               <AlertTriangle className="h-10 w-10 text-rose-400 dark:text-rose-600" />
             </div>
             <h3 className="text-xl font-semibold mb-2 text-zinc-900 dark:text-zinc-100">
-              {toolExecutionError
-                ? 'Tool Execution Error'
-                : error || 'Failed to load presentation'}
+              {toolExecutionError ? 'Tool Execution Error' : (error || 'Failed to load presentation')}
             </h3>
             <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center max-w-md mb-4">
-              {toolExecutionError
-                ? 'The presentation tool encountered an error during execution:'
-                : error ||
-                  'There was an error loading the presentation. Please try again.'}
+              {toolExecutionError ? 'The presentation tool encountered an error during execution:' : 
+               (error || 'There was an error loading the presentation. Please try again.')}
             </p>
             {retryAttempt > 0 && !toolExecutionError && (
               <p className="text-xs text-zinc-400 dark:text-zinc-500 mb-4">
@@ -696,9 +630,9 @@ export function PresentationViewer({
               </p>
             )}
             {!toolExecutionError && error && (
-              <Button
-                onClick={() => loadMetadata()}
-                variant="outline"
+              <Button 
+                onClick={() => loadMetadata()} 
+                variant="outline" 
                 size="sm"
                 disabled={isLoadingMetadata}
                 className="mb-4"
@@ -715,8 +649,8 @@ export function PresentationViewer({
             )}
             {toolExecutionError && (
               <div className="w-full max-w-2xl">
-                <CodeBlockCode
-                  code={toolExecutionError}
+                <CodeBlockCode 
+                  code={toolExecutionError} 
                   language="text"
                   className="text-xs bg-zinc-100 dark:bg-zinc-800 p-3 rounded-md border"
                 />
@@ -816,13 +750,7 @@ export function PresentationViewer({
         }}
         presentationName={extractedPresentationName}
         sandboxUrl={project?.sandbox?.sandbox_url}
-        initialSlide={
-          fullScreenInitialSlide ||
-          visibleSlide ||
-          currentSlideNumber ||
-          slides[0]?.number ||
-          1
-        }
+        initialSlide={fullScreenInitialSlide || visibleSlide || currentSlideNumber || slides[0]?.number || 1}
       />
     </Card>
   );

@@ -4,14 +4,14 @@ import { siteConfig } from '@/lib/site';
 export const metadata: Metadata = {
   title: siteConfig.name,
   description: siteConfig.description,
-  keywords: ['AniSora', 'AI', 'Agent'],
+  keywords: ['Kortix Suna', 'Kortix', 'Suna', 'AI', 'Agent', 'Open Source'],
   authors: [
     {
-      name: 'AniSora AI Corp',
-      url: 'https://www.bilibili.com',
+      name: 'Kortix AI Corp',
+      url: 'https://kortix.ai',
     },
   ],
-  creator: 'AniSora AI Corp',
+  creator: 'Kortix AI Corp',
   openGraph: {
     type: 'website',
     locale: 'en_US',
@@ -32,8 +32,8 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: siteConfig.name,
     description: siteConfig.description,
-    creator: '@bilibili',
-    site: '@bilibili',
+    creator: '@kortixai',
+    images: ['/banner.png'],
   },
   robots: {
     index: true,

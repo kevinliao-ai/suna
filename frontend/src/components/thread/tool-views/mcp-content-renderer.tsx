@@ -7,25 +7,10 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
-  Search,
-  Database,
-  FileText,
-  Link2,
-  Key,
-  AlertTriangle,
-  Copy,
-  Globe,
-  FileCode,
-  Table,
-  BookOpen,
-  ExternalLink,
+  Search, Database, FileText, Link2, Key, AlertTriangle,
+  Copy, Globe, FileCode, Table, BookOpen, ExternalLink
 } from 'lucide-react';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
 interface MCPContentRendererProps {
@@ -50,13 +35,7 @@ interface SearchResult {
 }
 
 // Renderer for search results
-function SearchResultsRenderer({
-  data,
-  metadata,
-}: {
-  data: any;
-  metadata?: any;
-}) {
+function SearchResultsRenderer({ data, metadata }: { data: any; metadata?: any }) {
   // Normalize search results from various formats
   const normalizeResults = (data: any): SearchResult[] => {
     let items: any[] = [];
@@ -66,20 +45,13 @@ function SearchResultsRenderer({
     else if (Array.isArray(data)) items = data;
     else return [];
 
-    return items
-      .map((item, index) => ({
-        ...item,
-        url: item.url || item.link || item.href,
-        summary:
-          item.summary ||
-          item.description ||
-          item.text ||
-          item.snippet ||
-          item.content,
-        date: item.date || item.publishedDate || item.published_date,
-        title: item.title || item.name || `Result ${index + 1}`,
-      }))
-      .filter((item) => item.title || item.url);
+    return items.map((item, index) => ({
+      ...item,
+      url: item.url || item.link || item.href,
+      summary: item.summary || item.description || item.text || item.snippet || item.content,
+      date: item.date || item.publishedDate || item.published_date,
+      title: item.title || item.name || `Result ${index + 1}`
+    })).filter(item => item.title || item.url);
   };
 
   const results = normalizeResults(data);
@@ -111,10 +83,7 @@ function SearchResultsRenderer({
       <ScrollArea className="max-h-96">
         <div className="space-y-3">
           {results.map((result, idx) => (
-            <Card
-              key={idx}
-              className="p-3 bg-card border border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600 transition-colors"
-            >
+            <Card key={idx} className="p-3 bg-card border border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600 transition-colors">
               <div className="space-y-2">
                 <div className="flex items-start gap-2">
                   <Badge variant="outline" className="text-xs shrink-0 mt-0.5">
@@ -141,9 +110,7 @@ function SearchResultsRenderer({
                   <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
                     {result.author && <span>By {result.author}</span>}
                     {result.date && (
-                      <span>
-                        • {new Date(result.date).toLocaleDateString()}
-                      </span>
+                      <span>• {new Date(result.date).toLocaleDateString()}</span>
                     )}
                   </div>
                 )}
@@ -176,9 +143,7 @@ function SearchResultsRenderer({
                             variant="ghost"
                             size="sm"
                             className="h-6 w-6 p-0"
-                            onClick={() =>
-                              navigator.clipboard?.writeText(result.url!)
-                            }
+                            onClick={() => navigator.clipboard?.writeText(result.url!)}
                           >
                             <Copy className="h-3 w-3" />
                           </Button>
@@ -225,10 +190,7 @@ function TableRenderer({ data }: { data: any }) {
             <thead className="border-b border-zinc-200 dark:border-zinc-700">
               <tr>
                 {headers.map((header, idx) => (
-                  <th
-                    key={idx}
-                    className="px-3 py-2 text-left font-medium text-zinc-700 dark:text-zinc-300"
-                  >
+                  <th key={idx} className="px-3 py-2 text-left font-medium text-zinc-700 dark:text-zinc-300">
                     {header}
                   </th>
                 ))}
@@ -236,15 +198,9 @@ function TableRenderer({ data }: { data: any }) {
             </thead>
             <tbody>
               {items.map((row, rowIdx) => (
-                <tr
-                  key={rowIdx}
-                  className="border-b border-zinc-100 dark:border-zinc-800"
-                >
+                <tr key={rowIdx} className="border-b border-zinc-100 dark:border-zinc-800">
                   {headers.map((header, cellIdx) => (
-                    <td
-                      key={cellIdx}
-                      className="px-3 py-2 text-zinc-600 dark:text-zinc-400"
-                    >
+                    <td key={cellIdx} className="px-3 py-2 text-zinc-600 dark:text-zinc-400">
                       {String(row[header] ?? '')}
                     </td>
                   ))}
@@ -285,8 +241,8 @@ function JsonRenderer({ data }: { data: any }) {
 
 // Renderer for key-value pairs
 function KeyValueRenderer({ content }: { content: string }) {
-  const lines = content.split('\n').filter((line) => line.includes(':'));
-  const pairs = lines.map((line) => {
+  const lines = content.split('\n').filter(line => line.includes(':'));
+  const pairs = lines.map(line => {
     const [key, ...valueParts] = line.split(':');
     return { key: key.trim(), value: valueParts.join(':').trim() };
   });
@@ -379,27 +335,16 @@ function TextRenderer({ content }: { content: string }) {
 }
 
 // Main renderer component
-export function MCPContentRenderer({
-  detectionResult,
-  rawContent,
-}: MCPContentRendererProps) {
+export function MCPContentRenderer({ detectionResult, rawContent }: MCPContentRendererProps) {
   const { format, confidence, metadata, parsedData } = detectionResult;
 
   // Convert content to string if needed
-  const contentStr =
-    typeof rawContent === 'string'
-      ? rawContent
-      : JSON.stringify(rawContent, null, 2);
+  const contentStr = typeof rawContent === 'string' ? rawContent : JSON.stringify(rawContent, null, 2);
 
   // Select appropriate renderer based on detected format
   switch (format) {
     case ContentFormat.SEARCH_RESULTS:
-      return (
-        <SearchResultsRenderer
-          data={parsedData || rawContent}
-          metadata={metadata}
-        />
-      );
+      return <SearchResultsRenderer data={parsedData || rawContent} metadata={metadata} />;
 
     case ContentFormat.TABLE:
       return <TableRenderer data={parsedData || rawContent} />;
@@ -452,4 +397,4 @@ export function MCPContentRenderer({
     default:
       return <TextRenderer content={contentStr} />;
   }
-}
+} 

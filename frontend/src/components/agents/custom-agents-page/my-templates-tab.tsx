@@ -28,7 +28,7 @@ export const MyTemplatesTab = ({
   onUnpublish,
   onViewInMarketplace,
   onSwitchToMyAgents,
-  getTemplateStyling,
+  getTemplateStyling
 }: MyTemplatesTabProps) => {
   return (
     <div className="space-y-6 mt-8">
@@ -42,10 +42,7 @@ export const MyTemplatesTab = ({
       ) : templatesLoading ? (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {Array.from({ length: 8 }).map((_, i) => (
-            <div
-              key={i}
-              className="bg-card rounded-2xl overflow-hidden shadow-sm"
-            >
+            <div key={i} className="bg-card rounded-2xl overflow-hidden shadow-sm">
               <Skeleton className="h-48" />
               <div className="p-6 space-y-3">
                 <Skeleton className="h-5 rounded" />
@@ -64,8 +61,7 @@ export const MyTemplatesTab = ({
           </div>
           <h3 className="text-xl font-semibold mb-3">No templates yet</h3>
           <p className="text-muted-foreground mb-8 max-w-md mx-auto">
-            Create your first secure agent template to share with the community
-            while keeping your credentials safe.
+            Create your first secure agent template to share with the community while keeping your credentials safe.
           </p>
           <Button onClick={onSwitchToMyAgents} size="lg">
             <Plus className="h-4 w-4 mr-2" />
@@ -84,13 +80,11 @@ export const MyTemplatesTab = ({
                 styling={getTemplateStyling(template)}
                 isActioning={isActioning}
                 onPrimaryAction={
-                  template.is_public
+                  template.is_public 
                     ? () => onUnpublish(template.template_id, template.name)
                     : () => onPublish(template)
                 }
-                onSecondaryAction={
-                  template.is_public ? onViewInMarketplace : undefined
-                }
+                onSecondaryAction={template.is_public ? onViewInMarketplace : undefined}
               />
             );
           })}
@@ -98,4 +92,4 @@ export const MyTemplatesTab = ({
       )}
     </div>
   );
-};
+}; 

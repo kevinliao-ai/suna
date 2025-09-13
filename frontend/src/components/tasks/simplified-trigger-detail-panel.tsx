@@ -21,15 +21,11 @@ import {
   Target,
   Repeat,
   Play,
-  Pause,
+  Pause
 } from 'lucide-react';
 import Link from 'next/link';
 import { TriggerWithAgent } from '@/hooks/react-query/triggers/use-all-triggers';
-import {
-  useDeleteTrigger,
-  useToggleTrigger,
-  useUpdateTrigger,
-} from '@/hooks/react-query/triggers';
+import { useDeleteTrigger, useToggleTrigger, useUpdateTrigger } from '@/hooks/react-query/triggers';
 import { TriggerConfigDialog } from '@/components/agents/triggers/trigger-config-dialog';
 import { useAgentWorkflows } from '@/hooks/react-query/agents/use-agent-workflows';
 import { toast } from 'sonner';
@@ -52,57 +48,25 @@ interface SimplifiedTriggerDetailPanelProps {
 }
 
 const SCHEDULE_PRESETS = [
-  {
-    cron: '*/15 * * * *',
-    name: 'Every 15 minutes',
-    icon: <Zap className="h-4 w-4" />,
-  },
-  {
-    cron: '*/30 * * * *',
-    name: 'Every 30 minutes',
-    icon: <Timer className="h-4 w-4" />,
-  },
-  {
-    cron: '0 * * * *',
-    name: 'Every hour',
-    icon: <Timer className="h-4 w-4" />,
-  },
-  {
-    cron: '0 9 * * *',
-    name: 'Daily at 9 AM',
-    icon: <Target className="h-4 w-4" />,
-  },
-  {
-    cron: '0 9 * * 1-5',
-    name: 'Weekdays at 9 AM',
-    icon: <CalendarIcon className="h-4 w-4" />,
-  },
-  {
-    cron: '0 9 * * 1',
-    name: 'Weekly on Monday',
-    icon: <Repeat className="h-4 w-4" />,
-  },
-  {
-    cron: '0 9 1 * *',
-    name: 'Monthly on 1st',
-    icon: <CalendarIcon className="h-4 w-4" />,
-  },
+  { cron: '*/15 * * * *', name: 'Every 15 minutes', icon: <Zap className="h-4 w-4" /> },
+  { cron: '*/30 * * * *', name: 'Every 30 minutes', icon: <Timer className="h-4 w-4" /> },
+  { cron: '0 * * * *', name: 'Every hour', icon: <Timer className="h-4 w-4" /> },
+  { cron: '0 9 * * *', name: 'Daily at 9 AM', icon: <Target className="h-4 w-4" /> },
+  { cron: '0 9 * * 1-5', name: 'Weekdays at 9 AM', icon: <CalendarIcon className="h-4 w-4" /> },
+  { cron: '0 9 * * 1', name: 'Weekly on Monday', icon: <Repeat className="h-4 w-4" /> },
+  { cron: '0 9 1 * *', name: 'Monthly on 1st', icon: <CalendarIcon className="h-4 w-4" /> },
 ];
 
 const getScheduleDisplay = (cron?: string) => {
-  if (!cron)
-    return { name: 'Not configured', icon: <Clock className="h-4 w-4" /> };
+  if (!cron) return { name: 'Not configured', icon: <Clock className="h-4 w-4" /> };
 
-  const preset = SCHEDULE_PRESETS.find((p) => p.cron === cron);
+  const preset = SCHEDULE_PRESETS.find(p => p.cron === cron);
   if (preset) return preset;
 
   return { name: cron, icon: <Clock className="h-4 w-4" /> };
 };
 
-export function SimplifiedTriggerDetailPanel({
-  trigger,
-  onClose,
-}: SimplifiedTriggerDetailPanelProps) {
+export function SimplifiedTriggerDetailPanel({ trigger, onClose }: SimplifiedTriggerDetailPanelProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
 
@@ -111,13 +75,9 @@ export function SimplifiedTriggerDetailPanel({
   const updateMutation = useUpdateTrigger();
 
   const { data: workflows = [] } = useAgentWorkflows(trigger.agent_id);
-  const workflowName = workflows.find(
-    (w) => w.id === trigger.config?.workflow_id,
-  )?.name;
+  const workflowName = workflows.find(w => w.id === trigger.config?.workflow_id)?.name;
 
-  const isScheduled =
-    trigger.trigger_type.toLowerCase() === 'schedule' ||
-    trigger.trigger_type.toLowerCase() === 'scheduled';
+  const isScheduled = trigger.trigger_type.toLowerCase() === 'schedule' || trigger.trigger_type.toLowerCase() === 'scheduled';
   const scheduleDisplay = getScheduleDisplay(trigger.config?.cron_expression);
 
   const handleToggle = async () => {
@@ -137,7 +97,7 @@ export function SimplifiedTriggerDetailPanel({
     try {
       await deleteMutation.mutateAsync({
         triggerId: trigger.trigger_id,
-        agentId: trigger.agent_id,
+        agentId: trigger.agent_id
       });
       toast.success('Task deleted successfully');
       onClose();
@@ -164,10 +124,7 @@ export function SimplifiedTriggerDetailPanel({
     }
   };
 
-  const isLoading =
-    deleteMutation.isPending ||
-    toggleMutation.isPending ||
-    updateMutation.isPending;
+  const isLoading = deleteMutation.isPending || toggleMutation.isPending || updateMutation.isPending;
 
   const provider = {
     provider_id: isScheduled ? 'schedule' : trigger.provider_id,
@@ -175,7 +132,7 @@ export function SimplifiedTriggerDetailPanel({
     description: trigger.description || '',
     trigger_type: trigger.trigger_type,
     webhook_enabled: !!trigger.webhook_url,
-    config_schema: {},
+    config_schema: {}
   };
 
   const triggerConfig = {
@@ -189,7 +146,7 @@ export function SimplifiedTriggerDetailPanel({
     webhook_url: trigger.webhook_url,
     created_at: trigger.created_at,
     updated_at: trigger.updated_at,
-    config: trigger.config,
+    config: trigger.config
   };
 
   return (
@@ -201,10 +158,10 @@ export function SimplifiedTriggerDetailPanel({
             <div className="flex items-center gap-3 mb-2">
               <h1 className="text-2xl font-medium text-foreground">{trigger.name}</h1>
               <Badge
-                variant={trigger.is_active ? 'highlight' : 'secondary'}
+                variant={trigger.is_active ? "highlight" : "secondary"}
                 className="text-xs"
               >
-                {trigger.is_active ? 'Active' : 'Inactive'}
+                {trigger.is_active ? "Active" : "Inactive"}
               </Badge>
             </div>
             {trigger.description && (
@@ -245,7 +202,7 @@ export function SimplifiedTriggerDetailPanel({
         <div className="flex gap-3">
           <Button
             size="sm"
-            variant={trigger.is_active ? 'outline' : 'default'}
+            variant={trigger.is_active ? "outline" : "default"}
             onClick={handleToggle}
             disabled={isLoading}
             className={cn(
@@ -304,7 +261,8 @@ export function SimplifiedTriggerDetailPanel({
               <p className="text-sm text-muted-foreground">
                 {trigger.config?.execution_type === 'agent'
                   ? 'Custom prompt for the agent'
-                  : `Runs workflow: ${workflowName || 'Unknown'}`}
+                  : `Runs workflow: ${workflowName || 'Unknown'}`
+                }
               </p>
             </div>
           </div>

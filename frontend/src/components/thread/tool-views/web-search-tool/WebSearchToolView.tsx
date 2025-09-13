@@ -18,7 +18,7 @@ import { useTheme } from 'next-themes';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { LoadingState } from '../shared/LoadingState';
 import { extractWebSearchData } from './_utils';
 
@@ -32,9 +32,7 @@ export function WebSearchToolView({
   isStreaming = false,
 }: ToolViewProps) {
   const { resolvedTheme } = useTheme();
-  const [expandedResults, setExpandedResults] = useState<
-    Record<number, boolean>
-  >({});
+  const [expandedResults, setExpandedResults] = useState<Record<number, boolean>>({});
 
   const {
     query,
@@ -43,13 +41,13 @@ export function WebSearchToolView({
     images,
     actualIsSuccess,
     actualToolTimestamp,
-    actualAssistantTimestamp,
+    actualAssistantTimestamp
   } = extractWebSearchData(
     assistantContent,
     toolContent,
     isSuccess,
     toolTimestamp,
-    assistantTimestamp,
+    assistantTimestamp
   );
 
   const toolTitle = getToolTitle(name);
@@ -66,11 +64,7 @@ export function WebSearchToolView({
   const getResultType = (result: any) => {
     const { url, title } = result;
 
-    if (
-      url.includes('news') ||
-      url.includes('article') ||
-      title.includes('News')
-    ) {
+    if (url.includes('news') || url.includes('article') || title.includes('News')) {
       return { icon: FileText, label: 'Article' };
     } else if (url.includes('wiki')) {
       return { icon: BookOpen, label: 'Wiki' };
@@ -101,8 +95,8 @@ export function WebSearchToolView({
               variant="secondary"
               className={
                 actualIsSuccess
-                  ? 'bg-gradient-to-b from-emerald-200 to-emerald-100 text-emerald-700 dark:from-emerald-800/50 dark:to-emerald-900/60 dark:text-emerald-300'
-                  : 'bg-gradient-to-b from-rose-200 to-rose-100 text-rose-700 dark:from-rose-800/50 dark:to-rose-900/60 dark:text-rose-300'
+                  ? "bg-gradient-to-b from-emerald-200 to-emerald-100 text-emerald-700 dark:from-emerald-800/50 dark:to-emerald-900/60 dark:text-emerald-300"
+                  : "bg-gradient-to-b from-rose-200 to-rose-100 text-rose-700 dark:from-rose-800/50 dark:to-rose-900/60 dark:text-rose-300"
               }
             >
               {actualIsSuccess ? (
@@ -110,9 +104,7 @@ export function WebSearchToolView({
               ) : (
                 <AlertTriangle className="h-3.5 w-3.5" />
               )}
-              {actualIsSuccess
-                ? 'Search completed successfully'
-                : 'Search failed'}
+              {actualIsSuccess ? 'Search completed successfully' : 'Search failed'}
             </Badge>
           )}
         </div>
@@ -152,16 +144,12 @@ export function WebSearchToolView({
                           className="object-cover w-full h-32 group-hover:opacity-90 transition-opacity"
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
-                            target.src =
-                              "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='18' height='18' rx='2' ry='2'%3E%3C/rect%3E%3Ccircle cx='8.5' cy='8.5' r='1.5'%3E%3C/circle%3E%3Cpolyline points='21 15 16 10 5 21'%3E%3C/polyline%3E%3C/svg%3E";
-                            target.classList.add('p-4');
+                            target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='18' height='18' rx='2' ry='2'%3E%3C/rect%3E%3Ccircle cx='8.5' cy='8.5' r='1.5'%3E%3C/circle%3E%3Cpolyline points='21 15 16 10 5 21'%3E%3C/polyline%3E%3C/svg%3E";
+                            target.classList.add("p-4");
                           }}
                         />
                         <div className="absolute top-0 right-0 p-1">
-                          <Badge
-                            variant="secondary"
-                            className="bg-black/60 hover:bg-black/70 text-white border-none shadow-md"
-                          >
+                          <Badge variant="secondary" className="bg-black/60 hover:bg-black/70 text-white border-none shadow-md">
                             <ExternalLink className="h-3 w-3" />
                           </Badge>
                         </div>
@@ -169,11 +157,7 @@ export function WebSearchToolView({
                     ))}
                   </div>
                   {images.length > 6 && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="mt-2 text-xs"
-                    >
+                    <Button variant="outline" size="sm" className="mt-2 text-xs">
                       View {images.length - 6} more images
                     </Button>
                   )}
@@ -192,8 +176,7 @@ export function WebSearchToolView({
 
               <div className="space-y-4">
                 {searchResults.map((result, idx) => {
-                  const { icon: ResultTypeIcon, label: resultTypeLabel } =
-                    getResultType(result);
+                  const { icon: ResultTypeIcon, label: resultTypeLabel } = getResultType(result);
                   const isExpanded = expandedResults[idx] || false;
                   const favicon = getFavicon(result.url);
 
@@ -210,17 +193,13 @@ export function WebSearchToolView({
                               alt=""
                               className="w-5 h-5 mt-1 rounded"
                               onError={(e) => {
-                                (e.target as HTMLImageElement).style.display =
-                                  'none';
+                                (e.target as HTMLImageElement).style.display = 'none';
                               }}
                             />
                           )}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
-                              <Badge
-                                variant="outline"
-                                className="text-xs px-2 py-0 h-5 font-normal bg-zinc-50 dark:bg-zinc-800"
-                              >
+                              <Badge variant="outline" className="text-xs px-2 py-0 h-5 font-normal bg-zinc-50 dark:bg-zinc-800">
                                 <ResultTypeIcon className="h-3 w-3 mr-1 opacity-70" />
                                 {resultTypeLabel}
                               </Badge>
@@ -305,11 +284,7 @@ export function WebSearchToolView({
                             className="h-7 text-xs bg-white dark:bg-zinc-900"
                             asChild
                           >
-                            <a
-                              href={result.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
+                            <a href={result.url} target="_blank" rel="noopener noreferrer">
                               <ExternalLink className="h-3 w-3" />
                               Visit Site
                             </a>
@@ -362,4 +337,4 @@ export function WebSearchToolView({
       </div>
     </Card>
   );
-}
+} 

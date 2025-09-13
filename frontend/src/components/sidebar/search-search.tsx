@@ -79,10 +79,7 @@ export function SidebarSearch() {
 
       // Check if this is a workflow thread and use the workflow name if available
       let displayName = project.name || 'Unnamed Project';
-      if (
-        thread.metadata?.is_workflow_execution &&
-        thread.metadata?.workflow_run_name
-      ) {
+      if (thread.metadata?.is_workflow_execution && thread.metadata?.workflow_run_name) {
         displayName = thread.metadata.workflow_run_name;
       }
 

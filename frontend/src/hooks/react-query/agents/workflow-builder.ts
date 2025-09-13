@@ -10,7 +10,7 @@ import {
   CreateWorkflowRequest,
   UpdateWorkflowRequest,
   workflowToJSON,
-  validateWorkflow,
+  validateWorkflow
 } from './conditional-workflow-types';
 
 export class WorkflowBuilder {
@@ -25,7 +25,7 @@ export class WorkflowBuilder {
       status: 'draft',
       is_default: false,
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     };
     this.steps = new Map();
   }
@@ -70,7 +70,7 @@ export class WorkflowBuilder {
       description?: string;
       nextStepId?: string;
       order?: number;
-    } = {},
+    } = {}
   ): this {
     const step: WorkflowStep = {
       id,
@@ -79,9 +79,9 @@ export class WorkflowBuilder {
       type: 'instruction',
       order: options.order || this.stepOrder++,
       instruction,
-      next_step_id: options.nextStepId,
+      next_step_id: options.nextStepId
     };
-
+    
     this.steps.set(id, step);
     return this;
   }
@@ -94,7 +94,7 @@ export class WorkflowBuilder {
       description?: string;
       nextStepId?: string;
       order?: number;
-    } = {},
+    } = {}
   ): this {
     const step: WorkflowStep = {
       id,
@@ -103,9 +103,9 @@ export class WorkflowBuilder {
       type: 'instruction',
       order: options.order || this.stepOrder++,
       tool_name: toolName,
-      next_step_id: options.nextStepId,
+      next_step_id: options.nextStepId
     };
-
+    
     this.steps.set(id, step);
     return this;
   }
@@ -119,7 +119,7 @@ export class WorkflowBuilder {
       ifTrueStepId?: string;
       ifFalseStepId?: string;
       order?: number;
-    } = {},
+    } = {}
   ): this {
     const step: WorkflowStep = {
       id,
@@ -129,9 +129,9 @@ export class WorkflowBuilder {
       order: options.order || this.stepOrder++,
       condition,
       if_true_step_id: options.ifTrueStepId,
-      if_false_step_id: options.ifFalseStepId,
+      if_false_step_id: options.ifFalseStepId
     };
-
+    
     this.steps.set(id, step);
     return this;
   }
@@ -144,7 +144,7 @@ export class WorkflowBuilder {
       description?: string;
       nextStepId?: string;
       order?: number;
-    } = {},
+    } = {}
   ): this {
     const step: WorkflowStep = {
       id,
@@ -153,9 +153,9 @@ export class WorkflowBuilder {
       type: 'sequence',
       order: options.order || this.stepOrder++,
       child_step_ids: childStepIds,
-      next_step_id: options.nextStepId,
+      next_step_id: options.nextStepId
     };
-
+    
     this.steps.set(id, step);
     return this;
   }
@@ -167,7 +167,7 @@ export class WorkflowBuilder {
       description?: string;
       nextStepId?: string;
       order?: number;
-    } = {},
+    } = {}
   ): this {
     const step: WorkflowStep = {
       id,
@@ -175,15 +175,18 @@ export class WorkflowBuilder {
       description: options.description,
       type: 'trigger',
       order: options.order || this.stepOrder++,
-      next_step_id: options.nextStepId,
+      next_step_id: options.nextStepId
     };
-
+    
     this.steps.set(id, step);
     return this;
   }
 
   // Update existing steps
-  updateStep(id: string, updates: Partial<Omit<WorkflowStep, 'id'>>): this {
+  updateStep(
+    id: string,
+    updates: Partial<Omit<WorkflowStep, 'id'>>
+  ): this {
     const existingStep = this.steps.get(id);
     if (existingStep) {
       this.steps.set(id, { ...existingStep, ...updates });
@@ -204,7 +207,7 @@ export class WorkflowBuilder {
   connectIfBranch(
     ifStepId: string,
     trueStepId?: string,
-    falseStepId?: string,
+    falseStepId?: string
   ): this {
     const ifStep = this.steps.get(ifStepId);
     if (ifStep && ifStep.type === 'if') {
@@ -218,7 +221,7 @@ export class WorkflowBuilder {
   // Remove steps
   removeStep(id: string): this {
     this.steps.delete(id);
-
+    
     // Clean up references to this step
     for (const [stepId, step] of this.steps) {
       if (step.next_step_id === id) {
@@ -231,17 +234,15 @@ export class WorkflowBuilder {
         step.if_false_step_id = undefined;
       }
       if (step.child_step_ids?.includes(id)) {
-        step.child_step_ids = step.child_step_ids.filter(
-          (childId) => childId !== id,
-        );
+        step.child_step_ids = step.child_step_ids.filter(childId => childId !== id);
       }
     }
-
+    
     // Update root step if needed
     if (this.workflow.root_step_id === id) {
       this.workflow.root_step_id = undefined;
     }
-
+    
     return this;
   }
 
@@ -250,17 +251,17 @@ export class WorkflowBuilder {
     if (!this.workflow.id) {
       this.workflow.id = `workflow_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     }
-
+    
     const workflow = {
       ...this.workflow,
-      steps: Array.from(this.steps.values()).sort((a, b) => a.order - b.order),
+      steps: Array.from(this.steps.values()).sort((a, b) => a.order - b.order)
     } as ConditionalWorkflow;
-
+    
     // Auto-set root step if not set
     if (!workflow.root_step_id && workflow.steps.length > 0) {
       workflow.root_step_id = workflow.steps[0].id;
     }
-
+    
     return workflow;
   }
 
@@ -273,13 +274,13 @@ export class WorkflowBuilder {
   // Build API request
   buildCreateRequest(): CreateWorkflowRequest {
     const workflow = this.build();
-
+    
     return {
       name: workflow.name,
       description: workflow.description,
       trigger_phrase: workflow.trigger_phrase,
       is_default: workflow.is_default,
-      steps: workflow.steps.map((step) => ({
+      steps: workflow.steps.map(step => ({
         name: step.name,
         description: step.description,
         type: step.type,
@@ -290,10 +291,10 @@ export class WorkflowBuilder {
         if_false_step_id: step.if_false_step_id,
         child_step_ids: step.child_step_ids,
         next_step_id: step.next_step_id,
-        order: step.order,
+        order: step.order
       })),
       root_step_id: workflow.root_step_id,
-      variables: workflow.variables,
+      variables: workflow.variables
     };
   }
 
@@ -307,13 +308,13 @@ export class WorkflowBuilder {
   clone(): WorkflowBuilder {
     const newBuilder = new WorkflowBuilder(
       this.workflow.agent_id!,
-      this.workflow.name!,
+      this.workflow.name!
     );
-
+    
     newBuilder.workflow = { ...this.workflow };
     newBuilder.steps = new Map(this.steps);
     newBuilder.stepOrder = this.stepOrder;
-
+    
     return newBuilder;
   }
 }
@@ -329,20 +330,20 @@ export function createLinearWorkflow(
     name: string;
     instruction: string;
     description?: string;
-  }>,
+  }>
 ): ConditionalWorkflow {
   const builder = new WorkflowBuilder(agentId, name);
-
+  
   for (let i = 0; i < steps.length; i++) {
     const step = steps[i];
     const nextStepId = i < steps.length - 1 ? steps[i + 1].id : undefined;
-
+    
     builder.addInstructionStep(step.id, step.name, step.instruction, {
       description: step.description,
-      nextStepId,
+      nextStepId
     });
   }
-
+  
   return builder.build();
 }
 
@@ -353,37 +354,42 @@ export function createConditionalWorkflow(
   initialStep: { id: string; name: string; instruction: string },
   condition: { id: string; name: string; condition: Condition },
   trueBranch: { id: string; name: string; instruction: string },
-  falseBranch: { id: string; name: string; instruction: string },
+  falseBranch: { id: string; name: string; instruction: string }
 ): ConditionalWorkflow {
   const builder = new WorkflowBuilder(agentId, name);
-
+  
   // Add initial step
   builder.addInstructionStep(
     initialStep.id,
     initialStep.name,
     initialStep.instruction,
-    { nextStepId: condition.id },
+    { nextStepId: condition.id }
   );
-
+  
   // Add condition step
-  builder.addIfStep(condition.id, condition.name, condition.condition, {
-    ifTrueStepId: trueBranch.id,
-    ifFalseStepId: falseBranch.id,
-  });
-
+  builder.addIfStep(
+    condition.id,
+    condition.name,
+    condition.condition,
+    {
+      ifTrueStepId: trueBranch.id,
+      ifFalseStepId: falseBranch.id
+    }
+  );
+  
   // Add branches
   builder.addInstructionStep(
     trueBranch.id,
     trueBranch.name,
-    trueBranch.instruction,
+    trueBranch.instruction
   );
-
+  
   builder.addInstructionStep(
     falseBranch.id,
     falseBranch.name,
-    falseBranch.instruction,
+    falseBranch.instruction
   );
-
+  
   return builder.build();
 }
 
@@ -391,9 +397,9 @@ export function createConditionalWorkflow(
 export function createWorkflowFromJSON(json: WorkflowJSON): WorkflowBuilder {
   const builder = new WorkflowBuilder(
     json.workflow.agent_id,
-    json.workflow.name,
+    json.workflow.name
   );
-
+  
   builder.workflow.id = json.workflow.id;
   builder.workflow.description = json.workflow.description;
   builder.workflow.status = json.workflow.status;
@@ -403,12 +409,12 @@ export function createWorkflowFromJSON(json: WorkflowJSON): WorkflowBuilder {
   builder.workflow.updated_at = json.workflow.updated_at;
   builder.workflow.root_step_id = json.flow.root_step_id;
   builder.workflow.variables = json.flow.variables;
-
+  
   // Add all steps
   for (const step of json.flow.steps) {
     builder.steps.set(step.id, step);
   }
-
+  
   return builder;
 }
 
@@ -427,7 +433,7 @@ export const STEP_TYPES: Record<string, StepType> = {
   INSTRUCTION: 'instruction',
   IF: 'if',
   SEQUENCE: 'sequence',
-  TRIGGER: 'trigger',
+  TRIGGER: 'trigger'
 };
 
 // Export condition operations
@@ -436,5 +442,5 @@ export const CONDITION_OPERATIONS = {
   EQUALS: 'equals',
   NOT_EQUALS: 'not_equals',
   IS_EMPTY: 'is_empty',
-  IS_NOT_EMPTY: 'is_not_empty',
-} as const;
+  IS_NOT_EMPTY: 'is_not_empty'
+} as const; 

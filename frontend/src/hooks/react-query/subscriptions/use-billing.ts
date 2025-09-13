@@ -5,7 +5,7 @@ import {
   createCheckoutSession,
   checkBillingStatus,
   getAvailableModels,
-  CreateCheckoutSessionRequest,
+  CreateCheckoutSessionRequest
 } from '@/lib/api';
 import { billingApi } from '@/lib/api-enhanced';
 import { modelKeys, usageKeys } from './keys';
@@ -16,7 +16,7 @@ export const useAvailableModels = createQueryHook(
   {
     staleTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
-  },
+  }
 );
 
 export const useBillingStatus = createQueryHook(
@@ -28,7 +28,7 @@ export const useBillingStatus = createQueryHook(
     refetchOnWindowFocus: false, // Don't refetch on window focus
     refetchOnMount: false, // Don't refetch on mount if data exists
     refetchOnReconnect: true, // Only refetch when network reconnects
-  },
+  }
 );
 
 export const useCreateCheckoutSession = createMutationHook(
@@ -41,12 +41,12 @@ export const useCreateCheckoutSession = createMutationHook(
     },
     errorContext: {
       operation: 'create checkout session',
-      resource: 'billing',
-    },
-  },
+      resource: 'billing'
+    }
+  }
 );
 
-export const useUsageLogs = (page: number = 0, itemsPerPage: number = 1000) =>
+export const useUsageLogs = (page: number = 0, itemsPerPage: number = 1000) => 
   createQueryHook(
     usageKeys.logs(page, itemsPerPage),
     () => billingApi.getUsageLogs(page, itemsPerPage),
@@ -54,5 +54,5 @@ export const useUsageLogs = (page: number = 0, itemsPerPage: number = 1000) =>
       staleTime: 30 * 1000, // 30 seconds
       refetchOnMount: true,
       refetchOnWindowFocus: false,
-    },
-  )();
+    }
+  )(); 

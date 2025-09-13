@@ -4,14 +4,12 @@ import { useAuth } from '@/components/AuthProvider';
 
 export const useEnrollPhoneNumber = () => {
   const queryClient = useQueryClient();
-
+  
   return useMutation({
     mutationFn: phoneVerificationService.enrollPhoneNumber,
     onSuccess: () => {
       // Invalidate factors list after enrollment
-      queryClient.invalidateQueries({
-        queryKey: ['phone-verification-factors'],
-      });
+      queryClient.invalidateQueries({ queryKey: ['phone-verification-factors'] });
       queryClient.invalidateQueries({ queryKey: ['mfa-aal'] });
     },
   });
@@ -25,37 +23,33 @@ export const useCreateChallenge = () => {
 
 export const useVerifyChallenge = () => {
   const queryClient = useQueryClient();
-
+  
   return useMutation({
     mutationFn: phoneVerificationService.verifyChallenge,
     onSuccess: () => {
       // Invalidate all phone verification related caches after successful verification
       queryClient.invalidateQueries({ queryKey: ['mfa-aal'] });
-      queryClient.invalidateQueries({
-        queryKey: ['phone-verification-factors'],
-      });
+      queryClient.invalidateQueries({ queryKey: ['phone-verification-factors'] });
     },
   });
 };
 
 export const useChallengeAndVerify = () => {
   const queryClient = useQueryClient();
-
+  
   return useMutation({
     mutationFn: phoneVerificationService.challengeAndVerify,
     onSuccess: () => {
       // Invalidate all phone verification related caches after successful verification
       queryClient.invalidateQueries({ queryKey: ['mfa-aal'] });
-      queryClient.invalidateQueries({
-        queryKey: ['phone-verification-factors'],
-      });
+      queryClient.invalidateQueries({ queryKey: ['phone-verification-factors'] });
     },
   });
 };
 
 export const useListFactors = () => {
   const { user } = useAuth();
-
+  
   return useQuery({
     queryKey: ['phone-verification-factors'],
     queryFn: phoneVerificationService.listFactors,
@@ -67,37 +61,37 @@ export const useListFactors = () => {
 
 export const useUnenrollFactor = () => {
   const queryClient = useQueryClient();
-
+  
   return useMutation({
     mutationFn: phoneVerificationService.unenrollFactor,
     onSuccess: () => {
       // Invalidate caches after unenrolling
-      queryClient.invalidateQueries({
-        queryKey: ['phone-verification-factors'],
-      });
+      queryClient.invalidateQueries({ queryKey: ['phone-verification-factors'] });
       queryClient.invalidateQueries({ queryKey: ['mfa-aal'] });
     },
   });
 };
+
+
 
 export const useUnenrollPhoneFactor = () => {
   const queryClient = useQueryClient();
-
+  
   return useMutation({
     mutationFn: phoneVerificationService.unenrollFactor,
     onSuccess: () => {
       // Invalidate caches after unenrolling
-      queryClient.invalidateQueries({
-        queryKey: ['phone-verification-factors'],
-      });
+      queryClient.invalidateQueries({ queryKey: ['phone-verification-factors'] });
       queryClient.invalidateQueries({ queryKey: ['mfa-aal'] });
     },
   });
 };
 
+
+
 export const useGetAAL = () => {
   const { user } = useAuth();
-
+  
   return useQuery({
     queryKey: ['mfa-aal'],
     queryFn: phoneVerificationService.getAAL,

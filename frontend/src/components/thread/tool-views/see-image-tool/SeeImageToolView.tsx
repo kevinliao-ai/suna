@@ -1,20 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Image as ImageIcon,
-  ImageOff,
-  CheckCircle,
-  AlertTriangle,
-  Loader2,
-  Download,
-  ZoomIn,
-  ZoomOut,
-  ExternalLink,
-  Check,
-} from 'lucide-react';
+import { Image as ImageIcon, ImageOff, CheckCircle, AlertTriangle, Loader2, Download, ZoomIn, ZoomOut, ExternalLink, Check } from 'lucide-react';
 import { ToolViewProps } from '../types';
-import { formatTimestamp } from '../utils';
+import {
+  formatTimestamp,
+} from '../utils';
 import { constructImageUrl, extractSeeImageData } from './_utils';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn, truncateString } from '@/lib/utils';
 import { GenericToolView } from '../GenericToolView';
@@ -22,17 +18,7 @@ import { useAuth } from '@/components/AuthProvider';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 
-function SafeImage({
-  src,
-  alt,
-  filePath,
-  className,
-}: {
-  src: string;
-  alt: string;
-  filePath: string;
-  className?: string;
-}) {
+function SafeImage({ src, alt, filePath, className }: { src: string; alt: string; filePath: string; className?: string }) {
   const [imgSrc, setImgSrc] = useState<string | null>(null);
   const [error, setError] = useState(false);
   const [attempts, setAttempts] = useState(0);
@@ -46,14 +32,12 @@ function SafeImage({
         try {
           const response = await fetch(src, {
             headers: {
-              Authorization: `Bearer ${session?.access_token}`,
-            },
+              'Authorization': `Bearer ${session?.access_token}`
+            }
           });
 
           if (!response.ok) {
-            throw new Error(
-              `Failed to load image: ${response.status} ${response.statusText}`,
-            );
+            throw new Error(`Failed to load image: ${response.status} ${response.statusText}`);
           }
 
           const blob = await response.blob();
@@ -105,13 +89,13 @@ function SafeImage({
 
   const handleZoomIn = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setZoomLevel((prev) => Math.min(prev + 0.25, 3));
+    setZoomLevel(prev => Math.min(prev + 0.25, 3));
     if (!isZoomed) setIsZoomed(true);
   };
 
   const handleZoomOut = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setZoomLevel((prev) => Math.max(prev - 0.25, 0.5));
+    setZoomLevel(prev => Math.max(prev - 0.25, 0.5));
   };
 
   const handleDownload = (e: React.MouseEvent) => {
@@ -159,21 +143,21 @@ function SafeImage({
 
   return (
     <div className="flex flex-col items-center">
-      <div
-        className={cn(
-          'overflow-hidden transition-all duration-300 rounded-3xl border bg-card mb-3',
-          isZoomed ? 'cursor-zoom-out' : 'cursor-zoom-in',
-        )}
-      >
+      <div className={cn(
+        "overflow-hidden transition-all duration-300 rounded-3xl border bg-card mb-3",
+        isZoomed ? "cursor-zoom-out" : "cursor-zoom-in"
+      )}>
         <div className="relative flex items-center justify-center">
           <img
             src={imgSrc}
             alt={alt}
             onClick={handleZoomToggle}
             className={cn(
-              'max-w-full object-contain transition-all duration-300 ease-in-out',
-              isZoomed ? 'max-h-[80vh]' : 'max-h-[500px] hover:scale-[1.01]',
-              className,
+              "max-w-full object-contain transition-all duration-300 ease-in-out",
+              isZoomed
+                ? "max-h-[80vh]"
+                : "max-h-[500px] hover:scale-[1.01]",
+              className
             )}
             style={{
               transform: isZoomed ? `scale(${zoomLevel})` : 'none',
@@ -184,10 +168,7 @@ function SafeImage({
       </div>
 
       <div className="flex items-center justify-between w-full px-2 py-2 bg-zinc-50 dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800">
-        <Badge
-          variant="secondary"
-          className="bg-white/90 dark:bg-black/70 text-zinc-700 dark:text-zinc-300 shadow-sm"
-        >
+        <Badge variant="secondary" className="bg-white/90 dark:bg-black/70 text-zinc-700 dark:text-zinc-300 shadow-sm">
           <ImageIcon className="h-3 w-3 mr-1" />
           {filePath.split('.').pop()?.toUpperCase()}
         </Badge>
@@ -250,13 +231,13 @@ export function SeeImageToolView({
     output,
     actualIsSuccess,
     actualToolTimestamp,
-    actualAssistantTimestamp,
+    actualAssistantTimestamp
   } = extractSeeImageData(
     assistantContent,
     toolContent,
     isSuccess,
     toolTimestamp,
-    assistantTimestamp,
+    assistantTimestamp
   );
 
   useEffect(() => {
@@ -292,12 +273,9 @@ export function SeeImageToolView({
 
   const config = {
     color: 'text-blue-500 dark:text-blue-400',
-    bgColor:
-      'bg-gradient-to-b from-blue-100 to-blue-50 shadow-inner dark:from-blue-800/40 dark:to-blue-900/60 dark:shadow-blue-950/20',
-    badgeColor:
-      'bg-gradient-to-b from-blue-200 to-blue-100 text-blue-700 dark:from-blue-800/50 dark:to-blue-900/60 dark:text-blue-300',
-    hoverColor:
-      'hover:bg-gradient-to-b hover:from-blue-200 hover:to-blue-100 dark:hover:from-blue-800/60 dark:hover:to-blue-900/40',
+    bgColor: 'bg-gradient-to-b from-blue-100 to-blue-50 shadow-inner dark:from-blue-800/40 dark:to-blue-900/60 dark:shadow-blue-950/20',
+    badgeColor: 'bg-gradient-to-b from-blue-200 to-blue-100 text-blue-700 dark:from-blue-800/50 dark:to-blue-900/60 dark:text-blue-300',
+    hoverColor: 'hover:bg-gradient-to-b hover:from-blue-200 hover:to-blue-100 dark:hover:from-blue-800/60 dark:hover:to-blue-900/40'
   };
 
   const imageUrl = constructImageUrl(filePath, project);
@@ -310,13 +288,8 @@ export function SeeImageToolView({
       <CardHeader className="h-14 bg-gradient-to-r from-zinc-50/90 to-zinc-100/90 dark:from-zinc-900/90 dark:to-zinc-800/90 backdrop-blur-sm border-b p-2 px-4 space-y-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div
-              className={cn(
-                'relative p-2 rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-600/10 border border-blue-500/20 transition-colors',
-                config.bgColor,
-              )}
-            >
-              <ImageIcon className={cn('w-5 h-5', config.color)} />
+            <div className={cn("relative p-2 rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-600/10 border border-blue-500/20 transition-colors", config.bgColor)}>
+              <ImageIcon className={cn("w-5 h-5", config.color)} />
             </div>
             <div>
               <div className="flex items-center">
@@ -324,10 +297,7 @@ export function SeeImageToolView({
                   {truncateString(filename, 25)}
                 </CardTitle>
                 {isAnimated && (
-                  <Badge
-                    variant="outline"
-                    className="ml-2 text-[10px] py-0 px-1.5 h-4 border-amber-300 text-amber-700 dark:border-amber-700 dark:text-amber-400"
-                  >
+                  <Badge variant="outline" className="ml-2 text-[10px] py-0 px-1.5 h-4 border-amber-300 text-amber-700 dark:border-amber-700 dark:text-amber-400">
                     ANIMATED
                   </Badge>
                 )}
@@ -336,15 +306,12 @@ export function SeeImageToolView({
           </div>
 
           {!isStreaming ? (
-            <Badge
-              variant="secondary"
-              className={cn(
-                'px-2.5 py-1 transition-colors flex items-center gap-1.5',
-                actualIsSuccess
-                  ? 'bg-gradient-to-b from-emerald-200 to-emerald-100 text-emerald-700 dark:from-emerald-800/50 dark:to-emerald-900/60 dark:text-emerald-300'
-                  : 'bg-gradient-to-b from-rose-200 to-rose-100 text-rose-700 dark:from-rose-800/50 dark:to-rose-900/60 dark:text-rose-300',
-              )}
-            >
+            <Badge variant="secondary" className={cn(
+              "px-2.5 py-1 transition-colors flex items-center gap-1.5",
+              actualIsSuccess
+                ? "bg-gradient-to-b from-emerald-200 to-emerald-100 text-emerald-700 dark:from-emerald-800/50 dark:to-emerald-900/60 dark:text-emerald-300"
+                : "bg-gradient-to-b from-rose-200 to-rose-100 text-rose-700 dark:from-rose-800/50 dark:to-rose-900/60 dark:text-rose-300"
+            )}>
               {actualIsSuccess ? (
                 <>
                   <CheckCircle className="h-3.5 w-3.5" />
@@ -358,10 +325,7 @@ export function SeeImageToolView({
               )}
             </Badge>
           ) : (
-            <Badge
-              variant="secondary"
-              className="bg-gradient-to-b from-blue-50 to-blue-100 text-blue-700 border border-blue-200/50 dark:from-blue-900/30 dark:to-blue-800/20 dark:text-blue-400 dark:border-blue-800/30 px-2.5 py-1 flex items-center gap-1.5"
-            >
+            <Badge variant="secondary" className="bg-gradient-to-b from-blue-50 to-blue-100 text-blue-700 border border-blue-200/50 dark:from-blue-900/30 dark:to-blue-800/20 dark:text-blue-400 dark:border-blue-800/30 px-2.5 py-1 flex items-center gap-1.5">
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
               Loading image...
             </Badge>
@@ -385,9 +349,7 @@ export function SeeImageToolView({
                   style={{ width: `${progress}%` }}
                 ></div>
               </div>
-              <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-2">
-                {progress}%
-              </p>
+              <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-2">{progress}%</p>
             </div>
           </div>
         ) : (
@@ -411,10 +373,7 @@ export function SeeImageToolView({
             IMAGE
           </Badge>
           {fileExt && (
-            <Badge
-              variant="outline"
-              className="py-0 px-1.5 h-5 text-[10px] uppercase font-medium"
-            >
+            <Badge variant="outline" className="py-0 px-1.5 h-5 text-[10px] uppercase font-medium">
               {fileExt}
             </Badge>
           )}
@@ -430,4 +389,4 @@ export function SeeImageToolView({
       </div>
     </Card>
   );
-}
+} 

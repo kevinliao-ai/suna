@@ -36,7 +36,7 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({
   onAgentSelect,
   disabled = false,
   isSunaAgent,
-  compact = false,
+  compact = false
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -59,28 +59,23 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({
       ...agent,
       id: agent.agent_id,
       type: 'custom' as const,
-      icon: <Bot className="h-4 w-4" />,
-    })),
+      icon: <Bot className="h-4 w-4" />
+    }))
   ];
 
-  const filteredAgents = allAgents.filter(
-    (agent) =>
-      agent.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      agent.description?.toLowerCase().includes(searchQuery.toLowerCase()),
+  const filteredAgents = allAgents.filter((agent) =>
+    agent.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    agent.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const sortedFilteredAgents = React.useMemo(() => {
     if (!selectedAgentId) {
       return filteredAgents;
     }
-
-    const selectedAgent = filteredAgents.find(
-      (agent) => agent.id === selectedAgentId,
-    );
-    const otherAgents = filteredAgents.filter(
-      (agent) => agent.id !== selectedAgentId,
-    );
-
+    
+    const selectedAgent = filteredAgents.find(agent => agent.id === selectedAgentId);
+    const otherAgents = filteredAgents.filter(agent => agent.id !== selectedAgentId);
+    
     return selectedAgent ? [selectedAgent, ...otherAgents] : filteredAgents;
   }, [filteredAgents, selectedAgentId]);
 
@@ -96,34 +91,23 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({
   }, [isOpen]);
 
   const getAgentDisplay = () => {
-    const selectedAgent = allAgents.find(
-      (agent) => agent.id === selectedAgentId,
-    );
+    const selectedAgent = allAgents.find(agent => agent.id === selectedAgentId);
     if (selectedAgent) {
-      const isSelectedAgentSuna =
-        selectedAgent.metadata?.is_suna_default || false;
+      const isSelectedAgentSuna = selectedAgent.metadata?.is_suna_default || false;
       return {
         name: selectedAgent.name,
-        icon: isSelectedAgentSuna ? (
-          <KortixLogo size={16} />
-        ) : (
-          selectedAgent.icon
-        ),
+        icon: isSelectedAgentSuna ? <KortixLogo size={16} /> : selectedAgent.icon
       };
     }
-
+    
     if (selectedAgentId !== undefined) {
     }
-
+    
     const defaultAgent = allAgents[0];
     const isDefaultAgentSuna = defaultAgent?.metadata?.is_suna_default || false;
     return {
       name: defaultAgent?.name || 'Suna',
-      icon: isDefaultAgentSuna ? (
-        <KortixLogo size={16} />
-      ) : (
-        defaultAgent?.icon || <KortixLogo size={16} />
-      ),
+      icon: isDefaultAgentSuna ? <KortixLogo size={16} /> : (defaultAgent?.icon || <KortixLogo size={16} />)
     };
   };
 
@@ -138,19 +122,17 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({
     router.push(`/agents/config/${agentId}`);
   };
 
-  const handleSearchInputKeyDown = (
-    e: React.KeyboardEvent<HTMLInputElement>,
-  ) => {
+  const handleSearchInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     e.stopPropagation();
     if (e.key === 'ArrowDown') {
       e.preventDefault();
       setHighlightedIndex((prev) =>
-        prev < sortedFilteredAgents.length - 1 ? prev + 1 : 0,
+        prev < sortedFilteredAgents.length - 1 ? prev + 1 : 0
       );
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
       setHighlightedIndex((prev) =>
-        prev > 0 ? prev - 1 : sortedFilteredAgents.length - 1,
+        prev > 0 ? prev - 1 : sortedFilteredAgents.length - 1
       );
     } else if (e.key === 'Enter' && highlightedIndex >= 0) {
       e.preventDefault();
@@ -183,14 +165,18 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({
           <TooltipTrigger asChild>
             <DropdownMenuItem
               className={cn(
-                'flex items-center rounded-xl gap-3 px-4 py-2.5 cursor-pointer hover:bg-accent/40 transition-colors duration-200 group',
-                isHighlighted && 'bg-accent/40',
+                "flex items-center rounded-xl gap-3 px-4 py-2.5 cursor-pointer hover:bg-accent/40 transition-colors duration-200 group",
+                isHighlighted && "bg-accent/40"
               )}
               onClick={() => handleAgentSelect(agent.id)}
               onMouseEnter={() => setHighlightedIndex(index)}
             >
               <div className="flex-shrink-0">
-                {isThisAgentSuna ? <KortixLogo size={16} /> : agent.icon}
+                {isThisAgentSuna ? (
+                  <KortixLogo size={16} />
+                ) : (
+                  agent.icon
+                )}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
@@ -247,33 +233,31 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({
                   variant="ghost"
                   size="sm"
                   className={cn(
-                    compact
-                      ? 'px-2 py-1 text-xs hover:bg-accent/40 transition-all duration-200 rounded-lg'
-                      : 'px-2.5 py-1.5 text-sm font-normal hover:bg-accent/40 transition-all duration-200 rounded-xl',
-                    'focus:ring-1 focus:ring-ring focus:ring-offset-1 focus:outline-none',
-                    isOpen && 'bg-accent/40',
+                    compact 
+                      ? "px-2 py-1 text-xs hover:bg-accent/40 transition-all duration-200 rounded-lg"
+                      : "px-2.5 py-1.5 text-sm font-normal hover:bg-accent/40 transition-all duration-200 rounded-xl",
+                    "focus:ring-1 focus:ring-ring focus:ring-offset-1 focus:outline-none",
+                    isOpen && "bg-accent/40"
                   )}
                   disabled={disabled}
                 >
                   <div className="flex items-center gap-2">
-                    <div className={cn('flex-shrink-0', compact && 'scale-90')}>
+                    <div className={cn("flex-shrink-0", compact && "scale-90")}>
                       {agentDisplay.icon}
                     </div>
-                    <span
-                      className={cn(
-                        compact
-                          ? 'truncate max-w-[100px] text-xs font-medium'
-                          : 'hidden sm:inline-block truncate max-w-[120px] font-medium',
-                      )}
-                    >
+                    <span className={cn(
+                      compact 
+                        ? "truncate max-w-[100px] text-xs font-medium"
+                        : "hidden sm:inline-block truncate max-w-[120px] font-medium"
+                    )}>
                       {agentDisplay.name}
                     </span>
-                    <ChevronDown
-                      size={compact ? 10 : 12}
+                    <ChevronDown 
+                      size={compact ? 10 : 12} 
                       className={cn(
-                        'opacity-50 transition-transform duration-200',
-                        isOpen && 'rotate-180',
-                      )}
+                        "opacity-50 transition-transform duration-200",
+                        isOpen && "rotate-180"
+                      )} 
                     />
                   </div>
                 </Button>
@@ -289,7 +273,7 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({
           className="w-88 p-0 border-0 shadow-md bg-card/98 backdrop-blur-sm overflow-hidden h-[480px] flex flex-col"
           sideOffset={6}
           style={{
-            borderRadius: '20px',
+            borderRadius: '20px'
           }}
         >
           <div className="flex-shrink-0 p-4 pb-3">
@@ -303,9 +287,9 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={handleSearchInputKeyDown}
                 className={cn(
-                  'w-full pl-10 pr-3 py-2 text-sm bg-muted/40 border-0 rounded-xl',
-                  'focus:outline-none focus:ring-1 focus:ring-ring focus:ring-offset-0 focus:bg-muted/60',
-                  'placeholder:text-muted-foreground/60 transition-all duration-200',
+                  "w-full pl-10 pr-3 py-2 text-sm bg-muted/40 border-0 rounded-xl",
+                  "focus:outline-none focus:ring-1 focus:ring-ring focus:ring-offset-0 focus:bg-muted/60",
+                  "placeholder:text-muted-foreground/60 transition-all duration-200"
                 )}
               />
             </div>
@@ -319,15 +303,11 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({
               <div className="px-4 py-6 text-sm text-muted-foreground/70 text-center">
                 <Search className="h-6 w-6 mx-auto mb-2 opacity-40" />
                 <p>No agents found</p>
-                <p className="text-xs mt-1 opacity-60">
-                  Try adjusting your search
-                </p>
+                <p className="text-xs mt-1 opacity-60">Try adjusting your search</p>
               </div>
             ) : (
               <div className="space-y-0.5 pb-2">
-                {sortedFilteredAgents.map((agent, index) =>
-                  renderAgentItem(agent, index),
-                )}
+                {sortedFilteredAgents.map((agent, index) => renderAgentItem(agent, index))}
               </div>
             )}
           </div>
@@ -356,10 +336,10 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({
           </div>
         </DropdownMenuContent>
       </DropdownMenu>
-      <NewAgentDialog
-        open={showNewAgentDialog}
+      <NewAgentDialog 
+        open={showNewAgentDialog} 
         onOpenChange={setShowNewAgentDialog}
       />
     </>
   );
-};
+}; 

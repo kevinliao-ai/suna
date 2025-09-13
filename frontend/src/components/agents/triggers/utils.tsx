@@ -1,8 +1,8 @@
 // Replaced with lucide-react for smaller bundle
-import { Send as FaTelegram } from 'lucide-react';
-import { SlackIcon } from '@/components/ui/icons/slack';
-import { Webhook, Clock } from 'lucide-react';
-import { Zap } from 'lucide-react';
+import { Send as FaTelegram } from "lucide-react";
+import { SlackIcon } from "@/components/ui/icons/slack";
+import { Webhook, Clock } from "lucide-react";
+import { Zap } from "lucide-react";
 
 export const getTriggerIcon = (triggerType: string) => {
   switch (triggerType) {

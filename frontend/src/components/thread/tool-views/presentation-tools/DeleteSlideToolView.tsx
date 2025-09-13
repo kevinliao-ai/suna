@@ -1,5 +1,10 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
   Trash2,
@@ -32,16 +37,12 @@ export function DeleteSlideToolView({
   project,
 }: ToolViewProps) {
   const { toolResult } = extractToolData(toolContent);
-
+  
   let deleteData: DeleteSlideData | null = null;
   let error: string | null = null;
 
   try {
-    if (
-      toolResult &&
-      toolResult.toolOutput &&
-      toolResult.toolOutput !== 'STREAMING'
-    ) {
+    if (toolResult && toolResult.toolOutput && toolResult.toolOutput !== 'STREAMING') {
       const output = toolResult.toolOutput;
       if (typeof output === 'string') {
         try {
@@ -135,7 +136,7 @@ export function DeleteSlideToolView({
             <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center max-w-md mb-6">
               {deleteData.message}
             </p>
-
+            
             <div className="grid grid-cols-2 gap-4 w-full max-w-md">
               <Card className="p-4 text-center">
                 <div className="flex items-center justify-center gap-2 mb-2">
@@ -146,7 +147,7 @@ export function DeleteSlideToolView({
                   #{deleteData.deleted_slide}
                 </p>
               </Card>
-
+              
               <Card className="p-4 text-center">
                 <div className="flex items-center justify-center gap-2 mb-2">
                   <FileText className="h-4 w-4 text-muted-foreground" />
@@ -164,7 +165,9 @@ export function DeleteSlideToolView({
       <div className="px-4 py-2 h-10 bg-gradient-to-r from-zinc-50/90 to-zinc-100/90 dark:from-zinc-900/90 dark:to-zinc-800/90 backdrop-blur-sm border-t border-zinc-200 dark:border-zinc-800 flex justify-end items-center">
         <div className="flex items-center gap-2 text-xs text-zinc-400 dark:text-zinc-500">
           <Clock className="h-3 w-3" />
-          <span>{formatTimestamp(toolTimestamp)}</span>
+          <span>
+            {formatTimestamp(toolTimestamp)}
+          </span>
         </div>
       </div>
     </Card>

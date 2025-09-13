@@ -17,65 +17,63 @@ export class ApiVersionRepository implements IVersionRepository {
       versionName: response.version_name,
       systemPrompt: response.system_prompt,
       model: response.model,
-      configuredMcps: (response.configured_mcps || []).map((mcp) => ({
+      configuredMcps: (response.configured_mcps || []).map(mcp => ({
         name: mcp.name,
         type: mcp.type || 'sse',
         config: mcp.config || {},
-        enabledTools: mcp.enabledTools || mcp.enabled_tools || [],
+        enabledTools: mcp.enabledTools || mcp.enabled_tools || []
       })),
-      customMcps: (response.custom_mcps || []).map((mcp) => ({
+      customMcps: (response.custom_mcps || []).map(mcp => ({
         name: mcp.name,
         type: mcp.type || 'sse',
         config: mcp.config || {},
-        enabledTools: mcp.enabledTools || mcp.enabled_tools || [],
+        enabledTools: mcp.enabledTools || mcp.enabled_tools || []
       })),
       toolConfiguration: {
-        tools: response.agentpress_tools || {},
+        tools: response.agentpress_tools || {}
       },
       agentpress_tools: response.agentpress_tools || {},
       isActive: response.is_active,
       createdAt: new Date(response.created_at),
       updatedAt: new Date(response.updated_at),
       createdBy: { value: response.created_by },
-      changeDescription: response.change_description,
+      changeDescription: response.change_description
     };
   }
 
   async getAllVersions(agentId: string): Promise<AgentVersion[]> {
     const versions = await this.apiClient.get<VersionResponse[]>(
-      `/agents/${agentId}/versions`,
+      `/agents/${agentId}/versions`
     );
-    return versions.map((v) => this.toAgentVersion(v));
+    return versions.map(v => this.toAgentVersion(v));
   }
 
   async getVersion(agentId: string, versionId: string): Promise<AgentVersion> {
     const version = await this.apiClient.get<VersionResponse>(
-      `/agents/${agentId}/versions/${versionId}`,
+      `/agents/${agentId}/versions/${versionId}`
     );
     return this.toAgentVersion(version);
   }
 
   async createVersion(
     agentId: string,
-    request: CreateVersionRequest,
+    request: CreateVersionRequest
   ): Promise<AgentVersion> {
     const version = await this.apiClient.post<VersionResponse>(
       `/agents/${agentId}/versions`,
-      request,
+      request
     );
     return this.toAgentVersion(version);
   }
 
   async activateVersion(agentId: string, versionId: string): Promise<void> {
-    await this.apiClient.put(
-      `/agents/${agentId}/versions/${versionId}/activate`,
-    );
+    await this.apiClient.put(`/agents/${agentId}/versions/${versionId}/activate`);
   }
 
   async compareVersions(
     agentId: string,
     version1Id: string,
-    version2Id: string,
+    version2Id: string
   ): Promise<VersionComparison> {
     const response = await this.apiClient.get<{
       version1: VersionResponse;
@@ -86,16 +84,16 @@ export class ApiVersionRepository implements IVersionRepository {
     return {
       version1: this.toAgentVersion(response.version1),
       version2: this.toAgentVersion(response.version2),
-      differences: response.differences,
+      differences: response.differences
     };
   }
 
   async rollbackToVersion(
     agentId: string,
-    versionId: string,
+    versionId: string
   ): Promise<AgentVersion> {
     const version = await this.apiClient.post<VersionResponse>(
-      `/agents/${agentId}/versions/${versionId}/rollback`,
+      `/agents/${agentId}/versions/${versionId}/rollback`
     );
     return this.toAgentVersion(version);
   }
@@ -103,11 +101,11 @@ export class ApiVersionRepository implements IVersionRepository {
   async updateVersionDetails(
     agentId: string,
     versionId: string,
-    request: UpdateVersionDetailsRequest,
+    request: UpdateVersionDetailsRequest
   ): Promise<AgentVersion> {
     const version = await this.apiClient.put<VersionResponse>(
       `/agents/${agentId}/versions/${versionId}/details`,
-      request,
+      request
     );
     return this.toAgentVersion(version);
   }

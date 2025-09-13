@@ -23,9 +23,7 @@ function PopoverContent({
   sideOffset = 4,
   container,
   ...props
-}: React.ComponentProps<typeof PopoverPrimitive.Content> & {
-  container?: HTMLElement;
-}) {
+}: React.ComponentProps<typeof PopoverPrimitive.Content> & { container?: HTMLElement }) {
   return (
     <PopoverPrimitive.Portal container={container}>
       <PopoverPrimitive.Content

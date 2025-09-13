@@ -4,7 +4,7 @@ export interface DiscoverMcpToolsData {
   profile_name: string | null;
   toolkit_name: string | null;
   toolkit_slug: string | null;
-  tools: Array<{ name: string; description?: string }> | null;
+  tools: Array<{name: string; description?: string}> | null;
   tool_names: string[] | null;
   total_tools: number;
   is_connected: boolean;
@@ -28,7 +28,7 @@ export function extractDiscoverMcpToolsData(
   toolContent?: any,
   isSuccess?: boolean,
   toolTimestamp?: string,
-  assistantTimestamp?: string,
+  assistantTimestamp?: string
 ): DiscoverMcpToolsData & {
   actualIsSuccess: boolean;
   actualToolTimestamp: string | undefined;
@@ -48,19 +48,16 @@ export function extractDiscoverMcpToolsData(
     is_connected: false,
     actualIsSuccess: isSuccess || false,
     actualToolTimestamp: toolTimestamp,
-    actualAssistantTimestamp: assistantTimestamp,
+    actualAssistantTimestamp: assistantTimestamp
   };
 
   // Try parsing toolContent first
   if (toolContent) {
     const parsedToolResult = parseToolResult(toolContent);
-
-    if (
-      parsedToolResult &&
-      parsedToolResult.functionName === 'discover_mcp_tools_for_agent'
-    ) {
+    
+    if (parsedToolResult && parsedToolResult.functionName === 'discover_mcp_tools_for_agent') {
       const args = parsedToolResult.arguments || {};
-
+      
       // Parse the tool output which contains the result
       let output: any = {};
       try {
@@ -89,20 +86,17 @@ export function extractDiscoverMcpToolsData(
         timestamp: parsedToolResult.timestamp,
         actualIsSuccess: parsedToolResult.isSuccess,
         actualToolTimestamp: parsedToolResult.timestamp || toolTimestamp,
-        actualAssistantTimestamp: assistantTimestamp,
+        actualAssistantTimestamp: assistantTimestamp
       };
     }
   }
 
   if (assistantContent) {
     const parsedToolResult = parseToolResult(assistantContent);
-
-    if (
-      parsedToolResult &&
-      parsedToolResult.functionName === 'discover_mcp_tools_for_agent'
-    ) {
+    
+    if (parsedToolResult && parsedToolResult.functionName === 'discover_mcp_tools_for_agent') {
       const args = parsedToolResult.arguments || {};
-
+      
       let output: any = {};
       try {
         if (typeof parsedToolResult.toolOutput === 'string') {
@@ -129,11 +123,10 @@ export function extractDiscoverMcpToolsData(
         timestamp: parsedToolResult.timestamp,
         actualIsSuccess: parsedToolResult.isSuccess,
         actualToolTimestamp: toolTimestamp,
-        actualAssistantTimestamp:
-          parsedToolResult.timestamp || assistantTimestamp,
+        actualAssistantTimestamp: parsedToolResult.timestamp || assistantTimestamp
       };
     }
   }
 
   return defaultResult;
-}
+} 

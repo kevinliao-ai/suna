@@ -27,50 +27,33 @@ export function IconPicker({
   onIconSelect,
   iconColor = '#000000',
   backgroundColor = '#F3F4F6',
-  className,
+  className
 }: IconPickerProps) {
   const [searchQuery, setSearchQuery] = useState('');
-
+  
   const allIconNames = useMemo(() => {
-    return Object.keys(icons)
-      .map((name) => toKebabCase(name))
-      .sort();
+    return Object.keys(icons).map(name => toKebabCase(name)).sort();
   }, []);
 
   const filteredIcons = useMemo(() => {
     if (!searchQuery) return allIconNames;
-
+    
     const query = searchQuery.toLowerCase();
-    return allIconNames.filter(
-      (name) => name.includes(query) || name.replace(/-/g, ' ').includes(query),
+    return allIconNames.filter(name => 
+      name.includes(query) || 
+      name.replace(/-/g, ' ').includes(query)
     );
   }, [allIconNames, searchQuery]);
 
   const popularIcons = [
-    'bot',
-    'brain',
-    'sparkles',
-    'zap',
-    'rocket',
-    'briefcase',
-    'code',
-    'database',
-    'globe',
-    'heart',
-    'lightbulb',
-    'message-circle',
-    'shield',
-    'star',
-    'user',
-    'cpu',
-    'terminal',
-    'settings',
-    'wand-2',
-    'layers',
+    'bot', 'brain', 'sparkles', 'zap', 'rocket', 
+    'briefcase', 'code', 'database', 'globe', 'heart',
+    'lightbulb', 'message-circle', 'shield', 'star', 'user',
+    'cpu', 'terminal', 'settings', 'wand-2', 'layers'
   ];
 
   return (
-    <div className={cn('flex flex-col', className)}>
+    <div className={cn("flex flex-col", className)}>
       <div className="pb-3 shrink-0">
         <Input
           type="text"
@@ -93,20 +76,19 @@ export function IconPicker({
                     key={iconName}
                     onClick={() => onIconSelect(iconName)}
                     className={cn(
-                      'p-2 sm:p-3 rounded-md border transition-all hover:scale-105 flex items-center justify-center aspect-square',
+                      "p-2 sm:p-3 rounded-md border transition-all hover:scale-105 flex items-center justify-center aspect-square",
                       selectedIcon === iconName
-                        ? 'border-primary bg-primary/10 ring-1 ring-primary/30'
-                        : 'border-border hover:border-primary/60 hover:bg-accent',
+                        ? "border-primary bg-primary/10 ring-1 ring-primary/30"
+                        : "border-border hover:border-primary/60 hover:bg-accent"
                     )}
                     style={{
-                      backgroundColor:
-                        selectedIcon === iconName ? backgroundColor : undefined,
+                      backgroundColor: selectedIcon === iconName ? backgroundColor : undefined
                     }}
                     title={iconName}
                   >
-                    <DynamicIcon
-                      name={iconName as any}
-                      size={18}
+                    <DynamicIcon 
+                      name={iconName as any} 
+                      size={18} 
                       color={selectedIcon === iconName ? iconColor : undefined}
                     />
                   </button>
@@ -116,11 +98,12 @@ export function IconPicker({
           )}
           <div className="space-y-3">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              {searchQuery
+              {searchQuery 
                 ? `Search Results (${filteredIcons.length})`
-                : `All Icons (${allIconNames.length})`}
+                : `All Icons (${allIconNames.length})`
+              }
             </p>
-
+            
             {filteredIcons.length === 0 ? (
               <div className="text-center py-12 text-sm text-muted-foreground">
                 <p>No icons found matching "{searchQuery}"</p>
@@ -133,20 +116,19 @@ export function IconPicker({
                     key={iconName}
                     onClick={() => onIconSelect(iconName)}
                     className={cn(
-                      'rounded-md border transition-all hover:scale-105 flex items-center justify-center aspect-square',
+                      "rounded-md border transition-all hover:scale-105 flex items-center justify-center aspect-square",
                       selectedIcon === iconName
-                        ? 'border-primary bg-primary/10 ring-1 ring-primary/30'
-                        : 'border-border hover:border-primary/60 hover:bg-accent',
+                        ? "border-primary bg-primary/10 ring-1 ring-primary/30"
+                        : "border-border hover:border-primary/60 hover:bg-accent"
                     )}
                     style={{
-                      backgroundColor:
-                        selectedIcon === iconName ? backgroundColor : undefined,
+                      backgroundColor: selectedIcon === iconName ? backgroundColor : undefined
                     }}
                     title={iconName}
                   >
-                    <DynamicIcon
-                      name={iconName as any}
-                      size={18}
+                    <DynamicIcon 
+                      name={iconName as any} 
+                      size={18} 
                       color={selectedIcon === iconName ? iconColor : undefined}
                     />
                   </button>
@@ -158,4 +140,4 @@ export function IconPicker({
       </ScrollArea>
     </div>
   );
-}
+} 

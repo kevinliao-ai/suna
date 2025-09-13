@@ -13,10 +13,10 @@ interface NavigationSubmenuProps {
   onNavigate?: (item: DocsNavigationItem) => void;
 }
 
-export const NavigationSubmenu = ({
-  item,
-  level = 0,
-  onNavigate,
+export const NavigationSubmenu = ({ 
+  item, 
+  level = 0, 
+  onNavigate 
 }: NavigationSubmenuProps) => {
   const [isExpanded, setIsExpanded] = useState(item.defaultExpanded ?? false);
   const hasChildren = item.children && item.children.length > 0;
@@ -26,7 +26,7 @@ export const NavigationSubmenu = ({
     if (hasChildren) {
       setIsExpanded(!isExpanded);
     }
-
+    
     if (item.href && onNavigate) {
       onNavigate(item);
     }
@@ -38,25 +38,29 @@ export const NavigationSubmenu = ({
         variant="ghost"
         onClick={handleClick}
         className={cn(
-          'w-full justify-start h-auto p-3 font-normal',
-          hasChildren && 'cursor-pointer',
-          !hasChildren && item.href && 'hover:bg-accent',
+          "w-full justify-start h-auto p-3 font-normal",
+          hasChildren && "cursor-pointer",
+          !hasChildren && item.href && "hover:bg-accent"
         )}
         style={{ paddingLeft: `${12 + paddingLeft}px` }}
       >
         {hasChildren && (
-          <ChevronRight
+          <ChevronRight 
             className={cn(
-              'mr-2 h-4 w-4 transition-transform',
-              isExpanded && 'rotate-90',
-            )}
+              "mr-2 h-4 w-4 transition-transform",
+              isExpanded && "rotate-90"
+            )} 
           />
         )}
-
-        {item.icon && <item.icon className="mr-3 h-4 w-4" />}
-
-        <span className="flex-1 text-left text-sm">{item.title}</span>
-
+        
+        {item.icon && (
+          <item.icon className="mr-3 h-4 w-4" />
+        )}
+        
+        <span className="flex-1 text-left text-sm">
+          {item.title}
+        </span>
+        
         {item.badge && (
           <Badge variant="secondary" className="ml-2 h-5 text-xs">
             {item.badge}
@@ -78,4 +82,4 @@ export const NavigationSubmenu = ({
       )}
     </div>
   );
-};
+}; 

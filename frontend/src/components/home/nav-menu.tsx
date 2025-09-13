@@ -28,7 +28,7 @@ export function NavMenu() {
     if (pathname === '/enterprise') {
       targetHref = '/enterprise';
     }
-
+    
     const targetItem = ref.current?.querySelector(
       `[href="${targetHref}"]`,
     )?.parentElement;
@@ -45,9 +45,7 @@ export function NavMenu() {
       // Skip scroll handling during manual click scrolling or if not on homepage
       if (isManualScroll || pathname !== '/') return;
 
-      const sections = navs
-        .filter((item) => item.href.startsWith('#'))
-        .map((item) => item.href.substring(1));
+      const sections = navs.filter(item => item.href.startsWith('#')).map((item) => item.href.substring(1));
 
       // Find the section closest to viewport top
       let closestSection = sections[0];
@@ -79,7 +77,7 @@ export function NavMenu() {
 
     // Handle non-homepage routes
     if (pathname !== '/') {
-      const currentPageItem = navs.find((item) => item.href === pathname);
+      const currentPageItem = navs.find(item => item.href === pathname);
       if (currentPageItem) {
         const navItem = ref.current?.querySelector(
           `[href="${currentPageItem.href}"]`,
@@ -110,13 +108,13 @@ export function NavMenu() {
     e.preventDefault();
 
     const targetId = item.href.substring(1);
-
+    
     // If we're not on the homepage, redirect to homepage with the section
     if (pathname !== '/') {
       router.push(`/${item.href}`);
       return;
     }
-
+    
     const element = document.getElementById(targetId);
 
     if (element) {
@@ -159,10 +157,7 @@ export function NavMenu() {
           <li
             key={item.name}
             className={`z-10 cursor-pointer h-full flex items-center justify-center px-4 py-2 text-sm font-medium transition-colors duration-200 ${
-              (item.href.startsWith('#') &&
-                pathname === '/' &&
-                activeSection === item.href.substring(1)) ||
-              item.href === pathname
+              (item.href.startsWith('#') && pathname === '/' && activeSection === item.href.substring(1)) || (item.href === pathname)
                 ? 'text-primary'
                 : 'text-primary/60 hover:text-primary'
             } tracking-tight`}

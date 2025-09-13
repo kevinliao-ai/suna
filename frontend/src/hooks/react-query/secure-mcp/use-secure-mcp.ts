@@ -106,9 +106,7 @@ export function useUserCredentials() {
     queryKey: ['secure-mcp', 'credentials'],
     queryFn: async (): Promise<MCPCredential[]> => {
       const supabase = createClient();
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const { data: { session } } = await supabase.auth.getSession();
 
       if (!session) {
         throw new Error('You must be logged in to view credentials');
@@ -116,18 +114,13 @@ export function useUserCredentials() {
 
       const response = await fetch(`${API_URL}/secure-mcp/credentials`, {
         headers: {
-          Authorization: `Bearer ${session.access_token}`,
+          'Authorization': `Bearer ${session.access_token}`,
         },
       });
 
       if (!response.ok) {
-        const errorData = await response
-          .json()
-          .catch(() => ({ message: 'Unknown error' }));
-        throw new Error(
-          errorData.message ||
-            `HTTP ${response.status}: ${response.statusText}`,
-        );
+        const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
       }
 
       return response.json();
@@ -139,13 +132,9 @@ export function useStoreCredential() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (
-      request: StoreCredentialRequest,
-    ): Promise<MCPCredential> => {
+    mutationFn: async (request: StoreCredentialRequest): Promise<MCPCredential> => {
       const supabase = createClient();
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const { data: { session } } = await supabase.auth.getSession();
 
       if (!session) {
         throw new Error('You must be logged in to store credentials');
@@ -155,27 +144,20 @@ export function useStoreCredential() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.access_token}`,
+          'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify(request),
       });
 
       if (!response.ok) {
-        const errorData = await response
-          .json()
-          .catch(() => ({ message: 'Unknown error' }));
-        throw new Error(
-          errorData.message ||
-            `HTTP ${response.status}: ${response.statusText}`,
-        );
+        const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
       }
 
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ['secure-mcp', 'credentials'],
-      });
+      queryClient.invalidateQueries({ queryKey: ['secure-mcp', 'credentials'] });
     },
   });
 }
@@ -186,38 +168,26 @@ export function useDeleteCredential() {
   return useMutation({
     mutationFn: async (mcp_qualified_name: string): Promise<void> => {
       const supabase = createClient();
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const { data: { session } } = await supabase.auth.getSession();
 
       if (!session) {
         throw new Error('You must be logged in to delete credentials');
       }
 
-      const response = await fetch(
-        `${API_URL}/secure-mcp/credentials/${encodeURIComponent(mcp_qualified_name)}`,
-        {
-          method: 'DELETE',
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-          },
+      const response = await fetch(`${API_URL}/secure-mcp/credentials/${encodeURIComponent(mcp_qualified_name)}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
         },
-      );
+      });
 
       if (!response.ok) {
-        const errorData = await response
-          .json()
-          .catch(() => ({ message: 'Unknown error' }));
-        throw new Error(
-          errorData.message ||
-            `HTTP ${response.status}: ${response.statusText}`,
-        );
+        const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ['secure-mcp', 'credentials'],
-      });
+      queryClient.invalidateQueries({ queryKey: ['secure-mcp', 'credentials'] });
     },
   });
 }
@@ -250,9 +220,7 @@ export function useMarketplaceTemplates(params?: {
     queryKey: ['secure-mcp', 'marketplace-templates', params],
     queryFn: async (): Promise<MarketplaceTemplatesResponse> => {
       const supabase = createClient();
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const { data: { session } } = await supabase.auth.getSession();
 
       if (!session) {
         throw new Error('You must be logged in to view marketplace templates');
@@ -263,30 +231,20 @@ export function useMarketplaceTemplates(params?: {
       if (params?.limit) searchParams.set('limit', params.limit.toString());
       if (params?.search) searchParams.set('search', params.search);
       if (params?.tags) searchParams.set('tags', params.tags);
-      if (params?.is_kortix_team !== undefined)
-        searchParams.set('is_kortix_team', params.is_kortix_team.toString());
-      if (params?.mine !== undefined)
-        searchParams.set('mine', params.mine.toString());
+      if (params?.is_kortix_team !== undefined) searchParams.set('is_kortix_team', params.is_kortix_team.toString());
+      if (params?.mine !== undefined) searchParams.set('mine', params.mine.toString());
       if (params?.sort_by) searchParams.set('sort_by', params.sort_by);
       if (params?.sort_order) searchParams.set('sort_order', params.sort_order);
 
-      const response = await fetch(
-        `${API_URL}/templates/marketplace?${searchParams}`,
-        {
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-          },
+      const response = await fetch(`${API_URL}/templates/marketplace?${searchParams}`, {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
         },
-      );
+      });
 
       if (!response.ok) {
-        const errorData = await response
-          .json()
-          .catch(() => ({ message: 'Unknown error' }));
-        throw new Error(
-          errorData.message ||
-            `HTTP ${response.status}: ${response.statusText}`,
-        );
+        const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
       }
       return response.json();
     },
@@ -298,9 +256,7 @@ export function useTemplateDetails(template_id: string) {
     queryKey: ['secure-mcp', 'template', template_id],
     queryFn: async (): Promise<AgentTemplate> => {
       const supabase = createClient();
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const { data: { session } } = await supabase.auth.getSession();
 
       if (!session) {
         throw new Error('You must be logged in to view template details');
@@ -308,18 +264,13 @@ export function useTemplateDetails(template_id: string) {
 
       const response = await fetch(`${API_URL}/templates/${template_id}`, {
         headers: {
-          Authorization: `Bearer ${session.access_token}`,
+          'Authorization': `Bearer ${session.access_token}`,
         },
       });
 
       if (!response.ok) {
-        const errorData = await response
-          .json()
-          .catch(() => ({ message: 'Unknown error' }));
-        throw new Error(
-          errorData.message ||
-            `HTTP ${response.status}: ${response.statusText}`,
-        );
+        const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
       }
 
       return response.json();
@@ -332,13 +283,9 @@ export function useCreateTemplate() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (
-      request: CreateTemplateRequest,
-    ): Promise<{ template_id: string; message: string }> => {
+    mutationFn: async (request: CreateTemplateRequest): Promise<{ template_id: string; message: string }> => {
       const supabase = createClient();
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const { data: { session } } = await supabase.auth.getSession();
 
       if (!session) {
         throw new Error('You must be logged in to create templates');
@@ -348,30 +295,21 @@ export function useCreateTemplate() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.access_token}`,
+          'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify(request),
       });
 
       if (!response.ok) {
-        const errorData = await response
-          .json()
-          .catch(() => ({ message: 'Unknown error' }));
-        throw new Error(
-          errorData.message ||
-            `HTTP ${response.status}: ${response.statusText}`,
-        );
+        const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
       }
 
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ['secure-mcp', 'marketplace-templates'],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ['secure-mcp', 'my-templates'],
-      });
+      queryClient.invalidateQueries({ queryKey: ['secure-mcp', 'marketplace-templates'] });
+      queryClient.invalidateQueries({ queryKey: ['secure-mcp', 'my-templates'] });
     },
   });
 }
@@ -387,9 +325,7 @@ export function useMyTemplates(params?: {
     queryKey: ['secure-mcp', 'my-templates', params],
     queryFn: async (): Promise<MarketplaceTemplatesResponse> => {
       const supabase = createClient();
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const { data: { session } } = await supabase.auth.getSession();
 
       if (!session) {
         throw new Error('You must be logged in to view your templates');
@@ -404,18 +340,13 @@ export function useMyTemplates(params?: {
 
       const response = await fetch(`${API_URL}/templates/my?${searchParams}`, {
         headers: {
-          Authorization: `Bearer ${session.access_token}`,
+          'Authorization': `Bearer ${session.access_token}`,
         },
       });
 
       if (!response.ok) {
-        const errorData = await response
-          .json()
-          .catch(() => ({ message: 'Unknown error' }));
-        throw new Error(
-          errorData.message ||
-            `HTTP ${response.status}: ${response.statusText}`,
-        );
+        const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
       }
 
       return response.json();
@@ -427,53 +358,33 @@ export function usePublishTemplate() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      template_id,
-      tags,
-    }: {
-      template_id: string;
-      tags?: string[];
-    }): Promise<{ message: string }> => {
+    mutationFn: async ({ template_id, tags }: { template_id: string; tags?: string[] }): Promise<{ message: string }> => {
       const supabase = createClient();
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const { data: { session } } = await supabase.auth.getSession();
 
       if (!session) {
         throw new Error('You must be logged in to publish templates');
       }
 
-      const response = await fetch(
-        `${API_URL}/templates/${template_id}/publish`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({ tags }),
+      const response = await fetch(`${API_URL}/templates/${template_id}/publish`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
         },
-      );
+        body: JSON.stringify({ tags }),
+      });
 
       if (!response.ok) {
-        const errorData = await response
-          .json()
-          .catch(() => ({ message: 'Unknown error' }));
-        throw new Error(
-          errorData.message ||
-            `HTTP ${response.status}: ${response.statusText}`,
-        );
+        const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
       }
 
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ['secure-mcp', 'marketplace-templates'],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ['secure-mcp', 'my-templates'],
-      });
+      queryClient.invalidateQueries({ queryKey: ['secure-mcp', 'marketplace-templates'] });
+      queryClient.invalidateQueries({ queryKey: ['secure-mcp', 'my-templates'] });
     },
   });
 }
@@ -484,44 +395,30 @@ export function useUnpublishTemplate() {
   return useMutation({
     mutationFn: async (template_id: string): Promise<{ message: string }> => {
       const supabase = createClient();
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const { data: { session } } = await supabase.auth.getSession();
 
       if (!session) {
         throw new Error('You must be logged in to unpublish templates');
       }
 
-      const response = await fetch(
-        `${API_URL}/templates/${template_id}/unpublish`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${session.access_token}`,
-          },
+      const response = await fetch(`${API_URL}/templates/${template_id}/unpublish`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
         },
-      );
+      });
 
       if (!response.ok) {
-        const errorData = await response
-          .json()
-          .catch(() => ({ message: 'Unknown error' }));
-        throw new Error(
-          errorData.message ||
-            `HTTP ${response.status}: ${response.statusText}`,
-        );
+        const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
       }
 
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ['secure-mcp', 'marketplace-templates'],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ['secure-mcp', 'my-templates'],
-      });
+      queryClient.invalidateQueries({ queryKey: ['secure-mcp', 'marketplace-templates'] });
+      queryClient.invalidateQueries({ queryKey: ['secure-mcp', 'my-templates'] });
     },
   });
 }
@@ -532,9 +429,7 @@ export function useDeleteTemplate() {
   return useMutation({
     mutationFn: async (template_id: string): Promise<{ message: string }> => {
       const supabase = createClient();
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const { data: { session } } = await supabase.auth.getSession();
 
       if (!session) {
         throw new Error('You must be logged in to delete templates');
@@ -544,29 +439,20 @@ export function useDeleteTemplate() {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.access_token}`,
+          'Authorization': `Bearer ${session.access_token}`,
         },
       });
 
       if (!response.ok) {
-        const errorData = await response
-          .json()
-          .catch(() => ({ message: 'Unknown error' }));
-        throw new Error(
-          errorData.message ||
-            `HTTP ${response.status}: ${response.statusText}`,
-        );
+        const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
       }
 
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ['secure-mcp', 'marketplace-templates'],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ['secure-mcp', 'my-templates'],
-      });
+      queryClient.invalidateQueries({ queryKey: ['secure-mcp', 'marketplace-templates'] });
+      queryClient.invalidateQueries({ queryKey: ['secure-mcp', 'my-templates'] });
     },
   });
 }
@@ -574,7 +460,7 @@ export function useDeleteTemplate() {
 export function useKortixTeamTemplates() {
   return useMarketplaceTemplates({
     is_kortix_team: true,
-    limit: 10,
+    limit: 10
   });
 }
 
@@ -582,13 +468,9 @@ export function useInstallTemplate() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (
-      request: InstallTemplateRequest,
-    ): Promise<InstallationResponse> => {
+    mutationFn: async (request: InstallTemplateRequest): Promise<InstallationResponse> => {
       const supabase = createClient();
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         throw new Error('You must be logged in to install templates');
       }
@@ -596,31 +478,26 @@ export function useInstallTemplate() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.access_token}`,
+          'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify(request),
       });
 
       if (!response.ok) {
-        const errorData = await response
-          .json()
-          .catch(() => ({ message: 'Unknown error' }));
-        const isAgentLimitError =
-          response.status === 402 &&
-          (errorData.error_code === 'AGENT_LIMIT_EXCEEDED' ||
-            errorData.detail?.error_code === 'AGENT_LIMIT_EXCEEDED');
-
+        const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+        const isAgentLimitError = (response.status === 402) && (
+          errorData.error_code === 'AGENT_LIMIT_EXCEEDED' || 
+          errorData.detail?.error_code === 'AGENT_LIMIT_EXCEEDED'
+        );
+        
         if (isAgentLimitError) {
           const { AgentCountLimitError } = await import('@/lib/api');
           // Use the nested detail if it exists, otherwise use the errorData directly
           const errorDetail = errorData.detail || errorData;
           throw new AgentCountLimitError(response.status, errorDetail);
         }
-
-        throw new Error(
-          errorData.message ||
-            `HTTP ${response.status}: ${response.statusText}`,
-        );
+        
+        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
       }
 
       return response.json();
@@ -631,4 +508,4 @@ export function useInstallTemplate() {
       queryClient.invalidateQueries({ queryKey: ['templates'] });
     },
   });
-}
+} 

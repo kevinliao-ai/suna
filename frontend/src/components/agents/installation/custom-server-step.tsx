@@ -15,27 +15,21 @@ interface CustomServerStepProps {
 export const CustomServerStep: React.FC<CustomServerStepProps> = ({
   step,
   config,
-  onConfigUpdate,
+  onConfigUpdate
 }) => {
-  const handleFieldChange = useCallback(
-    (fieldKey: string, value: string) => {
-      const newConfig = {
-        ...config,
-        [fieldKey]: value,
-      };
-      onConfigUpdate(step.qualified_name, newConfig);
-    },
-    [config, onConfigUpdate, step.qualified_name],
-  );
+  const handleFieldChange = useCallback((fieldKey: string, value: string) => {
+    const newConfig = {
+      ...config,
+      [fieldKey]: value
+    };
+    onConfigUpdate(step.qualified_name, newConfig);
+  }, [config, onConfigUpdate, step.qualified_name]);
 
   return (
     <div className="space-y-4">
       {step.custom_type && (
         <div className="flex items-center gap-2">
-          <Badge
-            variant="outline"
-            className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800"
-          >
+          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800">
             {step.custom_type.toUpperCase()}
           </Badge>
           <span className="text-sm text-muted-foreground">Custom Server</span>
@@ -55,9 +49,7 @@ export const CustomServerStep: React.FC<CustomServerStepProps> = ({
             {field.description && (
               <div className="flex items-start gap-2">
                 <Info className="h-3 w-3 text-muted-foreground mt-0.5 flex-shrink-0" />
-                <p className="text-xs text-muted-foreground">
-                  {field.description}
-                </p>
+                <p className="text-xs text-muted-foreground">{field.description}</p>
               </div>
             )}
           </div>
@@ -65,4 +57,4 @@ export const CustomServerStep: React.FC<CustomServerStepProps> = ({
       </div>
     </div>
   );
-};
+}; 

@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -9,12 +9,12 @@ import { TriggerProvider, ScheduleTriggerConfig } from './types';
 import {
   useInstallOAuthIntegration,
   useUninstallOAuthIntegration,
-  useOAuthCallbackHandler,
+  useOAuthCallbackHandler
 } from '@/hooks/react-query/triggers/use-oauth-integrations';
 import {
   useAgentTriggers,
   useCreateTrigger,
-  useDeleteTrigger,
+  useDeleteTrigger
 } from '@/hooks/react-query/triggers';
 import { toast } from 'sonner';
 import { EventBasedTriggerDialog } from './event-based-trigger-dialog';
@@ -28,14 +28,14 @@ const OAUTH_PROVIDERS = {
   schedule: {
     name: 'Create Schedule Trigger',
     icon: <Clock className="h-4 w-4" color="#10b981" />,
-    isOAuth: false,
-  },
+    isOAuth: false
+  }
 } as const;
 
 type ProviderKey = keyof typeof OAUTH_PROVIDERS;
 
 export const OneClickIntegrations: React.FC<OneClickIntegrationsProps> = ({
-  agentId,
+  agentId
 }) => {
   const [configuringSchedule, setConfiguringSchedule] = useState(false);
   const [showEventDialog, setShowEventDialog] = useState(false);
@@ -82,7 +82,7 @@ export const OneClickIntegrations: React.FC<OneClickIntegrationsProps> = ({
     try {
       await installMutation.mutateAsync({
         agent_id: agentId,
-        provider: provider,
+        provider: provider
       });
     } catch (error) {
       console.error(`Error installing ${provider}:`, error);
@@ -94,7 +94,7 @@ export const OneClickIntegrations: React.FC<OneClickIntegrationsProps> = ({
       try {
         await deleteTriggerMutation.mutateAsync({
           triggerId,
-          agentId,
+          agentId
         });
         toast.success('Schedule trigger removed successfully');
       } catch (error) {
@@ -135,7 +135,7 @@ export const OneClickIntegrations: React.FC<OneClickIntegrationsProps> = ({
 
   const getIntegrationForProvider = (provider: ProviderKey) => {
     if (provider === 'schedule') {
-      return triggers.find((trigger) => trigger.trigger_type === 'schedule');
+      return triggers.find(trigger => trigger.trigger_type === 'schedule');
     }
   };
 
@@ -156,43 +156,35 @@ export const OneClickIntegrations: React.FC<OneClickIntegrationsProps> = ({
     name: 'Schedule',
     trigger_type: 'schedule',
     webhook_enabled: true,
-    config_schema: {},
+    config_schema: {}
   };
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-3">
+
         {Object.entries(OAUTH_PROVIDERS).map(([providerId, config]) => {
           const provider = providerId as ProviderKey;
           const isInstalled = isProviderInstalled(provider);
-          const isLoading =
-            installMutation.isPending ||
-            uninstallMutation.isPending ||
-            (provider === 'schedule' &&
-              (createTriggerMutation.isPending ||
-                deleteTriggerMutation.isPending));
+          const isLoading = installMutation.isPending || uninstallMutation.isPending ||
+            (provider === 'schedule' && (createTriggerMutation.isPending || deleteTriggerMutation.isPending));
           const triggerId = getTriggerId(provider);
 
-          const buttonText =
-            provider === 'schedule'
-              ? config.name
-              : isInstalled
-                ? `Disconnect ${config.name}`
-                : `Connect ${config.name}`;
+          const buttonText = provider === 'schedule'
+            ? config.name
+            : (isInstalled ? `Disconnect ${config.name}` : `Connect ${config.name}`);
 
           return (
             <Button
               key={providerId}
               variant="outline"
-              size="sm"
+              size='sm'
               onClick={() => {
                 if (provider === 'schedule') {
                   handleInstall(provider);
                 } else {
                   // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-                  isInstalled
-                    ? handleUninstall(provider, triggerId)
-                    : handleInstall(provider);
+                  isInstalled ? handleUninstall(provider, triggerId) : handleInstall(provider);
                 }
               }}
               disabled={isLoading}
@@ -209,7 +201,7 @@ export const OneClickIntegrations: React.FC<OneClickIntegrationsProps> = ({
         })}
         <Button
           variant="default"
-          size="sm"
+          size='sm'
           onClick={() => setShowEventDialog(true)}
           className="flex items-center gap-2"
         >

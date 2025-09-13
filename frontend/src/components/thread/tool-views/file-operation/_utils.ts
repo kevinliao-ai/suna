@@ -1,12 +1,4 @@
-import {
-  LucideIcon,
-  FilePen,
-  Replace,
-  Trash2,
-  FileCode,
-  FileSpreadsheet,
-  File,
-} from 'lucide-react';
+import { LucideIcon, FilePen, Replace, Trash2, FileCode, FileSpreadsheet, File } from 'lucide-react';
 
 export type DiffType = 'unchanged' | 'added' | 'removed';
 
@@ -31,60 +23,39 @@ export const parseNewlines = (text: string): string => {
   return text.replace(/\\n/g, '\n');
 };
 
-export const generateLineDiff = (
-  oldText: string,
-  newText: string,
-): LineDiff[] => {
+export const generateLineDiff = (oldText: string, newText: string): LineDiff[] => {
   const parsedOldText = parseNewlines(oldText);
   const parsedNewText = parseNewlines(newText);
-
+  
   const oldLines = parsedOldText.split('\n');
   const newLines = parsedNewText.split('\n');
-
+  
   const diffLines: LineDiff[] = [];
   const maxLines = Math.max(oldLines.length, newLines.length);
-
+  
   for (let i = 0; i < maxLines; i++) {
     const oldLine = i < oldLines.length ? oldLines[i] : null;
     const newLine = i < newLines.length ? newLines[i] : null;
-
+    
     if (oldLine === newLine) {
-      diffLines.push({
-        type: 'unchanged',
-        oldLine,
-        newLine,
-        lineNumber: i + 1,
-      });
+      diffLines.push({ type: 'unchanged', oldLine, newLine, lineNumber: i + 1 });
     } else {
       if (oldLine !== null) {
-        diffLines.push({
-          type: 'removed',
-          oldLine,
-          newLine: null,
-          lineNumber: i + 1,
-        });
+        diffLines.push({ type: 'removed', oldLine, newLine: null, lineNumber: i + 1 });
       }
       if (newLine !== null) {
-        diffLines.push({
-          type: 'added',
-          oldLine: null,
-          newLine,
-          lineNumber: i + 1,
-        });
+        diffLines.push({ type: 'added', oldLine: null, newLine, lineNumber: i + 1 });
       }
     }
   }
-
+  
   return diffLines;
 };
 
-export const generateCharDiff = (
-  oldText: string,
-  newText: string,
-): CharDiffPart[] => {
+export const generateCharDiff = (oldText: string, newText: string): CharDiffPart[] => {
   const parsedOldText = parseNewlines(oldText);
   const parsedNewText = parseNewlines(newText);
-
+  
   let prefixLength = 0;
   while (
     prefixLength < parsedOldText.length &&
@@ -139,17 +110,12 @@ export const generateCharDiff = (
 
 export const calculateDiffStats = (lineDiff: LineDiff[]): DiffStats => {
   return {
-    additions: lineDiff.filter((line) => line.type === 'added').length,
-    deletions: lineDiff.filter((line) => line.type === 'removed').length,
+    additions: lineDiff.filter(line => line.type === 'added').length,
+    deletions: lineDiff.filter(line => line.type === 'removed').length
   };
 };
 
-export type FileOperation =
-  | 'create'
-  | 'rewrite'
-  | 'delete'
-  | 'edit'
-  | 'str-replace';
+export type FileOperation = 'create' | 'rewrite' | 'delete' | 'edit' | 'str-replace';
 
 export interface OperationConfig {
   icon: LucideIcon;
@@ -247,22 +213,22 @@ const parseContent = (content: any): any => {
 };
 
 const parseOutput = (output: any) => {
-  if (typeof output === 'string') {
-    try {
-      return JSON.parse(output);
-    } catch {
-      return output; // Return as string if not JSON
+    if (typeof output === 'string') {
+      try {
+        return JSON.parse(output);
+      } catch {
+        return output; // Return as string if not JSON
+      }
     }
-  }
-  return output;
-};
+    return output;
+  };
 
 export const extractFileEditData = (
   assistantContent: any,
   toolContent: any,
   isSuccess: boolean,
   toolTimestamp?: string,
-  assistantTimestamp?: string,
+  assistantTimestamp?: string
 ): {
   filePath: string | null;
   originalContent: string | null;
@@ -285,20 +251,17 @@ export const extractFileEditData = (
 
   const extractData = (content: any) => {
     let parsed = typeof content === 'string' ? parseContent(content) : content;
-
+    
     // Handle nested content structures like { role: '...', content: '...' }
     if (parsed?.role && parsed?.content) {
-      parsed =
-        typeof parsed.content === 'string'
-          ? parseContent(parsed.content)
-          : parsed.content;
+        parsed = typeof parsed.content === 'string' ? parseContent(parsed.content) : parsed.content;
     }
 
     if (parsed?.tool_execution) {
       const args = parsed.tool_execution.arguments || {};
       const output = parseOutput(parsed.tool_execution.result?.output);
       const success = parsed.tool_execution.result?.success;
-
+      
       let errorMessage: string | undefined;
       if (success === false) {
         if (typeof output === 'object' && output !== null && output.message) {
@@ -311,35 +274,25 @@ export const extractFileEditData = (
       }
 
       return {
-        filePath:
-          args.target_file ||
-          (typeof output === 'object' && output?.file_path) ||
-          null,
-        originalContent:
-          (typeof output === 'object' && output?.original_content) ?? null,
-        updatedContent:
-          (typeof output === 'object' && output?.updated_content) ?? null,
+        filePath: args.target_file || (typeof output === 'object' && output?.file_path) || null,
+        originalContent: (typeof output === 'object' && output?.original_content) ?? null,
+        updatedContent: (typeof output === 'object' && output?.updated_content) ?? null,
         success: success,
         timestamp: parsed.tool_execution.execution_details?.timestamp,
         errorMessage: errorMessage,
       };
     }
-
+    
     // Fallback for when toolContent is just the output object from the tool result
-    if (
-      typeof parsed === 'object' &&
-      parsed !== null &&
-      (parsed.original_content !== undefined ||
-        parsed.updated_content !== undefined)
-    ) {
-      return {
-        filePath: parsed.file_path || null,
-        originalContent: parsed.original_content ?? null,
-        updatedContent: parsed.updated_content ?? null,
-        success: parsed.updated_content !== null, // Success is false if updated_content is null
-        timestamp: null,
-        errorMessage: parsed.message,
-      };
+    if (typeof parsed === 'object' && parsed !== null && (parsed.original_content !== undefined || parsed.updated_content !== undefined)) {
+        return {
+            filePath: parsed.file_path || null,
+            originalContent: parsed.original_content ?? null,
+            updatedContent: parsed.updated_content ?? null,
+            success: parsed.updated_content !== null, // Success is false if updated_content is null
+            timestamp: null,
+            errorMessage: parsed.message,
+        };
     }
     return {};
   };
@@ -348,10 +301,8 @@ export const extractFileEditData = (
   const assistantData = extractData(assistantContent);
 
   const filePath = toolData.filePath || assistantData.filePath;
-  const originalContent =
-    toolData.originalContent || assistantData.originalContent;
-  const updatedContent =
-    toolData.updatedContent || assistantData.updatedContent;
+  const originalContent = toolData.originalContent || assistantData.originalContent;
+  const updatedContent = toolData.updatedContent || assistantData.updatedContent;
   const errorMessage = toolData.errorMessage || assistantData.errorMessage;
 
   let actualIsSuccess = isSuccess;
@@ -366,21 +317,10 @@ export const extractFileEditData = (
     actualAssistantTimestamp = assistantData.timestamp || assistantTimestamp;
   }
 
-  return {
-    filePath,
-    originalContent,
-    updatedContent,
-    actualIsSuccess,
-    actualToolTimestamp,
-    actualAssistantTimestamp,
-    errorMessage,
-  };
+  return { filePath, originalContent, updatedContent, actualIsSuccess, actualToolTimestamp, actualAssistantTimestamp, errorMessage };
 };
 
-export const getOperationType = (
-  name?: string,
-  assistantContent?: any,
-): FileOperation => {
+export const getOperationType = (name?: string, assistantContent?: any): FileOperation => {
   if (name) {
     if (name.includes('create')) return 'create';
     if (name.includes('rewrite')) return 'rewrite';
@@ -392,36 +332,34 @@ export const getOperationType = (
   if (!assistantContent) return 'create';
 
   // Assuming normalizeContentToString is imported from existing utils
-  const contentStr =
-    typeof assistantContent === 'string'
-      ? assistantContent
-      : JSON.stringify(assistantContent);
+  const contentStr = typeof assistantContent === 'string' ? assistantContent : JSON.stringify(assistantContent);
   if (!contentStr) return 'create';
 
   if (contentStr.includes('<create-file>')) return 'create';
   if (contentStr.includes('<full-file-rewrite>')) return 'rewrite';
   if (contentStr.includes('<edit-file>')) return 'edit';
-  if (contentStr.includes('delete-file') || contentStr.includes('<delete>'))
+  if (
+    contentStr.includes('delete-file') ||
+    contentStr.includes('<delete>')
+  )
     return 'delete';
 
   if (contentStr.toLowerCase().includes('create file')) return 'create';
-  if (contentStr.toLowerCase().includes('rewrite file')) return 'rewrite';
+  if (contentStr.toLowerCase().includes('rewrite file'))
+    return 'rewrite';
   if (contentStr.toLowerCase().includes('edit file')) return 'edit';
   if (contentStr.toLowerCase().includes('delete file')) return 'delete';
 
   return 'create';
 };
 
-export const getOperationConfigs = (): Record<
-  FileOperation,
-  OperationConfig
-> => {
+export const getOperationConfigs = (): Record<FileOperation, OperationConfig> => {
   return {
-    create: {
-      icon: FilePen,
+  create: {
+    icon: FilePen,
       color: 'text-green-600',
-      successMessage: 'File created successfully',
-      progressMessage: 'Creating file...',
+    successMessage: 'File created successfully',
+    progressMessage: 'Creating file...',
       bgColor: 'bg-green-50',
       gradientBg: 'from-green-50 to-green-100',
       borderColor: 'border-green-200',
@@ -438,40 +376,40 @@ export const getOperationConfigs = (): Record<
       borderColor: 'border-blue-200',
       badgeColor: 'bg-blue-100 text-blue-700 border-blue-200',
       hoverColor: 'hover:bg-blue-100',
-    },
-    rewrite: {
-      icon: Replace,
+  },
+  rewrite: {
+    icon: Replace,
       color: 'text-amber-600',
-      successMessage: 'File rewritten successfully',
-      progressMessage: 'Rewriting file...',
+    successMessage: 'File rewritten successfully',
+    progressMessage: 'Rewriting file...',
       bgColor: 'bg-amber-50',
       gradientBg: 'from-amber-50 to-amber-100',
       borderColor: 'border-amber-200',
       badgeColor: 'bg-amber-100 text-amber-700 border-amber-200',
       hoverColor: 'hover:bg-amber-100',
-    },
-    delete: {
-      icon: Trash2,
+  },
+  delete: {
+    icon: Trash2,
       color: 'text-red-600',
-      successMessage: 'File deleted successfully',
-      progressMessage: 'Deleting file...',
+    successMessage: 'File deleted successfully',
+    progressMessage: 'Deleting file...',
       bgColor: 'bg-red-50',
       gradientBg: 'from-red-50 to-red-100',
       borderColor: 'border-red-200',
       badgeColor: 'bg-red-100 text-red-700 border-red-200',
       hoverColor: 'hover:bg-red-100',
-    },
-    'str-replace': {
-      icon: Replace,
-      color: 'text-blue-600',
-      successMessage: 'String replaced successfully',
-      progressMessage: 'Replacing string...',
-      bgColor: 'bg-blue-50',
-      gradientBg: 'from-blue-50 to-blue-100',
-      borderColor: 'border-blue-200',
-      badgeColor: 'bg-blue-100 text-blue-700 border-blue-200',
-      hoverColor: 'hover:bg-blue-100',
-    },
+  },
+  'str-replace': {
+    icon: Replace,
+    color: 'text-blue-600',
+    successMessage: 'String replaced successfully',
+    progressMessage: 'Replacing string...',
+    bgColor: 'bg-blue-50',
+    gradientBg: 'from-blue-50 to-blue-100',
+    borderColor: 'border-blue-200',
+    badgeColor: 'bg-blue-100 text-blue-700 border-blue-200',
+    hoverColor: 'hover:bg-blue-100',
+  },
   };
 };
 
@@ -483,7 +421,9 @@ export const getFileIcon = (fileName: string): LucideIcon => {
 };
 
 export const processFilePath = (filePath: string | null): string | null => {
-  return filePath ? filePath.trim().replace(/\\n/g, '\n').split('\n')[0] : null;
+  return filePath
+    ? filePath.trim().replace(/\\n/g, '\n').split('\n')[0]
+    : null;
 };
 
 export const getFileName = (processedFilePath: string | null): string => {
@@ -498,11 +438,9 @@ export const getFileExtension = (fileName: string): string => {
 
 export const isFileType = {
   markdown: (fileExtension: string): boolean => fileExtension === 'md',
-  html: (fileExtension: string): boolean =>
-    fileExtension === 'html' || fileExtension === 'htm',
+  html: (fileExtension: string): boolean => fileExtension === 'html' || fileExtension === 'htm',
   csv: (fileExtension: string): boolean => fileExtension === 'csv',
-  xlsx: (fileExtension: string): boolean =>
-    fileExtension === 'xlsx' || fileExtension === 'xls',
+  xlsx: (fileExtension: string): boolean => fileExtension === 'xlsx' || fileExtension === 'xls',
 };
 
 export const hasLanguageHighlighting = (language: string): boolean => {
@@ -510,5 +448,7 @@ export const hasLanguageHighlighting = (language: string): boolean => {
 };
 
 export const splitContentIntoLines = (fileContent: string | null): string[] => {
-  return fileContent ? fileContent.replace(/\\n/g, '\n').split('\n') : [];
+  return fileContent
+    ? fileContent.replace(/\\n/g, '\n').split('\n')
+    : [];
 };

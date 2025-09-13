@@ -10,20 +10,17 @@ import {
   Link2Off,
   Clock,
   Badge as BadgeIcon,
-  Server,
+  Server
 } from 'lucide-react';
 import { ToolViewProps } from '../types';
 import { formatTimestamp, getToolTitle } from '../utils';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { LoadingState } from '../shared/LoadingState';
-import { Separator } from '@/components/ui/separator';
-import {
-  extractCreateCredentialProfileData,
-  CredentialProfile,
-} from './_utils';
+import { Separator } from "@/components/ui/separator";
+import { extractCreateCredentialProfileData, CredentialProfile } from './_utils';
 
 export function CreateCredentialProfileToolView({
   name = 'create-credential-profile',
@@ -34,6 +31,7 @@ export function CreateCredentialProfileToolView({
   isSuccess = true,
   isStreaming = false,
 }: ToolViewProps) {
+
   const {
     toolkit_slug,
     profile_name,
@@ -42,13 +40,13 @@ export function CreateCredentialProfileToolView({
     profile,
     actualIsSuccess,
     actualToolTimestamp,
-    actualAssistantTimestamp,
+    actualAssistantTimestamp
   } = extractCreateCredentialProfileData(
     assistantContent,
     toolContent,
     isSuccess,
     toolTimestamp,
-    assistantTimestamp,
+    assistantTimestamp
   );
 
   const toolTitle = getToolTitle(name);
@@ -64,7 +62,7 @@ export function CreateCredentialProfileToolView({
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
-        timeZoneName: 'short',
+        timeZoneName: 'short'
       });
     } catch (e) {
       return dateString;
@@ -74,10 +72,10 @@ export function CreateCredentialProfileToolView({
   const getConnectionStatus = (isConnected: boolean) => {
     return {
       icon: isConnected ? Link2 : Link2Off,
-      color: isConnected
+      color: isConnected 
         ? 'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800'
         : 'bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-300 dark:border-yellow-800',
-      text: isConnected ? 'Connected' : 'Not Connected',
+      text: isConnected ? 'Connected' : 'Not Connected'
     };
   };
 
@@ -100,10 +98,10 @@ export function CreateCredentialProfileToolView({
             <Badge
               variant="secondary"
               className={cn(
-                'text-xs font-medium',
+                "text-xs font-medium",
                 actualIsSuccess
-                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800'
-                  : 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800',
+                  ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800"
+                  : "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800"
               )}
             >
               {actualIsSuccess ? (
@@ -168,7 +166,7 @@ export function CreateCredentialProfileToolView({
                     return (
                       <Badge
                         variant="outline"
-                        className={cn('text-xs font-medium', status.color)}
+                        className={cn("text-xs font-medium", status.color)}
                       >
                         <StatusIcon className="w-3 h-3" />
                         {status.text}
@@ -190,7 +188,7 @@ export function CreateCredentialProfileToolView({
 
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
-                      <Server className="w-4 h-4" />
+                      <Server className="w-4 h-4" /> 
                       <span>Toolkit Slug</span>
                     </div>
                     <p className="text-sm font-mono text-zinc-700 dark:text-zinc-300 pl-6">
@@ -208,9 +206,7 @@ export function CreateCredentialProfileToolView({
                           Setup Required
                         </p>
                         <p className="text-xs text-blue-700 dark:text-blue-300">
-                          This credential profile needs to be connected before
-                          it can be used. Follow the authentication flow to
-                          complete the setup.
+                          This credential profile needs to be connected before it can be used. Follow the authentication flow to complete the setup.
                         </p>
                       </div>
                     </div>
@@ -229,9 +225,7 @@ export function CreateCredentialProfileToolView({
                 Profile not created
               </h3>
               <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                {toolkit_slug
-                  ? `Failed to create profile for "${toolkit_slug}"`
-                  : 'Credential profile creation failed'}
+                {toolkit_slug ? `Failed to create profile for "${toolkit_slug}"` : 'Credential profile creation failed'}
               </p>
             </div>
           </div>
@@ -239,4 +233,4 @@ export function CreateCredentialProfileToolView({
       </CardContent>
     </Card>
   );
-}
+} 

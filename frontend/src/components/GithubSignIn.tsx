@@ -21,7 +21,7 @@ interface AuthMessage {
 export default function GitHubSignIn({ returnUrl }: GitHubSignInProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { resolvedTheme } = useTheme();
-
+  
   const { wasLastMethod, markAsUsed } = useAuthMethodTracking('github');
 
   const cleanupAuthState = useCallback(() => {
@@ -164,7 +164,7 @@ export default function GitHubSignIn({ returnUrl }: GitHubSignInProps) {
           {isLoading ? 'Signing in...' : 'Continue with GitHub'}
         </span>
       </button>
-
+      
       {wasLastMethod && (
         <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-background shadow-sm">
           <div className="w-full h-full bg-green-500 rounded-full animate-pulse" />

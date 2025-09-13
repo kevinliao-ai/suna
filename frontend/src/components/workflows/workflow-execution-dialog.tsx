@@ -2,13 +2,7 @@
 
 import React, { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
@@ -31,7 +25,7 @@ export function WorkflowExecutionDialog({
   workflow,
   agentId,
   onSuccess,
-  onError,
+  onError
 }: WorkflowExecutionDialogProps) {
   const executeWorkflowMutation = useExecuteWorkflow();
   const [executionInput, setExecutionInput] = useState<string>('');
@@ -43,18 +37,16 @@ export function WorkflowExecutionDialog({
 
   const handleConfirmExecution = useCallback(async () => {
     if (!workflow) return;
-
+    
     try {
-      const result = await executeWorkflowMutation.mutateAsync({
-        agentId,
-        workflowId: workflow.id,
+      const result = await executeWorkflowMutation.mutateAsync({ 
+        agentId, 
+        workflowId: workflow.id, 
         execution: {
-          input_data: executionInput.trim()
-            ? { prompt: executionInput }
-            : undefined,
-        },
+          input_data: executionInput.trim() ? { prompt: executionInput } : undefined
+        } 
       });
-
+      
       handleClose();
       toast.success(`${result.message}`);
       onSuccess?.(result);
@@ -62,15 +54,7 @@ export function WorkflowExecutionDialog({
       toast.error('Failed to execute workflow');
       onError?.(error);
     }
-  }, [
-    agentId,
-    workflow,
-    executionInput,
-    executeWorkflowMutation,
-    handleClose,
-    onSuccess,
-    onError,
-  ]);
+  }, [agentId, workflow, executionInput, executeWorkflowMutation, handleClose, onSuccess, onError]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -95,21 +79,22 @@ export function WorkflowExecutionDialog({
           </div>
 
           <div className="flex items-center justify-end gap-2 pt-4">
-            <Button variant="outline" onClick={handleClose}>
+            <Button 
+              variant="outline" 
+              onClick={handleClose}
+            >
               Cancel
             </Button>
-            <Button
+            <Button 
               onClick={handleConfirmExecution}
               disabled={executeWorkflowMutation.isPending}
             >
               <Play className="h-3.5 w-3.5" />
-              {executeWorkflowMutation.isPending
-                ? 'Executing...'
-                : 'Execute Workflow'}
+              {executeWorkflowMutation.isPending ? 'Executing...' : 'Execute Workflow'}
             </Button>
           </div>
         </div>
       </DialogContent>
     </Dialog>
   );
-}
+} 

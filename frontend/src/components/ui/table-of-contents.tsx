@@ -47,10 +47,10 @@ export function TableOfContents({ className }: TableOfContentsProps) {
         setActiveId('');
       }
     };
-
+    
     updateHeadings();
     const timeout = setTimeout(updateHeadings, 200);
-
+    
     return () => clearTimeout(timeout);
   }, [getHeadings, pathname]);
 
@@ -64,7 +64,7 @@ export function TableOfContents({ className }: TableOfContentsProps) {
       for (let i = headings.length - 1; i >= 0; i--) {
         const heading = headings[i];
         const element = document.getElementById(heading.id);
-
+        
         if (element) {
           const rect = element.getBoundingClientRect();
           const elementTop = scrollY + rect.top;
@@ -102,13 +102,13 @@ export function TableOfContents({ className }: TableOfContentsProps) {
     if (element) {
       const windowHeight = window.innerHeight;
       const offset = Math.min(windowHeight * 0.15, 80);
-
+      
       const elementTop = element.getBoundingClientRect().top + window.scrollY;
       const targetPosition = elementTop - offset;
-
+      
       window.scrollTo({
         top: targetPosition,
-        behavior: 'smooth',
+        behavior: 'smooth'
       });
       setActiveId(id);
     }
@@ -122,7 +122,7 @@ export function TableOfContents({ className }: TableOfContentsProps) {
         <Menu className="w-4 h-4" />
         <h4 className="font-semibold text-foreground">On this page</h4>
       </div>
-
+      
       <nav className="space-y-1">
         {headings.map((heading) => (
           <button
@@ -132,7 +132,7 @@ export function TableOfContents({ className }: TableOfContentsProps) {
               'mb-4 block w-full text-left text-sm transition-all duration-200 py-0.5 px-3 hover:text-accent-foreground',
               activeId === heading.id
                 ? 'text-primary font-semibold border-l-2 border-primary'
-                : 'text-muted-foreground hover:text-foreground',
+                : 'text-muted-foreground hover:text-foreground'
             )}
           >
             {heading.text}
@@ -141,4 +141,4 @@ export function TableOfContents({ className }: TableOfContentsProps) {
       </nav>
     </div>
   );
-}
+} 

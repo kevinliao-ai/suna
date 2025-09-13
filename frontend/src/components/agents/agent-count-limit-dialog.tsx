@@ -23,7 +23,7 @@ export const AgentCountLimitDialog: React.FC<AgentCountLimitDialogProps> = ({
   const returnUrl = typeof window !== 'undefined' ? window.location.href : '/';
 
   const getNextTierRecommendation = () => {
-    if (tierName === 'free') {
+    if (tierName === 'free' || tierName === 'none') {
       return {
         name: 'Plus',
         price: '$20/month',
@@ -32,7 +32,7 @@ export const AgentCountLimitDialog: React.FC<AgentCountLimitDialogProps> = ({
     } else if (tierName.includes('tier_2_20')) {
       return {
         name: 'Pro',
-        price: '$50/month',
+        price: '$50/month', 
         agentLimit: 20,
       };
     } else if (tierName.includes('tier_6_50')) {
@@ -58,13 +58,13 @@ export const AgentCountLimitDialog: React.FC<AgentCountLimitDialogProps> = ({
       size="xl"
       className="[&_.grid]:!grid-cols-4 [&_.grid]:gap-3 mt-8"
     >
-      <PricingSection
-        returnUrl={returnUrl}
-        showTitleAndTabs={false}
-        insideDialog={true}
+      <PricingSection 
+        returnUrl={returnUrl} 
+        showTitleAndTabs={false} 
+        insideDialog={true} 
         showInfo={false}
         noPadding={true}
       />
     </UpgradeDialog>
   );
-};
+}; 

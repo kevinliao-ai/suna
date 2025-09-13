@@ -1,5 +1,7 @@
 import { supabaseMFAService } from '@/lib/supabase/mfa';
 
+
+
 export interface FactorInfo {
   id: string;
   friendly_name?: string;
@@ -71,40 +73,35 @@ export interface AALResponse {
   factors?: FactorInfo[];
 }
 
+
+
+
 export const phoneVerificationService = {
   /**
    * Enroll phone number for SMS-based 2FA
    */
-  async enrollPhoneNumber(
-    data: PhoneVerificationEnroll,
-  ): Promise<EnrollFactorResponse> {
+  async enrollPhoneNumber(data: PhoneVerificationEnroll): Promise<EnrollFactorResponse> {
     return await supabaseMFAService.enrollPhoneNumber(data);
   },
 
   /**
    * Create a challenge for an enrolled phone factor (sends SMS)
    */
-  async createChallenge(
-    data: PhoneVerificationChallenge,
-  ): Promise<ChallengeResponse> {
+  async createChallenge(data: PhoneVerificationChallenge): Promise<ChallengeResponse> {
     return await supabaseMFAService.createChallenge(data);
   },
 
   /**
    * Verify SMS code for phone verification
    */
-  async verifyChallenge(
-    data: PhoneVerificationVerify,
-  ): Promise<PhoneVerificationResponse> {
+  async verifyChallenge(data: PhoneVerificationVerify): Promise<PhoneVerificationResponse> {
     return await supabaseMFAService.verifyChallenge(data);
   },
 
   /**
    * Create challenge and verify in one step
    */
-  async challengeAndVerify(
-    data: PhoneVerificationChallengeAndVerify,
-  ): Promise<PhoneVerificationResponse> {
+  async challengeAndVerify(data: PhoneVerificationChallengeAndVerify): Promise<PhoneVerificationResponse> {
     return await supabaseMFAService.challengeAndVerify(data);
   },
 
@@ -134,5 +131,5 @@ export const phoneVerificationService = {
    */
   async getAAL(): Promise<AALResponse> {
     return await supabaseMFAService.getAAL();
-  },
+  }
 };

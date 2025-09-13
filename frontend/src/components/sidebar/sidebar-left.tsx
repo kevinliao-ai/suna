@@ -2,15 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import {
-  Bot,
-  Menu,
-  Store,
-  Plus,
-  Zap,
-  ChevronRight,
-  Loader2,
-} from 'lucide-react';
+import { Bot, Menu, Plus, Zap, ChevronRight } from 'lucide-react';
 
 import { NavAgents } from '@/components/sidebar/nav-agents';
 import { NavUserWithTeams } from '@/components/sidebar/nav-user-with-teams';
@@ -51,7 +43,7 @@ import { cn } from '@/lib/utils';
 import { usePathname, useSearchParams } from 'next/navigation';
 import posthog from 'posthog-js';
 import { useDocumentModalStore } from '@/lib/stores/use-document-modal-store';
-// Floating mobile menu button component
+
 function FloatingMobileMenuButton() {
   const { setOpenMobile, openMobile } = useSidebar();
   const isMobile = useIsMobile();
@@ -71,7 +63,9 @@ function FloatingMobileMenuButton() {
             <Menu className="h-5 w-5" />
           </Button>
         </TooltipTrigger>
-        <TooltipContent side="bottom">Open menu</TooltipContent>
+        <TooltipContent side="bottom">
+          Open menu
+        </TooltipContent>
       </Tooltip>
     </div>
   );
@@ -86,10 +80,12 @@ export function SidebarLeft({
     name: string;
     email: string;
     avatar: string;
+    isAdmin?: boolean;
   }>({
     name: 'Loading...',
     email: 'loading@example.com',
     avatar: '',
+    isAdmin: false,
   });
 
   const pathname = usePathname();
@@ -97,19 +93,25 @@ export function SidebarLeft({
   const [showNewAgentDialog, setShowNewAgentDialog] = useState(false);
   const { isOpen: isDocumentModalOpen } = useDocumentModalStore();
 
-  // Close mobile menu on page navigation
   useEffect(() => {
     if (isMobile) {
       setOpenMobile(false);
     }
   }, [pathname, searchParams, isMobile, setOpenMobile]);
 
+  
   useEffect(() => {
     const fetchUserData = async () => {
       const supabase = createClient();
       const { data } = await supabase.auth.getUser();
-
       if (data.user) {
+        const { data: roleData } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', data.user.id)
+          .in('role', ['admin', 'super_admin']);
+        const isAdmin = roleData && roleData.length > 0;
+        
         setUser({
           name:
             data.user.user_metadata?.name ||
@@ -117,6 +119,7 @@ export function SidebarLeft({
             'User',
           email: data.user.email || '',
           avatar: data.user.user_metadata?.avatar_url || '',
+          isAdmin: isAdmin,
         });
       }
     };
@@ -126,8 +129,6 @@ export function SidebarLeft({
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      // Don't handle sidebar shortcuts when document modal is open
-      console.log('Sidebar-left handler - document modal open:', isDocumentModalOpen, 'key:', event.key);
       if (isDocumentModalOpen) return;
       
       if ((event.metaKey || event.ctrlKey) && event.key === 'b') {
@@ -145,6 +146,9 @@ export function SidebarLeft({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [state, setOpen, isDocumentModalOpen]);
 
+
+
+
   return (
     <Sidebar
       collapsible="icon"
@@ -153,15 +157,12 @@ export function SidebarLeft({
     >
       <SidebarHeader className="px-2 py-2">
         <div className="flex h-[40px] items-center px-1 relative">
-          <Link
-            href="/dashboard"
-            className="flex-shrink-0"
-            onClick={() => isMobile && setOpenMobile(false)}
-          >
+          <Link href="/dashboard" className="flex-shrink-0" onClick={() => isMobile && setOpenMobile(false)}>
             <KortixLogo size={24} />
           </Link>
           {state !== 'collapsed' && (
-            <div className="ml-2 transition-all duration-200 ease-in-out whitespace-nowrap"></div>
+            <div className="ml-2 transition-all duration-200 ease-in-out whitespace-nowrap">
+            </div>
           )}
           <div className="ml-auto flex items-center gap-2">
             {state !== 'collapsed' && !isMobile && (
@@ -178,11 +179,10 @@ export function SidebarLeft({
       <SidebarContent className="[&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
         <SidebarGroup>
           <Link href="/dashboard">
-            <SidebarMenuButton
+            <SidebarMenuButton 
               className={cn('touch-manipulation', {
-                'bg-accent text-accent-foreground font-medium':
-                  pathname === '/dashboard',
-              })}
+                'bg-accent text-accent-foreground font-medium': pathname === '/dashboard',
+              })} 
               onClick={() => {
                 posthog.capture('new_task_clicked');
                 if (isMobile) setOpenMobile(false);
@@ -195,11 +195,10 @@ export function SidebarLeft({
             </SidebarMenuButton>
           </Link>
           <Link href="/tasks">
-            <SidebarMenuButton
+            <SidebarMenuButton 
               className={cn('touch-manipulation mt-1', {
-                'bg-accent text-accent-foreground font-medium':
-                  pathname === '/tasks',
-              })}
+                'bg-accent text-accent-foreground font-medium': pathname === '/tasks',
+              })} 
               onClick={() => {
                 if (isMobile) setOpenMobile(false);
               }}
@@ -210,9 +209,12 @@ export function SidebarLeft({
               </span>
             </SidebarMenuButton>
           </Link>
-          {
+          {(
             <SidebarMenu>
-              <Collapsible defaultOpen={true} className="group/collapsible">
+              <Collapsible
+                defaultOpen={true}
+                className="group/collapsible"
+              >
                 <SidebarMenuItem>
                   <CollapsibleTrigger asChild>
                     <SidebarMenuButton
@@ -231,42 +233,25 @@ export function SidebarLeft({
                   <CollapsibleContent>
                     <SidebarMenuSub>
                       <SidebarMenuSubItem>
-                        <SidebarMenuSubButton
-                          className={cn('pl-3 touch-manipulation', {
-                            'bg-accent text-accent-foreground font-medium':
-                              pathname === '/agents' &&
-                              searchParams.get('tab') === 'marketplace',
-                          })}
-                          asChild
-                        >
-                          <Link
-                            href="/agents?tab=marketplace"
-                            onClick={() => isMobile && setOpenMobile(false)}
-                          >
+                        <SidebarMenuSubButton className={cn('pl-3 touch-manipulation', {
+                          'bg-accent text-accent-foreground font-medium': pathname === '/agents' && searchParams.get('tab') === 'marketplace',
+                        })} asChild>
+                          <Link href="/agents?tab=marketplace" onClick={() => isMobile && setOpenMobile(false)}>
                             <span>Explore</span>
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
                       <SidebarMenuSubItem data-tour="my-agents">
-                        <SidebarMenuSubButton
-                          className={cn('pl-3 touch-manipulation', {
-                            'bg-accent text-accent-foreground font-medium':
-                              pathname === '/agents' &&
-                              (searchParams.get('tab') === 'my-agents' ||
-                                searchParams.get('tab') === null),
-                          })}
-                          asChild
-                        >
-                          <Link
-                            href="/agents?tab=my-agents"
-                            onClick={() => isMobile && setOpenMobile(false)}
-                          >
+                        <SidebarMenuSubButton className={cn('pl-3 touch-manipulation', {
+                          'bg-accent text-accent-foreground font-medium': pathname === '/agents' && (searchParams.get('tab') === 'my-agents' || searchParams.get('tab') === null),
+                        })} asChild>
+                          <Link href="/agents?tab=my-agents" onClick={() => isMobile && setOpenMobile(false)}>
                             <span>My Agents</span>
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
                       <SidebarMenuSubItem data-tour="new-agent">
-                        <SidebarMenuSubButton
+                        <SidebarMenuSubButton 
                           onClick={() => {
                             setShowNewAgentDialog(true);
                             if (isMobile) setOpenMobile(false);
@@ -281,7 +266,7 @@ export function SidebarLeft({
                 </SidebarMenuItem>
               </Collapsible>
             </SidebarMenu>
-          }
+          )}
         </SidebarGroup>
         <NavAgents />
       </SidebarContent>
@@ -304,8 +289,8 @@ export function SidebarLeft({
         <NavUserWithTeams user={user} />
       </SidebarFooter>
       <SidebarRail />
-      <NewAgentDialog
-        open={showNewAgentDialog}
+      <NewAgentDialog 
+        open={showNewAgentDialog} 
         onOpenChange={setShowNewAgentDialog}
       />
     </Sidebar>

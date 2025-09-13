@@ -11,7 +11,7 @@ import {
   User,
   Clock,
   Globe,
-  ArrowRight,
+  ArrowRight
 } from 'lucide-react';
 import { ToolViewProps } from '../types';
 import { formatTimestamp, getToolTitle } from '../utils';
@@ -19,9 +19,9 @@ import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { LoadingState } from '../shared/LoadingState';
-import { Separator } from '@/components/ui/separator';
+import { Separator } from "@/components/ui/separator";
 import { extractCreateCredentialProfileData } from './_utils';
 import { useComposioToolkitIcon } from '@/hooks/react-query/composio/use-composio';
 
@@ -34,6 +34,7 @@ export function CreateCredentialProfileForAgentToolView({
   isSuccess = true,
   isStreaming = false,
 }: ToolViewProps) {
+
   const [authCompleted, setAuthCompleted] = useState(false);
 
   const {
@@ -44,18 +45,18 @@ export function CreateCredentialProfileForAgentToolView({
     requires_authentication,
     actualIsSuccess,
     actualToolTimestamp,
-    actualAssistantTimestamp,
+    actualAssistantTimestamp
   } = extractCreateCredentialProfileData(
     assistantContent,
     toolContent,
     isSuccess,
     toolTimestamp,
-    assistantTimestamp,
+    assistantTimestamp
   );
 
   const toolTitle = getToolTitle(name);
   const { data: iconData } = useComposioToolkitIcon(toolkit_slug || '', {
-    enabled: !!toolkit_slug,
+    enabled: !!toolkit_slug
   });
 
   const handleAuthClick = () => {
@@ -84,10 +85,10 @@ export function CreateCredentialProfileForAgentToolView({
             <Badge
               variant="secondary"
               className={cn(
-                'text-xs font-medium',
+                "text-xs font-medium",
                 actualIsSuccess
-                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800'
-                  : 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800',
+                  ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800"
+                  : "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800"
               )}
             >
               {actualIsSuccess ? (
@@ -146,21 +147,18 @@ export function CreateCredentialProfileForAgentToolView({
                       </p>
                     </div>
                   </div>
-
+                  
                   <div className="flex items-center gap-2">
                     <Badge variant="outline" className="text-xs">
                       <Globe className="w-3 h-3 mr-1" />
                       {toolkit_slug}
                     </Badge>
-                    <Badge
-                      variant="secondary"
-                      className={cn(
-                        'text-xs',
-                        authCompleted
-                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800'
-                          : 'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-300 dark:border-yellow-800',
-                      )}
-                    >
+                    <Badge variant="secondary" className={cn(
+                      "text-xs",
+                      authCompleted 
+                        ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800"
+                        : "bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-300 dark:border-yellow-800"
+                    )}>
                       {authCompleted ? (
                         <ShieldCheck className="w-3 h-3 mr-1" />
                       ) : (
@@ -185,47 +183,40 @@ export function CreateCredentialProfileForAgentToolView({
                       <div>Service: {toolkit_name || toolkit_slug}</div>
                     </div>
                   </div>
-
+                  
                   <div className="space-y-2">
                     <h4 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
                       <Shield className="w-4 h-4" />
                       Authentication
                     </h4>
                     <div className="space-y-1 text-sm text-zinc-600 dark:text-zinc-400">
-                      <div>
-                        Required: {requires_authentication ? 'Yes' : 'No'}
-                      </div>
-                      <div>
-                        Status: {authCompleted ? 'Complete' : 'Pending'}
-                      </div>
+                      <div>Required: {requires_authentication ? 'Yes' : 'No'}</div>
+                      <div>Status: {authCompleted ? 'Complete' : 'Pending'}</div>
                     </div>
                   </div>
                 </div>
               </div>
-              {requires_authentication &&
-                authentication_url &&
-                !authCompleted && (
-                  <div className="border rounded-xl p-4 space-y-4">
-                    <div className="flex items-center gap-2">
-                      <Key className="w-5 h-5 text-orange-600 dark:text-orange-400" />
-                      <h4 className="font-medium text-zinc-900 dark:text-zinc-100">
-                        Authentication Required
-                      </h4>
-                    </div>
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                      Complete the authentication process to activate this
-                      credential profile:
-                    </p>
-                    <Button
+              {requires_authentication && authentication_url && !authCompleted && (
+                <div className="border rounded-xl p-4 space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Key className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+                    <h4 className="font-medium text-zinc-900 dark:text-zinc-100">
+                      Authentication Required
+                    </h4>
+                  </div>
+                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                    Complete the authentication process to activate this credential profile:
+                  </p>
+                  <Button 
                       onClick={handleAuthClick}
                       className="w-full"
                       size="sm"
-                    >
-                      Authenticate with {toolkit_name || toolkit_slug}
-                      <ExternalLink className="w-4 h-4" />
-                    </Button>
-                  </div>
-                )}
+                  >
+                    Authenticate with {toolkit_name || toolkit_slug}
+                    <ExternalLink className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
             </div>
           </ScrollArea>
         ) : (
@@ -239,4 +230,4 @@ export function CreateCredentialProfileForAgentToolView({
       </CardContent>
     </Card>
   );
-}
+} 

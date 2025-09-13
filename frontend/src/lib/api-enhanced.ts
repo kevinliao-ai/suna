@@ -1,11 +1,11 @@
 import { createClient } from '@/lib/supabase/client';
 import { backendApi, supabaseClient } from './api-client';
 import { handleApiSuccess } from './error-handler';
-import {
-  Project,
-  Thread,
-  Message,
-  AgentRun,
+import { 
+  Project, 
+  Thread, 
+  Message, 
+  AgentRun, 
   InitiateAgentResponse,
   HealthCheckResponse,
   FileInfo,
@@ -16,7 +16,7 @@ import {
   AvailableModelsResponse,
   BillingStatusResponse,
   BillingError,
-  UsageLogsResponse,
+  UsageLogsResponse
 } from './api';
 
 export * from './api';
@@ -26,9 +26,8 @@ export const projectsApi = {
     const result = await supabaseClient.execute(
       async () => {
         const supabase = createClient();
-        const { data: userData, error: userError } =
-          await supabase.auth.getUser();
-
+        const { data: userData, error: userError } = await supabase.auth.getUser();
+        
         if (userError) {
           return { data: null, error: userError };
         }
@@ -43,10 +42,7 @@ export const projectsApi = {
           .eq('account_id', userData.user.id);
 
         if (error) {
-          if (
-            error.code === '42501' &&
-            error.message.includes('has_role_on_account')
-          ) {
+          if (error.code === '42501' && error.message.includes('has_role_on_account')) {
             return { data: [], error: null };
           }
           return { data: null, error };
@@ -68,7 +64,7 @@ export const projectsApi = {
 
         return { data: mappedProjects, error: null };
       },
-      { operation: 'load projects', resource: 'projects' },
+      { operation: 'load projects', resource: 'projects' }
     );
 
     return result.data || [];
@@ -86,24 +82,17 @@ export const projectsApi = {
 
         if (error) {
           if (error.code === 'PGRST116') {
-            return {
-              data: null,
-              error: new Error(`Project not found: ${projectId}`),
-            };
+            return { data: null, error: new Error(`Project not found: ${projectId}`) };
           }
           return { data: null, error };
         }
 
         // Ensure sandbox is active if it exists
         if (data.sandbox?.id) {
-          backendApi.post(
-            `/project/${projectId}/sandbox/ensure-active`,
-            undefined,
-            {
-              showErrors: false,
-              errorContext: { silent: true },
-            },
-          );
+          backendApi.post(`/project/${projectId}/sandbox/ensure-active`, undefined, {
+            showErrors: false,
+            errorContext: { silent: true }
+          });
         }
 
         const mappedProject: Project = {
@@ -122,29 +111,21 @@ export const projectsApi = {
 
         return { data: mappedProject, error: null };
       },
-      { operation: 'load project', resource: `project ${projectId}` },
+      { operation: 'load project', resource: `project ${projectId}` }
     );
 
     return result.data || null;
   },
 
-  async create(
-    projectData: { name: string; description: string },
-    accountId?: string,
-  ): Promise<Project | null> {
+  async create(projectData: { name: string; description: string }, accountId?: string): Promise<Project | null> {
     const result = await supabaseClient.execute(
       async () => {
         const supabase = createClient();
-
+        
         if (!accountId) {
-          const { data: userData, error: userError } =
-            await supabase.auth.getUser();
+          const { data: userData, error: userError } = await supabase.auth.getUser();
           if (userError) return { data: null, error: userError };
-          if (!userData.user)
-            return {
-              data: null,
-              error: new Error('You must be logged in to create a project'),
-            };
+          if (!userData.user) return { data: null, error: new Error('You must be logged in to create a project') };
           accountId = userData.user.id;
         }
 
@@ -170,16 +151,13 @@ export const projectsApi = {
 
         return { data: project, error: null };
       },
-      { operation: 'create project', resource: 'project' },
+      { operation: 'create project', resource: 'project' }
     );
 
     return result.data || null;
   },
 
-  async update(
-    projectId: string,
-    data: Partial<Project>,
-  ): Promise<Project | null> {
+  async update(projectId: string, data: Partial<Project>): Promise<Project | null> {
     if (!projectId || projectId === '') {
       throw new Error('Cannot update project: Invalid project ID');
     }
@@ -195,11 +173,7 @@ export const projectsApi = {
           .single();
 
         if (error) return { data: null, error };
-        if (!updatedData)
-          return {
-            data: null,
-            error: new Error('No data returned from update'),
-          };
+        if (!updatedData) return { data: null, error: new Error('No data returned from update') };
 
         // Dispatch custom event for project updates
         if (typeof window !== 'undefined') {
@@ -232,7 +206,7 @@ export const projectsApi = {
 
         return { data: project, error: null };
       },
-      { operation: 'update project', resource: `project ${projectId}` },
+      { operation: 'update project', resource: `project ${projectId}` }
     );
     return result.data || null;
   },
@@ -248,7 +222,7 @@ export const projectsApi = {
 
         return { data: !error, error };
       },
-      { operation: 'delete project', resource: `project ${projectId}` },
+      { operation: 'delete project', resource: `project ${projectId}` }
     );
     return result.success;
   },
@@ -259,17 +233,13 @@ export const threadsApi = {
     const result = await supabaseClient.execute(
       async () => {
         const supabase = createClient();
-        const { data: userData, error: userError } =
-          await supabase.auth.getUser();
-
+        const { data: userData, error: userError } = await supabase.auth.getUser();
+        
         if (userError) return { data: null, error: userError };
         if (!userData.user) return { data: [], error: null };
 
-        let query = supabase
-          .from('threads')
-          .select('*')
-          .eq('account_id', userData.user.id);
-
+        let query = supabase.from('threads').select('*').eq('account_id', userData.user.id);
+        
         if (projectId) {
           query = query.eq('project_id', projectId);
         }
@@ -287,10 +257,7 @@ export const threadsApi = {
 
         return { data: mappedThreads, error: null };
       },
-      {
-        operation: 'load threads',
-        resource: projectId ? `threads for project ${projectId}` : 'threads',
-      },
+      { operation: 'load threads', resource: projectId ? `threads for project ${projectId}` : 'threads' }
     );
 
     return result.data || [];
@@ -308,7 +275,7 @@ export const threadsApi = {
 
         return { data, error };
       },
-      { operation: 'load thread', resource: `thread ${threadId}` },
+      { operation: 'load thread', resource: `thread ${threadId}` }
     );
 
     return result.data || null;
@@ -318,15 +285,10 @@ export const threadsApi = {
     const result = await supabaseClient.execute(
       async () => {
         const supabase = createClient();
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-
+        const { data: { user } } = await supabase.auth.getUser();
+        
         if (!user) {
-          return {
-            data: null,
-            error: new Error('You must be logged in to create a thread'),
-          };
+          return { data: null, error: new Error('You must be logged in to create a thread') };
         }
 
         const { data, error } = await supabase
@@ -340,7 +302,7 @@ export const threadsApi = {
 
         return { data, error };
       },
-      { operation: 'create thread', resource: 'thread' },
+      { operation: 'create thread', resource: 'thread' }
     );
     return result.data || null;
   },
@@ -354,7 +316,7 @@ export const agentApi = {
       enable_thinking?: boolean;
       reasoning_effort?: string;
       stream?: boolean;
-    },
+    }
   ): Promise<{ agent_run_id: string } | null> {
     const result = await backendApi.post(
       `/thread/${threadId}/agent/start`,
@@ -362,7 +324,7 @@ export const agentApi = {
       {
         errorContext: { operation: 'start agent', resource: 'AI assistant' },
         timeout: 60000,
-      },
+      }
     );
     return result.data || null;
   },
@@ -373,7 +335,7 @@ export const agentApi = {
       undefined,
       {
         errorContext: { operation: 'stop agent', resource: 'AI assistant' },
-      },
+      }
     );
 
     if (result.success) {
@@ -384,24 +346,24 @@ export const agentApi = {
   },
 
   async getStatus(agentRunId: string): Promise<AgentRun | null> {
-    const result = await backendApi.get(`/agent/${agentRunId}/status`, {
-      errorContext: {
-        operation: 'get agent status',
-        resource: 'AI assistant status',
-      },
-      showErrors: false,
-    });
+    const result = await backendApi.get(
+      `/agent/${agentRunId}/status`,
+      {
+        errorContext: { operation: 'get agent status', resource: 'AI assistant status' },
+        showErrors: false,
+      }
+    );
 
     return result.data || null;
   },
 
   async getRuns(threadId: string): Promise<AgentRun[]> {
-    const result = await backendApi.get(`/thread/${threadId}/agent/runs`, {
-      errorContext: {
-        operation: 'load agent runs',
-        resource: 'conversation history',
-      },
-    });
+    const result = await backendApi.get(
+      `/thread/${threadId}/agent/runs`,
+      {
+        errorContext: { operation: 'load agent runs', resource: 'conversation history' },
+      }
+    );
 
     return result.data || [];
   },
@@ -409,84 +371,68 @@ export const agentApi = {
 
 export const billingApi = {
   async getSubscription(): Promise<SubscriptionStatus | null> {
-    const result = await backendApi.get('/billing/subscription', {
-      errorContext: {
-        operation: 'load subscription',
-        resource: 'billing information',
-      },
-    });
-
-    return result.data || null;
-  },
-
-  async checkStatus(): Promise<BillingStatusResponse | null> {
-    const result = await backendApi.get('/billing/status', {
-      errorContext: {
-        operation: 'check billing status',
-        resource: 'account status',
-      },
-    });
-
-    return result.data || null;
-  },
-
-  async createCheckoutSession(
-    request: CreateCheckoutSessionRequest,
-  ): Promise<CreateCheckoutSessionResponse | null> {
-    const result = await backendApi.post(
-      '/billing/create-checkout-session',
-      request,
+    const result = await backendApi.get(
+      '/billing/subscription',
       {
-        errorContext: {
-          operation: 'create checkout session',
-          resource: 'billing',
-        },
-      },
+        errorContext: { operation: 'load subscription', resource: 'billing information' },
+      }
     );
 
     return result.data || null;
   },
 
-  async createPortalSession(
-    request: CreatePortalSessionRequest,
-  ): Promise<{ url: string } | null> {
+  async checkStatus(): Promise<BillingStatusResponse | null> {
+    const result = await backendApi.get(
+      '/billing/status',
+      {
+        errorContext: { operation: 'check billing status', resource: 'account status' },
+      }
+    );
+
+    return result.data || null;
+  },
+
+  async createCheckoutSession(request: CreateCheckoutSessionRequest): Promise<CreateCheckoutSessionResponse | null> {
+    const result = await backendApi.post(
+      '/billing/create-checkout-session',
+      request,
+      {
+        errorContext: { operation: 'create checkout session', resource: 'billing' },
+      }
+    );
+
+    return result.data || null;
+  },
+
+  async createPortalSession(request: CreatePortalSessionRequest): Promise<{ url: string } | null> {
     const result = await backendApi.post(
       '/billing/create-portal-session',
       request,
       {
-        errorContext: {
-          operation: 'create portal session',
-          resource: 'billing portal',
-        },
-      },
+        errorContext: { operation: 'create portal session', resource: 'billing portal' },
+      }
     );
 
     return result.data || null;
   },
 
   async getAvailableModels(): Promise<AvailableModelsResponse | null> {
-    const result = await backendApi.get('/billing/available-models', {
-      errorContext: {
-        operation: 'load available models',
-        resource: 'AI models',
-      },
-    });
+    const result = await backendApi.get(
+      '/billing/available-models',
+      {
+        errorContext: { operation: 'load available models', resource: 'AI models' },
+      }
+    );
 
     return result.data || null;
   },
 
-  async getUsageLogs(
-    page: number = 0,
-    itemsPerPage: number = 1000,
-  ): Promise<UsageLogsResponse | null> {
+  async getUsageLogs(page: number = 0, itemsPerPage: number = 1000): Promise<UsageLogsResponse | null> {
     const result = await backendApi.get(
       `/billing/usage-logs?page=${page}&items_per_page=${itemsPerPage}`,
       {
-        errorContext: {
-          operation: 'load usage logs',
-          resource: 'usage history',
-        },
-      },
+        errorContext: { operation: 'load usage logs', resource: 'usage history' },
+      }
     );
 
     return result.data || null;
@@ -495,14 +441,14 @@ export const billingApi = {
 
 export const healthApi = {
   async check(): Promise<HealthCheckResponse | null> {
-    const result = await backendApi.get('/health', {
-      errorContext: {
-        operation: 'check system health',
-        resource: 'system status',
-      },
-      timeout: 10000,
-    });
+    const result = await backendApi.get(
+      '/health',
+      {
+        errorContext: { operation: 'check system health', resource: 'system status' },
+        timeout: 10000,
+      }
+    );
 
     return result.data || null;
   },
-};
+}; 

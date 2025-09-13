@@ -44,7 +44,7 @@ export function XlsxRenderer({
   fileName,
   className,
   sandboxId,
-  project,
+  project
 }: XlsxRendererProps) {
   const { session } = useAuth();
   const [sheetIndex, setSheetIndex] = useState(0);

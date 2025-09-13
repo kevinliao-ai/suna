@@ -27,44 +27,41 @@ export interface DocsHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 export const DocsHeader = React.forwardRef<HTMLDivElement, DocsHeaderProps>(
-  (
-    {
-      title,
-      subtitle,
-      description,
-      breadcrumbs,
-      badge,
-      badgeVariant = 'secondary',
-      lastUpdated,
-      author,
-      readTime,
-      showSeparator = false,
-      size = 'default',
-      className,
-      ...props
-    },
-    ref,
-  ) => {
+  ({
+    title,
+    subtitle,
+    description,
+    breadcrumbs,
+    badge,
+    badgeVariant = 'secondary',
+    lastUpdated,
+    author,
+    readTime,
+    showSeparator = false,
+    size = 'default',
+    className,
+    ...props
+  }, ref) => {
     const titleSizes = {
       sm: 'text-2xl',
       default: 'text-3xl',
-      lg: 'text-4xl lg:text-5xl',
+      lg: 'text-4xl lg:text-5xl'
     };
 
     const subtitleSizes = {
       sm: 'text-sm',
       default: 'text-base',
-      lg: 'text-base',
+      lg: 'text-base'
     };
 
     const descriptionSizes = {
       sm: 'text-sm',
       default: 'text-base',
-      lg: 'text-base',
+      lg: 'text-base'
     };
 
     return (
-      <div ref={ref} className={cn('space-y-4', className)} {...props}>
+      <div ref={ref} className={cn("space-y-4", className)} {...props}>
         {breadcrumbs && breadcrumbs.length > 0 && (
           <nav className="flex items-center space-x-1 text-sm text-muted-foreground overflow-x-auto">
             {breadcrumbs.map((crumb, index) => (
@@ -77,9 +74,7 @@ export const DocsHeader = React.forwardRef<HTMLDivElement, DocsHeaderProps>(
                     {crumb.title}
                   </button>
                 ) : (
-                  <span
-                    className={`whitespace-nowrap ${index === breadcrumbs.length - 1 ? 'text-foreground' : ''}`}
-                  >
+                  <span className={`whitespace-nowrap ${index === breadcrumbs.length - 1 ? 'text-foreground' : ''}`}>
                     {crumb.title}
                   </span>
                 )}
@@ -93,41 +88,57 @@ export const DocsHeader = React.forwardRef<HTMLDivElement, DocsHeaderProps>(
 
         <div className="space-y-3">
           <div className="space-y-2">
-            {badge && <Badge variant={badgeVariant}>{badge}</Badge>}
-            <h1 className={cn('font-bold tracking-tight', titleSizes[size])}>
+            {badge && (
+              <Badge variant={badgeVariant}>
+                {badge}
+              </Badge>
+            )}
+            <h1 className={cn(
+              "font-bold tracking-tight",
+              titleSizes[size]
+            )}>
               {title}
             </h1>
             {subtitle && (
-              <p className={cn('text-muted-foreground', subtitleSizes[size])}>
+              <p className={cn(
+                "text-muted-foreground",
+                subtitleSizes[size]
+              )}>
                 {subtitle}
               </p>
             )}
           </div>
 
           {description && (
-            <p
-              className={cn(
-                'text-muted-foreground leading-relaxed max-w-3xl',
-                descriptionSizes[size],
-              )}
-            >
+            <p className={cn(
+              "text-muted-foreground leading-relaxed max-w-3xl",
+              descriptionSizes[size]
+            )}>
               {description}
             </p>
           )}
 
           {(lastUpdated || author || readTime) && (
             <div className="flex items-center gap-4 text-sm text-muted-foreground/60">
-              {lastUpdated && <span>Last updated: {lastUpdated}</span>}
-              {author && <span>By {author}</span>}
-              {readTime && <span>{readTime}</span>}
+              {lastUpdated && (
+                <span>Last updated: {lastUpdated}</span>
+              )}
+              {author && (
+                <span>By {author}</span>
+              )}
+              {readTime && (
+                <span>{readTime}</span>
+              )}
             </div>
           )}
         </div>
 
-        {showSeparator && <Separator className="mt-6" />}
+        {showSeparator && (
+          <Separator className="mt-6" />
+        )}
       </div>
     );
-  },
+  }
 );
 
-DocsHeader.displayName = 'DocsHeader';
+DocsHeader.displayName = 'DocsHeader'; 

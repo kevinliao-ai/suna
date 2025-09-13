@@ -1,14 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import {
-  Loader2,
-  Server,
-  RefreshCw,
-  AlertCircle,
-  Clock,
-  Wrench,
-} from 'lucide-react';
+import { Loader2, Server, RefreshCw, AlertCircle, Clock, Wrench } from 'lucide-react';
 import { useApiHealth } from '@/hooks/react-query';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -19,12 +12,8 @@ import { isLocalMode } from '@/lib/config';
 
 export function MaintenancePage() {
   const [lastChecked, setLastChecked] = useState<Date | null>(null);
-
-  const {
-    data: healthData,
-    isLoading: isCheckingHealth,
-    refetch,
-  } = useApiHealth();
+  
+  const { data: healthData, isLoading: isCheckingHealth, refetch } = useApiHealth();
 
   const checkHealth = async () => {
     try {
@@ -57,10 +46,7 @@ export function MaintenancePage() {
                 </div>
               </div>
               <div className="flex justify-center">
-                <Badge
-                  variant="outline"
-                  className="px-3 py-1 bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-700 text-blue-800 dark:text-blue-200 font-medium"
-                >
+                <Badge variant="outline" className="px-3 py-1 bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-700 text-blue-800 dark:text-blue-200 font-medium">
                   <AlertCircle className="h-4 w-4" />
                   System Under Maintenance
                 </Badge>
@@ -70,9 +56,11 @@ export function MaintenancePage() {
                   We'll Be Right Back
                 </h1>
                 <p className="text-base text-muted-foreground max-w-lg mx-auto leading-relaxed">
-                  {isLocalMode()
-                    ? 'The backend server appears to be offline. Please ensure your backend server is running and try again.'
-                    : "We're performing scheduled maintenance to improve your experience. Our team is working diligently to restore all services."}
+                  {isLocalMode() ? (
+                    "The backend server appears to be offline. Please ensure your backend server is running and try again."
+                  ) : (
+                    "We're performing scheduled maintenance to improve your experience. Our team is working diligently to restore all services."
+                  )}
                 </p>
               </div>
               <div className="grid grid-cols-1 gap-3 mt-6 md:px-4">
@@ -80,13 +68,9 @@ export function MaintenancePage() {
                   <CardContent className="text-center">
                     <div className="flex items-center justify-center mb-1">
                       <div className="h-3 w-3 bg-red-500 dark:bg-red-400 rounded-full mr-2 animate-pulse"></div>
-                      <span className="font-medium text-red-700 dark:text-red-300">
-                        Services Offline
-                      </span>
+                      <span className="font-medium text-red-700 dark:text-red-300">Services Offline</span>
                     </div>
-                    <p className="text-sm text-red-600 dark:text-red-400">
-                      All agent executions are currently paused.
-                    </p>
+                    <p className="text-sm text-red-600 dark:text-red-400">All agent executions are currently paused.</p>
                   </CardContent>
                 </Card>
               </div>
@@ -118,9 +102,11 @@ export function MaintenancePage() {
               </div>
               <div className="pt-4 border-t border-border/50">
                 <p className="text-sm text-muted-foreground">
-                  {isLocalMode()
-                    ? 'Need help? Check the documentation for setup instructions.'
-                    : 'For urgent matters, please contact our support team.'}
+                  {isLocalMode() ? (
+                    "Need help? Check the documentation for setup instructions."
+                  ) : (
+                    "For urgent matters, please contact our support team."
+                  )}
                 </p>
               </div>
             </div>

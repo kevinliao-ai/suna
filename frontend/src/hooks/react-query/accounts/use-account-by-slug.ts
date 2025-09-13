@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/client';
 
 export function useAccountBySlug(slug: string) {
   const supabaseClient = createClient();
-
+  
   return useQuery({
     queryKey: ['account', 'by-slug', slug],
     queryFn: async () => {

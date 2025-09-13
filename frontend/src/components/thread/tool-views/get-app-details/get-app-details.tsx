@@ -14,7 +14,7 @@ import {
   Play,
   DollarSign,
   BookOpen,
-  Settings,
+  Settings
 } from 'lucide-react';
 import { ToolViewProps } from '../types';
 import { formatTimestamp, getToolTitle } from '../utils';
@@ -22,15 +22,10 @@ import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { LoadingState } from '../shared/LoadingState';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { Separator } from '@/components/ui/separator';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Separator } from "@/components/ui/separator";
 import { extractGetAppDetailsData, ToolkitDetails } from './_utils';
 
 export function GetAppDetailsToolView({
@@ -42,6 +37,7 @@ export function GetAppDetailsToolView({
   isSuccess = true,
   isStreaming = false,
 }: ToolViewProps) {
+
   const {
     toolkit_slug,
     message,
@@ -50,13 +46,13 @@ export function GetAppDetailsToolView({
     auth_schemes,
     actualIsSuccess,
     actualToolTimestamp,
-    actualAssistantTimestamp,
+    actualAssistantTimestamp
   } = extractGetAppDetailsData(
     assistantContent,
     toolContent,
     isSuccess,
     toolTimestamp,
-    assistantTimestamp,
+    assistantTimestamp
   );
 
   const toolTitle = getToolTitle(name);
@@ -100,10 +96,10 @@ export function GetAppDetailsToolView({
             <Badge
               variant="secondary"
               className={cn(
-                'text-xs font-medium',
+                "text-xs font-medium",
                 actualIsSuccess
-                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800'
-                  : 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800',
+                  ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800"
+                  : "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800"
               )}
             >
               {actualIsSuccess ? (
@@ -187,26 +183,17 @@ export function GetAppDetailsToolView({
                           {toolkit.toolkit_slug}
                         </p>
                       </div>
-
+                      
                       <div className="flex items-center gap-2">
                         {(() => {
                           const AuthIcon = getAuthTypeIcon(auth_schemes);
                           return (
                             <Badge
                               variant="outline"
-                              className={cn(
-                                'text-xs font-medium',
-                                getAuthTypeColor(auth_schemes),
-                              )}
+                              className={cn("text-xs font-medium", getAuthTypeColor(auth_schemes))}
                             >
                               <AuthIcon className="w-3 h-3 " />
-                              {auth_schemes?.includes('OAUTH2')
-                                ? 'OAuth2'
-                                : auth_schemes?.includes('BEARER_TOKEN')
-                                  ? 'Bearer Token'
-                                  : auth_schemes?.includes('API_KEY')
-                                    ? 'API Key'
-                                    : 'Unknown'}
+                              {auth_schemes?.includes('OAUTH2') ? 'OAuth2' : auth_schemes?.includes('BEARER_TOKEN') ? 'Bearer Token' : auth_schemes?.includes('API_KEY') ? 'API Key' : 'Unknown'}
                             </Badge>
                           );
                         })()}
@@ -239,9 +226,7 @@ export function GetAppDetailsToolView({
                 <div className="bg-white dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <Tag className="w-4 h-4 text-purple-500" />
-                    <h3 className="font-medium text-zinc-900 dark:text-zinc-100">
-                      Categories
-                    </h3>
+                    <h3 className="font-medium text-zinc-900 dark:text-zinc-100">Categories</h3>
                   </div>
                   <div className="flex flex-wrap gap-1">
                     {toolkit.categories.map((category, index) => (
@@ -268,9 +253,7 @@ export function GetAppDetailsToolView({
                 No app details found
               </h3>
               <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                {toolkit_slug
-                  ? `Unable to load details for "${toolkit_slug}"`
-                  : 'App information not available'}
+                {toolkit_slug ? `Unable to load details for "${toolkit_slug}"` : 'App information not available'}
               </p>
             </div>
           </div>
@@ -278,4 +261,4 @@ export function GetAppDetailsToolView({
       </CardContent>
     </Card>
   );
-}
+} 

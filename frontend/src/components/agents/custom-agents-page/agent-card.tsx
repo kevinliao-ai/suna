@@ -1,17 +1,7 @@
 'use client';
 
 import React from 'react';
-import {
-  Download,
-  CheckCircle,
-  Loader2,
-  Globe,
-  GlobeLock,
-  GitBranch,
-  Trash2,
-  MoreVertical,
-  User,
-} from 'lucide-react';
+import { Download, CheckCircle, Loader2, Globe, GlobeLock, GitBranch, Trash2, MoreVertical, User } from 'lucide-react';
 import { DynamicIcon } from 'lucide-react/dynamic';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -99,26 +89,20 @@ interface AgentCardProps {
   currentUserId?: string;
 }
 
-const MarketplaceBadge: React.FC<{
-  isKortixTeam?: boolean;
+const MarketplaceBadge: React.FC<{ 
+  isKortixTeam?: boolean; 
   isOwner?: boolean;
 }> = ({ isKortixTeam, isOwner }) => {
   return (
     <div className="flex gap-1 flex-wrap">
       {isKortixTeam && (
-        <Badge
-          variant="secondary"
-          className="bg-blue-100 text-blue-700 border-0 dark:bg-blue-950 dark:text-blue-300"
-        >
+        <Badge variant="secondary" className="bg-blue-100 text-blue-700 border-0 dark:bg-blue-950 dark:text-blue-300">
           <CheckCircle className="h-3 w-3 mr-1" />
           Kortix
         </Badge>
       )}
       {isOwner && (
-        <Badge
-          variant="secondary"
-          className="bg-green-100 text-green-700 border-0 dark:bg-green-950 dark:text-green-300"
-        >
+        <Badge variant="secondary" className="bg-green-100 text-green-700 border-0 dark:bg-green-950 dark:text-green-300">
           Owner
         </Badge>
       )}
@@ -129,30 +113,21 @@ const MarketplaceBadge: React.FC<{
 const TemplateBadge: React.FC<{ isPublic?: boolean }> = ({ isPublic }) => {
   if (isPublic) {
     return (
-      <Badge
-        variant="default"
-        className="bg-green-100 text-green-700 border-0 dark:bg-green-950 dark:text-green-300"
-      >
+      <Badge variant="default" className="bg-green-100 text-green-700 border-0 dark:bg-green-950 dark:text-green-300">
         <Globe className="h-3 w-3" />
         Public
       </Badge>
     );
   }
   return (
-    <Badge
-      variant="secondary"
-      className="bg-gray-100 text-gray-700 border-0 dark:bg-gray-800 dark:text-gray-300"
-    >
+    <Badge variant="secondary" className="bg-gray-100 text-gray-700 border-0 dark:bg-gray-800 dark:text-gray-300">
       <GlobeLock className="h-3 w-3" />
       Private
     </Badge>
   );
 };
 
-const AgentBadges: React.FC<{ agent: AgentData; isSunaAgent: boolean }> = ({
-  agent,
-  isSunaAgent,
-}) => (
+const AgentBadges: React.FC<{ agent: AgentData, isSunaAgent: boolean }> = ({ agent, isSunaAgent }) => (
   <div className="flex gap-1">
     {!isSunaAgent && agent.current_version && (
       <Badge variant="outline" className="text-xs">
@@ -161,10 +136,7 @@ const AgentBadges: React.FC<{ agent: AgentData; isSunaAgent: boolean }> = ({
       </Badge>
     )}
     {!isSunaAgent && agent.is_public && (
-      <Badge
-        variant="default"
-        className="bg-green-100 text-green-700 border-0 dark:bg-green-950 dark:text-green-300 text-xs"
-      >
+      <Badge variant="default" className="bg-green-100 text-green-700 border-0 dark:bg-green-950 dark:text-green-300 text-xs">
         <Globe className="h-3 w-3 mr-1" />
         Published
       </Badge>
@@ -187,32 +159,27 @@ const MarketplaceMetadata: React.FC<{ data: MarketplaceData }> = ({ data }) => (
 
 const TemplateMetadata: React.FC<{ data: TemplateData }> = ({ data }) => (
   <div className="space-y-1 text-xs text-muted-foreground">
-    {data.is_public &&
-      data.download_count !== undefined &&
-      data.download_count > 0 && (
-        <div className="flex items-center gap-1">
-          <Download className="h-3 w-3" />
-          <span>{data.download_count} downloads</span>
-        </div>
-      )}
+    {data.is_public && data.download_count !== undefined && data.download_count > 0 && (
+      <div className="flex items-center gap-1">
+        <Download className="h-3 w-3" />
+        <span>{data.download_count} downloads</span>
+      </div>
+    )}
   </div>
 );
 
 const AgentMetadata: React.FC<{ data: AgentData }> = ({ data }) => (
   <div className="space-y-1 text-xs text-muted-foreground">
-    {data.is_public &&
-      data.marketplace_published_at &&
-      data.download_count != null &&
-      data.download_count > 0 && (
-        <div className="flex items-center gap-1">
-          <Download className="h-3 w-3" />
-          <span>{data.download_count} downloads</span>
-        </div>
-      )}
+    {data.is_public && data.marketplace_published_at && data.download_count != null && data.download_count > 0 && (
+      <div className="flex items-center gap-1">
+        <Download className="h-3 w-3" />
+        <span>{data.download_count} downloads</span>
+      </div>
+    )}
   </div>
 );
 
-const MarketplaceActions: React.FC<{
+const MarketplaceActions: React.FC<{ 
   onAction?: (data: any, e?: React.MouseEvent) => void;
   onDeleteAction?: (data: any, e?: React.MouseEvent) => void;
   isActioning?: boolean;
@@ -235,7 +202,7 @@ const MarketplaceActions: React.FC<{
   return (
     <>
       <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
-        <Button
+        <Button 
           onClick={(e) => {
             e.stopPropagation();
             onAction?.(data, e);
@@ -256,12 +223,12 @@ const MarketplaceActions: React.FC<{
             </>
           )}
         </Button>
-
+        
         {isOwner && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
+              <Button 
+                variant="outline" 
                 size="sm"
                 className="px-2"
                 disabled={isActioning}
@@ -271,7 +238,9 @@ const MarketplaceActions: React.FC<{
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={handleDeleteClick}>
+              <DropdownMenuItem
+                onClick={handleDeleteClick}
+              >
                 <Trash2 className="h-4 w-4" />
                 Delete Template
               </DropdownMenuItem>
@@ -285,9 +254,7 @@ const MarketplaceActions: React.FC<{
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Template</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "<strong>{data.name}</strong>"?
-              This will permanently remove it from the marketplace and cannot be
-              undone.
+              Are you sure you want to delete "<strong>{data.name}</strong>"? This will permanently remove it from the marketplace and cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -317,7 +284,7 @@ const MarketplaceActions: React.FC<{
   );
 };
 
-const TemplateActions: React.FC<{
+const TemplateActions: React.FC<{ 
   data: TemplateData;
   onPrimaryAction?: (data: any, e?: React.MouseEvent) => void;
   onSecondaryAction?: (data: any, e?: React.MouseEvent) => void;
@@ -370,57 +337,55 @@ const TemplateActions: React.FC<{
   </div>
 );
 
-const CardAvatar: React.FC<{
-  isSunaAgent?: boolean;
-  profileImageUrl?: string;
+const CardAvatar: React.FC<{ 
+  isSunaAgent?: boolean; 
+  profileImageUrl?: string; 
   agentName?: string;
   iconName?: string;
   iconColor?: string;
   iconBackground?: string;
-}> = ({
-  isSunaAgent = false,
-  profileImageUrl,
+}> = ({ 
+  isSunaAgent = false, 
+  profileImageUrl, 
   agentName,
   iconName,
   iconColor = '#000000',
-  iconBackground = '#F3F4F6',
+  iconBackground = '#F3F4F6'
 }) => {
   if (isSunaAgent) {
     return (
       <div className="h-14 w-14 bg-muted border flex items-center justify-center rounded-2xl">
         <KortixLogo size={28} />
       </div>
-    );
+    )
   }
-
+  
   if (iconName) {
     return (
-      <div
+      <div 
         className="h-14 w-14 flex items-center justify-center rounded-2xl"
         style={{ backgroundColor: iconBackground }}
       >
-        <DynamicIcon name={iconName as any} size={28} color={iconColor} />
+        <DynamicIcon 
+          name={iconName as any} 
+          size={28} 
+          color={iconColor}
+        />
       </div>
     );
   }
-
+  
   if (profileImageUrl) {
     return (
-      <img
-        src={profileImageUrl}
-        alt="Agent"
-        className="h-14 w-14 rounded-2xl object-cover"
-      />
+      <img src={profileImageUrl} alt="Agent" className="h-14 w-14 rounded-2xl object-cover" />
     );
   }
-
+  
   return (
     <div className="h-14 w-14 bg-muted border flex items-center justify-center rounded-2xl">
-      <span className="text-lg font-semibold">
-        {agentName?.charAt(0).toUpperCase() || '?'}
-      </span>
+      <span className="text-lg font-semibold">{agentName?.charAt(0).toUpperCase() || '?'}</span>
     </div>
-  );
+  )
 };
 
 const TagList: React.FC<{ tags?: string[] }> = ({ tags }) => {
@@ -428,12 +393,8 @@ const TagList: React.FC<{ tags?: string[] }> = ({ tags }) => {
     <div className="flex flex-wrap gap-1 min-h-[1.25rem]">
       {tags && tags.length > 0 && (
         <>
-          {tags.slice(0, 2).map((tag) => (
-            <Badge
-              key={tag}
-              variant="outline"
-              className="text-xs border-border/50"
-            >
+          {tags.slice(0, 2).map(tag => (
+            <Badge key={tag} variant="outline" className="text-xs border-border/50">
               {tag}
             </Badge>
           ))}
@@ -457,32 +418,25 @@ export const AgentCard: React.FC<AgentCardProps> = ({
   onSecondaryAction,
   onDeleteAction,
   onClick,
-  currentUserId,
+  currentUserId
 }) => {
-  const isSunaAgent =
-    mode === 'agent' && (data as AgentData).metadata?.is_suna_default === true;
-  const isOwner =
-    currentUserId &&
-    mode === 'marketplace' &&
-    (data as MarketplaceData).creator_id === currentUserId;
-
+  
+  const isSunaAgent = mode === 'agent' && (data as AgentData).metadata?.is_suna_default === true;
+  const isOwner = currentUserId && mode === 'marketplace' && (data as MarketplaceData).creator_id === currentUserId;
+  
   const cardClassName = `group relative bg-card rounded-2xl overflow-hidden shadow-sm transition-all duration-300 border cursor-pointer flex flex-col min-h-[280px] max-h-[320px] border-border/50 hover:border-primary/20`;
-
+  
   const renderBadge = () => {
     switch (mode) {
       case 'marketplace':
-        return (
-          <MarketplaceBadge
-            isKortixTeam={(data as MarketplaceData).is_kortix_team}
-            isOwner={isOwner}
-          />
-        );
+        return <MarketplaceBadge 
+          isKortixTeam={(data as MarketplaceData).is_kortix_team} 
+          isOwner={isOwner}
+        />;
       case 'template':
         return <TemplateBadge isPublic={(data as TemplateData).is_public} />;
       case 'agent':
-        return (
-          <AgentBadges agent={data as AgentData} isSunaAgent={isSunaAgent} />
-        );
+        return <AgentBadges agent={data as AgentData} isSunaAgent={isSunaAgent} />;
       default:
         return null;
     }
@@ -504,24 +458,20 @@ export const AgentCard: React.FC<AgentCardProps> = ({
   const renderActions = () => {
     switch (mode) {
       case 'marketplace':
-        return (
-          <MarketplaceActions
-            onAction={onPrimaryAction}
-            onDeleteAction={onDeleteAction}
-            isActioning={isActioning}
-            data={data}
-            currentUserId={currentUserId}
-          />
-        );
+        return <MarketplaceActions 
+          onAction={onPrimaryAction} 
+          onDeleteAction={onDeleteAction}
+          isActioning={isActioning} 
+          data={data} 
+          currentUserId={currentUserId}
+        />;
       case 'template':
-        return (
-          <TemplateActions
-            data={data as TemplateData}
-            onPrimaryAction={onPrimaryAction}
-            onSecondaryAction={onSecondaryAction}
-            isActioning={isActioning}
-          />
-        );
+        return <TemplateActions 
+          data={data as TemplateData} 
+          onPrimaryAction={onPrimaryAction} 
+          onSecondaryAction={onSecondaryAction} 
+          isActioning={isActioning} 
+        />;
       case 'agent':
         return null;
       default:
@@ -534,35 +484,39 @@ export const AgentCard: React.FC<AgentCardProps> = ({
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
       <div className="relative p-6 flex flex-col flex-1">
         <div className="flex items-start justify-between mb-4">
-          <CardAvatar
-            isSunaAgent={isSunaAgent}
-            profileImageUrl={(data as any)?.profile_image_url}
+          <CardAvatar 
+            isSunaAgent={isSunaAgent} 
+            profileImageUrl={(data as any)?.profile_image_url} 
             agentName={data.name}
             iconName={(data as any)?.icon_name}
             iconColor={(data as any)?.icon_color}
             iconBackground={(data as any)?.icon_background}
           />
-          <div className="flex items-center gap-2">{renderBadge()}</div>
+          <div className="flex items-center gap-2">
+            {renderBadge()}
+          </div>
         </div>
-
+        
         <h3 className="text-lg font-semibold text-foreground mb-2 line-clamp-1">
           {data.name}
         </h3>
         <p className="text-sm text-muted-foreground mb-4 line-clamp-2 min-h-[2.5rem]">
           {data.description || 'No description available'}
         </p>
-
+        
         <div className="flex-1 flex flex-col">
           <div className="min-h-[1.25rem] mb-3">
             <TagList tags={data.tags} />
           </div>
-
+          
           <div className="mt-auto">
-            <div className="mb-3">{renderMetadata()}</div>
+            <div className="mb-3">
+              {renderMetadata()}
+            </div>
             {renderActions()}
           </div>
         </div>
       </div>
     </div>
   );
-};
+}; 

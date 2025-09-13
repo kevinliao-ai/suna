@@ -20,61 +20,57 @@ interface ComposioUrl {
 
 // Common toolkit name mappings for better display
 const TOOLKIT_NAME_MAPPINGS: Record<string, string> = {
-  gmail: 'Gmail',
-  github: 'GitHub',
-  gitlab: 'GitLab',
-  google_sheets: 'Google Sheets',
-  google_drive: 'Google Drive',
-  google_calendar: 'Google Calendar',
-  notion: 'Notion',
-  slack: 'Slack',
-  discord: 'Discord',
-  twitter: 'Twitter',
-  linkedin: 'LinkedIn',
-  facebook: 'Facebook',
-  instagram: 'Instagram',
-  youtube: 'YouTube',
-  zoom: 'Zoom',
-  microsoft_teams: 'Microsoft Teams',
-  outlook: 'Outlook',
-  dropbox: 'Dropbox',
-  onedrive: 'OneDrive',
-  salesforce: 'Salesforce',
-  hubspot: 'HubSpot',
-  mailchimp: 'Mailchimp',
-  stripe: 'Stripe',
-  paypal: 'PayPal',
-  shopify: 'Shopify',
-  wordpress: 'WordPress',
-  airtable: 'Airtable',
-  monday: 'Monday.com',
-  asana: 'Asana',
-  trello: 'Trello',
-  jira: 'Jira',
-  figma: 'Figma',
-  twilio: 'Twilio',
-  aws: 'AWS',
-  google_cloud: 'Google Cloud',
-  azure: 'Azure',
+  'gmail': 'Gmail',
+  'github': 'GitHub', 
+  'gitlab': 'GitLab',
+  'google_sheets': 'Google Sheets',
+  'google_drive': 'Google Drive',
+  'google_calendar': 'Google Calendar',
+  'notion': 'Notion',
+  'slack': 'Slack',
+  'discord': 'Discord',
+  'twitter': 'Twitter',
+  'linkedin': 'LinkedIn',
+  'facebook': 'Facebook',
+  'instagram': 'Instagram',
+  'youtube': 'YouTube',
+  'zoom': 'Zoom',
+  'microsoft_teams': 'Microsoft Teams',
+  'outlook': 'Outlook',
+  'dropbox': 'Dropbox',
+  'onedrive': 'OneDrive',
+  'salesforce': 'Salesforce',
+  'hubspot': 'HubSpot',
+  'mailchimp': 'Mailchimp',
+  'stripe': 'Stripe',
+  'paypal': 'PayPal',
+  'shopify': 'Shopify',
+  'wordpress': 'WordPress',
+  'airtable': 'Airtable',
+  'monday': 'Monday.com',
+  'asana': 'Asana',
+  'trello': 'Trello',
+  'jira': 'Jira',
+  'figma': 'Figma',
+  'twilio': 'Twilio',
+  'aws': 'AWS',
+  'google_cloud': 'Google Cloud',
+  'azure': 'Azure',
 };
 
 // Toolkit logos/icons mapping
 const TOOLKIT_LOGOS: Record<string, string> = {
-  gmail: 'https://cdn.jsdelivr.net/gh/ComposioHQ/open-logos@master/gmail.svg',
-  github: 'https://cdn.jsdelivr.net/gh/ComposioHQ/open-logos@master/github.svg',
-  slack: 'https://cdn.jsdelivr.net/gh/ComposioHQ/open-logos@master/slack.svg',
-  notion: 'https://cdn.jsdelivr.net/gh/ComposioHQ/open-logos@master/notion.svg',
-  google_sheets:
-    'https://cdn.jsdelivr.net/gh/ComposioHQ/open-logos@master/google-sheets.svg',
-  google_drive:
-    'https://cdn.jsdelivr.net/gh/ComposioHQ/open-logos@master/google-drive.svg',
-  linear: 'https://cdn.jsdelivr.net/gh/ComposioHQ/open-logos@master/linear.svg',
-  airtable:
-    'https://cdn.jsdelivr.net/gh/ComposioHQ/open-logos@master/airtable.svg',
-  asana: 'https://cdn.jsdelivr.net/gh/ComposioHQ/open-logos@master/asana.svg',
-  trello: 'https://cdn.jsdelivr.net/gh/ComposioHQ/open-logos@master/trello.svg',
-  salesforce:
-    'https://cdn.jsdelivr.net/gh/ComposioHQ/open-logos@master/salesforce.svg',
+  'gmail': 'https://cdn.jsdelivr.net/gh/ComposioHQ/open-logos@master/gmail.svg',
+  'github': 'https://cdn.jsdelivr.net/gh/ComposioHQ/open-logos@master/github.svg',
+  'slack': 'https://cdn.jsdelivr.net/gh/ComposioHQ/open-logos@master/slack.svg',
+  'notion': 'https://cdn.jsdelivr.net/gh/ComposioHQ/open-logos@master/notion.svg',
+  'google_sheets': 'https://cdn.jsdelivr.net/gh/ComposioHQ/open-logos@master/google-sheets.svg',
+  'google_drive': 'https://cdn.jsdelivr.net/gh/ComposioHQ/open-logos@master/google-drive.svg',
+  'linear': 'https://cdn.jsdelivr.net/gh/ComposioHQ/open-logos@master/linear.svg',
+  'airtable': 'https://cdn.jsdelivr.net/gh/ComposioHQ/open-logos@master/airtable.svg',
+  'asana': 'https://cdn.jsdelivr.net/gh/ComposioHQ/open-logos@master/asana.svg',
+  'trello': 'https://cdn.jsdelivr.net/gh/ComposioHQ/open-logos@master/trello.svg',
+  'salesforce': 'https://cdn.jsdelivr.net/gh/ComposioHQ/open-logos@master/salesforce.svg',
 };
 
 function formatToolkitName(toolkitSlug: string): string {
@@ -82,79 +78,60 @@ function formatToolkitName(toolkitSlug: string): string {
   if (TOOLKIT_NAME_MAPPINGS[toolkitSlug.toLowerCase()]) {
     return TOOLKIT_NAME_MAPPINGS[toolkitSlug.toLowerCase()];
   }
-
+  
   // Fall back to converting snake_case to Title Case
   return toolkitSlug
     .split('_')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(' ');
 }
 
-function extractToolkitInfoFromContext(
-  content: string,
-  urlStartIndex: number,
-): { toolkitName: string | null; toolkitSlug: string | null } {
+function extractToolkitInfoFromContext(content: string, urlStartIndex: number): { toolkitName: string | null; toolkitSlug: string | null } {
   // Use a smaller, more focused context window
-  const contextBefore = content.substring(
-    Math.max(0, urlStartIndex - 200),
-    urlStartIndex,
-  );
-  const contextAfter = content.substring(
-    urlStartIndex,
-    Math.min(content.length, urlStartIndex + 100),
-  );
-
+  const contextBefore = content.substring(Math.max(0, urlStartIndex - 200), urlStartIndex);
+  const contextAfter = content.substring(urlStartIndex, Math.min(content.length, urlStartIndex + 100));
+  
   // Look for the most recent/closest pattern before the URL
   // Pattern 1: [toolkit:slug:name] Authentication:
-  let match = contextBefore.match(
-    /\[toolkit:([^:]+):([^\]]+)\]\s+Authentication:\s*$/i,
-  );
+  let match = contextBefore.match(/\[toolkit:([^:]+):([^\]]+)\]\s+Authentication:\s*$/i);
   if (match) {
     const toolkitSlug = match[1].trim();
     const toolkitName = match[2].trim();
     return { toolkitName, toolkitSlug };
   }
-
+  
   // Pattern 2: Service Name Authentication:
-  match = contextBefore.match(
-    /([A-Za-z]+(?:\s+[A-Za-z]+)*)\s+Authentication:\s*$/i,
-  );
+  match = contextBefore.match(/([A-Za-z]+(?:\s+[A-Za-z]+)*)\s+Authentication:\s*$/i);
   if (match) {
     const serviceName = match[1].trim();
     const slug = serviceName.toLowerCase().replace(/\s+/g, '_');
     return { toolkitName: serviceName, toolkitSlug: slug };
   }
-
+  
   // Pattern 3: Numbered list with service name
-  match = contextBefore.match(
-    /\d+\.\s*([A-Za-z]+(?:\s+[A-Za-z]+)*)\s+(?:Integration|Authentication)(?:\s+[^:\n]*)?:?\s*$/i,
-  );
+  match = contextBefore.match(/\d+\.\s*([A-Za-z]+(?:\s+[A-Za-z]+)*)\s+(?:Integration|Authentication)(?:\s+[^:\n]*)?:?\s*$/i);
   if (match) {
     const serviceName = match[1].trim();
     const slug = serviceName.toLowerCase().replace(/\s+/g, '_');
     return { toolkitName: serviceName, toolkitSlug: slug };
   }
-
+  
   // Pattern 3b: Handle numbered list with emojis
-  match = contextBefore.match(
-    /\d+\.\s*([A-Za-z]+(?:\s+[A-Za-z]+)*)\s+(?:Integration|Authentication)\s*[^\w\n]*\s*$/i,
-  );
+  match = contextBefore.match(/\d+\.\s*([A-Za-z]+(?:\s+[A-Za-z]+)*)\s+(?:Integration|Authentication)\s*[^\w\n]*\s*$/i);
   if (match) {
     const serviceName = match[1].trim();
     const slug = serviceName.toLowerCase().replace(/\s+/g, '_');
     return { toolkitName: serviceName, toolkitSlug: slug };
   }
-
+  
   // Pattern 4: Service Authentication (for...)
-  match = contextBefore.match(
-    /([A-Za-z]+(?:\s+[A-Za-z]+)*)\s+Authentication\s+\([^)]*\)\s*:?\s*$/i,
-  );
+  match = contextBefore.match(/([A-Za-z]+(?:\s+[A-Za-z]+)*)\s+Authentication\s+\([^)]*\)\s*:?\s*$/i);
   if (match) {
     const serviceName = match[1].trim();
     const slug = serviceName.toLowerCase().replace(/\s+/g, '_');
     return { toolkitName: serviceName, toolkitSlug: slug };
   }
-
+  
   // Pattern 5: Look for "Sign in to [Service]" in the URL context
   const urlContext = contextAfter.substring(0, 100);
   match = urlContext.match(/Sign\s+in\s+to\s+([A-Za-z]+(?:\s+[A-Za-z]+)*)/i);
@@ -163,21 +140,16 @@ function extractToolkitInfoFromContext(
     const slug = serviceName.toLowerCase().replace(/\s+/g, '_');
     return { toolkitName: serviceName, toolkitSlug: slug };
   }
-
+  
   // Pattern 6: Look in the immediate context before URL (within 100 chars)
-  const immediateContext = content.substring(
-    Math.max(0, urlStartIndex - 100),
-    urlStartIndex,
-  );
-  match = immediateContext.match(
-    /([A-Za-z]+)\s+(?:authentication|auth|connect)\s*(?:link|url)?:?\s*$/i,
-  );
+  const immediateContext = content.substring(Math.max(0, urlStartIndex - 100), urlStartIndex);
+  match = immediateContext.match(/([A-Za-z]+)\s+(?:authentication|auth|connect)\s*(?:link|url)?:?\s*$/i);
   if (match) {
     const serviceName = match[1].trim();
     const slug = serviceName.toLowerCase().replace(/\s+/g, '_');
     return { toolkitName: serviceName, toolkitSlug: slug };
   }
-
+  
   // Pattern 7: Look for common toolkit names in the immediate context only
   const commonToolkits = Object.keys(TOOLKIT_NAME_MAPPINGS);
   for (const toolkit of commonToolkits) {
@@ -187,7 +159,7 @@ function extractToolkitInfoFromContext(
       return { toolkitName, toolkitSlug: toolkit };
     }
   }
-
+  
   return { toolkitName: null, toolkitSlug: null };
 }
 
@@ -207,60 +179,49 @@ function detectComposioUrls(content: string): ComposioUrl[] {
     /https:\/\/[^\/\s]+\/connect\/[^\s)]+/g,
     /https:\/\/[^\s)]+[?&](client_id|redirect_uri|response_type|scope)=[^\s)]+/g,
   ];
-
+  
   const urls: ComposioUrl[] = [];
   const processedUrls = new Set<string>(); // To avoid duplicates
-
+  
   for (const pattern of authUrlPatterns) {
     let match;
     pattern.lastIndex = 0; // Reset regex state
     while ((match = pattern.exec(content)) !== null) {
       const url = match[0];
-
+      
       // Skip if we've already processed this URL
       if (processedUrls.has(url)) {
         continue;
       }
-
+      
       processedUrls.add(url);
-      const { toolkitName, toolkitSlug } = extractToolkitInfoFromContext(
-        content,
-        match.index,
-      );
-
+      const { toolkitName, toolkitSlug } = extractToolkitInfoFromContext(content, match.index);
+      
       // Debug logging to help identify what's being detected
       console.log('ComposioUrlDetector Debug:', {
         url: url.substring(0, 50) + '...',
         toolkitName,
         toolkitSlug,
-        contextBefore: content.substring(
-          Math.max(0, match.index - 100),
-          match.index,
-        ),
+        contextBefore: content.substring(Math.max(0, match.index - 100), match.index)
       });
-
+      
       urls.push({
         url,
         toolkitName,
         toolkitSlug,
         startIndex: match.index,
-        endIndex: match.index + url.length,
+        endIndex: match.index + url.length
       });
     }
   }
-
+  
   return urls.sort((a, b) => a.startIndex - b.startIndex);
 }
 
 function hasAuthUrlPattern(content: string, url: ComposioUrl): boolean {
-  const beforeUrl = content.substring(
-    Math.max(0, url.startIndex - 100),
-    url.startIndex,
-  );
+  const beforeUrl = content.substring(Math.max(0, url.startIndex - 100), url.startIndex);
   // Updated pattern to also match [toolkit:slug:name] Authentication: format
-  return /(?:(?:\[toolkit:[^:]+:[^\]]+\]|[A-Za-z]+(?:\s+[A-Za-z]+)*)\s+)?(?:authentication|auth|connect|visit)\s+(?:url|link)?:\s*$/i.test(
-    beforeUrl,
-  );
+  return /(?:(?:\[toolkit:[^:]+:[^\]]+\]|[A-Za-z]+(?:\s+[A-Za-z]+)*)\s+)?(?:authentication|auth|connect|visit)\s+(?:url|link)?:\s*$/i.test(beforeUrl);
 }
 
 interface ComposioConnectButtonProps {
@@ -269,15 +230,14 @@ interface ComposioConnectButtonProps {
   toolkitSlug?: string;
 }
 
-const ComposioConnectButton: React.FC<ComposioConnectButtonProps> = ({
-  url,
+const ComposioConnectButton: React.FC<ComposioConnectButtonProps> = ({ 
+  url, 
   toolkitName,
-  toolkitSlug,
+  toolkitSlug
 }) => {
-  const displayName =
-    toolkitName || (toolkitSlug ? formatToolkitName(toolkitSlug) : 'Service');
+  const displayName = toolkitName || (toolkitSlug ? formatToolkitName(toolkitSlug) : 'Service');
   const logoUrl = toolkitSlug ? TOOLKIT_LOGOS[toolkitSlug.toLowerCase()] : null;
-
+  
   const handleConnect = () => {
     window.open(url, '_blank', 'noopener,noreferrer');
   };
@@ -307,19 +267,23 @@ const ComposioConnectButton: React.FC<ComposioConnectButtonProps> = ({
               )}
             </div>
           </div>
-
+          
           <div className="flex-1 min-w-0 flex items-center gap-2 justify-between">
             <div className="flex flex-col mb-3">
               <div className="flex items-center">
                 <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 text-sm">
-                  Sign in to {displayName}
+                    Sign in to {displayName}
                 </h3>
               </div>
               <p className="text-xs text-zinc-600 dark:text-zinc-400 -mt-1">
                 Click to authorize access to your {displayName} account
               </p>
             </div>
-            <Button onClick={handleConnect} size="sm" className="max-w-64">
+            <Button
+              onClick={handleConnect}
+              size="sm"
+              className="max-w-64"
+            >
               <ExternalLink className="w-3 h-3" />
               Sign in
             </Button>
@@ -330,14 +294,18 @@ const ComposioConnectButton: React.FC<ComposioConnectButtonProps> = ({
   );
 };
 
-export const ComposioUrlDetector: React.FC<ComposioUrlDetectorProps> = ({
-  content,
-  className,
+export const ComposioUrlDetector: React.FC<ComposioUrlDetectorProps> = ({ 
+  content, 
+  className 
 }) => {
   const composioUrls = detectComposioUrls(content);
 
   if (composioUrls.length === 0) {
-    return <Markdown className={className}>{content}</Markdown>;
+    return (
+      <Markdown className={className}>
+        {content}
+      </Markdown>
+    );
   }
 
   const contentParts: React.ReactNode[] = [];
@@ -346,16 +314,13 @@ export const ComposioUrlDetector: React.FC<ComposioUrlDetectorProps> = ({
   composioUrls.forEach((composioUrl, index) => {
     if (composioUrl.startIndex > lastIndex) {
       const textBefore = content.substring(lastIndex, composioUrl.startIndex);
-
+      
       const cleanedTextBefore = hasAuthUrlPattern(content, composioUrl)
         ? textBefore
             // Remove [toolkit:slug:name] pattern
             .replace(/\[toolkit:[^:]+:[^\]]+\]\s+/gi, '')
             // Remove authentication/auth/connect/visit url/link patterns
-            .replace(
-              /(?:authentication|auth|connect|visit)\s+(?:url|link)?:\s*$/i,
-              '',
-            )
+            .replace(/(?:authentication|auth|connect|visit)\s+(?:url|link)?:\s*$/i, '')
             .trim()
         : textBefore;
 
@@ -363,7 +328,7 @@ export const ComposioUrlDetector: React.FC<ComposioUrlDetectorProps> = ({
         contentParts.push(
           <Markdown key={`text-${index}`} className={className}>
             {cleanedTextBefore}
-          </Markdown>,
+          </Markdown>
         );
       }
     }
@@ -374,7 +339,7 @@ export const ComposioUrlDetector: React.FC<ComposioUrlDetectorProps> = ({
         url={composioUrl.url}
         toolkitName={composioUrl.toolkitName || undefined}
         toolkitSlug={composioUrl.toolkitSlug || undefined}
-      />,
+      />
     );
 
     lastIndex = composioUrl.endIndex;
@@ -386,10 +351,10 @@ export const ComposioUrlDetector: React.FC<ComposioUrlDetectorProps> = ({
       contentParts.push(
         <Markdown key="text-final" className={className}>
           {remainingText}
-        </Markdown>,
+        </Markdown>
       );
     }
   }
 
   return <>{contentParts}</>;
-};
+}; 
