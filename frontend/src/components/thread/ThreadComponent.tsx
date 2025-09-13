@@ -30,14 +30,14 @@ import {
 } from '@/components/thread/types';
 import {
   ApiMessageType,
-} from '@/app/(dashboard-angent)/projects/[projectId]/thread/_types';
+} from '@/app/(dashboard)/projects/[projectId]/thread/_types';
 import {
   useThreadData,
   useToolCalls,
   useBilling,
   useKeyboardShortcuts,
-} from '@/app/(dashboard-angent)/projects/[projectId]/thread/_hooks';
-import { ThreadError, UpgradeDialog, ThreadLayout } from '@/app/(dashboard-angent)/projects/[projectId]/thread/_components';
+} from '@/app/(dashboard)/projects/[projectId]/thread/_hooks';
+import { ThreadError, UpgradeDialog, ThreadLayout } from '@/app/(dashboard)/projects/[projectId]/thread/_components';
 
 import {
   useThreadAgent,

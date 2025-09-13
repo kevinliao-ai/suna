@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@/lib/supabase/client';
 import { threadKeys } from '@/hooks/react-query/threads/keys';
-import { Project } from '../app/(dashboard-angent)/projects/[projectId]/thread/_types';
+import { Project } from '../app/(dashboard)/projects/[projectId]/thread/_types';
 
 /**
  * Hook to subscribe to real-time project updates and invalidate React Query cache

@@ -61,8 +61,8 @@ export default function QuickStartPage() {
             data={[{
               language: "bash",
               filename: "terminal",
-              code: `git clone https://github.com/kortix-ai/suna.git
-cd suna`
+              code: `git clone https://github.com/bilibili/Index-anisora.git
+cd Index-anisora`
             }]}
             defaultValue="bash"
           >
