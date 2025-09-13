@@ -200,13 +200,19 @@ const STAGING_TIERS: SubscriptionTiers = {
 } as const;
 
 function getEnvironmentMode(): EnvMode {
-  const envMode = process.env.NEXT_PUBLIC_ENV_MODE.toUpperCase();
+  const envMode = process.env.NEXT_PUBLIC_ENV_MODE;
   switch (envMode) {
     case 'LOCAL':
       return EnvMode.LOCAL;
     case 'STAGING':
       return EnvMode.STAGING;
     case 'PRODUCTION':
+      return EnvMode.PRODUCTION;
+    case 'local':
+      return EnvMode.LOCAL;
+    case 'staging':
+      return EnvMode.STAGING;
+    case 'production':
       return EnvMode.PRODUCTION;
     default:
       if (process.env.NODE_ENV === 'development') {
