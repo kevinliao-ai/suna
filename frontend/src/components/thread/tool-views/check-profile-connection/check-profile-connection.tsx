@@ -86,7 +86,7 @@ export function CheckProfileConnectionToolView({
     return toolName
       .replace(/^[A-Z_]+-/, '')
       .split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .map(word => word.charAt(0)?.toUpperCase() + word.slice(1).toLowerCase())
       .join(' ');
   };
 

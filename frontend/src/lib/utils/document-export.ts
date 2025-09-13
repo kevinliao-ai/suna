@@ -343,7 +343,7 @@ export async function exportDocument({ content, fileName, format }: DocumentExpo
     }
   } catch (error) {
     console.error(`Export error (${format}):`, error);
-    toast.error(`Failed to export as ${format.toUpperCase()}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    toast.error(`Failed to export as ${format?.toUpperCase()}: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 

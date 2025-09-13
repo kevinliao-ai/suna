@@ -64,7 +64,7 @@ const IntegrationLogo: React.FC<{
     logoUrl = composioIconData?.icon_url;
   }
 
-  const firstLetter = displayName.charAt(0).toUpperCase();
+  const firstLetter = displayName.charAt(0)?.toUpperCase();
 
   return (
     <div className="w-5 h-5 flex items-center justify-center flex-shrink-0 overflow-hidden rounded-sm">
@@ -146,9 +146,9 @@ export const MarketplaceAgentPreviewDialog: React.FC<MarketplaceAgentPreviewDial
   const getAppDisplayName = (qualifiedName: string) => {
     if (qualifiedName.includes('_')) {
       const parts = qualifiedName.split('_');
-      return parts[parts.length - 1].replace(/\b\w/g, l => l.toUpperCase());
+      return parts[parts.length - 1].replace(/\b\w/g, l => l?.toUpperCase());
     }
-    return qualifiedName.replace(/\b\w/g, l => l.toUpperCase());
+    return qualifiedName.replace(/\b\w/g, l => l?.toUpperCase());
   };
 
   console.log('agent', agent);

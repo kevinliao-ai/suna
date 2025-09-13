@@ -36,7 +36,7 @@ function extractTokensFromTemplate(template: string): string[] {
 function toLabel(key: string): string {
     return key
         .replace(/[_\.-]+/g, ' ')
-        .replace(/\b\w/g, (c) => c.toUpperCase())
+        .replace(/\b\w/g, (c) => c?.toUpperCase())
         .trim();
 }
 

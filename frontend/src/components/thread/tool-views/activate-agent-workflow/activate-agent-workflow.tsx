@@ -138,7 +138,7 @@ export default function ActivateAgentWorkflowToolView({
                     )}
                   >
                     <StatusIcon className="h-3 w-3 mr-1" />
-                    {status?.charAt(0).toUpperCase() + status?.slice(1)}
+                    {status?.charAt(0)?.toUpperCase() + status?.slice(1)}
                   </Badge>
                 </div>
 

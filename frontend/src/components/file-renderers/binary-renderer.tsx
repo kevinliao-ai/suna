@@ -48,7 +48,7 @@ export function BinaryRenderer({
         <div className="relative mb-6">
           <File className="h-24 w-24 text-muted-foreground/50" />
           <div className="absolute bottom-1 right-1 bg-background rounded-sm px-1.5 py-0.5 text-xs font-medium text-muted-foreground border">
-            {fileExtension.toUpperCase()}
+            {fileExtension?.toUpperCase()}
           </div>
         </div>
 

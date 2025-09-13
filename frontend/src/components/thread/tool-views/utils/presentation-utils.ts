@@ -103,7 +103,7 @@ export async function downloadPresentation(
     a.download = `${presentationName}.${format}`;
     a.click();
     window.URL.revokeObjectURL(url);
-    toast.success(`Downloaded ${presentationName} as ${format.toUpperCase()}`, {
+    toast.success(`Downloaded ${presentationName} as ${format?.toUpperCase()}`, {
       duration: 8000,
     });
   } catch (error) {

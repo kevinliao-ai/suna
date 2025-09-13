@@ -222,7 +222,7 @@ export default function ComposioTestPage() {
                             <SelectContent>
                               {commonToolkits.map((tool) => (
                                 <SelectItem key={tool} value={tool}>
-                                  {tool.charAt(0).toUpperCase() + tool.slice(1)}
+                                  {tool.charAt(0)?.toUpperCase() + tool?.slice(1)}
                                 </SelectItem>
                               ))}
                             </SelectContent>

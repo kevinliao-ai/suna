@@ -125,7 +125,7 @@ export function AgentWorkflowsConfiguration({ agentId, agentName }: AgentWorkflo
     
     return (
       <Badge className={colors[status]}>
-        {status.charAt(0).toUpperCase() + status.slice(1)}
+        {status.charAt(0)?.toUpperCase() + status.slice(1)}
       </Badge>
     );
   };

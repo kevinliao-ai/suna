@@ -119,7 +119,7 @@ export const canAccessModel = (
 export const formatModelName = (name: string): string => {
   return name
     .split('-')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .map(word => word.charAt(0)?.toUpperCase() + word.slice(1))
     .join(' ');
 };
 

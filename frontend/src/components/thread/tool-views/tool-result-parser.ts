@@ -166,6 +166,6 @@ export function isToolResult(content: any): boolean {
 export function formatToolNameForDisplay(toolName: string): string {
   return toolName
     .split('-')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .map(word => word.charAt(0)?.toUpperCase() + word.slice(1))
     .join(' ');
 } 

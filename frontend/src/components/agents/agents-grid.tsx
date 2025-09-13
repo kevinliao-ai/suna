@@ -118,7 +118,7 @@ const AgentModal: React.FC<AgentModalProps> = ({
               <img src={agent.profile_image_url} alt={agent.name} className="h-16 w-16 rounded-xl object-cover" />
             ) : (
               <div className="h-16 w-16 rounded-xl bg-muted flex items-center justify-center">
-                <span className="text-lg font-semibold">{agent.name.charAt(0).toUpperCase()}</span>
+                <span className="text-lg font-semibold">{agent.name.charAt(0)?.toUpperCase()}</span>
               </div>
             )}
           </div>

@@ -282,7 +282,7 @@ const ToolPreviewCard = ({ tool, searchTerm }: {
     // Default to first letter of tool name
     return (
       <div className="w-3 h-3 rounded-sm bg-primary/10 flex items-center justify-center text-[8px] font-semibold text-primary">
-        {toolName.charAt(0).toUpperCase()}
+        {toolName.charAt(0)?.toUpperCase()}
       </div>
     );
   };

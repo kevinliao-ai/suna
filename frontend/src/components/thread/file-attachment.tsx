@@ -72,7 +72,7 @@ function getFileIcon(type: FileType): React.ElementType {
 // Generate a human-readable display name for file type
 function getTypeLabel(type: FileType, extension?: string): string {
     if (type === 'code' && extension) {
-        return extension.toUpperCase();
+        return extension?.toUpperCase();
     }
 
     const labels: Record<FileType, string> = {

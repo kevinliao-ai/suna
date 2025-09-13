@@ -64,7 +64,7 @@ const normalizeToolName = (toolName: string, toolType: 'agentpress' | 'mcp') => 
   } else {
     return toolName
       .split('_')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .map(word => word.charAt(0)?.toUpperCase() + word.slice(1).toLowerCase())
       .join(' ');
   }
 };

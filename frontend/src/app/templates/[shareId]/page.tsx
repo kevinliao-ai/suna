@@ -111,7 +111,7 @@ const IntegrationIcon: React.FC<{
     }
   }, [extractedSlug, hasError]);
   
-  const firstLetter = displayName.charAt(0).toUpperCase();
+  const firstLetter = displayName.charAt(0)?.toUpperCase();
   
   const iconMap: Record<string, JSX.Element> = {
     'github': <GitBranch size={size} />,
