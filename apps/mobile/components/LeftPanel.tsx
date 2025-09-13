@@ -392,7 +392,7 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({ isVisible, onClose }) => {
 
     const getUserInitial = () => {
         const name = getUserDisplayName();
-        return name.charAt(0).toUpperCase();
+        return name.charAt(0)?.toUpperCase();
     };
 
     const handleSettingsDrawerOpen = () => {

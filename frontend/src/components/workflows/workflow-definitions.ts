@@ -135,7 +135,7 @@ export function getToolDefinition(toolName: string): StepDefinition | null {
     
     return {
         id: `tool_${toolName}`,
-        name: toolName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+        name: toolName.replace(/_/g, ' ').replace(/\b\w/g, l => l?.toUpperCase()),
         description: `Use ${toolName.replace(/_/g, ' ')}`,
         icon: TOOL_ICONS[toolName],
         category: 'tools',
@@ -219,7 +219,7 @@ export function generateAvailableStepTypes(agentTools?: {
         agentTools.mcp_tools.forEach(tool => {
             allSteps.push({
                 id: `mcp_${tool.name}`,
-                name: tool.name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+                name: tool.name.replace(/_/g, ' ').replace(/\b\w/g, l => l?.toUpperCase()),
                 description: tool.description,
                 icon: Cog, // Better icon for MCP tools
                 category: 'integrations',

@@ -62,5 +62,5 @@ export const getToolDisplayName = (toolName: string): string => {
       'trigger_tool': 'Trigger Management',
     };
     
-    return displayNames[toolName] || toolName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    return displayNames[toolName] || toolName.replace(/_/g, ' ').replace(/\b\w/g, l => l?.toUpperCase());
   };

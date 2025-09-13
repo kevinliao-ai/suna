@@ -50,7 +50,7 @@ const IntegrationIcon: React.FC<{
   customType?: string;
   size?: number;
 }> = ({ qualifiedName, displayName, customType, size = 20 }) => {
-  const firstLetter = displayName.charAt(0).toUpperCase();
+  const firstLetter = displayName.charAt(0)?.toUpperCase();
   const getIconColor = () => {
     const colors = [
       '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', 

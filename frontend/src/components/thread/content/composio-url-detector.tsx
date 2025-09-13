@@ -82,7 +82,7 @@ function formatToolkitName(toolkitSlug: string): string {
   // Fall back to converting snake_case to Title Case
   return toolkitSlug
     .split('_')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .map(word => word.charAt(0)?.toUpperCase() + word.slice(1).toLowerCase())
     .join(' ');
 }
 

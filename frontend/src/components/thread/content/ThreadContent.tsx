@@ -447,7 +447,7 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                         </div>
                     ) : (
                         <div className="h-5 w-5 flex items-center justify-center rounded text-xs">
-                            <span className="text-lg">{recentAssistantWithAgent.agents.name.charAt(0).toUpperCase()}</span>
+                            <span className="text-lg">{recentAssistantWithAgent.agents.name.charAt(0)?.toUpperCase()}</span>
                         </div>
                     )}
                 </>

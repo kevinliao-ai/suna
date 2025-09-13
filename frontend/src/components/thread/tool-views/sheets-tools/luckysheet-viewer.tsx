@@ -57,7 +57,7 @@ function argbToHex(argb?: string | number): string | undefined {
     return indexColors[argb] || undefined;
   }
   
-  const v = String(argb).replace(/^#/, '').toUpperCase();
+  const v = String(argb).replace(/^#/, '')?.toUpperCase();
   if (v.length === 8) {
     return `#${v.slice(2)}`;
   }
@@ -244,7 +244,7 @@ export function LuckysheetViewer({ xlsxPath, sandboxId, className, height }: Luc
                   }
                   
                   if (bgColor) {
-                    bgColor = bgColor.replace(/^#/, '').toUpperCase();
+                    bgColor = bgColor.replace(/^#/, '')?.toUpperCase();
                     if (bgColor.length === 8) {
                       bgColor = '#' + bgColor.slice(2);
                     } else if (bgColor.length === 6) {
@@ -265,7 +265,7 @@ export function LuckysheetViewer({ xlsxPath, sandboxId, className, height }: Luc
                   if (cellStyle.font.name) v.ff = cellStyle.font.name;
                   if (cellStyle.font.color?.rgb) {
                     let fc = cellStyle.font.color.rgb;
-                    fc = fc.replace(/^#/, '').toUpperCase();
+                    fc = fc.replace(/^#/, '')?.toUpperCase();
                     if (fc.length === 8) {
                       fc = '#' + fc.slice(2);
                     } else if (fc.length === 6) {
@@ -313,7 +313,7 @@ export function LuckysheetViewer({ xlsxPath, sandboxId, className, height }: Luc
                     if (font.name) v.ff = font.name;
                     if (font.color?.rgb) {
                       let fc = font.color.rgb;
-                      fc = fc.replace(/^#/, '').toUpperCase();
+                      fc = fc.replace(/^#/, '')?.toUpperCase();
                       if (fc.length === 8) {
                         fc = '#' + fc.slice(2);
                       } else if (fc.length === 6) {
@@ -329,7 +329,7 @@ export function LuckysheetViewer({ xlsxPath, sandboxId, className, height }: Luc
                     const fill = wb.Styles.Fills[xf.fillId];
                     if (fill.fgColor?.rgb || fill.bgColor?.rgb) {
                       let bg = fill.fgColor?.rgb || fill.bgColor?.rgb;
-                      bg = bg.replace(/^#/, '').toUpperCase();
+                      bg = bg.replace(/^#/, '')?.toUpperCase();
                       if (bg.length === 8) {
                         bg = '#' + bg.slice(2);
                       } else if (bg.length === 6) {

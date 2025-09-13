@@ -30,7 +30,7 @@ const getToolDisplayName = (toolName: string) => {
         case 'complete':
             return 'Task Complete';
         default:
-            return toolName?.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Unknown Tool';
+            return toolName?.replace(/-/g, ' ').replace(/\b\w/g, l => l?.toUpperCase()) || 'Unknown Tool';
     }
 };
 

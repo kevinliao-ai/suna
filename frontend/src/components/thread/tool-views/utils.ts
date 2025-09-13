@@ -104,13 +104,13 @@ export function getToolTitle(toolName: string): string {
   // For browser tools not explicitly mapped
   if (normalizedName.startsWith('browser_')) {
     const operation = normalizedName.replace('browser_', '').replace(/_/g, ' ');
-    return 'Browser ' + operation.charAt(0).toUpperCase() + operation.slice(1);
+    return 'Browser ' + operation.charAt(0)?.toUpperCase() + operation.slice(1);
   }
 
   // Format any other tool name
   return toolName
     .split('-')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .map((word) => word.charAt(0)?.toUpperCase() + word.slice(1))
     .join(' ');
 }
 
@@ -603,7 +603,7 @@ export function getFileType(filePath: string): string {
     case 'md':
       return 'Markdown';
     default:
-      return extension.toUpperCase() || 'Text';
+      return extension?.toUpperCase() || 'Text';
   }
 }
 
@@ -621,7 +621,7 @@ export function extractBrowserOperation(toolName: string | undefined): string {
   if (!toolName) return 'Browser Operation';
 
   const operation = toolName.replace('browser_', '').replace(/_/g, ' ');
-  return operation.charAt(0).toUpperCase() + operation.slice(1);
+  return operation.charAt(0)?.toUpperCase() + operation.slice(1);
 }
 
 // Helper to extract search query

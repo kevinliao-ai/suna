@@ -438,31 +438,31 @@ function formatMCPToolName(serverName: string, toolName: string): string {
   };
   
   const formattedServerName = serverMappings[serverName.toLowerCase()] || 
-    serverName.charAt(0).toUpperCase() + serverName.slice(1);
+    serverName.charAt(0)?.toUpperCase() + serverName.slice(1);
   
   let formattedToolName = toolName;
   
   if (toolName.includes('-')) {
     formattedToolName = toolName
       .split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .map(word => word.charAt(0)?.toUpperCase() + word.slice(1))
       .join(' ');
   }
   else if (toolName.includes('_')) {
     formattedToolName = toolName
       .split('_')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .map(word => word.charAt(0)?.toUpperCase() + word.slice(1))
       .join(' ');
   }
   else if (/[a-z][A-Z]/.test(toolName)) {
     formattedToolName = toolName
       .replace(/([a-z])([A-Z])/g, '$1 $2')
       .split(' ')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .map(word => word.charAt(0)?.toUpperCase() + word.slice(1))
       .join(' ');
   }
   else {
-    formattedToolName = toolName.charAt(0).toUpperCase() + toolName.slice(1);
+    formattedToolName = toolName.charAt(0)?.toUpperCase() + toolName.slice(1);
   }
   
   return `${formattedServerName}: ${formattedToolName}`;

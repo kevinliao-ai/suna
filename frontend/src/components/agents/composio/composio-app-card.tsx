@@ -38,7 +38,7 @@ export const ComposioAppCard: React.FC<ComposioAppCardProps> = ({
               />
             ) : (
               <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5 text-primary font-semibold text-lg">
-                {app.name.charAt(0).toUpperCase()}
+                {app.name.charAt(0)?.toUpperCase()}
               </div>
             )}
           </div>

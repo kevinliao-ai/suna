@@ -55,12 +55,12 @@ export function ConfigureProfileForAgentToolView({
     return toolName
       .replace(/^[A-Z_]+-/, '')
       .split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .map(word => word.charAt(0)?.toUpperCase() + word.slice(1).toLowerCase())
       .join(' ');
   };
 
   const getToolCategory = (toolName: string) => {
-    const upperTool = toolName.toUpperCase();
+    const upperTool = toolName?.toUpperCase();
     if (upperTool.includes('SCHEDULE') || upperTool.includes('MEETING')) return 'Meeting';
     if (upperTool.includes('EMAIL') || upperTool.includes('SEND')) return 'Communication';
     if (upperTool.includes('FILE') || upperTool.includes('DOCUMENT')) return 'Files';

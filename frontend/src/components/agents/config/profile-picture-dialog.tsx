@@ -145,7 +145,7 @@ export function ProfilePictureDialog({
                     onChange={(e) => {
                       const hex = e.target.value;
                       if (/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(hex) || hex.startsWith('#')) {
-                        onChange(hex.toUpperCase());
+                        onChange(hex?.toUpperCase());
                       }
                     }}
                     placeholder="#000000"
@@ -172,7 +172,7 @@ export function ProfilePictureDialog({
             onChange={(e) => {
               const hex = e.target.value;
               if (/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(hex) || hex.startsWith('#')) {
-                onChange(hex.toUpperCase());
+                onChange(hex?.toUpperCase());
               }
             }}
             placeholder="#000000"
