@@ -48,7 +48,7 @@ export default function ActivateTrialPage() {
     try {
       const result = await startTrialMutation.mutateAsync({
         success_url: `${window.location.origin}/dashboard?trial=started`,
-        cancel_url: `${window.location.origin}/activate-trial`,
+        cancel_url: `${window.location.origin}/dashboard`,
       });
       
       if (result.checkout_url) {

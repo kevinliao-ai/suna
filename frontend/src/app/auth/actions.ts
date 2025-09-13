@@ -99,7 +99,7 @@ export async function signUp(prevState: any, formData: FormData) {
   const userName = email
     .split('@')[0]
     .replace(/[._-]/g, ' ')
-    .replace(/\b\w/g, (l) => l?.toUpperCase());
+    .replace(/\b\w/g, (l) => l.toUpperCase());
 
   const { error: signInError, data: signInData } =
     await supabase.auth.signInWithPassword({
