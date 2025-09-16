@@ -5,10 +5,13 @@ import type { NextRequest } from 'next/server';
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get('code');
+  console.log('code', code)
   const next = searchParams.get('returnUrl') ?? '/dashboard';
-
+  console.log('next', next)
   // Use configured URL instead of parsed origin to avoid 0.0.0.0 issues in self-hosted environments
-  const baseUrl = process.env.NEXT_PUBLIC_URL || 'http://localhost:3000';
+  // Default to production URL if not set
+  const baseUrl = process.env.NEXT_PUBLIC_URL || 'https://www.anisora.ai';
+  console.log('baseUrl', baseUrl)
   const error = searchParams.get('error');
   const errorDescription = searchParams.get('error_description');
 
