@@ -62,7 +62,7 @@ export const siteConfig = {
   description:
     'AniSora AI is a powerful open-source AI model for generating anime-style videos.',
   cta: 'Start Free',
-  url: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+  url: process.env.NEXT_PUBLIC_APP_URL || 'https://www.anisora.ai',
   keywords: [
     'AI Agent',
     'anime videos',
