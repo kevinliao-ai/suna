@@ -24,10 +24,10 @@ export function FooterSection({
   }, []);
 
   const logoSrc = !mounted
-    ? '/anisora-logo.png'
+    ? 'https://cdn.anisora.ai/anisora-logo.png'
     : resolvedTheme === 'dark'
-      ? '/anisora-logo.png'
-      : '/anisora-logo.png';
+      ? 'https://cdn.anisora.ai/anisora-logo.png'
+      : 'https://cdn.anisora.ai/anisora-logo.png';
 
   return (
     <footer id="footer" className="w-full pb-0">

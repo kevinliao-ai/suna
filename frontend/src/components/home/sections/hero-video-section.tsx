@@ -1,5 +1,5 @@
 import { HeroVideoDialog } from '@/components/home/ui/hero-video-dialog';
-const AniSoraHeroVideo = `/AniSoraHeroVideo.mp4`;
+const AniSoraHeroVideo = `https://cdn.anisora.ai/AniSoraHeroVideo.mp4`;
 
 export function HeroVideoSection() {
   return (
@@ -9,14 +9,14 @@ export function HeroVideoSection() {
           className="block dark:hidden"
           animationStyle="from-center"
           videoSrc={AniSoraHeroVideo}
-          thumbnailSrc="/examples/000000(225).gif"
+          thumbnailSrc="https://cdn.anisora.ai/examples/000000(225).gif"
           thumbnailAlt="Video Demos"
         />
         <HeroVideoDialog
           className="hidden dark:block"
           animationStyle="from-center"
           videoSrc={AniSoraHeroVideo}
-          thumbnailSrc="/examples/000000(225).gif"
+          thumbnailSrc="https://cdn.anisora.ai/examples/000000(225).gif"
           thumbnailAlt="Video Demos"
         />
       </div>

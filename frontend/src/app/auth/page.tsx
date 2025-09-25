@@ -273,7 +273,7 @@ function LoginContent() {
       <div className="absolute top-6 left-6 z-10">
         <Link href="/" className="flex items-center">
           <Image
-            src="/anisora-logo.png"
+            src="https://cdn.anisora.ai/anisora-logo.png"
             alt="AniSora Logo"
             width={120}
             height={24}

@@ -104,10 +104,10 @@ export function Navbar() {
   const handleOverlayClick = () => setIsDrawerOpen(false);
 
   const logoSrc = !mounted
-    ? '/anisora-logo.png'
+    ? 'https://cdn.anisora.ai/anisora-logo.png'
     : resolvedTheme === 'dark'
-      ? '/anisora-logo.png'
-      : '/anisora-logo.png';
+      ? 'https://cdn.anisora.ai/anisora-logo.png'
+      : 'https://cdn.anisora.ai/anisora-logo.png';
 
   return (
     <header

@@ -2,7 +2,10 @@ import type { NextConfig } from 'next';
 
 const nextConfig = (): NextConfig => ({
   output: (process.env.NEXT_OUTPUT as 'standalone') || undefined,
-  
+  images: {
+    domains: ['cdn.anisora.ai'], // 添加您的 CDN 域名
+    unoptimized: true, // 静态导出时需要设置为 true
+  },
   async rewrites() {
     return [
       {

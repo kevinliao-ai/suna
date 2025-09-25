@@ -15,7 +15,7 @@ export const changeLogData: ChangelogData[] = [
       'Ultra-Low-Resolution Video Super-Resolution',
       'Generates 5-second 360p video clips in under 8 seconds',
     ],
-    image: '/anisora-logo.png',
+    image: 'https://cdn.anisora.ai/anisora-logo.png',
   },
   {
     version: 'AniMe Research',
