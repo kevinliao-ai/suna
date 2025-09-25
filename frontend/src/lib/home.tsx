@@ -1253,7 +1253,7 @@ export const siteConfig = {
       text: 'Get Started for free',
       href: '/auth',
     },
-    subtext: 'Create, enhance, and animate your AI-powered videos',
+    subtext: 'Anime video creation made simple',
   },
   footerLinks: [
     {

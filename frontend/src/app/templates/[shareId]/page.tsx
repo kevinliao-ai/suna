@@ -408,7 +408,7 @@ export default function TemplateSharePage() {
               <div className="flex items-center">
                 <Link href="/" className="flex items-center">
                   <img 
-                    src={resolvedTheme === 'dark' ? '/anisora-logo.png' : '/anisora-logo.png'} 
+                    src={resolvedTheme === 'dark' ? 'https://cdn.anisora.ai/anisora-logo.png' : 'https://cdn.anisora.ai/anisora-logo.png'} 
                     alt="AniSora" 
                     className="h-6 opacity-70"
                   />
