@@ -83,6 +83,7 @@ export const siteConfig = {
       { id: 2, name: 'Use Cases', href: '#showcase' },
       { id: 3, name: 'Open Source', href: '#open-source' },
       { id: 4, name: 'FAQ', href: '#faq' },
+      { id: 99, name: 'Index‑TTS', href: '/index-tts' },
       // { id: 5, name: 'Pricing', href: '#pricing' },
     ],
   },

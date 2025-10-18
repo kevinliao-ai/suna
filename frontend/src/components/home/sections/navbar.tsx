@@ -61,9 +61,13 @@ export function Navbar() {
   const { theme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const { user } = useAuth();
-  const { formattedStars, loading: starsLoading } = useGitHubStars('bilibili', 'Index-anisora');
   const router = useRouter();
   const pathname = usePathname();
+  // show Index‑TTS repo when on /index-tts page, otherwise show AniSora repo
+  const isIndexTTS = pathname === '/index-tts';
+  const ghOwner = isIndexTTS ? 'index-tts' : 'bilibili';
+  const ghRepo = isIndexTTS ? 'index-tts' : 'Index-anisora';
+  const { formattedStars, loading: starsLoading } = useGitHubStars(ghOwner, ghRepo);
 
   useEffect(() => {
     setMounted(true);
@@ -165,12 +169,23 @@ export function Navbar() {
                     </span>
                   </Link>
                   {user ? (
-                    <Link
-                      className="bg-secondary h-8 hidden md:flex items-center justify-center text-sm font-normal tracking-wide rounded-full text-primary-foreground dark:text-secondary-foreground w-fit px-4 shadow-[inset_0_1px_2px_rgba(255,255,255,0.25),0_3px_3px_-1.5px_rgba(16,24,40,0.06),0_1px_1px_rgba(16,24,40,0.08)] border border-white/[0.12]"
-                      href="/dashboard"
+                    <a
+                      className="bg-secondary h-8 hidden md:flex items-center justify-center text-sm font-normal tracking-wide rounded-full text-primary-foreground dark:text-secondary-foreground w-fit px-4 shadow-[inset_0_1px_2px_rgba(255,255,255,0.25),0_3px_3px_-1.5px_rgba(16,24,40,0.06),0_1px_1px_rgba(16,24,40,0.08)] border border-white/[0.12] cursor-pointer"
+                      onClick={() => {
+                        try {
+                          // if current page is index-tts, open dashboard with tool param
+                          if (pathname === '/index-tts') {
+                            router.push('/dashboard?tool=index-tts');
+                          } else {
+                            router.push('/dashboard');
+                          }
+                        } catch (e) {
+                          router.push('/dashboard');
+                        }
+                      }}
                     >
                       Dashboard
-                    </Link>
+                    </a>
                   ) : (
                     <Link
                       className="bg-secondary h-8 hidden md:flex items-center justify-center text-sm font-normal tracking-wide rounded-full text-primary-foreground dark:text-secondary-foreground w-fit px-4 shadow-[inset_0_1px_2px_rgba(255,255,255,0.25),0_3px_3px_-1.5px_rgba(16,24,40,0.06),0_1px_1px_rgba(16,24,40,0.08)] border border-white/[0.12]"
@@ -306,12 +321,23 @@ export function Navbar() {
                 {/* Action buttons */}
                 <div className="flex flex-col gap-2">
                   {user ? (
-                    <Link
-                      href="/dashboard"
+                    <button
+                      onClick={() => {
+                        setIsDrawerOpen(false);
+                        try {
+                          if (pathname === '/index-tts') {
+                            router.push('/dashboard?tool=index-tts');
+                          } else {
+                            router.push('/dashboard');
+                          }
+                        } catch (e) {
+                          router.push('/dashboard');
+                        }
+                      }}
                       className="bg-secondary h-8 flex items-center justify-center text-sm font-normal tracking-wide rounded-full text-primary-foreground dark:text-secondary-foreground w-full px-4 shadow-[inset_0_1px_2px_rgba(255,255,255,0.25),0_3px_3px_-1.5px_rgba(16,24,40,0.06),0_1px_1px_rgba(16,24,40,0.08)] border border-white/[0.12] hover:bg-secondary/80 transition-all ease-out active:scale-95"
                     >
                       Dashboard
-                    </Link>
+                    </button>
                   ) : (
                     <Link
                       href="/auth"

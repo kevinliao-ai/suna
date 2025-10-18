@@ -31,6 +31,7 @@ import { ReleaseBadge } from '../auth/release-badge';
 import { useDashboardTour } from '@/hooks/use-dashboard-tour';
 import { TourConfirmationDialog } from '@/components/tour/TourConfirmationDialog';
 import { Calendar, MessageSquare, Plus, Sparkles, Zap } from 'lucide-react';
+import { IndexTtsDrawer } from '@/components/dashboard/index-tts-drawer';
 
 const PENDING_PROMPT_KEY = 'pendingAgentPrompt';
 
@@ -90,6 +91,7 @@ export function DashboardContent() {
   const chatInputRef = React.useRef<ChatInputHandles>(null);
   const initiateAgentMutation = useInitiateAgentWithInvalidation();
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [indexTtsOpen, setIndexTtsOpen] = useState(false);
 
   // Tour integration
   const {
@@ -111,7 +113,7 @@ export function DashboardContent() {
     sort_order: 'asc',
   });
 
-  const agents = agentsResponse?.agents || [];
+  const agents = React.useMemo(() => agentsResponse?.agents || [], [agentsResponse?.agents]);
   const selectedAgent = selectedAgentId
     ? agents.find((agent) => agent.agent_id === selectedAgentId)
     : null;
@@ -167,7 +169,7 @@ export function DashboardContent() {
     [stopTour, setStepIndex],
   );
 
-  const handleSubmit = async (
+  const handleSubmit = React.useCallback(async (
     message: string,
     options?: {
       model_name?: string;
@@ -244,7 +246,7 @@ export function DashboardContent() {
       // Only reset loading state if there was an error or no thread_id was returned
       setIsSubmitting(false);
     }
-  };
+  }, [chatInputRef, initiateAgentMutation, selectedAgentId, isSubmitting, isRedirecting]);
 
   React.useEffect(() => {
     const timer = setTimeout(() => {
@@ -268,7 +270,7 @@ export function DashboardContent() {
 
       return () => clearTimeout(timer);
     }
-  }, [autoSubmit, inputValue, isSubmitting, isRedirecting]);
+  }, [autoSubmit, inputValue, isSubmitting, isRedirecting, handleSubmit]);
 
   return (
     <>
@@ -388,6 +390,14 @@ export function DashboardContent() {
                       router.push(`/agents/config/${agentId}`)
                     }
                   />
+                  <div className="mt-3 flex justify-center">
+                    <button
+                      onClick={() => setIndexTtsOpen(true)}
+                      className="text-sm text-primary underline-offset-2 hover:underline"
+                    >
+                      打开 Index‑TTS 演示
+                    </button>
+                  </div>
                 </div>
                 <div className="w-full" data-tour="examples">
                   <Examples
@@ -426,6 +436,9 @@ export function DashboardContent() {
           projectId={undefined}
         />
       )}
+      <IndexTtsDrawer open={indexTtsOpen} onOpenChange={setIndexTtsOpen} />
     </>
   );
 }
+
+// Render Drawer at end of file
