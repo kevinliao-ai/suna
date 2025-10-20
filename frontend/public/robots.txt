@@ -1,5 +1,5 @@
 # robots.txt for AniSora AI
-# Last updated: 2025-06-30
+# Last updated: 2025-10-20
 
 # Global rules for all crawlers
 User-agent: *
@@ -10,6 +10,12 @@ Disallow: /admin/
 Disallow: /api/
 Disallow: /_next/data/
 Disallow: /*/private/
+Disallow: /monitoring/
+
+# Allow specific API routes for SEO
+Allow: /api/og/
+Allow: /api/share-page/og-image
+Allow: /api/watermark/parse
 
 # Allow all static assets
 Allow: /*.css$
@@ -21,9 +27,19 @@ Allow: /*.jpeg$
 Allow: /*.webp$
 Allow: /*.gif$
 
-# Allow Google AdSense verification
+# Specific rules for Googlebot
 User-agent: Googlebot
+Allow: /
+Crawl-delay: 0
 Allow: /*?*google_adsense*
 
-# Block other query parameters
+# Specific rules for Bingbot
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 0
+
+# Block other query parameters (except SEO-important ones)
 Disallow: /*?*
+
+# Sitemap locations
+Sitemap: https://anisora.ai/sitemap.xml
