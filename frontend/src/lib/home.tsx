@@ -84,6 +84,7 @@ export const siteConfig = {
       { id: 3, name: 'Open Source', href: '#open-source' },
       { id: 4, name: 'FAQ', href: '#faq' },
       { id: 99, name: 'Index‑TTS', href: '/index-tts' },
+      { id: 100, name: 'Sora Watermark', href: '/sora-watermark-remove' },
       // { id: 5, name: 'Pricing', href: '#pricing' },
     ],
   },
@@ -1275,6 +1276,8 @@ export const siteConfig = {
         { id: 1, title: 'Home', url: '#hero' },
         { id: 2, title: 'Use Cases', url: '#showcase' },
         { id: 3, title: 'FAQ', url: '#faq' },
+        { id: 4, title: 'Index‑TTS', url: '/index-tts' },
+        { id: 5, title: 'Sora Watermark Remover', url: '/sora-watermark-remove' },
       ],
     },
     {
