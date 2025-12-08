@@ -47,7 +47,7 @@ export default function DashboardPage() {
 
   const drawerVariants = {
     hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { type: 'spring', damping: 15, stiffness: 200 } },
+    visible: { opacity: 1, y: 0, transition: { type: 'spring' as const, damping: 15, stiffness: 200 } },
     exit: { opacity: 0, y: 10, transition: { duration: 0.12 } },
   };
 
