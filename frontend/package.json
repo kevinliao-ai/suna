@@ -10,10 +10,6 @@
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
-  "overrides": {
-    "react": "^19",
-    "react-dom": "^19"
-  },
   "dependencies": {
     "@calcom/embed-react": "^1.5.2",
     "@codemirror/view": "^6.38.1",
