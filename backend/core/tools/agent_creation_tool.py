@@ -87,7 +87,7 @@ class AgentCreationTool(Tool):
                     },
                     "agentpress_tools": {
                         "type": "object",
-                        "description": "Configuration for AgentPress tools. Each key is a tool name, value is boolean for enabled/disabled. Available tools: sb_shell_tool, sb_files_tool, web_search_tool, browser_tool, sb_vision_tool, data_providers_tool, etc.",
+                        "description": "Configuration for AgentPress tools. Each key is a tool name, value is boolean for enabled/disabled. Available tools: sb_shell_tool, sb_files_tool, web_search_tool, browser_tool, sb_vision_tool, etc.",
                         "additionalProperties": {
                             "type": "boolean"
                         }
@@ -138,7 +138,7 @@ class AgentCreationTool(Tool):
             client = await self.db.client
             
             
-            from core.core_utils import check_agent_count_limit
+            from core.utils.limits_checker import check_agent_count_limit
             limit_check = await check_agent_count_limit(client, account_id)
             
             if not limit_check['can_create']:
@@ -149,7 +149,7 @@ class AgentCreationTool(Tool):
                 )
 
             if agentpress_tools is None:
-                from core.config_helper import _get_default_agentpress_tools
+                from core.config.config_helper import _get_default_agentpress_tools
                 agentpress_tools = _get_default_agentpress_tools()
             else:
                 agent_builder_tools = {

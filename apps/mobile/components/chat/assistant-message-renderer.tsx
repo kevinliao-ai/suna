@@ -11,21 +11,21 @@ import { View, Pressable, Text as RNText } from 'react-native';
 import { Text } from '@/components/ui/text';
 import { Icon } from '@/components/ui/icon';
 import { Clock } from 'lucide-react-native';
-import type { UnifiedMessage, ParsedMetadata, ParsedContent } from '@/api/types';
-import { safeJsonParse } from '@/lib/utils/message-grouping';
-import { getToolIcon, getUserFriendlyToolName } from '@/lib/utils/tool-display';
-import { isAskOrCompleteTool, extractTextFromArguments } from '@/lib/utils/streaming-utils';
+import type { UnifiedMessage, ParsedMetadata, ParsedContent } from '@agentpress/shared';
+import { safeJsonParse, getUserFriendlyToolName, isAskOrCompleteTool, extractTextFromArguments } from '@agentpress/shared';
+import { getToolIcon } from '@/lib/icons/tool-icons';
 import { SelectableMarkdownText } from '@/components/ui/selectable-markdown';
 import { autoLinkUrls } from '@/lib/utils/url-autolink';
 import { Linking } from 'react-native';
 import { FileAttachmentsGrid } from './FileAttachmentRenderer';
 import { TaskCompletedFeedback } from './tool-views/complete-tool/TaskCompletedFeedback';
 import { PromptExamples } from '@/components/shared';
-import { parseXmlToolCalls, preprocessTextOnlyTools } from '@/lib/utils/tool-parser';
+import { parseXmlToolCalls, preprocessTextOnlyTools } from '@agentpress/shared/tools';
+import { normalizeArrayValue, normalizeAttachments } from '@agentpress/shared/utils';
 
 export interface AssistantMessageRendererProps {
   message: UnifiedMessage;
-  onToolClick: (assistantMessageId: string | null, toolName: string) => void;
+  onToolClick: (assistantMessageId: string | null, toolName: string, toolCallId?: string) => void;
   onFileClick?: (filePath: string) => void;
   sandboxId?: string;
   /** Sandbox URL for direct file access (used for presentations and HTML previews) */
@@ -36,43 +36,7 @@ export interface AssistantMessageRendererProps {
   isDark?: boolean; // Pass color scheme from parent to avoid hooks violation
 }
 
-/**
- * Normalizes an array value that might be a string, array, or other type
- */
-function normalizeArrayValue(value: unknown): string[] {
-  if (Array.isArray(value)) {
-    return value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0);
-  }
-
-  if (typeof value === 'string') {
-    try {
-      const parsed = JSON.parse(value);
-      if (Array.isArray(parsed)) {
-        return parsed.filter((item): item is string => typeof item === 'string' && item.trim().length > 0);
-      }
-    } catch {
-      // If parsing fails, treat as comma-separated string
-      return value.split(',').map(a => a.trim()).filter(a => a.length > 0);
-    }
-  }
-
-  return [];
-}
-
-/**
- * Normalizes attachments value (can be string, array, or empty)
- */
-function normalizeAttachments(attachments: unknown): string[] {
-  if (Array.isArray(attachments)) {
-    return attachments;
-  }
-
-  if (typeof attachments === 'string') {
-    return attachments.split(',').map(a => a.trim()).filter(a => a.length > 0);
-  }
-
-  return [];
-}
+// normalizeArrayValue and normalizeAttachments are now imported from @agentpress/shared/utils
 
 /**
  * Extracts a display parameter from tool call arguments
@@ -221,7 +185,7 @@ function renderCompleteToolCall(
  * Renders a regular tool call as a clickable button
  */
 function renderRegularToolCall(
-  toolCall: { function_name: string; arguments?: Record<string, any> | string },
+  toolCall: { function_name: string; arguments?: Record<string, any> | string; tool_call_id?: string },
   index: number,
   toolName: string,
   props: AssistantMessageRendererProps
@@ -233,10 +197,10 @@ function renderRegularToolCall(
   return (
     <View key={`tool-${index}`} className="my-1">
       <Pressable
-        onPress={() => onToolClick(message.message_id, toolName)}
-        className="inline-flex items-center gap-1.5 py-1 px-1 pr-1.5 text-xs text-muted-foreground bg-muted rounded-lg border border-neutral-200 dark:border-neutral-700/50 active:bg-muted/80"
+        onPress={() => onToolClick(message.message_id, toolName, toolCall.tool_call_id)}
+        className="flex-row items-center gap-1.5 py-1 px-1 pr-1.5 bg-muted rounded-lg border border-neutral-200 dark:border-neutral-700/50 active:bg-muted/80"
       >
-        <View className='border-2 bg-gradient-to-br from-neutral-200 to-neutral-300 dark:from-neutral-700 dark:to-neutral-800 flex items-center justify-center p-0.5 rounded-sm border-neutral-400/20 dark:border-neutral-600'>
+        <View className="flex items-center justify-center">
           <Icon as={IconComponent} size={14} className="text-muted-foreground" />
         </View>
         <Text className="font-mono text-xs text-foreground">{getUserFriendlyToolName(toolName)}</Text>

@@ -75,6 +75,34 @@ def print_error(message):
     print(f"{Colors.RED}❌  {message}{Colors.ENDC}")
 
 
+
+def detect_docker_compose_command():
+    """Detects whether 'docker compose' or 'docker-compose' is available."""
+    candidates = [
+        ["docker", "compose"],
+        ["docker-compose"],
+    ]
+    for cmd in candidates:
+        try:
+            subprocess.run(
+                cmd + ["version"],
+                capture_output=True,
+                text=True,
+                check=True,
+                shell=IS_WINDOWS,
+            )
+            return cmd
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            continue
+
+    print_error("Docker Compose command not found. Install Docker Desktop or docker-compose.")
+    return None
+
+
+def format_compose_cmd(compose_cmd):
+    """Formats the compose command list for display."""
+    return " ".join(compose_cmd) if compose_cmd else "docker compose"
+
 # --- Environment File Parsing ---
 def parse_env_file(filepath):
     """Parses a .env file and returns a dictionary of key-value pairs."""
@@ -183,6 +211,9 @@ def load_existing_env_vars():
             "LANGFUSE_PUBLIC_KEY": backend_env.get("LANGFUSE_PUBLIC_KEY", ""),
             "LANGFUSE_SECRET_KEY": backend_env.get("LANGFUSE_SECRET_KEY", ""),
             "LANGFUSE_HOST": backend_env.get("LANGFUSE_HOST", ""),
+        },
+        "braintrust": {
+            "BRAINTRUST_API_KEY": backend_env.get("BRAINTRUST_API_KEY", ""),
         },
         "monitoring": {
             "SENTRY_DSN": backend_env.get("SENTRY_DSN", ""),
@@ -309,6 +340,7 @@ class SetupWizard:
             "vapi": existing_env_vars.get("vapi", {}),
             "stripe": existing_env_vars.get("stripe", {}),
             "langfuse": existing_env_vars.get("langfuse", {}),
+            "braintrust": existing_env_vars.get("braintrust", {}),
             "monitoring": existing_env_vars.get("monitoring", {}),
             "storage": existing_env_vars.get("storage", {}),
             "email": existing_env_vars.get("email", {}),
@@ -323,6 +355,15 @@ class SetupWizard:
                 self.env_vars[key] = value
 
         self.total_steps = 17
+        self.compose_cmd = None
+
+    def get_compose_command(self):
+        """Returns the docker compose command list, caching the detection result."""
+        if self.compose_cmd:
+            return self.compose_cmd
+        self.compose_cmd = detect_docker_compose_command()
+        return self.compose_cmd
+
 
     def show_current_config(self):
         """Shows the current configuration status."""
@@ -624,6 +665,9 @@ class SetupWizard:
         """Checks if all required tools for the chosen setup method are installed."""
         print_step(2, self.total_steps, "Checking Requirements")
 
+        compose_cmd = self.get_compose_command()
+        compose_cmd_str = format_compose_cmd(compose_cmd) if compose_cmd else "docker compose"
+
         if self.env_vars["setup_method"] == "docker":
             requirements = {
                 "git": "https://git-scm.com/downloads",
@@ -634,7 +678,7 @@ class SetupWizard:
                 "git": "https://git-scm.com/downloads",
                 "uv": "https://github.com/astral-sh/uv#installation",
                 "node": "https://nodejs.org/en/download/",
-                "npm": "https://docs.npmjs.com/downloading-and-installing-node-js-and-npm",
+                "pnpm": "https://pnpm.io/installation",
                 "docker": "https://docs.docker.com/get-docker/",  # For Redis
             }
 
@@ -1046,9 +1090,9 @@ class SetupWizard:
         )
         print_info("Create a snapshot with these exact settings:")
         print_info(
-            f"   - Name:\t\t{Colors.GREEN}kortix/suna:0.1.3.25{Colors.ENDC}")
+            f"   - Name:\t\t{Colors.GREEN}kortix/suna:0.1.3.28{Colors.ENDC}")
         print_info(
-            f"   - Snapshot name:\t{Colors.GREEN}kortix/suna:0.1.3.25{Colors.ENDC}")
+            f"   - Snapshot name:\t{Colors.GREEN}kortix/suna:0.1.3.28{Colors.ENDC}")
         print_info(
             f"   - Entrypoint:\t{Colors.GREEN}/usr/bin/supervisord -n -c /etc/supervisor/conf.d/supervisord.conf{Colors.ENDC}"
         )
@@ -1525,6 +1569,7 @@ class SetupWizard:
             **self.env_vars.get("vapi", {}),
             **self.env_vars.get("stripe", {}),
             **self.env_vars.get("langfuse", {}),
+            **self.env_vars.get("braintrust", {}),
             **self.env_vars.get("monitoring", {}),
             **self.env_vars.get("storage", {}),
             **self.env_vars.get("email", {}),
@@ -1624,7 +1669,7 @@ class SetupWizard:
             )
         except (subprocess.SubprocessError, FileNotFoundError):
             print_error(
-                "Node.js/npm not found or Supabase CLI not available. Make sure Node.js is installed."
+                "Node.js/pnpm not found or Supabase CLI not available. Make sure Node.js and pnpm are installed."
             )
             print_warning("Skipping migration application. Apply manually later.")
             return
@@ -1681,7 +1726,7 @@ class SetupWizard:
             )
         except (subprocess.SubprocessError, FileNotFoundError):
             print_error(
-                "Node.js/npm not found or Supabase CLI not available. Make sure Node.js is installed."
+                "Node.js/pnpm not found or Supabase CLI not available. Make sure Node.js and pnpm are installed."
             )
             print_warning("Skipping migration application. Apply manually later.")
             return
@@ -1741,9 +1786,9 @@ class SetupWizard:
             return
 
         try:
-            print_info("Installing frontend dependencies with npm...")
+            print_info("Installing frontend dependencies with pnpm...")
             subprocess.run(
-                ["npm", "install"], cwd="frontend", check=True, shell=IS_WINDOWS
+                ["pnpm", "install"], cwd="frontend", check=True, shell=IS_WINDOWS
             )
             print_success("Frontend dependencies installed.")
 
@@ -1779,9 +1824,14 @@ class SetupWizard:
         print_step(17, self.total_steps, "Starting Kortix Super Worker")
         if self.env_vars["setup_method"] == "docker":
             print_info("Starting Kortix Super Worker with Docker Compose...")
+            compose_cmd = self.get_compose_command()
+            if not compose_cmd:
+                print_warning("Docker Compose command not detected. Install Docker Desktop or docker-compose and rerun.")
+                return
+            compose_cmd_str = format_compose_cmd(compose_cmd)
             try:
                 subprocess.run(
-                    ["docker", "compose", "up", "-d", "--build"],
+                    compose_cmd + ["up", "-d", "--build"],
                     check=True,
                     shell=IS_WINDOWS,
                 )
@@ -1789,7 +1839,7 @@ class SetupWizard:
                 time.sleep(15)
                 # A simple check to see if containers are running
                 result = subprocess.run(
-                    ["docker", "compose", "ps"],
+                    compose_cmd + ["ps"],
                     capture_output=True,
                     text=True,
                     shell=IS_WINDOWS,
@@ -1798,7 +1848,7 @@ class SetupWizard:
                     print_success("Kortix Super Worker services are starting up!")
                 else:
                     print_warning(
-                        "Some services might not be running. Check 'docker compose ps' for details."
+                        "Some services might not be running. Check '{compose_cmd_str} ps' for details."
                     )
             except subprocess.SubprocessError as e:
                 print_error(f"Failed to start Kortix Super Worker with Docker Compose: {e}")
@@ -1808,13 +1858,13 @@ class SetupWizard:
                 print_info(
                     "WORKAROUND: Try starting without rebuilding:"
                 )
-                print_info(f"  {Colors.CYAN}docker compose up -d{Colors.ENDC} (without --build)")
+                print_info(f"  {Colors.CYAN}{compose_cmd_str} up -d{Colors.ENDC} (without --build)")
                 print_info(
                     "\nIf that doesn't work, you may need to:"
                 )
                 print_info(f"  1. {Colors.CYAN}cd frontend{Colors.ENDC}")
-                print_info(f"  2. {Colors.CYAN}npm run build{Colors.ENDC}")
-                print_info(f"  3. {Colors.CYAN}cd .. && docker compose up -d{Colors.ENDC}")
+                print_info(f"  2. {Colors.CYAN}pnpm run build{Colors.ENDC}")
+                print_info(f"  3. {Colors.CYAN}cd .. && {compose_cmd_str} up -d{Colors.ENDC}")
                 # Don't exit, let the final instructions show
                 return
         else:
@@ -1832,6 +1882,10 @@ class SetupWizard:
         print_info(
             f"Delete the {Colors.RED}.setup_progress{Colors.ENDC} file to reset the setup."
         )
+
+        # Get compose command for display
+        compose_cmd = self.get_compose_command()
+        compose_cmd_str = format_compose_cmd(compose_cmd)
 
         if self.env_vars["setup_method"] == "docker":
             print_info("Your Kortix Super Worker instance is ready to use!")
@@ -1859,13 +1913,13 @@ class SetupWizard:
             
             print("\nUseful Docker commands:")
             print(
-                f"  {Colors.CYAN}docker compose ps{Colors.ENDC}         - Check service status"
+                f"  {Colors.CYAN}{compose_cmd_str} ps{Colors.ENDC}         - Check service status"
             )
             print(
-                f"  {Colors.CYAN}docker compose logs -f{Colors.ENDC}    - Follow logs"
+                f"  {Colors.CYAN}{compose_cmd_str} logs -f{Colors.ENDC}    - Follow logs"
             )
             print(
-                f"  {Colors.CYAN}docker compose down{Colors.ENDC}       - Stop Kortix Super Worker services"
+                f"  {Colors.CYAN}{compose_cmd_str} down{Colors.ENDC}       - Stop Kortix Super Worker services"
             )
             print(
                 f"  {Colors.CYAN}python start.py{Colors.ENDC}           - To start or stop Kortix Super Worker services"
@@ -1893,12 +1947,12 @@ class SetupWizard:
             print(
                 f"\n{Colors.BOLD}{step_num}. Start Infrastructure (in project root):{Colors.ENDC}"
             )
-            print(f"{Colors.CYAN}   docker compose up redis -d{Colors.ENDC}")
+            print(f"{Colors.CYAN}   {compose_cmd_str} up redis -d{Colors.ENDC}")
             step_num += 1
 
             print(
                 f"\n{Colors.BOLD}{step_num}. Start Frontend (in a new terminal):{Colors.ENDC}")
-            print(f"{Colors.CYAN}   cd frontend && npm run dev{Colors.ENDC}")
+            print(f"{Colors.CYAN}   cd frontend && pnpm run dev{Colors.ENDC}")
             step_num += 1
 
             print(

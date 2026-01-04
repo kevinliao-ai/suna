@@ -2,10 +2,29 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import EventSource from 'react-native-sse';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { UnifiedMessage, ParsedContent, ParsedMetadata } from '@/api/types';
+import type { UnifiedMessage, ParsedContent, ParsedMetadata } from '@agentpress/shared';
 import { API_URL, getAuthToken } from '@/api/config';
-import { safeJsonParse } from '@/lib/utils/message-grouping';
+import { safeJsonParse } from '@agentpress/shared';
 import { chatKeys } from '@/lib/chat';
+import {
+  createAccumulatorState,
+  clearAccumulator,
+  type ToolCallAccumulatorState,
+} from '@agentpress/shared/streaming';
+import {
+  orderContentBySequence,
+  type TextChunk,
+} from '@agentpress/shared/streaming';
+import {
+  mapAgentStatus,
+  preprocessStreamData,
+  isCompletionMessage,
+  parseStreamingMessage,
+  handleAssistantChunk,
+  handleToolCallChunk,
+  handleToolResult,
+  createMessageWithToolCalls,
+} from '@agentpress/shared/streaming';
 
 interface UseAgentStreamResult {
   status: string;
@@ -36,9 +55,7 @@ export function useAgentStream(
   const queryClient = useQueryClient();
 
   const [status, setStatus] = useState<string>('idle');
-  const [textContent, setTextContent] = useState<
-    { content: string; sequence?: number }[]
-  >([]);
+  const [textContent, setTextContent] = useState<TextChunk[]>([]);
   
   // Throttled state updates for smoother streaming
   const throttleRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -46,6 +63,12 @@ export function useAgentStream(
   
   // Throttled content update function for smoother streaming
   const flushPendingContent = useCallback(() => {
+    // Clear and release any pending throttle to avoid starving updates
+    if (throttleRef.current) {
+      clearTimeout(throttleRef.current);
+      throttleRef.current = null;
+    }
+
     if (pendingContentRef.current.length > 0) {
       // Sort chunks by sequence before adding to state
       const sortedContent = pendingContentRef.current.slice().sort((a, b) => {
@@ -71,13 +94,15 @@ export function useAgentStream(
   const addContentThrottled = useCallback((content: { content: string; sequence?: number }) => {
     pendingContentRef.current.push(content);
     
-    // Clear existing throttle
+    // True throttle: only schedule a flush if one isn't already pending
     if (throttleRef.current) {
-      clearTimeout(throttleRef.current);
+      return;
     }
     
-    // Set new throttle for smooth updates (16ms ≈ 60fps)
-    throttleRef.current = setTimeout(flushPendingContent, 16);
+    // Set throttle for smooth updates (16ms ≈ 60fps)
+    throttleRef.current = setTimeout(() => {
+      flushPendingContent();
+    }, 16);
   }, [flushPendingContent]);
   
   const [toolCall, setToolCall] = useState<UnifiedMessage | null>(null); // Changed from ParsedContent
@@ -93,39 +118,11 @@ export function useAgentStream(
   const retryCountRef = useRef<number>(0);
   const startStreamingRef = useRef<((runId: string) => void) | null>(null);
   
-  // DELTA STREAMING: Track accumulated tool call arguments
-  const accumulatedToolCallsRef = useRef<Map<string, string>>(new Map());
+  // DELTA STREAMING: Track accumulated tool call arguments with sequence numbers
+  const accumulatorRef = useRef<ToolCallAccumulatorState>(createAccumulatorState());
 
   const orderedTextContent = useMemo(() => {
-    if (textContent.length === 0) return '';
-    
-    // Only sort if sequences are out of order (optimization)
-    let needsSorting = false;
-    for (let i = 1; i < textContent.length; i++) {
-      const prevSeq = textContent[i - 1].sequence ?? 0;
-      const currSeq = textContent[i].sequence ?? 0;
-      if (currSeq < prevSeq) {
-        needsSorting = true;
-        break;
-      }
-    }
-    
-    // If already sorted, just concatenate
-    if (!needsSorting) {
-      let result = '';
-      for (let i = 0; i < textContent.length; i++) {
-        result += textContent[i].content;
-      }
-      return result;
-    }
-    
-    // Only sort if necessary
-    const sorted = textContent.slice().sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0));
-    let result = '';
-    for (let i = 0; i < sorted.length; i++) {
-      result += sorted[i].content;
-    }
-    return result;
+    return orderContentBySequence(textContent);
   }, [textContent]);
 
   // Refs to capture current state for persistence
@@ -165,6 +162,8 @@ export function useAgentStream(
       setToolCall(null);
       setAgentRunId(null);
       currentRunIdRef.current = null;
+      // Clear accumulated tool call deltas and previous state
+      clearAccumulator(accumulatorRef.current);
       
       if (retryTimeoutRef.current) {
         clearTimeout(retryTimeoutRef.current);
@@ -179,19 +178,7 @@ export function useAgentStream(
     setMessagesRef.current = setMessages;
   }, [setMessages]);
 
-  // Helper function to map backend status to frontend status string
-  const mapAgentStatus = (backendStatus: string): string => {
-    switch (backendStatus) {
-      case 'completed':
-        return 'completed';
-      case 'stopped':
-        return 'stopped';
-      case 'failed':
-        return 'failed';
-      default:
-        return 'error';
-    }
-  };
+  // Use shared mapAgentStatus function (imported above)
 
   // Internal function to update status and notify consumer
   const updateStatus = useCallback(
@@ -260,6 +247,11 @@ export function useAgentStream(
         queryKey: ['active-agent-runs'],
       });
 
+      // Refetch thread messages to ensure all messages are synced with the database
+      queryClient.invalidateQueries({
+        queryKey: chatKeys.messages(currentThreadId),
+      });
+
       if (agentId) {
         queryClient.invalidateQueries({ queryKey: ['agents'] });
         queryClient.invalidateQueries({ queryKey: ['agent', agentId] });
@@ -282,29 +274,16 @@ export function useAgentStream(
     (rawData: string) => {
       if (!isMountedRef.current) return;
 
-      let processedData = rawData;
-      if (processedData.startsWith('data: ')) {
-        processedData = processedData.substring(6).trim();
-      }
+      const processedData = preprocessStreamData(rawData);
       if (!processedData) return;
 
-      // Early exit for non-JSON completion messages
-      if (
-        processedData ===
-        '{"type": "status", "status": "completed", "message": "Worker run completed successfully"}'
-      ) {
-        finalizeStream('completed', currentRunIdRef.current);
-        return;
-      }
-      if (
-        processedData.includes('Run data not available for streaming') ||
-        processedData.includes('Stream ended with status: completed')
-      ) {
+      // Early exit for completion messages
+      if (isCompletionMessage(processedData)) {
         finalizeStream('completed', currentRunIdRef.current);
         return;
       }
 
-      // Check for error messages first
+      // Check for error messages and special message types first
       try {
         const jsonData = JSON.parse(processedData);
         if (jsonData.status === 'error') {
@@ -317,15 +296,55 @@ export function useAgentStream(
           callbacks.onError?.(errorMessage);
           return;
         }
+        // Handle ping messages (keep-alive) - only ignore if truly empty
+        if (jsonData.type === 'ping') {
+          // Only ignore ping if it has no content field or content is empty
+          if (!jsonData.content) {
+            return;
+          }
+          // If ping has content, log it and continue processing (shouldn't happen, but safer)
+          console.log('[useAgentStream] ⚠️ Ping message with content, continuing processing:', {
+            hasContent: !!jsonData.content,
+            contentLength: jsonData.content?.length,
+          });
+          // Continue to normal processing path below
+        }
+        // Handle tool_output_stream messages - only ignore if truly empty
+        if (jsonData.type === 'tool_output_stream') {
+          // Log what we're receiving for debugging
+          console.log('[useAgentStream] 📦 Received tool_output_stream message:', {
+            tool_call_id: jsonData.tool_call_id,
+            tool_name: jsonData.tool_name,
+            hasOutput: !!jsonData.output,
+            outputLength: jsonData.output?.length,
+            is_final: jsonData.is_final,
+          });
+          
+          // Only ignore tool_output_stream if it has no output field or output is empty
+          if (!jsonData.output) {
+            console.log('[useAgentStream] Ignoring empty tool_output_stream');
+            return;
+          }
+          
+          // If tool_output_stream has output but shouldn't be processed as text, log it
+          // Note: tool_output_stream is for tool output streaming, not regular text chunks
+          // But we log it to help debug if text chunks are being mislabeled
+          const outputStr = typeof jsonData.output === 'string' ? jsonData.output : String(jsonData.output);
+          console.log('[useAgentStream] ⚠️ tool_output_stream with output (not processing as text):', {
+            outputPreview: outputStr.substring(0, 100),
+            outputLength: outputStr.length,
+            outputType: typeof jsonData.output,
+          });
+          // Continue to normal processing path below - this allows the message to be processed
+          // if it's actually a mislabeled text chunk, but typically tool_output_stream
+          // should be handled separately (not implemented in mobile yet)
+        }
       } catch (jsonError) {
         // Not JSON or could not parse as JSON, continue processing
       }
 
       // Process JSON messages
-      const message = safeJsonParse(
-        processedData,
-        null,
-      ) as UnifiedMessage | null;
+      const message = parseStreamingMessage(processedData);
       if (!message) {
         console.warn(
           '[useAgentStream] Failed to parse streamed message:',
@@ -348,77 +367,90 @@ export function useAgentStream(
       switch (message.type) {
         case 'assistant':
           if (parsedMetadata.stream_status === 'tool_call_chunk') {
-            // Handle tool call chunks - extract from metadata.tool_calls
-            const toolCalls = parsedMetadata.tool_calls || [];
-            if (toolCalls.length > 0) {
-              // DELTA STREAMING: Accumulate deltas into full tool calls
-              const reconstructedToolCalls = toolCalls.map((tc: any) => {
-                if (tc.is_delta && tc.arguments_delta) {
-                  // This is a delta update - accumulate it
-                  const toolCallId = tc.tool_call_id || 'unknown';
-                  const currentArgs = accumulatedToolCallsRef.current.get(toolCallId) || '';
-                  const newArgs = currentArgs + tc.arguments_delta;
-                  accumulatedToolCallsRef.current.set(toolCallId, newArgs);
-                  
-                  // Return reconstructed tool call with full accumulated arguments
-                  return {
-                    ...tc,
-                    arguments: newArgs,
-                    is_delta: false, // Mark as assembled
-                  };
-                } else {
-                  // Full tool call (legacy mode or complete)
-                  return tc;
-                }
-              });
-              
+            // Handle tool call chunks using shared utilities
+            const reconstructedToolCalls = handleToolCallChunk(
+              message,
+              parsedMetadata,
+              accumulatorRef.current
+            );
+            
+            if (reconstructedToolCalls) {
               // Create updated message with reconstructed tool calls
-              const updatedMessage = {
-                ...message,
-                metadata: JSON.stringify({
-                  ...parsedMetadata,
-                  tool_calls: reconstructedToolCalls,
-                }),
-              };
+              const updatedMessage = createMessageWithToolCalls(
+                message,
+                parsedMetadata,
+                reconstructedToolCalls
+              );
               
-              // Set toolCall state with the reconstructed UnifiedMessage
+              // Set toolCall state with ALL reconstructed tool calls
               setToolCall(updatedMessage);
               // Call the callback with the reconstructed message
               callbacks.onToolCallChunk?.(updatedMessage);
             }
-          } else if (
-            parsedMetadata.stream_status === 'chunk' &&
-            parsedContent.content
-          ) {
-            if (retryCountRef.current > 0) {
-              console.log('[useAgentStream] Successfully connected, resetting retry counter');
-              retryCountRef.current = 0;
+          } else {
+            // Handle text chunks
+            const chunkContent = handleAssistantChunk(message, parsedContent, parsedMetadata);
+            if (chunkContent) {
+              if (retryCountRef.current > 0) {
+                console.log('[useAgentStream] Successfully connected, resetting retry counter');
+                retryCountRef.current = 0;
+              }
+              
+              // Use throttled approach for smoother streaming
+              addContentThrottled({
+                sequence: message.sequence,
+                content: chunkContent,
+              });
+              callbacks.onAssistantChunk?.({ content: chunkContent });
+            } else if (parsedMetadata.stream_status === 'complete') {
+              // Flush any pending content before completing
+              flushPendingContent();
+              
+              console.log(`[useAgentStream] 🏁 Assistant message complete - clearing tool call state`);
+              
+              setTextContent([]);
+              setToolCall(null);
+              // Clear accumulated tool call deltas and previous state when assistant message completes
+              clearAccumulator(accumulatorRef.current);
+              if (message.message_id) callbacks.onMessage(message);
+            } else if (!parsedMetadata.stream_status) {
+              // Handle non-chunked assistant messages if needed
+              callbacks.onAssistantStart?.();
+              if (message.message_id) callbacks.onMessage(message);
             }
-            // Use throttled approach for smoother streaming
-            addContentThrottled({
-              sequence: message.sequence,
-              content: parsedContent.content,
-            });
-            callbacks.onAssistantChunk?.({ content: parsedContent.content });
-          } else if (parsedMetadata.stream_status === 'complete') {
-            // Flush any pending content before completing
-            flushPendingContent();
-            
-            setTextContent([]);
-            setToolCall(null);
-            // Clear accumulated tool call deltas
-            accumulatedToolCallsRef.current.clear();
-            if (message.message_id) callbacks.onMessage(message);
-          } else if (!parsedMetadata.stream_status) {
-            // Handle non-chunked assistant messages if needed
-            callbacks.onAssistantStart?.();
-            if (message.message_id) callbacks.onMessage(message);
           }
           break;
         case 'tool':
-          setToolCall(null); // Clear any streaming tool call
-          // Clear accumulated tool call deltas when tool execution completes
-          accumulatedToolCallsRef.current.clear();
+          // Handle tool result using shared utilities
+          const reconstructedToolCallsFromResult = handleToolResult(
+            message,
+            parsedMetadata,
+            accumulatorRef.current
+          );
+          
+          if (reconstructedToolCallsFromResult) {
+            // Update streamingToolCall to include this completed tool with its result
+            const updatedMessageWithResults = createMessageWithToolCalls(
+              message,
+              parsedMetadata,
+              reconstructedToolCallsFromResult
+            );
+            
+            console.log(`[useAgentStream] 🔄 Updating tool call state with result`, {
+              totalToolCalls: reconstructedToolCallsFromResult.length,
+              completedCount: reconstructedToolCallsFromResult.filter((tc: any) => tc.completed).length,
+              toolCallsWithResults: reconstructedToolCallsFromResult.filter((tc: any) => tc.tool_result).length,
+            });
+            
+            // Force update to streamingToolCall state
+            setToolCall(updatedMessageWithResults);
+            
+            // Also call the callback to notify downstream handlers
+            callbacks.onToolCallChunk?.(updatedMessageWithResults);
+          }
+          
+          // DO NOT clear accumulator - other tools may still be streaming
+          // Only clear when assistant message completes
           if (message.message_id) callbacks.onMessage(message);
           break;
         case 'status':
@@ -426,13 +458,26 @@ export function useAgentStream(
             case 'tool_completed':
             case 'tool_failed':
             case 'tool_error':
-              // Clear streaming tool call when tool completes/fails
-              setToolCall(null);
+              console.log(`[useAgentStream] 📊 Status message: ${parsedContent.status_type}`, {
+                message: parsedContent.message,
+                accumulatedToolCalls: accumulatorRef.current.accumulatedToolCalls.size,
+                completedToolCalls: accumulatorRef.current.completedToolCallIds.size,
+                toolResults: accumulatorRef.current.toolResults.size,
+              });
+              // Don't clear toolCall state here - other tools may still be streaming
+              // Individual tool completion is handled by useThreadToolCalls via the messages array
+              // DO NOT clear accumulated tool calls - status messages don't indicate all tools are done
+              // Only clear when assistant message completes
               break;
             case 'finish':
               // Optional: Handle finish reasons like 'xml_tool_limit_reached'
               // Don't finalize here, wait for thread_run_end or completion message
               break;
+            // case 'thread_run_end':
+            //   // Thread run has ended - finalize the stream
+            //   console.log(`[useAgentStream] 🏁 Thread run ended - finalizing stream`);
+            //   finalizeStream('completed', currentRunIdRef.current);
+            //   break;
             case 'error':
               setError(parsedContent.message || 'Worker run failed');
               finalizeStream('error', currentRunIdRef.current);
@@ -451,6 +496,13 @@ export function useAgentStream(
           if (message.message_id) callbacks.onMessage(message);
           break;
         default:
+          // Note: ping and tool_output_stream messages are handled in the error checking section above
+          // and return early, so they shouldn't reach here. If they do, ignore them silently.
+          const messageType = (message as any).type;
+          if (messageType === 'ping' || messageType === 'tool_output_stream') {
+            // These are handled in the error checking section above, ignore here
+            break;
+          }
           console.warn(
             '[useAgentStream] Unhandled message type:',
             message.type,

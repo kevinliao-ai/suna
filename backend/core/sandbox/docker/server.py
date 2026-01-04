@@ -23,6 +23,7 @@ class WorkspaceDirMiddleware(BaseHTTPMiddleware):
         return await call_next(request)
 
 app = FastAPI()
+
 app.add_middleware(WorkspaceDirMiddleware)
 
 # Include routers

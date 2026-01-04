@@ -38,27 +38,22 @@ class MCPRegistry:
         cache_key = self._make_cache_key(toolkit_slug)
         
         redis_available = await self._ensure_redis()
-        logger.debug(f"⚡ [MCP DYNAMIC] Redis available: {redis_available} for {toolkit_slug}")
         
         if redis_available:
             try:
                 cached_data = await self._redis_client.get(cache_key)
                 if cached_data:
                     tools = json.loads(cached_data)
-                    logger.info(f"✅ [MCP DYNAMIC] Cache hit: {toolkit_slug} ({len(tools)} tools)")
+                    logger.debug(f"⚡ [MCP DYNAMIC] Cache hit: {toolkit_slug} ({len(tools)} tools)")
                     return tools
-                else:
-                    logger.debug(f"⚡ [MCP DYNAMIC] No cached data for key: {cache_key}")
             except Exception as e:
                 logger.warning(f"⚠️  [MCP DYNAMIC] Cache read error for {toolkit_slug}: {e}")
         
         if cache_only:
-            logger.debug(f"⚡ [MCP DYNAMIC] Cache miss (cache_only mode): {toolkit_slug} - skipping API query")
             return []
         
-        logger.info(f"❌ [MCP DYNAMIC] Cache miss: {toolkit_slug} - querying Composio API")
-        
         tools = await self._query_composio_toolkit(toolkit_slug, account_id=account_id)
+        
         await self._cache_toolkit_tools(toolkit_slug, tools)
         
         return tools

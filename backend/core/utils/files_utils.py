@@ -65,25 +65,40 @@ def should_exclude_file(rel_path: str) -> bool:
     return False 
 
 def clean_path(path: str, workspace_path: str = "/workspace") -> str:
-    """Clean and normalize a path to be relative to the workspace
+    """Clean and normalize a path to be relative to the workspace.
+    
+    ALWAYS returns a relative path without the /workspace prefix.
+    Tools should prepend workspace_path to get the full absolute path.
     
     Args:
         path: The path to clean
         workspace_path: The base workspace path to remove (default: "/workspace")
         
     Returns:
-        The cleaned path, relative to the workspace
+        A cleaned relative path (never starts with /workspace or /)
+    
+    Examples:
+        "/workspace/uploads/image.png" -> "uploads/image.png"
+        "workspace/uploads/image.png" -> "uploads/image.png"  
+        "uploads/image.png" -> "uploads/image.png"
+        "/uploads/image.png" -> "uploads/image.png"
     """
+    # Strip the absolute /workspace prefix if present
+    if path.startswith('/workspace/'):
+        path = path[len('/workspace/'):]
+    elif path.startswith('/workspace'):
+        path = path[len('/workspace'):]
+    
     # Remove any leading slash
     path = path.lstrip('/')
     
-    # Remove workspace prefix if present
+    # Remove workspace prefix if present (for paths like "workspace/foo")
     if path.startswith(workspace_path.lstrip('/')):
         path = path[len(workspace_path.lstrip('/')):]
     
-    # Remove workspace/ prefix if present
+    # Remove workspace/ prefix if present (handles "workspace/uploads/...")
     if path.startswith('workspace/'):
-        path = path[9:]
+        path = path[len('workspace/'):]
     
     # Remove any remaining leading slash
     path = path.lstrip('/')
