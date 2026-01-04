@@ -250,7 +250,7 @@ export default function DashboardPage() {
                       <div className="flex items-center justify-center gap-2">
                         <a
                           className="underline"
-                          href="https://indexteam-indextts-2-demo.ms.show/?t=1767274823829&__theme=light&studio_token=4b104170-0217-48c5-b939-d0cf1203609a&backend_url=/"
+                          href="https://indexteam-indextts-2-demo.ms.show/?t=1767488095670&__theme=light&studio_token=8025326f-aeba-420e-944a-afb55c5362c3&backend_url=/"
                           target="_blank"
                           rel="noreferrer"
                         >Open in new window</a>
@@ -272,7 +272,7 @@ export default function DashboardPage() {
                     <iframe
                       id="index-tts-iframe"
                       title="Index-TTS Demo"
-                      src="https://indexteam-indextts-2-demo.ms.show/?t=1767274823829&__theme=light&studio_token=4b104170-0217-48c5-b939-d0cf1203609a&backend_url=/"
+                      src="https://indexteam-indextts-2-demo.ms.show/?t=1767488095670&__theme=light&studio_token=8025326f-aeba-420e-944a-afb55c5362c3&backend_url=/"
                       className="h-full w-full border-0"
                       sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-modals"
                       allow="microphone; autoplay"
