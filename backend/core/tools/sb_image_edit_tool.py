@@ -2,7 +2,7 @@ from typing import Optional
 from core.agentpress.tool import ToolResult, openapi_schema, tool_metadata
 from core.sandbox.tool_base import SandboxToolsBase
 from core.agentpress.thread_manager import ThreadManager
-import httpx
+from core.services.http_client import get_http_client
 from io import BytesIO
 import uuid
 import replicate
@@ -20,6 +20,7 @@ from core.utils.config import get_config
 from core.billing.credits.media_integration import media_billing
 from core.billing.credits.media_calculator import select_image_quality, cap_quality_for_tier, FREE_TIERS
 from core.utils.image_processing import upscale_image_sync, remove_background_sync, UPSCALE_MODEL, REMOVE_BG_MODEL
+from core.utils.file_name_generator import generate_smart_filename
 
 
 def parse_image_paths(image_path: Optional[str | list[str]]) -> list[str]:
@@ -544,7 +545,9 @@ Generate, edit, upscale, or remove background from images. Video generation supp
 
             if mode == "generate":
                 logger.info(f"Calling Replicate openai/gpt-image-1.5 for generation (quality={quality}, aspect_ratio={aspect_ratio})")
-                output = replicate.run(
+                # Wrap replicate.run() in thread pool to avoid blocking event loop
+                output = await asyncio.to_thread(
+                    replicate.run,
                     "openai/gpt-image-1.5",
                     input={
                         "prompt": prompt,
@@ -566,7 +569,9 @@ Generate, edit, upscale, or remove background from images. Video generation supp
                 image_data_url = f"data:image/png;base64,{image_b64}"
 
                 logger.info(f"Calling Replicate openai/gpt-image-1.5 for editing (quality={quality}, aspect_ratio={aspect_ratio}) with image_path='{image_path}' (image size: {len(image_bytes)} bytes)")
-                output = replicate.run(
+                # Wrap replicate.run() in thread pool to avoid blocking event loop
+                output = await asyncio.to_thread(
+                    replicate.run,
                     "openai/gpt-image-1.5",
                     input={
                         "prompt": prompt,
@@ -591,17 +596,21 @@ Generate, edit, upscale, or remove background from images. Video generation supp
             else:
                 # Fetch from URL if it's a URL string
                 url = str(first_output.url) if hasattr(first_output, 'url') else str(first_output)
-                async with httpx.AsyncClient() as client:
+                async with get_http_client() as client:
                     response = await client.get(url)
                     response.raise_for_status()
                     result_bytes = response.content
 
-            # Save to sandbox with random filename
-            random_filename = f"generated_image_{uuid.uuid4().hex[:8]}.png"
-            sandbox_path = f"{self.workspace_path}/{random_filename}"
+            # Generate smart filename using LLM based on the prompt
+            smart_filename = await generate_smart_filename(
+                prompt=prompt,
+                file_type="image",
+                extension="png"
+            )
+            sandbox_path = f"{self.workspace_path}/{smart_filename}"
             await self.sandbox.fs.upload_file(result_bytes, sandbox_path)
             
-            return random_filename
+            return smart_filename
 
         except Exception as e:
             error_message = str(e)
@@ -634,8 +643,8 @@ Generate, edit, upscale, or remove background from images. Video generation supp
         try:
             if use_mock:
                 logger.warning(f"🎬 Video generation running in MOCK mode for prompt: '{prompt[:50]}...'")
-                # For mock, just return a fake filename
-                return f"generated_video_{uuid.uuid4().hex[:8]}.mp4"
+                # For mock, return a descriptive mock filename
+                return f"Mock Video {uuid.uuid4().hex[:6]}.mp4"
             
             # Ensure Replicate token is set
             self._get_replicate_token()
@@ -701,7 +710,9 @@ Generate, edit, upscale, or remove background from images. Video generation supp
             logger.info(f"Calling Replicate bytedance/seedance-1.5-pro for video generation")
             logger.debug(f"Video params: duration={input_params.get('duration')}, aspect_ratio={input_params.get('aspect_ratio')}, generate_audio={input_params.get('generate_audio')}, has_image={'image' in input_params}")
             
-            output = replicate.run(
+            # Wrap replicate.run() in thread pool to avoid blocking event loop
+            output = await asyncio.to_thread(
+                replicate.run,
                 "bytedance/seedance-1.5-pro",
                 input=input_params
             )
@@ -711,25 +722,29 @@ Generate, edit, upscale, or remove background from images. Video generation supp
                 result_bytes = output.read()
             elif hasattr(output, 'url'):
                 url = str(output.url)
-                async with httpx.AsyncClient(timeout=120.0) as client:
-                    response = await client.get(url)
+                async with get_http_client() as client:
+                    response = await client.get(url, timeout=120.0)
                     response.raise_for_status()
                     result_bytes = response.content
             else:
                 # Try to fetch from string URL
                 url = str(output)
-                async with httpx.AsyncClient(timeout=120.0) as client:
-                    response = await client.get(url)
+                async with get_http_client() as client:
+                    response = await client.get(url, timeout=120.0)
                     response.raise_for_status()
                     result_bytes = response.content
             
-            # Save to sandbox with random filename
-            random_filename = f"generated_video_{uuid.uuid4().hex[:8]}.mp4"
-            sandbox_path = f"{self.workspace_path}/{random_filename}"
+            # Generate smart filename using LLM based on the prompt
+            smart_filename = await generate_smart_filename(
+                prompt=prompt,
+                file_type="video",
+                extension="mp4"
+            )
+            sandbox_path = f"{self.workspace_path}/{smart_filename}"
             await self.sandbox.fs.upload_file(result_bytes, sandbox_path)
             
-            logger.info(f"Video saved: {random_filename}")
-            return random_filename
+            logger.info(f"Video saved: {smart_filename}")
+            return smart_filename
 
         except Exception as e:
             error_message = str(e)
@@ -757,7 +772,7 @@ Generate, edit, upscale, or remove background from images. Video generation supp
         try:
             if use_mock:
                 logger.warning(f"🔍 Upscale running in MOCK mode for: '{image_path}'")
-                return f"upscaled_image_{uuid.uuid4().hex[:8]}.webp"
+                return f"Mock Upscaled {uuid.uuid4().hex[:6]}.webp"
             
             # Get image bytes
             if isinstance(image_path, list):
@@ -782,14 +797,21 @@ Generate, edit, upscale, or remove background from images. Video generation supp
                 None, upscale_image_sync, image_bytes, mime_type
             )
             
-            # Save to sandbox with random filename
-            ext = "webp"  # Upscale outputs webp
-            random_filename = f"upscaled_{uuid.uuid4().hex[:8]}.{ext}"
-            sandbox_path = f"{self.workspace_path}/{random_filename}"
+            # Generate a descriptive filename based on original file
+            from pathlib import Path
+            original_stem = Path(image_path).stem
+            # Clean up original name to Title Case
+            # Remove underscores/hyphens and convert to title case
+            clean_stem = re.sub(r'[_\-]+', ' ', original_stem)
+            clean_stem = ' '.join(word.title() for word in clean_stem.split())[:30]
+            if not clean_stem:
+                clean_stem = "Image"
+            smart_filename = f"{clean_stem} Upscaled.webp"
+            sandbox_path = f"{self.workspace_path}/{smart_filename}"
             await self.sandbox.fs.upload_file(result_bytes, sandbox_path)
             
-            logger.info(f"Upscaled image saved: {random_filename}")
-            return random_filename
+            logger.info(f"Upscaled image saved: {smart_filename}")
+            return smart_filename
             
         except Exception as e:
             error_message = str(e)
@@ -816,7 +838,7 @@ Generate, edit, upscale, or remove background from images. Video generation supp
         try:
             if use_mock:
                 logger.warning(f"✂️ Remove BG running in MOCK mode for: '{image_path}'")
-                return f"nobg_image_{uuid.uuid4().hex[:8]}.png"
+                return f"Mock Transparent {uuid.uuid4().hex[:6]}.png"
             
             # Get image bytes
             if isinstance(image_path, list):
@@ -841,13 +863,20 @@ Generate, edit, upscale, or remove background from images. Video generation supp
                 None, remove_background_sync, image_bytes, mime_type
             )
             
-            # Save to sandbox with random filename (PNG for transparency)
-            random_filename = f"nobg_{uuid.uuid4().hex[:8]}.png"
-            sandbox_path = f"{self.workspace_path}/{random_filename}"
+            # Generate a descriptive filename based on original file
+            from pathlib import Path
+            original_stem = Path(image_path).stem
+            # Clean up original name to Title Case
+            clean_stem = re.sub(r'[_\-]+', ' ', original_stem)
+            clean_stem = ' '.join(word.title() for word in clean_stem.split())[:30]
+            if not clean_stem:
+                clean_stem = "Image"
+            smart_filename = f"{clean_stem} Transparent.png"
+            sandbox_path = f"{self.workspace_path}/{smart_filename}"
             await self.sandbox.fs.upload_file(result_bytes, sandbox_path)
             
-            logger.info(f"Background removed, saved: {random_filename}")
-            return random_filename
+            logger.info(f"Background removed, saved: {smart_filename}")
+            return smart_filename
             
         except Exception as e:
             error_message = str(e)
@@ -901,7 +930,7 @@ Generate, edit, upscale, or remove background from images. Video generation supp
     async def _download_image_from_url(self, url: str) -> bytes | ToolResult:
         """Download image from URL."""
         try:
-            async with httpx.AsyncClient() as client:
+            async with get_http_client() as client:
                 response = await client.get(url)
                 response.raise_for_status()
                 return response.content
@@ -928,20 +957,27 @@ Generate, edit, upscale, or remove background from images. Video generation supp
                 f"Could not read image file from sandbox: {image_path} - {str(e)}"
             )
 
-    async def _process_image_response(self, response) -> str | ToolResult:
-        """Download generated image and save to sandbox with random name."""
+    async def _process_image_response(self, response, prompt: str = "") -> str | ToolResult:
+        """Download generated image and save to sandbox with descriptive name."""
         try:
             original_b64_str = response.data[0].b64_json
             # Decode base64 image data
             image_data = base64.b64decode(original_b64_str)
 
-            # Generate random filename
-            random_filename = f"generated_image_{uuid.uuid4().hex[:8]}.png"
-            sandbox_path = f"{self.workspace_path}/{random_filename}"
+            # Generate smart filename if prompt available, otherwise use fallback
+            if prompt:
+                smart_filename = await generate_smart_filename(
+                    prompt=prompt,
+                    file_type="image",
+                    extension="png"
+                )
+            else:
+                smart_filename = f"Image {uuid.uuid4().hex[:6]}.png"
+            sandbox_path = f"{self.workspace_path}/{smart_filename}"
 
             # Save image to sandbox
             await self.sandbox.fs.upload_file(image_data, sandbox_path)
-            return random_filename
+            return smart_filename
 
         except Exception as e:
             return self.fail_response(f"Failed to download and save image: {str(e)}")
@@ -954,18 +990,18 @@ Generate, edit, upscale, or remove background from images. Video generation supp
             placeholder_url = f"https://picsum.photos/1024/1024?random={random_id}"
             
             # Download the image
-            async with httpx.AsyncClient() as client:
+            async with get_http_client() as client:
                 response = await client.get(placeholder_url, follow_redirects=True)
                 response.raise_for_status()
                 image_data = response.content
             
-            # Generate random filename
-            random_filename = f"generated_image_{uuid.uuid4().hex[:8]}.png"
-            sandbox_path = f"{self.workspace_path}/{random_filename}"
+            # Generate descriptive filename for mock image
+            mock_filename = f"Mock Image {uuid.uuid4().hex[:6]}.png"
+            sandbox_path = f"{self.workspace_path}/{mock_filename}"
             
             # Save to sandbox
             await self.sandbox.fs.upload_file(image_data, sandbox_path)
-            return random_filename
+            return mock_filename
             
         except Exception as e:
             return self.fail_response(f"Failed to download placeholder image: {str(e)}")

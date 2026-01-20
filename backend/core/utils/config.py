@@ -49,22 +49,15 @@ class Configuration:
     AGENT_NATIVE_TOOL_CALLING: bool = True  # Enable OpenAI-style native function calling
     AGENT_EXECUTE_ON_STREAM: bool = True     # Execute tools as they stream (vs. at end)
     AGENT_TOOL_EXECUTION_STRATEGY: str = "parallel"  # "parallel" or "sequential"
+    
+    # Model selection
+    # Options: "bedrock", "anthropic", "minimax", "grok", "openai"
+    MAIN_LLM: str = "bedrock"
     # ============================================
     
-
-    ENABLE_BOOTSTRAP_MODE: bool = True        # Use two-phase bootstrap+enrichment (faster startup)
-    ENABLE_MINIMAL_PROMPT: bool = True        # Use minimal prompt for first turn (no DB queries)
-    BOOTSTRAP_SLO_WARNING_MS: int = 750       # Emit warning if Phase A exceeds this threshold
-    BOOTSTRAP_SLO_CRITICAL_MS: int = 1500     # Hard timeout for Phase A (fail if exceeded)
-    # =========================================
-    
     # ===== PRESENCE CONFIGURATION =====
-    DISABLE_PRESENCE: bool = False  # Disable presence tracking entirely
+    DISABLE_PRESENCE: bool = True  # Disable presence tracking entirely
     # ==================================
-    
-    # ===== MEMORY CONFIGURATION =====
-    ENABLE_MEMORY: bool = False  # Disable memory feature entirely
-    # ================================
     
     SYSTEM_ADMIN_USER_ID: Optional[str] = None  # User ID that owns shared/fallback agents
 
@@ -291,13 +284,15 @@ class Configuration:
     ANTHROPIC_API_KEY: Optional[str] = None
     OPENAI_API_KEY: Optional[str] = None
     
+    ENABLE_MEMORY: bool = False
+    ENABLE_KNOWLEDGE_BASE: bool = False
+    ENABLE_USER_CONTEXT: bool = True
     MEMORY_EMBEDDING_PROVIDER: Optional[str] = "openai"
     MEMORY_EMBEDDING_MODEL: Optional[str] = "text-embedding-3-small"
     MEMORY_EXTRACTION_MODEL: Optional[str] = "kortix/basic"
     VOYAGE_API_KEY: Optional[str] = None
     GROQ_API_KEY: Optional[str] = None
     OPENROUTER_API_KEY: Optional[str] = None
-    MINIMAX_API_KEY: Optional[str] = None
     XAI_API_KEY: Optional[str] = None
     MORPH_API_KEY: Optional[str] = None
     GEMINI_API_KEY: Optional[str] = None
@@ -319,12 +314,11 @@ class Configuration:
     SUPABASE_SERVICE_ROLE_KEY: str
     SUPABASE_JWT_SECRET: str
     
-    # Redis configuration
     REDIS_HOST: Optional[str] = "localhost"
     REDIS_PORT: Optional[int] = 6379
     REDIS_PASSWORD: Optional[str] = None
-    REDIS_USERNAME: Optional[str] = None  # Required for Redis Cloud
-    REDIS_MAX_CONNECTIONS: Optional[int] = 10  # Max connections per process (default 10)
+    REDIS_USERNAME: Optional[str] = None  
+    REDIS_MAX_CONNECTIONS: Optional[int] = 300
     REDIS_SSL: Optional[bool] = True
     
     # Daytona sandbox configuration (optional - sandbox features disabled if not configured)
@@ -367,6 +361,7 @@ class Configuration:
     # RevenueCat configuration
     REVENUECAT_WEBHOOK_SECRET: Optional[str] = None
     REVENUECAT_API_KEY: Optional[str] = None
+    REVENUECAT_PROJECT_ID: Optional[str] = None
     
     # Stripe Product IDs
     STRIPE_PRODUCT_ID_PROD: Optional[str] = 'prod_SCl7AQ2C8kK1CD'

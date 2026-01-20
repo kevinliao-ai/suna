@@ -5,17 +5,20 @@ import { useParams } from 'next/navigation';
 import { Suspense, lazy } from 'react';
 import { useAccounts } from '@/hooks/account';
 import { useAuth } from '@/components/AuthProvider';
-import { useMaintenanceNoticeQuery, useTechnicalIssueQuery } from '@/hooks/edge-flags';
+import { useSystemStatusQuery } from '@/hooks/edge-flags';
 import { useRouter } from 'next/navigation';
 import { useApiHealth } from '@/hooks/usage/use-health';
 import { useAdminRole } from '@/hooks/admin';
 import { usePresence } from '@/hooks/use-presence';
 import { featureFlags } from '@/lib/feature-flags';
+import { usePrefetchComposioIcons } from '@/hooks/composio/use-composio';
 
 import { useProjects } from '@/hooks/sidebar/use-sidebar';
 import { useIsMobile } from '@/hooks/utils';
 import { AppProviders } from '@/components/layout/app-providers';
+import { backendApi } from '@/lib/api-client';
 import { AnnouncementDialog } from '../announcements/announcement-dialog';
+import { NovuInboxProvider } from '../notifications/novu-inbox-provider';
 
 // Lazy load heavy components that aren't needed for initial render
 const FloatingMobileMenuButton = lazy(() => 
@@ -52,6 +55,10 @@ const MobileAppInterstitial = lazy(() =>
 
 const TechnicalIssueBanner = lazy(() => 
   import('@/components/announcements/technical-issue-banner').then(mod => ({ default: mod.TechnicalIssueBanner }))
+);
+
+const MaintenanceCountdownBanner = lazy(() => 
+  import('@/components/announcements/maintenance-countdown-banner').then(mod => ({ default: mod.MaintenanceCountdownBanner }))
 );
 
 // Skeleton shell that renders immediately for FCP
@@ -99,8 +106,10 @@ export default function DashboardLayoutContent({
   const personalAccount = accounts?.find((account) => account.personal_account);
   const router = useRouter();
   const isMobile = useIsMobile();
-  const { data: maintenanceNotice, isLoading: maintenanceLoading } = useMaintenanceNoticeQuery();
-  const { data: technicalIssue } = useTechnicalIssueQuery();
+  const { data: systemStatus, isLoading: systemStatusLoading } = useSystemStatusQuery();
+  const maintenanceNotice = systemStatus?.maintenanceNotice;
+  const technicalIssue = systemStatus?.technicalIssue;
+  const statusUpdatedAt = systemStatus?.updatedAt;
   const {
     data: healthData,
     isLoading: isCheckingHealth,
@@ -110,6 +119,21 @@ export default function DashboardLayoutContent({
   const { data: projects } = useProjects();
   const { data: adminRoleData, isLoading: isCheckingAdminRole } = useAdminRole();
   const isAdmin = adminRoleData?.isAdmin ?? false;
+  
+  // Prefetch popular Composio icons for faster UI
+  const { prefetchPopularIcons } = usePrefetchComposioIcons();
+
+  useEffect(() => {
+    if (user) {
+      backendApi.post('/prewarm', undefined, { showErrors: false });
+    }
+  }, [user])
+  
+  useEffect(() => {
+    if (user) {
+      prefetchPopularIcons();
+    }
+  }, [user, prefetchPopularIcons]);
 
   // Log data prefetching for debugging
   useEffect(() => {
@@ -132,22 +156,35 @@ export default function DashboardLayoutContent({
     }
   }, [user, isLoading, router]);
 
-  const mantenanceBanner: React.ReactNode | null = null;
+  const isMaintenanceActive = (() => {
+    if (!maintenanceNotice?.enabled || !maintenanceNotice.startTime || !maintenanceNotice.endTime) {
+      return false;
+    }
+    const now = new Date();
+    const start = new Date(maintenanceNotice.startTime);
+    const end = new Date(maintenanceNotice.endTime);
+    return now >= start && now <= end;
+  })();
 
-  // Show skeleton immediately for FCP while checking auth
-  // This allows content to paint quickly instead of blocking
+  const isMaintenanceScheduled = (() => {
+    if (!maintenanceNotice?.enabled || !maintenanceNotice.startTime || !maintenanceNotice.endTime) {
+      return false;
+    }
+    const now = new Date();
+    const start = new Date(maintenanceNotice.startTime);
+    const end = new Date(maintenanceNotice.endTime);
+    return now < start && now < end;
+  })();
+
   if (isLoading) {
     return <DashboardSkeleton />;
   }
 
-  // Redirect to auth if not authenticated (don't block render)
   if (!user) {
     return <DashboardSkeleton />;
   }
 
-  // Show maintenance page if maintenance mode is enabled
-  // Lazy loaded to not impact initial FCP
-  if (maintenanceNotice?.enabled && !maintenanceLoading && !isCheckingAdminRole && !isAdmin) {
+  if (isMaintenanceActive && !systemStatusLoading && !isCheckingAdminRole && !isAdmin) {
     return (
       <Suspense fallback={<DashboardSkeleton />}>
         <MaintenancePage />
@@ -165,6 +202,7 @@ export default function DashboardLayoutContent({
   }
 
   return (
+    <NovuInboxProvider>
     <AppProviders 
       showSidebar={true}
       sidebarSiblings={
@@ -177,12 +215,22 @@ export default function DashboardLayoutContent({
       }
     >
       <div className="relative h-full">
-        {/* Technical issue banner */}
-        {technicalIssue?.enabled && (
+        {technicalIssue?.enabled && technicalIssue.message && (
           <Suspense fallback={null}>
             <TechnicalIssueBanner 
               message={technicalIssue.message}
               statusUrl={technicalIssue.statusUrl}
+              updatedAt={statusUpdatedAt}
+            />
+          </Suspense>
+        )}
+        
+        {isMaintenanceScheduled && maintenanceNotice?.startTime && maintenanceNotice?.endTime && (
+          <Suspense fallback={null}>
+            <MaintenanceCountdownBanner 
+              startTime={maintenanceNotice.startTime}
+              endTime={maintenanceNotice.endTime}
+              updatedAt={statusUpdatedAt}
             />
           </Suspense>
         )}
@@ -197,7 +245,6 @@ export default function DashboardLayoutContent({
         
         <Suspense fallback={null}>
           <OnboardingProvider>
-            {mantenanceBanner}
             <div className="bg-background">{children}</div>
           </OnboardingProvider>
         </Suspense>
@@ -216,5 +263,6 @@ export default function DashboardLayoutContent({
         ) : null}
       </div>
     </AppProviders>
+    </NovuInboxProvider>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Loader2 } from 'lucide-react';
+import { KortixLoader } from '@/components/ui/kortix-loader';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { StepWrapper } from '../shared/step-wrapper';
@@ -103,7 +103,7 @@ export const SmartContextStep = () => {
               {isExtracting && (
                 <div className="absolute top-3 right-3">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground bg-background/80 backdrop-blur-sm px-2 py-1 rounded-md">
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <KortixLoader size="small" />
                     Analyzing...
                   </div>
                 </div>
@@ -151,9 +151,7 @@ export const SmartContextStep = () => {
             >
               <div className="inline-flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-primary/10 to-primary/5 rounded-full border border-primary/20">
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
-                  <div className="w-2 h-2 bg-primary/60 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }} />
-                  <div className="w-2 h-2 bg-primary/30 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }} />
+                  <div className="w-4 h-4 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
                 </div>
                 <span className="text-sm font-medium text-primary">
                   Perfect! Ready to find your AI assistants

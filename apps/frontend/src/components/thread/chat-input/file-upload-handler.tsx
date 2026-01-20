@@ -2,8 +2,9 @@
 
 import React, { forwardRef, useEffect, memo } from 'react';
 import { Button } from '@/components/ui/button';
-import { Paperclip, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { Paperclip } from 'lucide-react';
+import { KortixLoader } from '@/components/ui/kortix-loader';
+import { toast } from '@/lib/toast';
 import { createClient } from '@/lib/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { fileQueryKeys } from '@/hooks/files/use-file-queries';
@@ -13,7 +14,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { UploadedFile } from './chat-input';
-import { normalizeFilenameToNFC } from '@/lib/utils/unicode';
+import { normalizeFilenameToNFC, normalizeMimeType } from '@agentpress/shared';
 import { backendApi } from '@/lib/api-client';
 import JSZip from 'jszip';
 import {
@@ -157,7 +158,9 @@ const extractZipFiles = async (zipFile: File): Promise<File[]> => {
         continue;
       }
       
-      const extractedFile = new File([content], filename, { type: content.type || 'application/octet-stream' });
+      const rawMimeType = content.type || 'application/octet-stream';
+      const normalizedMimeType = normalizeMimeType(rawMimeType);
+      const extractedFile = new File([content], filename, { type: normalizedMimeType });
       extractedFiles.push(extractedFile);
       fileCount++;
     }
@@ -458,13 +461,53 @@ const handleFiles = async (
   messages: any[] = [],
   queryClient?: any,
 ) => {
-  await handleLocalFiles(files, setPendingFiles, setUploadedFiles, setIsUploading);
-
-  if (sandboxId && files.length > 0) {
-    await uploadFiles(files, sandboxId, setUploadedFiles, setIsUploading, messages, queryClient, setPendingFiles);
-  } else if (projectId && files.length > 0) {
-    await uploadFilesToProject(files, projectId, setUploadedFiles, setIsUploading, setPendingFiles);
+  // Process files (extract zips, validate)
+  const processedFiles: File[] = [];
+  
+  for (const file of files) {
+    if (isExtractableArchive(file)) {
+      const extracted = await extractZipFiles(file);
+      processedFiles.push(...extracted);
+    } else {
+      const validation = isAllowedFile(file);
+      if (!validation.allowed) {
+        toast.error(`${file.name}: ${validation.reason}`);
+        continue;
+      }
+      processedFiles.push(file);
+    }
   }
+  
+  if (processedFiles.length === 0) return;
+
+  setIsUploading(true);
+
+  // Always stage files via /files/stage API (simplified flow)
+  for (const file of processedFiles) {
+    const normalizedName = normalizeFilenameToNFC(file.name);
+    const fileId = crypto.randomUUID();
+
+    // Add to uploaded files with pending status and local preview
+    setUploadedFiles((prev) => [...prev, {
+      name: normalizedName,
+      path: `/workspace/uploads/${normalizedName}`,
+      size: file.size,
+      type: file.type || 'application/octet-stream',
+      localUrl: URL.createObjectURL(file),
+      fileId,
+      status: 'uploading' as const,
+    }]);
+
+    // Stage file to backend
+    try {
+      await stageFileToS3(file, fileId, setUploadedFiles);
+    } catch (error) {
+      console.error(`Failed to stage file ${normalizedName}:`, error);
+      // Error handling is done in stageFileToS3
+    }
+  }
+
+  setIsUploading(false);
 };
 
 interface FileUploadHandlerProps {
@@ -560,9 +603,9 @@ export const FileUploadHandler = memo(forwardRef<
                 }
               >
                 {isUploading ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <KortixLoader size="small" />
                 ) : (
-                  <Paperclip className="h-5 w-5" />
+                  <Paperclip className="h-4 w-4" strokeWidth={2} />
                 )}
               </Button>
             </span>

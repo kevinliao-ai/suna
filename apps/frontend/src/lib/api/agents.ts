@@ -32,8 +32,8 @@ export interface UnifiedAgentStartResponse {
 export interface OptimisticAgentStartResponse {
   thread_id: string;
   project_id: string;
-  agent_run_id: null;
-  status: 'pending';
+  agent_run_id: string | null;  // Now synchronously created, so usually non-null
+  status: 'pending' | 'running';
 }
 
 export interface AgentIconGenerationRequest {
@@ -70,7 +70,6 @@ export interface ActiveAgentRun {
 export const unifiedAgentStart = async (options: {
   threadId?: string;
   prompt?: string;
-  files?: File[];
   file_ids?: string[];
   model_name?: string;
   agent_id?: string;
@@ -101,12 +100,6 @@ export const unifiedAgentStart = async (options: {
     
     if (options.agent_id) {
       formData.append('agent_id', options.agent_id);
-    }
-    
-    if (options.files && options.files.length > 0) {
-      options.files.forEach((file) => {
-        formData.append('files', file);
-      });
     }
     
     if (options.file_ids && options.file_ids.length > 0) {
@@ -181,14 +174,14 @@ export const unifiedAgentStart = async (options: {
       }
 
       // Handle HTTP 431 - Request Header Fields Too Large
-      // This happens when uploading many files at once
+      // This happens when uploading many file_ids at once
       if (status === 431 || response.error instanceof RequestTooLargeError) {
-        const filesCount = options.files?.length || 0;
+        const fileIdsCount = options.file_ids?.length || 0;
         throw new RequestTooLargeError(431, {
-          message: `Request is too large (${filesCount} files attached)`,
-          suggestion: filesCount > 1 
+          message: `Request is too large (${fileIdsCount} files attached)`,
+          suggestion: fileIdsCount > 1 
             ? 'Try uploading files one at a time instead of all at once.'
-            : 'The file or request data is too large. Try a smaller file or simplify your message.',
+            : 'The request data is too large. Try a smaller file or simplify your message.',
         });
       }
 
@@ -387,11 +380,11 @@ export const optimisticAgentStart = async (options: {
   thread_id: string;
   project_id: string;
   prompt: string;
-  files?: File[];
   file_ids?: string[];
   model_name?: string;
   agent_id?: string;
   memory_enabled?: boolean;
+  mode?: string;  // Mode: slides, sheets, docs, canvas, video, research
 }): Promise<OptimisticAgentStartResponse> => {
   try {
     if (!API_URL) {
@@ -421,14 +414,14 @@ export const optimisticAgentStart = async (options: {
       options.file_ids.forEach((fileId) => {
         formData.append('file_ids', fileId);
       });
-    } else if (options.files && options.files.length > 0) {
-      options.files.forEach((file) => {
-        formData.append('files', file);
-      });
     }
     
     if (options.memory_enabled !== undefined) {
       formData.append('memory_enabled', String(options.memory_enabled));
+    }
+    
+    if (options.mode) {
+      formData.append('mode', options.mode);
     }
 
     const response = await backendApi.upload<OptimisticAgentStartResponse>(
@@ -465,12 +458,12 @@ export const optimisticAgentStart = async (options: {
       }
 
       if (status === 431 || response.error instanceof RequestTooLargeError) {
-        const filesCount = options.files?.length || 0;
+        const fileIdsCount = options.file_ids?.length || 0;
         throw new RequestTooLargeError(431, {
-          message: `Request is too large (${filesCount} files attached)`,
-          suggestion: filesCount > 1 
+          message: `Request is too large (${fileIdsCount} files attached)`,
+          suggestion: fileIdsCount > 1 
             ? 'Try uploading files one at a time instead of all at once.'
-            : 'The file or request data is too large. Try a smaller file or simplify your message.',
+            : 'The request data is too large. Try a smaller file or simplify your message.',
         });
       }
 
@@ -517,35 +510,6 @@ export const optimisticAgentStart = async (options: {
     }
 
     handleApiError(error, { operation: 'start agent', resource: 'AI assistant' });
-    throw error;
-  }
-};
-
-export const startAgentOnThread = async (
-  threadId: string,
-  options?: {
-    model_name?: string;
-    agent_id?: string;
-  }
-): Promise<{ thread_id: string; agent_run_id: string; status: string }> => {
-  try {
-    const response = await backendApi.post<{ thread_id: string; agent_run_id: string; status: string }>(
-      `/thread/${threadId}/start-agent`,
-      {
-        model_name: options?.model_name,
-        agent_id: options?.agent_id,
-      },
-      { showErrors: true, cache: 'no-store' }
-    );
-
-    if (response.error) {
-      throw new Error(`Error starting agent on thread: ${response.error.message}`);
-    }
-
-    return response.data!;
-  } catch (error) {
-    console.error('[API] Failed to start agent on thread:', error);
-    handleApiError(error, { operation: 'start agent on thread', resource: 'AI assistant' });
     throw error;
   }
 };
@@ -683,7 +647,13 @@ export const streamAgent = (
       };
 
       eventSource.onerror = (event) => {
-        console.error(`[STREAM] EventSource error for ${agentRunId}:`, event);
+        // EventSource.onerror fires on normal close too, check readyState first
+        // Only log if it's actually an error (readyState !== CLOSED) or if we can't determine
+        const isActualError = eventSource.readyState !== EventSource.CLOSED;
+        
+        if (isActualError) {
+          console.error(`[STREAM] EventSource error for ${agentRunId}:`, event);
+        }
         
         getAgentStatus(agentRunId)
           .then((status) => {
@@ -694,22 +664,24 @@ export const streamAgent = (
             }
           })
           .catch((err) => {
-            console.error(
-              `[STREAM] Error checking agent status after stream error:`,
-              err,
-            );
-
             const errMsg = err instanceof Error ? err.message : String(err);
             const isNotFoundErr =
               errMsg.includes('not found') ||
               errMsg.includes('404') ||
-              errMsg.includes('does not exist');
+              errMsg.includes('does not exist') ||
+              errMsg.includes('is not running');
 
             if (isNotFoundErr) {
+              // Expected: agent run completed or doesn't exist
               nonRunningAgentRuns.add(agentRunId);
               cleanupEventSource(agentRunId, 'agent not found');
               callbacks.onClose();
             } else {
+              // Only log actual errors
+              console.error(
+                `[STREAM] Error checking agent status after stream error:`,
+                err,
+              );
               console.warn(`[STREAM] Cleaning up stream for ${agentRunId} due to persistent error`);
               cleanupEventSource(agentRunId, 'persistent error');
               callbacks.onError(errMsg);

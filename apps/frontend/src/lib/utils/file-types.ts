@@ -11,11 +11,18 @@ export const PREVIEWABLE_EXTENSIONS = [
   'csv', 'tsv',
   'xlsx', 'xls',
   'pdf',
+  'txt',
+  'kanvax',
 ] as const;
 
 // Image extensions
 export const IMAGE_EXTENSIONS = [
   'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'ico', 'heic', 'heif',
+] as const;
+
+// Video extensions
+export const VIDEO_EXTENSIONS = [
+  'mp4', 'webm', 'mov', 'avi', 'mkv', 'm4v',
 ] as const;
 
 // Code file extensions
@@ -105,5 +112,37 @@ export function isSpreadsheetExtension(ext: string): boolean {
 
 export function isPdfExtension(ext: string): boolean {
   return ext.toLowerCase() === 'pdf';
+}
+
+export function isTextExtension(ext: string): boolean {
+  return ext.toLowerCase() === 'txt';
+}
+
+/**
+ * Check if file is a kanvax canvas file
+ */
+export function isKanvaxExtension(ext: string): boolean {
+  return ext.toLowerCase() === 'kanvax';
+}
+
+/**
+ * Check if file path is a kanvax canvas file
+ */
+export function isKanvaxFile(filepath: string): boolean {
+  return isKanvaxExtension(getExtension(filepath));
+}
+
+/**
+ * Check if file is a video
+ */
+export function isVideoExtension(ext: string): boolean {
+  return (VIDEO_EXTENSIONS as readonly string[]).includes(ext.toLowerCase());
+}
+
+/**
+ * Check if file path is a video
+ */
+export function isVideoFile(filepath: string): boolean {
+  return isVideoExtension(getExtension(filepath));
 }
 

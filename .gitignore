@@ -8,6 +8,9 @@ __pycache__/
 # C extensions
 *.so
 
+# claude
+CLAUDE.md
+
 # Distribution / packaging
 .Python
 build/
@@ -215,7 +218,11 @@ dump.rdb
 # Node.js dependencies
 node_modules/
 **/node_modules/
-
+**/node_modules/**
+.pnpm-store/**
+# Ensure .bin directories in node_modules are ignored
+**/node_modules/.bin/**
+**/.bin/**
 # mobile specific
 apps/mobile/node_modules/
 apps/mobile/.expo/
@@ -223,7 +230,7 @@ apps/mobile/dist/
 apps/mobile/web-build/
 apps/mobile/expo-env.d.ts
 apps/mobile/.metro-health-check*
-apps/mobile/npm-debug.*
+apps/mobile/npm-debug.*apps/mobile/npm-debug.*
 apps/mobile/yarn-debug.*
 apps/mobile/yarn-error.*
 apps/mobile/*.tsbuildinfo
@@ -234,8 +241,5 @@ apps/mobile/.env*.local
 apps/mobile/app-example
 # Docker-specific env files
 *.env.docker
-
-# Infra (separate repository)
-infra/
 
 dump.rdb

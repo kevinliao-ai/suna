@@ -94,24 +94,6 @@ export function UpdateAgentToolView({
               </CardTitle>
             </div>
           </div>
-          {!isStreaming && (
-            <Badge
-              variant="secondary"
-              className={cn(
-                "text-xs font-medium",
-                actualIsSuccess
-                  ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800"
-                  : "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800"
-              )}
-            >
-              {actualIsSuccess ? (
-                <CheckCircle className="h-3 w-3" />
-              ) : (
-                <AlertTriangle className="h-3 w-3" />
-              )}
-              {actualIsSuccess ? 'Worker updated' : 'Update failed'}
-            </Badge>
-          )}
         </div>
       </CardHeader>
       <CardContent className="p-0 h-full flex-1 overflow-hidden relative">
@@ -159,7 +141,7 @@ export function UpdateAgentToolView({
                         Default
                       </Badge>
                     )}
-                    <Badge variant="secondary" className="text-xs bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800">
+                    <Badge variant="secondary" className="text-xs bg-zinc-50 text-zinc-700 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700">
                       Active
                     </Badge>
                   </div>

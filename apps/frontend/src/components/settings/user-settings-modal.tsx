@@ -31,10 +31,10 @@ import {
     Users,
     Key,
     Camera,
-    Loader2,
     Upload,
     Brain,
 } from 'lucide-react';
+import { KortixLoader } from '@/components/ui/kortix-loader';
 import { cn } from '@/lib/utils';
 import {
     Tooltip,
@@ -42,7 +42,7 @@ import {
     TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { createClient } from '@/lib/supabase/client';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { isLocalMode, isProductionMode } from '@/lib/config';
 import { backendApi } from '@/lib/api-client';
 import { useQuery, useMutation } from '@tanstack/react-query';
@@ -92,7 +92,8 @@ import { getPlanName, getPlanIcon } from '../billing/plan-utils';
 import { TierBadge } from '../billing/tier-badge';
 import { siteConfig } from '@/lib/site-config';
 import ThreadUsage from '@/components/billing/thread-usage';
-import { formatCredits } from '@/lib/utils/credit-formatter';
+import { UsageLimitsCard } from '@/components/billing/usage-limits-card';
+import { formatCredits } from '@agentpress/shared';
 import { LanguageSwitcher } from './language-switcher';
 import { useTranslations } from 'next-intl';
 import { ReferralsTab } from '@/components/referrals/referrals-tab';
@@ -518,7 +519,7 @@ function GeneralTab({ onClose }: { onClose: () => void }) {
                                 className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                             >
                                 {isUploadingAvatar ? (
-                                    <Loader2 className="h-5 w-5 text-white animate-spin" />
+                                    <KortixLoader size="small" variant="white" />
                                 ) : (
                                     <Camera className="h-5 w-5 text-white" />
                                 )}
@@ -1017,11 +1018,12 @@ function BillingTab({ returnUrl, onOpenPlanModal, isActive }: { returnUrl: strin
         );
     }
 
-    const subStatus = accountState?.subscription.status;
+    const subscription = accountState?.subscription;
+    const subStatus = subscription?.status;
     const isSubscribed = subStatus === 'active' || subStatus === 'trialing';
-    const isFreeTier = accountState?.subscription.tier_key === 'free' || accountState?.subscription.tier_key === 'none';
-    const isCancelled = accountState?.subscription.is_cancelled || accountState?.subscription.cancel_at_period_end;
-    const canPurchaseCredits = accountState?.subscription.can_purchase_credits || false;
+    const isFreeTier = subscription?.tier_key === 'free' || subscription?.tier_key === 'none';
+    const isCancelled = subscription?.is_cancelled || subscription?.cancel_at_period_end;
+    const canPurchaseCredits = subscription?.can_purchase_credits || false;
 
     return (
         <div className="p-4 sm:p-6 space-y-6 sm:space-y-8 min-w-0 max-w-full overflow-x-hidden">
@@ -1327,6 +1329,7 @@ function CreditsHelpAlert() {
 function UsageTab() {
   return (
       <div className="p-4 sm:p-6 space-y-5 sm:space-y-6 min-w-0 max-w-full overflow-x-hidden">
+        <UsageLimitsCard />
         <ThreadUsage />
       </div>
   );

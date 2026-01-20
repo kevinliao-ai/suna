@@ -1,17 +1,322 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react';
-import { CircleDashed } from 'lucide-react';
+import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
+import { KortixLoader } from '@/components/ui/kortix-loader';
 import { getToolIcon, getUserFriendlyToolName, extractPrimaryParam } from '@/components/thread/utils';
 import { AppIcon } from '../tool-views/shared/AppIcon';
-import { useSmoothToolField } from '@/hooks/messages/useSmoothToolArguments';
+import { useSmoothToolField } from '@/hooks/messages';
+import { ToolCard } from './ToolCard';
+import { constructHtmlPreviewUrl } from '@/lib/utils/url';
+import type { Project } from '@/lib/api/threads';
+import { useQueryClient } from '@tanstack/react-query';
+import { threadKeys } from '@/hooks/threads/keys';
+import { backendApi } from '@/lib/api-client';
+
+/**
+ * Optimistically extract a string field from partial/streaming JSON.
+ * Works even when JSON is incomplete (still streaming).
+ * 
+ * @param jsonString - The potentially incomplete JSON string
+ * @param fieldName - The field name to extract (e.g., 'file_path', 'file_contents')
+ * @returns The extracted field value or null if not found
+ */
+function extractFieldFromPartialJson(jsonString: string, fieldName: string): string | null {
+    if (!jsonString || typeof jsonString !== 'string') return null;
+    
+    // Look for the field in the JSON string
+    // Pattern: "field_name": "value" or "field_name":"value"
+    const pattern = new RegExp(`"${fieldName}"\\s*:\\s*"`, 'i');
+    const match = jsonString.match(pattern);
+    
+    if (!match || match.index === undefined) return null;
+    
+    // Find the start of the value (after the opening quote)
+    const valueStart = match.index + match[0].length;
+    let value = '';
+    let i = valueStart;
+    let escaped = false;
+    
+    // Parse the string value, handling escape sequences
+    while (i < jsonString.length) {
+        const char = jsonString[i];
+        
+        if (escaped) {
+            // Handle escape sequences
+            switch (char) {
+                case 'n': value += '\n'; break;
+                case 't': value += '\t'; break;
+                case 'r': value += '\r'; break;
+                case '"': value += '"'; break;
+                case '\\': value += '\\'; break;
+                default: value += char;
+            }
+            escaped = false;
+        } else if (char === '\\') {
+            escaped = true;
+        } else if (char === '"') {
+            // End of string value
+            return value;
+        } else {
+            value += char;
+        }
+        i++;
+    }
+    
+    // If we didn't find a closing quote, the JSON is still streaming
+    // Return what we have so far (partial value)
+    return value;
+}
+
+/**
+ * Extract file path from partial JSON - tries multiple field names
+ */
+function extractFilePathFromPartialJson(jsonString: string): string | null {
+    return extractFieldFromPartialJson(jsonString, 'file_path') ||
+           extractFieldFromPartialJson(jsonString, 'target_file') ||
+           extractFieldFromPartialJson(jsonString, 'path');
+}
+
+/**
+ * Extract file contents from partial JSON
+ */
+function extractFileContentsFromPartialJson(jsonString: string): string | null {
+    return extractFieldFromPartialJson(jsonString, 'file_contents') ||
+           extractFieldFromPartialJson(jsonString, 'code_edit') ||
+           extractFieldFromPartialJson(jsonString, 'content');
+}
 
 // Media generation tools that show shimmer preview
 const MEDIA_GENERATION_TOOLS = new Set([
     'image-edit-or-generate',
     'image_edit_or_generate',
     'Generating Image',
-    'Editing Image', 
+    'Editing Image',
     'Generate Media',
 ]);
+
+// Slide creation tools that show slide shimmer preview
+const SLIDE_CREATION_TOOLS = new Set([
+    'create-slide',
+    'create_slide',
+    'Creating Slide',
+]);
+
+/**
+ * Slide preview component for streaming - loads actual slide when available
+ */
+const SlideStreamPreview: React.FC<{
+    toolCall?: any;
+    project?: Project;
+    onClick?: () => void;
+}> = ({ toolCall, project, onClick }) => {
+    const [slideUrl, setSlideUrl] = useState<string | null>(null);
+    const [iframeLoaded, setIframeLoaded] = useState(false);
+    const [isLoadingMetadata, setIsLoadingMetadata] = useState(true);
+    const [retryCount, setRetryCount] = useState(0);
+    const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const isEnsuringSandboxRef = useRef(false);
+    const queryClient = useQueryClient();
+
+    // Extract presentation info from tool call arguments (handle both string and object)
+    const parsedArgs = useMemo(() => {
+        const args = toolCall?.arguments;
+        if (!args) return {};
+        if (typeof args === 'object') return args;
+        // Try to parse string arguments
+        try {
+            return JSON.parse(args);
+        } catch {
+            // Try to extract from partial JSON
+            const presentationMatch = args.match(/"presentation_name"\s*:\s*"([^"]+)"/);
+            const slideMatch = args.match(/"slide_number"\s*:\s*(\d+)/);
+            return {
+                presentation_name: presentationMatch?.[1],
+                slide_number: slideMatch ? parseInt(slideMatch[1]) : undefined
+            };
+        }
+    }, [toolCall?.arguments]);
+
+    const presentationName = parsedArgs.presentation_name;
+    const slideNumber = parsedArgs.slide_number || 1;
+
+    // Ensure sandbox is active when we have sandbox ID but no URL
+    const ensureSandboxActive = useCallback(async () => {
+        if (!project?.id || !project?.sandbox?.id || isEnsuringSandboxRef.current) {
+            return;
+        }
+
+        isEnsuringSandboxRef.current = true;
+
+        try {
+            const response = await backendApi.post(
+                `/project/${project.id}/sandbox/ensure-active`,
+                {},
+                { showErrors: false }
+            );
+
+            if (response.error) {
+                console.warn('[SlideStreamPreview] Failed to ensure sandbox is active:', response.error);
+            } else {
+                // Invalidate project query to get fresh sandbox_url
+                queryClient.invalidateQueries({
+                    queryKey: threadKeys.project(project.id)
+                });
+            }
+        } catch (err) {
+            console.error('[SlideStreamPreview] Error ensuring sandbox is active:', err);
+        } finally {
+            isEnsuringSandboxRef.current = false;
+        }
+    }, [project?.id, project?.sandbox?.id, queryClient]);
+
+    // Trigger sandbox activation if we have sandbox ID but no URL
+    useEffect(() => {
+        if (project?.sandbox?.id && !project?.sandbox?.sandbox_url && presentationName) {
+            ensureSandboxActive();
+        }
+    }, [project?.sandbox?.id, project?.sandbox?.sandbox_url, presentationName, ensureSandboxActive]);
+
+    // Poll for project data update when sandbox_url is missing
+    useEffect(() => {
+        if (!project?.id || project?.sandbox?.sandbox_url || !presentationName) return;
+
+        // Poll every 2 seconds to check if sandbox_url is now available
+        const pollInterval = setInterval(() => {
+            queryClient.invalidateQueries({
+                queryKey: threadKeys.project(project.id)
+            });
+        }, 2000);
+
+        // Stop polling after 30 seconds
+        const stopPollingTimeout = setTimeout(() => {
+            clearInterval(pollInterval);
+        }, 30000);
+
+        return () => {
+            clearInterval(pollInterval);
+            clearTimeout(stopPollingTimeout);
+        };
+    }, [project?.id, project?.sandbox?.sandbox_url, presentationName, queryClient]);
+
+    // Fetch metadata and load slide URL
+    useEffect(() => {
+        if (!project?.sandbox?.sandbox_url || !presentationName) {
+            return; // Don't set loading to false - wait for data
+        }
+
+        // Reset state when starting a new fetch
+        setIsLoadingMetadata(true);
+        setSlideUrl(null);
+        setIframeLoaded(false);
+        setRetryCount(0);
+
+        const fetchMetadata = async (retry: number = 0) => {
+            try {
+                const sanitizedName = presentationName.replace(/[^a-zA-Z0-9\-_]/g, '').toLowerCase();
+                const metadataUrl = constructHtmlPreviewUrl(
+                    project.sandbox.sandbox_url,
+                    `presentations/${sanitizedName}/metadata.json`
+                );
+
+                const response = await fetch(`${metadataUrl}?t=${Date.now()}`, {
+                    cache: 'no-cache',
+                    headers: { 'Cache-Control': 'no-cache' },
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const slideData = data.slides?.[slideNumber];
+                    if (slideData?.file_path) {
+                        const url = constructHtmlPreviewUrl(project.sandbox.sandbox_url, slideData.file_path);
+                        setSlideUrl(url);
+                        setIsLoadingMetadata(false);
+                        return;
+                    }
+                }
+
+                // Retry if not found yet (slide might still be generating)
+                if (retry < 20) {
+                    const delay = Math.min(1000 * Math.pow(1.3, retry), 3000);
+                    setRetryCount(retry + 1);
+                    retryTimeoutRef.current = setTimeout(() => fetchMetadata(retry + 1), delay);
+                } else {
+                    setIsLoadingMetadata(false);
+                }
+            } catch (e) {
+                // Retry on error
+                if (retry < 20) {
+                    const delay = Math.min(1000 * Math.pow(1.3, retry), 3000);
+                    setRetryCount(retry + 1);
+                    retryTimeoutRef.current = setTimeout(() => fetchMetadata(retry + 1), delay);
+                } else {
+                    setIsLoadingMetadata(false);
+                }
+            }
+        };
+
+        fetchMetadata(0);
+
+        return () => {
+            if (retryTimeoutRef.current) {
+                clearTimeout(retryTimeoutRef.current);
+            }
+        };
+    }, [project?.sandbox?.sandbox_url, presentationName, slideNumber]);
+
+    const showShimmer = isLoadingMetadata || !slideUrl || !iframeLoaded;
+    const width = 480;
+    const height = 270;
+    const scale = width / 1920;
+
+    return (
+        <button
+            onClick={onClick}
+            className="relative rounded-lg overflow-hidden bg-muted border border-border hover:opacity-90 transition-opacity cursor-pointer block mt-2"
+            style={{ width: `${width}px`, height: `${height}px`, minWidth: `${width}px`, maxWidth: `${width}px` }}
+        >
+            {showShimmer && (
+                <>
+                    <div className="absolute inset-0 bg-muted" />
+                    <div
+                        className="absolute inset-0"
+                        style={{
+                            background: 'linear-gradient(90deg, transparent 0%, rgba(128, 128, 128, 0.15) 50%, transparent 100%)',
+                            backgroundSize: '200% 100%',
+                            animation: 'slideShimmerStream 1.5s infinite',
+                        }}
+                    />
+                    <style>{`
+                        @keyframes slideShimmerStream {
+                            0% { background-position: 200% 0; }
+                            100% { background-position: -200% 0; }
+                        }
+                    `}</style>
+                </>
+            )}
+            {slideUrl && (
+                <div style={{ width: `${width}px`, height: `${height}px`, position: 'relative', overflow: 'hidden' }}>
+                    <iframe
+                        src={slideUrl}
+                        title={`Slide ${slideNumber}`}
+                        className="border-0 pointer-events-none"
+                        sandbox="allow-same-origin allow-scripts"
+                        onLoad={() => setIframeLoaded(true)}
+                        style={{
+                            width: '1920px',
+                            height: '1080px',
+                            border: 'none',
+                            display: 'block',
+                            transform: `scale(${scale})`,
+                            transformOrigin: '0 0',
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            opacity: iframeLoaded ? 1 : 0,
+                        }}
+                    />
+                </div>
+            )}
+        </button>
+    );
+};
 
 // Define tool categories for different streaming behaviors
 const STREAMABLE_TOOLS = {
@@ -93,6 +398,7 @@ interface ShowToolStreamProps {
     showExpanded?: boolean;
     startTime?: number;
     toolCall?: any;
+    project?: Project;
 }
 
 export const ShowToolStream: React.FC<ShowToolStreamProps> = ({
@@ -101,32 +407,40 @@ export const ShowToolStream: React.FC<ShowToolStreamProps> = ({
     onToolClick,
     showExpanded = false,
     startTime,
-    toolCall
+    toolCall,
+    project
 }) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const [shouldShowContent, setShouldShowContent] = useState(false);
     const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
     const stableStartTimeRef = useRef<number | null>(null);
 
+    // Throttle content updates to allow smooth streaming even when chunks arrive rapidly
+    // Increased throttle time to 150ms to better handle rapid tool call chunks
     const [throttledContent, setThrottledContent] = useState(content);
     const throttleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const lastUpdateRef = useRef<number>(0);
+    const pendingContentRef = useRef<string>(content);
 
     useEffect(() => {
+        // Always update pending content immediately
+        pendingContentRef.current = content;
+        
         const now = Date.now();
         const timeSinceLastUpdate = now - lastUpdateRef.current;
+        const THROTTLE_MS = 150; // Increased from 100ms to allow smoother streaming
 
-        if (timeSinceLastUpdate >= 100) {
-            setThrottledContent(content);
+        if (timeSinceLastUpdate >= THROTTLE_MS) {
+            setThrottledContent(pendingContentRef.current);
             lastUpdateRef.current = now;
         } else {
             if (throttleTimeoutRef.current) {
                 clearTimeout(throttleTimeoutRef.current);
             }
             throttleTimeoutRef.current = setTimeout(() => {
-                setThrottledContent(content);
+                setThrottledContent(pendingContentRef.current);
                 lastUpdateRef.current = Date.now();
-            }, 100 - timeSinceLastUpdate);
+            }, THROTTLE_MS - timeSinceLastUpdate);
         }
 
         return () => {
@@ -225,12 +539,11 @@ export const ShowToolStream: React.FC<ShowToolStreamProps> = ({
     }, [effectiveToolCall, throttledContent]);
 
     // Apply smooth animation to tool content (120 chars/sec for snappy code display)
-    const { displayedValue: smoothFieldValue, isAnimating: isFieldAnimating } = useSmoothToolField(
-        rawToolArguments,
-        smoothFieldPath,
-        120,
-        !isCompleted // Only animate while streaming (not completed)
+    const smoothFieldValue = useSmoothToolField(
+        rawToolArguments || {},
+        { interval: 8 }
     );
+    const isFieldAnimating = !isCompleted;
 
     // Extract streaming content from JSON or plain text
     const streamingContent = useMemo(() => {
@@ -301,20 +614,105 @@ export const ShowToolStream: React.FC<ShowToolStreamProps> = ({
                 }
             }
 
-            // Fallback: return content or arguments as string
+            // Fallback: try to extract meaningful content from any tool
+            // First check for common content fields
+            if (parsed.file_contents) {
+                const value = isFieldAnimating ? smoothFieldValue : parsed.file_contents;
+                return { html: value, plainText: value };
+            }
+            if (parsed.code_edit) {
+                const value = isFieldAnimating ? smoothFieldValue : parsed.code_edit;
+                return { html: value, plainText: value };
+            }
             if (parsed.content) {
                 return { html: parsed.content, plainText: parsed.content };
             }
-            if (parsed.arguments) {
-                const argsStr = typeof parsed.arguments === 'string' ? parsed.arguments : JSON.stringify(parsed.arguments);
-                return { html: argsStr, plainText: argsStr };
+            if (parsed.text) {
+                return { html: parsed.text, plainText: parsed.text };
             }
+            if (parsed.message) {
+                return { html: parsed.message, plainText: parsed.message };
+            }
+            // Check nested arguments for content fields
+            if (parsed.arguments) {
+                const args = typeof parsed.arguments === 'string' ? 
+                    (() => { try { return JSON.parse(parsed.arguments); } catch { return null; } })() 
+                    : parsed.arguments;
+                if (args) {
+                    if (args.file_contents) {
+                        const value = isFieldAnimating ? smoothFieldValue : args.file_contents;
+                        return { html: value, plainText: value };
+                    }
+                    if (args.code_edit) {
+                        const value = isFieldAnimating ? smoothFieldValue : args.code_edit;
+                        return { html: value, plainText: value };
+                    }
+                    if (args.content) {
+                        return { html: args.content, plainText: args.content };
+                    }
+                    if (args.text) {
+                        return { html: args.text, plainText: args.text };
+                    }
+                    if (args.command) {
+                        return { html: `$ ${args.command}`, plainText: `$ ${args.command}` };
+                    }
+                    if (args.query) {
+                        return { html: args.query, plainText: args.query };
+                    }
+                    if (args.url) {
+                        return { html: args.url, plainText: args.url };
+                    }
+                }
+            }
+            // If we couldn't extract meaningful content, return empty for streaming display
+            // This prevents showing raw JSON in the preview
+            return { html: '', plainText: '' };
         } catch (e) {
-            // Not JSON, return as-is
+            // JSON parse failed - this is streaming/partial JSON
+            // Use optimistic parsing to extract fields from incomplete JSON
+            
+            // Try to extract file contents from partial JSON (for file operations)
+            const partialFileContents = extractFileContentsFromPartialJson(throttledContent);
+            if (partialFileContents) {
+                // Use smooth animation value if animating, otherwise use extracted content
+                const value = isFieldAnimating && smoothFieldValue ? smoothFieldValue : partialFileContents;
+                return { html: value, plainText: value };
+            }
+            
+            // Try to extract command from partial JSON
+            const partialCommand = extractFieldFromPartialJson(throttledContent, 'command');
+            if (partialCommand) {
+                const value = isFieldAnimating && smoothFieldValue ? smoothFieldValue : partialCommand;
+                return { html: `$ ${value}`, plainText: `$ ${value}` };
+            }
+            
+            // Try to extract query from partial JSON
+            const partialQuery = extractFieldFromPartialJson(throttledContent, 'query');
+            if (partialQuery) {
+                const value = isFieldAnimating && smoothFieldValue ? smoothFieldValue : partialQuery;
+                return { html: value, plainText: value };
+            }
+            
+            // Try to extract url from partial JSON
+            const partialUrl = extractFieldFromPartialJson(throttledContent, 'url');
+            if (partialUrl) {
+                return { html: partialUrl, plainText: partialUrl };
+            }
+            
+            // Try to extract text/message from partial JSON
+            const partialText = extractFieldFromPartialJson(throttledContent, 'text') ||
+                               extractFieldFromPartialJson(throttledContent, 'message');
+            if (partialText) {
+                return { html: partialText, plainText: partialText };
+            }
         }
 
-        // Fallback: return content as-is
-        return { html: throttledContent, plainText: throttledContent };
+        // Fallback: return content as-is only if it looks like actual content (not JSON)
+        if (throttledContent && !throttledContent.startsWith('{') && !throttledContent.startsWith('[')) {
+            return { html: throttledContent, plainText: throttledContent };
+        }
+        // Return empty to avoid showing raw JSON
+        return { html: '', plainText: '' };
     }, [throttledContent, toolName, isEditFile, isCreateFile, isFullFileRewrite, smoothFieldValue, isFieldAnimating]);
 
     // Show streaming content for all streamable tools with delayed transitions
@@ -355,23 +753,26 @@ export const ShowToolStream: React.FC<ShowToolStreamProps> = ({
 
     // Check if this is a media generation tool - show shimmer card
     const isMediaGenTool = MEDIA_GENERATION_TOOLS.has(rawToolName || '') || MEDIA_GENERATION_TOOLS.has(toolName || '');
-    
+
+    // Check if this is a slide creation tool - show slide shimmer preview
+    const isSlideTool = SLIDE_CREATION_TOOLS.has(rawToolName || '') || SLIDE_CREATION_TOOLS.has(toolName || '');
+
     // Stable color ref for shimmer - placed before conditional return to satisfy Rules of Hooks
     const shimmerColorRef = useRef(
-        ['from-purple-300/60 to-pink-300/60', 'from-blue-300/60 to-cyan-300/60', 
-         'from-emerald-300/60 to-teal-300/60', 'from-orange-300/60 to-amber-300/60',
-         'from-rose-300/60 to-red-300/60', 'from-indigo-300/60 to-violet-300/60']
+        ['from-zinc-300/60 to-zinc-400/60', 'from-zinc-350/60 to-zinc-450/60',
+         'from-neutral-300/60 to-neutral-400/60', 'from-stone-300/60 to-stone-400/60',
+         'from-gray-300/60 to-gray-400/60', 'from-slate-300/60 to-slate-400/60']
         [Math.floor(Math.random() * 6)]
     );
     const [showShimmerColor, setShowShimmerColor] = useState(false);
-    
+
     // Fade in shimmer color after delay
     useEffect(() => {
-        if (isMediaGenTool) {
+        if (isMediaGenTool || isSlideTool) {
             const timer = setTimeout(() => setShowShimmerColor(true), 800);
             return () => clearTimeout(timer);
         }
-    }, [isMediaGenTool]);
+    }, [isMediaGenTool, isSlideTool]);
 
     if (!toolName) {
         return null;
@@ -380,29 +781,23 @@ export const ShowToolStream: React.FC<ShowToolStreamProps> = ({
     if (isMediaGenTool) {
         const IconComponent = getToolIcon(rawToolName || '');
         
-        // Check if this is a video generation (has video_options in arguments)
         const isVideoGeneration = effectiveToolCall?.arguments?.video_options !== undefined ||
             (typeof effectiveToolCall?.arguments === 'string' && effectiveToolCall.arguments.includes('video_options'));
 
         return (
             <div className="space-y-2">
-                {/* Tool button - exactly like regular tools */}
-                <button
+                <ToolCard
+                    toolName={rawToolName || ''}
+                    displayName="Generate Media"
+                    toolCall={effectiveToolCall}
+                    toolCallId={effectiveToolCall?.tool_call_id}
+                    isStreaming={!isCompleted}
+                    fallbackIcon={IconComponent}
                     onClick={() => onToolClick?.(messageId ?? null, toolName, effectiveToolCall?.tool_call_id)}
-                    className="inline-flex items-center gap-1.5 h-8 px-2 py-1.5 text-xs text-muted-foreground bg-card hover:bg-card/80 rounded-lg transition-colors cursor-pointer border border-neutral-200 dark:border-neutral-700/50 max-w-full"
-                >
-                    <AppIcon toolCall={effectiveToolCall} size={14} className="h-3.5 w-3.5 text-muted-foreground shrink-0" fallbackIcon={IconComponent} />
-                    <span className="font-mono text-xs text-foreground truncate">Generate Media</span>
-                    {!isCompleted && (
-                        <CircleDashed className="h-3.5 w-3.5 text-muted-foreground shrink-0 animate-spin ml-1" />
-                    )}
-                </button>
+                />
 
-                {/* Shimmer below - aspect-video for video, aspect-square for image */}
                 <div className={`relative w-full max-w-80 ${isVideoGeneration ? 'aspect-video' : 'aspect-square'} rounded-2xl overflow-hidden border border-neutral-200 dark:border-neutral-700/50`}>
-                    {/* Gray base layer - contained with rounded corners */}
                     <div className="absolute inset-[-50%] bg-gradient-to-br from-zinc-300/60 to-zinc-400/60 dark:from-zinc-600/60 dark:to-zinc-700/60 blur-2xl" />
-                    {/* Color layer that fades in - contained with rounded corners */}
                     <div 
                         className={`absolute inset-[-50%] bg-gradient-to-br ${shimmerColorRef.current} blur-2xl transition-opacity duration-1000`}
                         style={{ opacity: showShimmerColor ? 1 : 0 }}
@@ -423,6 +818,34 @@ export const ShowToolStream: React.FC<ShowToolStreamProps> = ({
                         }
                     `}</style>
                 </div>
+            </div>
+        );
+    }
+
+    // Handle slide creation tools - show tool card + preview below
+    if (isSlideTool) {
+        const IconComponent = getToolIcon(rawToolName || '');
+
+        return (
+            <div>
+                {/* Tool card at top */}
+                <ToolCard
+                    toolName={rawToolName || ''}
+                    displayName={toolName}
+                    toolCall={effectiveToolCall}
+                    toolCallId={effectiveToolCall?.tool_call_id}
+                    paramDisplay={paramDisplay}
+                    isStreaming={!isCompleted}
+                    fallbackIcon={IconComponent}
+                    onClick={() => onToolClick?.(messageId ?? null, toolName, effectiveToolCall?.tool_call_id)}
+                />
+
+                {/* Slide preview below */}
+                <SlideStreamPreview
+                    toolCall={effectiveToolCall}
+                    project={project}
+                    onClick={() => onToolClick?.(messageId ?? null, toolName, effectiveToolCall?.tool_call_id)}
+                />
             </div>
         );
     }
@@ -452,7 +875,7 @@ export const ShowToolStream: React.FC<ShowToolStreamProps> = ({
                         <span className="font-mono text-xs text-foreground flex-1">{displayName}</span>
                         {paramDisplay && <span className="ml-1 text-xs text-muted-foreground truncate max-w-[200px]" title={paramDisplay}>{paramDisplay}</span>}
                         {!isCompleted && (
-                            <CircleDashed className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0 animate-spin animation-duration-2000 ml-auto" />
+                            <KortixLoader size="small" className="ml-auto" />
                         )}
                     </button>
 
@@ -545,19 +968,16 @@ export const ShowToolStream: React.FC<ShowToolStreamProps> = ({
 
     return (
         <div className="min-w-0 max-w-full">
-            <button
+            <ToolCard
+                toolName={rawToolName || ''}
+                displayName={displayName}
+                toolCall={effectiveToolCall}
+                toolCallId={effectiveToolCall?.tool_call_id}
+                paramDisplay={paramDisplay}
+                isStreaming={!isCompleted}
+                fallbackIcon={IconComponent}
                 onClick={() => onToolClick?.(messageId ?? null, toolName, effectiveToolCall?.tool_call_id)}
-                className="inline-flex items-center gap-1.5 h-8 px-2 py-1.5 text-xs text-muted-foreground bg-card hover:bg-card/80 rounded-lg transition-colors cursor-pointer border border-neutral-200 dark:border-neutral-700/50 max-w-full"
-            >
-                <div className='flex items-center justify-center flex-shrink-0'>
-                    <AppIcon toolCall={effectiveToolCall} size={14} className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" fallbackIcon={IconComponent} />
-                </div>
-                <span className="font-mono text-xs text-foreground truncate">{displayName}</span>
-                {paramDisplay && <span className="ml-1 text-xs text-muted-foreground truncate max-w-[150px] sm:max-w-[200px]" title={paramDisplay}>{paramDisplay}</span>}
-                {!isCompleted && (
-                    <CircleDashed className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0 animate-spin animation-duration-2000 ml-1" />
-                )}
-            </button>
+            />
         </div>
     );
 }; 

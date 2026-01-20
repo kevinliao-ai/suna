@@ -12,7 +12,8 @@ import {
   CalendarDays,
   ChevronLeft,
   ChevronRight,
-  Loader2,
+  Maximize2,
+  Type,
 } from 'lucide-react';
 import { ToolViewProps } from '../types';
 import { cleanUrl, formatTimestamp, getToolTitle } from '../utils';
@@ -21,8 +22,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { LoadingState } from '../shared/LoadingState';
-import { extractWebSearchData } from './_utils';
+import { ToolViewIconTitle } from '../shared/ToolViewIconTitle';
+import { ToolViewFooter } from '../shared/ToolViewFooter';
+import { WebSearchLoadingState } from './WebSearchLoadingState';
+import { extractWebSearchData, EnrichedImage } from './_utils';
+import { useSmoothToolField } from '@/hooks/messages';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 export function WebSearchToolView({
   toolCall,
@@ -34,6 +39,15 @@ export function WebSearchToolView({
 }: ToolViewProps) {
   const [expandedResults, setExpandedResults] = useState<Record<number, boolean>>({});
   const [currentQueryIndex, setCurrentQueryIndex] = useState(0);
+
+  // Apply smooth text streaming for query field
+  const rawArguments = toolCall?.rawArguments || toolCall?.arguments;
+  const smoothFields = useSmoothToolField(
+    typeof rawArguments === 'object' && rawArguments ? rawArguments : {},
+    { interval: 50 }
+  );
+  const smoothQuery = (smoothFields as any).query || (typeof rawArguments === 'object' ? rawArguments?.query : '') || '';
+  const isQueryAnimating = isStreaming && !toolResult;
 
   const {
     query,
@@ -52,6 +66,9 @@ export function WebSearchToolView({
     toolTimestamp,
     assistantTimestamp
   );
+
+  // Use smooth query when streaming
+  const displayQuery = isStreaming && smoothQuery ? smoothQuery : query;
 
   // Reset to first query when batch results change
   useEffect(() => {
@@ -109,48 +126,37 @@ export function WebSearchToolView({
     <Card className="gap-0 flex border-0 shadow-none p-0 py-0 rounded-none flex-col h-full overflow-hidden bg-card">
       <CardHeader className="h-14 bg-zinc-50/80 dark:bg-zinc-900/80 backdrop-blur-sm border-b p-2 px-4 space-y-2">
         <div className="flex flex-row items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="relative p-2 rounded-lg border flex-shrink-0 bg-zinc-200/60 dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700">
-              <Search className="w-5 h-5 text-zinc-500 dark:text-zinc-400" />
-            </div>
-            <div>
-              <CardTitle className="text-base font-medium text-zinc-900 dark:text-zinc-100">
-                {toolTitle}
-              </CardTitle>
-            </div>
-          </div>
-
-          {!isStreaming && (
-            <Badge
-              variant="secondary"
-              className={
-                actualIsSuccess
-                  ? "bg-gradient-to-b from-emerald-200 to-emerald-100 text-emerald-700 dark:from-emerald-800/50 dark:to-emerald-900/60 dark:text-emerald-300"
-                  : "bg-gradient-to-b from-rose-200 to-rose-100 text-rose-700 dark:from-rose-800/50 dark:to-rose-900/60 dark:text-rose-300"
-              }
-            >
-              {actualIsSuccess ? 'Search completed' : 'Search failed'}
-            </Badge>
-          )}
-
-          {isStreaming && (
-            <Badge className="bg-gradient-to-b from-blue-200 to-blue-100 text-blue-700 dark:from-blue-800/50 dark:to-blue-900/60 dark:text-blue-300">
-              <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
-              Searching
-            </Badge>
-          )}
+          <ToolViewIconTitle icon={Search} title={toolTitle} />
         </div>
       </CardHeader>
 
       <CardContent className="p-0 h-full flex-1 overflow-hidden relative">
         {isStreaming && searchResults.length === 0 && !answer && images.length === 0 ? (
-          <LoadingState
-            icon={Search}
-            iconColor="text-blue-500 dark:text-blue-400"
-            bgColor="bg-gradient-to-b from-blue-100 to-blue-50 shadow-inner dark:from-blue-800/40 dark:to-blue-900/60 dark:shadow-blue-950/20"
+          <WebSearchLoadingState
+            queries={
+              // Parse queries from toolCall arguments
+              (() => {
+                const args = toolCall?.arguments || {};
+                const rawQuery = args.query || args.queries;
+                if (Array.isArray(rawQuery)) {
+                  return rawQuery.filter((q): q is string => typeof q === 'string');
+                }
+                if (typeof rawQuery === 'string') {
+                  // Try to parse as JSON array
+                  try {
+                    const parsed = JSON.parse(rawQuery);
+                    if (Array.isArray(parsed)) {
+                      return parsed.filter((q): q is string => typeof q === 'string');
+                    }
+                  } catch {
+                    // Not JSON, treat as single query
+                  }
+                  return [rawQuery];
+                }
+                return query ? [query] : ['Searching...'];
+              })()
+            }
             title={name === 'image-search' ? "Searching for images" : "Searching the web"}
-            filePath={typeof query === 'string' ? query : undefined}
-            showProgress={true}
           />
         ) : searchResults.length > 0 || answer || images.length > 0 ? (
           <ScrollArea className="h-full w-full">
@@ -164,9 +170,9 @@ export function WebSearchToolView({
                         Query {safeQueryIndex + 1} of {batchResults.length}
                       </span>
                       {currentBatchItem.success ? (
-                        <CheckCircle className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                        <CheckCircle className="h-3.5 w-3.5 text-zinc-600 dark:text-zinc-400" />
                       ) : (
-                        <AlertTriangle className="h-3.5 w-3.5 text-rose-600 dark:text-rose-400" />
+                        <AlertTriangle className="h-3.5 w-3.5 text-zinc-600 dark:text-zinc-400" />
                       )}
                       {name === 'image-search' && currentBatchItem.images?.length > 0 && (
                         <Badge variant="outline" className="text-xs font-normal h-4 px-1.5">
@@ -225,36 +231,96 @@ export function WebSearchToolView({
                   <div className={`grid gap-3 mb-1 ${name === 'image-search' ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4' : 'grid-cols-2 sm:grid-cols-3'}`}>
                     {(() => {
                       // Show images for current query if batch mode, otherwise all images
-                      const imagesToShow = isBatch && currentBatchItem?.images
+                      const imagesToShow: EnrichedImage[] = isBatch && currentBatchItem?.images
                         ? currentBatchItem.images
                         : (name === 'image-search' ? images : images.slice(0, 6));
                       return imagesToShow.map((image, idx) => {
-                      const imageUrl = typeof image === 'string' ? image : (image as any).imageUrl;
+                      const imageUrl = image.url || image.imageUrl || '';
+                      const hasDescription = image.description && image.description.trim().length > 0;
+                      const hasDimensions = image.width && image.height && image.width > 0 && image.height > 0;
+                      const orientation = hasDimensions 
+                        ? (image.width! > image.height! ? 'landscape' : image.width! < image.height! ? 'portrait' : 'square')
+                        : null;
                       
                       return (
-                        <a
-                          key={idx}
-                          href={imageUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="group relative overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900 hover:border-blue-300 dark:hover:border-blue-700 transition-colors shadow-sm hover:shadow-md"
-                        >
-                          <img
-                            src={imageUrl}
-                            alt={`Search result ${idx + 1}`}
-                            className="object-cover w-full h-32 group-hover:opacity-90 transition-opacity"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='18' height='18' rx='2' ry='2'%3E%3C/rect%3E%3Ccircle cx='8.5' cy='8.5' r='1.5'%3E%3C/circle%3E%3Cpolyline points='21 15 16 10 5 21'%3E%3C/polyline%3E%3C/svg%3E";
-                              target.classList.add("p-4");
-                            }}
-                          />
-                          <div className="absolute top-0 right-0 p-1">
-                            <Badge variant="secondary" className="bg-black/60 hover:bg-black/70 text-white border-none shadow-md">
-                              <ExternalLink className="h-3 w-3" />
-                            </Badge>
-                          </div>
-                        </a>
+                        <TooltipProvider key={idx}>
+                          <Tooltip>
+                            
+                            <TooltipTrigger asChild>
+                              <a
+                                href={imageUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="group relative overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900 hover:border-blue-300 dark:hover:border-blue-700 transition-colors shadow-sm hover:shadow-md"
+                              >
+                                <img
+                                  src={imageUrl}
+                                  alt={image.title || `Search result ${idx + 1}`}
+                                  className="object-cover w-full h-32 group-hover:opacity-90 transition-opacity"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='18' height='18' rx='2' ry='2'%3E%3C/rect%3E%3Ccircle cx='8.5' cy='8.5' r='1.5'%3E%3C/circle%3E%3Cpolyline points='21 15 16 10 5 21'%3E%3C/polyline%3E%3C/svg%3E";
+                                    target.classList.add("p-4");
+                                  }}
+                                />
+                                {/* Metadata badges overlay */}
+                                <div className="absolute top-0 left-0 right-0 p-1 flex justify-between items-start">
+                                  <div className="flex gap-1">
+                                    {hasDimensions && (
+                                      <Badge variant="secondary" className="bg-black/60 hover:bg-black/70 text-white border-none shadow-md text-[10px] px-1.5 py-0">
+                                        <Maximize2 className="h-2.5 w-2.5 mr-0.5" />
+                                        {image.width}×{image.height}
+                                      </Badge>
+                                    )}
+                                    {hasDescription && (
+                                      <Badge variant="secondary" className="bg-emerald-600/80 hover:bg-emerald-600/90 text-white border-none shadow-md text-[10px] px-1.5 py-0">
+                                        <Type className="h-2.5 w-2.5" />
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <Badge variant="secondary" className="bg-black/60 hover:bg-black/70 text-white border-none shadow-md">
+                                    <ExternalLink className="h-3 w-3" />
+                                  </Badge>
+                                </div>
+                                {/* Title/source at bottom */}
+                                {(image.title || image.source) && (
+                                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2 pt-4">
+                                    <p className="text-[10px] text-white/90 truncate leading-tight">
+                                      {image.title || image.source}
+                                    </p>
+                                  </div>
+                                )}
+                              </a>
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom" className="max-w-xs">
+                              <div className="space-y-1.5">
+                                {image.title && (
+                                  <p className="font-medium text-sm">{truncateString(image.title, 60)}</p>
+                                )}
+                                {hasDimensions && (
+                                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                    <Maximize2 className="h-3 w-3" />
+                                    {image.width} × {image.height}px
+                                    {orientation && <span className="text-xs">({orientation})</span>}
+                                  </p>
+                                )}
+                                {hasDescription && (
+                                  <div className="text-xs">
+                                    <p className="text-muted-foreground flex items-center gap-1 mb-0.5">
+                                      <Type className="h-3 w-3" /> Description:
+                                    </p>
+                                    <p className="text-foreground bg-muted/50 rounded px-1.5 py-1 font-mono text-[10px] max-h-20 overflow-auto">
+                                      {truncateString(image.description || '', 150)}
+                                    </p>
+                                  </div>
+                                )}
+                                {image.source && (
+                                  <p className="text-xs text-muted-foreground">Source: {image.source}</p>
+                                )}
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       );
                     });
                     })()}
@@ -406,7 +472,7 @@ export function WebSearchToolView({
                               href={result.url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-md font-medium text-blue-600 dark:text-blue-400 hover:underline line-clamp-1 mb-1"
+                              className="text-md font-medium text-zinc-700 dark:text-zinc-300 hover:underline line-clamp-1 mb-1"
                             >
                               {truncateString(cleanUrl(result.title), 50)}
                             </a>
@@ -474,52 +540,46 @@ export function WebSearchToolView({
         )}
       </CardContent>
 
-      <div className="px-4 py-2 h-10 bg-gradient-to-r from-zinc-50/90 to-zinc-100/90 dark:from-zinc-900/90 dark:to-zinc-800/90 backdrop-blur-sm border-t border-zinc-200 dark:border-zinc-800 flex justify-between items-center gap-4">
-        <div className="h-full flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
-          {!isStreaming && (
-            <>
-              {name === 'image-search' && (
-                <>
-                  {isBatch && batchResults ? (
-                    <Badge variant="outline" className="h-6 py-0.5">
-                      <ImageIcon className="h-3 w-3" />
-                      {batchResults.length} queries • {images.length} images
-                    </Badge>
-                  ) : images.length > 0 && (
-                <Badge variant="outline" className="h-6 py-0.5">
-                  <ImageIcon className="h-3 w-3" />
-                  {images.length} images
-                </Badge>
-                  )}
-                </>
-              )}
-              {name !== 'image-search' && (
-                <>
-                  {isBatch && batchResults ? (
-                    <Badge variant="outline" className="h-6 py-0.5">
-                      <Globe className="h-3 w-3" />
-                      {batchResults.length} queries • {searchResults.length} results
-                    </Badge>
-                  ) : searchResults.length > 0 && (
-                <Badge variant="outline" className="h-6 py-0.5">
-                  <Globe className="h-3 w-3" />
-                  {searchResults.length} results
-                </Badge>
-                  )}
-                </>
-              )}
-            </>
-          )}
-        </div>
-
-        <div className="text-xs text-zinc-500 dark:text-zinc-400">
-          {actualToolTimestamp && !isStreaming
-            ? formatTimestamp(actualToolTimestamp)
-            : actualAssistantTimestamp
-              ? formatTimestamp(actualAssistantTimestamp)
-              : ''}
-        </div>
-      </div>
+      <ToolViewFooter
+        assistantTimestamp={actualAssistantTimestamp}
+        toolTimestamp={actualToolTimestamp}
+        isStreaming={isStreaming}
+      >
+        {!isStreaming && (
+          <>
+            {name === 'image-search' && (
+              <>
+                {isBatch && batchResults ? (
+                  <Badge variant="outline" className="h-6 py-0.5">
+                    <ImageIcon className="h-3 w-3" />
+                    {batchResults.length} queries • {images.length} images
+                  </Badge>
+                ) : images.length > 0 && (
+                  <Badge variant="outline" className="h-6 py-0.5">
+                    <ImageIcon className="h-3 w-3" />
+                    {images.length} images
+                  </Badge>
+                )}
+              </>
+            )}
+            {name !== 'image-search' && (
+              <>
+                {isBatch && batchResults ? (
+                  <Badge variant="outline" className="h-6 py-0.5">
+                    <Globe className="h-3 w-3" />
+                    {batchResults.length} queries • {searchResults.length} results
+                  </Badge>
+                ) : searchResults.length > 0 && (
+                  <Badge variant="outline" className="h-6 py-0.5">
+                    <Globe className="h-3 w-3" />
+                    {searchResults.length} results
+                  </Badge>
+                )}
+              </>
+            )}
+          </>
+        )}
+      </ToolViewFooter>
     </Card>
   );
 } 

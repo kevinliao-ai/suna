@@ -1,23 +1,18 @@
+'use client';
+
 import React, { useState, useMemo } from 'react';
-import {
-  Presentation,
-  FileText,
-  Download,
-  CheckCircle,
-  AlertTriangle,
-  Loader2,
-  LucideIcon,
-} from 'lucide-react';
+import { Presentation, FileText, Download } from 'lucide-react';
+import { KortixLoader } from '@/components/ui/kortix-loader';
 import { ToolViewProps } from '../types';
 import { formatTimestamp } from '../utils';
 import { downloadPresentation, DownloadFormat } from '../utils/presentation-utils';
-import { toast } from 'sonner';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { toast } from '@/lib/toast';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { ToolViewIconTitle } from '../shared/ToolViewIconTitle';
+import { LoadingState } from '../shared/LoadingState';
 import { useAuth } from '@/components/AuthProvider';
 import { useDownloadRestriction } from '@/hooks/billing';
-import { cn } from '@/lib/utils';
 
 interface ExportToolViewProps extends ToolViewProps {
   onFileClick?: (filePath: string) => void;
@@ -25,40 +20,11 @@ interface ExportToolViewProps extends ToolViewProps {
 
 type ExportFormat = 'pptx' | 'pdf';
 
-interface FormatConfig {
-  icon: LucideIcon;
-  label: string;
-  description: string;
-  defaultExtension: string;
-  fileProperty: string;
-  downloadFormat: DownloadFormat;
-}
-
-const formatConfigs: Record<ExportFormat, FormatConfig> = {
-  pdf: {
-    icon: FileText,
-    label: 'PDF',
-    description: 'Best for sharing & printing',
-    defaultExtension: '.pdf',
-    fileProperty: 'pdf_file',
-    downloadFormat: DownloadFormat.PDF,
-  },
-  pptx: {
-    icon: Presentation,
-    label: 'PowerPoint',
-    description: 'Editable presentation',
-    defaultExtension: '.pptx',
-    fileProperty: 'pptx_file',
-    downloadFormat: DownloadFormat.PPTX,
-  },
-};
-
 export function ExportToolView({
   toolCall,
   toolResult,
   assistantTimestamp,
   toolTimestamp,
-  isSuccess = true,
   isStreaming = false,
   project,
 }: ExportToolViewProps) {
@@ -72,251 +38,210 @@ export function ExportToolView({
   const name = toolCall?.function_name?.replace(/_/g, '-').toLowerCase() || 'export-presentation';
   const isUnifiedExport = name === 'export-presentation' || name === 'export_presentation';
   
-  const {
-    presentationName,
-    exports,
-    totalSlides,
-    partialSuccess
-  } = useMemo(() => {
+  const { presentationName, exports, totalSlides } = useMemo(() => {
+    console.log('[ExportToolView] Parsing:', { toolResult, name, isUnifiedExport });
+    
     if (toolResult?.output) {
       try {
         const output = toolResult.output;
         const parsed = typeof output === 'string' ? JSON.parse(output) : output;
+        console.log('[ExportToolView] Parsed output:', parsed);
         
         if (isUnifiedExport && parsed.exports) {
           return {
             presentationName: parsed.presentation_name || toolCall?.arguments?.presentation_name,
-            exports: parsed.exports,
+            exports: parsed.exports as Record<ExportFormat, { file?: string; download_url?: string; stored_locally?: boolean }>,
             totalSlides: parsed.total_slides,
-            partialSuccess: parsed.partial_success
           };
         }
         
         const format: ExportFormat = name.includes('pdf') ? 'pdf' : 'pptx';
-        const config = formatConfigs[format];
         return {
           presentationName: parsed.presentation_name || toolCall?.arguments?.presentation_name,
           exports: {
             [format]: {
-              file: parsed[config.fileProperty] || parsed.pptx_file || parsed.pdf_file,
+              file: parsed.pptx_file || parsed.pdf_file,
               download_url: parsed.download_url,
               stored_locally: parsed.stored_locally
             }
-          },
+          } as Record<ExportFormat, { file?: string; download_url?: string; stored_locally?: boolean }>,
           totalSlides: parsed.total_slides,
         };
       } catch (e) {
-        console.error('Error parsing tool result:', e);
+        console.error('[ExportToolView] Parse error:', e);
         return { presentationName: toolCall?.arguments?.presentation_name };
       }
     }
     return { presentationName: toolCall?.arguments?.presentation_name };
   }, [toolResult, name, isUnifiedExport, toolCall?.arguments]);
   
-  const availableExports = exports ? Object.keys(exports) as ExportFormat[] : [];
-  const hasPptx = availableExports.includes('pptx');
-  const hasPdf = availableExports.includes('pdf');
+  const hasPptx = !!exports?.pptx;
+  const hasPdf = !!exports?.pdf;
+  
+  console.log('[ExportToolView] Exports:', { exports, hasPptx, hasPdf });
 
-  if (!toolCall) {
-    console.warn('ExportToolView: toolCall is undefined.');
-    return null;
-  }
+  if (!toolCall) return null;
 
-  const handleDownload = async (downloadFormat: DownloadFormat, format: ExportFormat) => {
+  const handleDownload = async (format: ExportFormat) => {
     if (isDownloadRestricted) {
       openUpgradeModal();
       return;
     }
-    if (!project?.sandbox?.sandbox_url || !presentationName) return;
+
+    const exportData = exports?.[format];
+    
+    // Try direct download first if we have download_url
+    if (exportData?.download_url && project?.sandbox?.id) {
+      try {
+        setDownloadingFormat(format);
+        
+        const ext = format === 'pdf' ? '.pdf' : '.pptx';
+        const rawFilename = exportData.download_url.split('/').pop() || `presentation${ext}`;
+        const filename = rawFilename.trim().replace(/[\r\n]+/g, '') || `presentation${ext}`;
+        
+        const headers: Record<string, string> = {};
+        if (session?.access_token) {
+          headers['Authorization'] = `Bearer ${session.access_token}`;
+        }
+        
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/sandboxes/${project.sandbox.id}/files/content?path=${encodeURIComponent(exportData.download_url)}`,
+          { headers }
+        );
+        
+        if (!response.ok) throw new Error(`Download failed: ${response.status}`);
+        
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        
+        toast.success(`Downloaded ${filename}`);
+        return;
+      } catch (error) {
+        console.error('Direct download failed, trying conversion:', error);
+      } finally {
+        setDownloadingFormat(null);
+      }
+    }
+    
+    // Fallback to conversion endpoint
+    if (!project?.sandbox?.sandbox_url || !presentationName) {
+      toast.error('Unable to download - missing sandbox or presentation info');
+      return;
+    }
 
     setDownloadingFormat(format);
     try {
+      const downloadFormat = format === 'pdf' ? DownloadFormat.PDF : DownloadFormat.PPTX;
       await downloadPresentation(
         downloadFormat,
         project.sandbox.sandbox_url, 
         `/workspace/presentations/${presentationName}`, 
         presentationName
       );
-      toast.success(`Downloaded ${format.toUpperCase()} successfully`);
+      toast.success(`Downloaded ${format.toUpperCase()}`);
     } catch (error) {
-      console.error(`Error downloading ${downloadFormat}:`, error);
+      console.error(`Download error:`, error);
       toast.error(`Failed to download: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setDownloadingFormat(null);
     }
   };
 
-  const handleDirectDownload = async (format: ExportFormat) => {
-    if (isDownloadRestricted) {
-      openUpgradeModal();
-      return;
-    }
-    
-    const exportData = exports?.[format];
-    if (!exportData?.download_url || !project?.sandbox?.id) return;
-    
-    try {
-      setDownloadingFormat(format);
-      
-      const config = formatConfigs[format];
-      const filename = exportData.download_url.split('/').pop() || `presentation${config.defaultExtension}`;
-      
-      const headers: Record<string, string> = {};
-      if (session?.access_token) {
-        headers['Authorization'] = `Bearer ${session.access_token}`;
-      }
-      
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/sandboxes/${project.sandbox.id}/files/content?path=${encodeURIComponent(exportData.download_url)}`,
-        { headers }
-      );
-      
-      if (!response.ok) {
-        throw new Error(`Failed to download: ${response.status}`);
-      }
-      
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-      
-      toast.success(`Downloaded ${filename}`);
-    } catch (error) {
-      console.error('Error downloading file:', error);
-      toast.error(`Failed to download: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    } finally {
-      setDownloadingFormat(null);
-    }
-  };
-
-  const renderDownloadButton = (format: ExportFormat) => {
-    const config = formatConfigs[format];
-    const Icon = config.icon;
-    const exportData = exports?.[format];
-    const isLoading = downloadingFormat === format;
-    
-    return (
-      <Button
-        key={format}
-        variant="outline"
-        onClick={() => exportData?.download_url ? handleDirectDownload(format) : handleDownload(config.downloadFormat, format)}
-        disabled={!!downloadingFormat || !exportData}
-        className={cn(
-          "h-auto py-3 px-4 flex items-center gap-3 justify-start w-full",
-          "bg-background hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors",
-          "border border-border"
-        )}
-      >
-        <div className="w-9 h-9 rounded-md bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center flex-shrink-0">
-          {isLoading ? (
-            <Loader2 className="h-4 w-4 animate-spin text-foreground" />
-          ) : (
-            <Icon className="h-4 w-4 text-foreground" />
-          )}
-        </div>
-        <div className="flex-1 text-left">
-          <div className="font-medium text-sm text-foreground">
-            {isLoading ? 'Downloading...' : `Download ${config.label}`}
-          </div>
-          <div className="text-xs text-muted-foreground font-normal">
-            {config.description}
-          </div>
-        </div>
-        <Download className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-      </Button>
-    );
-  };
-
-  // Streaming state
+  // Loading state
   if (isStreaming) {
     return (
-      <Card className="gap-0 flex border-0 shadow-none p-0 py-0 rounded-none flex-col overflow-hidden bg-card">
-        <CardHeader className="h-14 bg-zinc-50/80 dark:bg-zinc-900/80 backdrop-blur-sm border-b p-2 px-4">
+      <Card className="gap-0 flex border-0 shadow-none p-0 rounded-none flex-col h-full overflow-hidden bg-card">
+        <CardHeader className="h-14 bg-zinc-50/80 dark:bg-zinc-900/80 border-b p-2 px-4 flex-shrink-0">
           <div className="flex flex-row items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="relative p-2 rounded-lg bg-gradient-to-br from-zinc-500/20 to-zinc-600/10 border border-zinc-500/20">
-                <Presentation className="w-5 h-5 text-zinc-500 dark:text-zinc-400" />
-              </div>
-              <CardTitle className="text-base font-medium">
-                {presentationName || 'Export Presentation'}
-              </CardTitle>
-            </div>
-            <Badge className="h-6 bg-gradient-to-b from-blue-200 to-blue-100 text-blue-700 dark:from-blue-800/50 dark:to-blue-900/60 dark:text-blue-300 border-0">
-              <Loader2 className="h-3 w-3 animate-spin mr-1" />
-              Exporting
-            </Badge>
+            <ToolViewIconTitle icon={Download} title="Export Presentation" />
           </div>
         </CardHeader>
-        <CardContent className="p-6">
-          <div className="flex items-center justify-center gap-3 py-4">
-            <Loader2 className="h-5 w-5 text-muted-foreground animate-spin" />
-            <span className="text-sm text-muted-foreground">
-              {presentationName || 'Processing...'}
-            </span>
-          </div>
+        <CardContent className="p-0 flex-1">
+          <LoadingState
+            icon={Download}
+            iconColor="text-zinc-500"
+            bgColor="bg-zinc-50 dark:bg-zinc-900"
+            title="Exporting"
+            filePath={presentationName || 'presentation'}
+          />
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className="gap-0 flex border-0 shadow-none p-0 py-0 rounded-none flex-col overflow-hidden bg-card">
-      <CardHeader className="h-14 bg-zinc-50/80 dark:bg-zinc-900/80 backdrop-blur-sm border-b p-2 px-4">
+    <Card className="gap-0 flex border-0 shadow-none p-0 rounded-none flex-col h-full overflow-hidden bg-card">
+      {/* Header */}
+      <CardHeader className="h-14 bg-zinc-50/80 dark:bg-zinc-900/80 border-b p-2 px-4 flex-shrink-0">
         <div className="flex flex-row items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="relative p-2 rounded-lg bg-gradient-to-br from-zinc-500/20 to-zinc-600/10 border border-zinc-500/20">
-              <Presentation className="w-5 h-5 text-zinc-500 dark:text-zinc-400" />
-            </div>
-            <CardTitle className="text-base font-medium">
-              {presentationName || 'Export Presentation'}
-            </CardTitle>
-          </div>
-          <Badge
-            className={cn(
-              "h-6 border-0",
-              isSuccess
-                ? "bg-gradient-to-b from-emerald-200 to-emerald-100 text-emerald-700 dark:from-emerald-800/50 dark:to-emerald-900/60 dark:text-emerald-300"
-                : "bg-gradient-to-b from-rose-200 to-rose-100 text-rose-700 dark:from-rose-800/50 dark:to-rose-900/60 dark:text-rose-300"
-            )}
-          >
-            {isSuccess ? (
-              <CheckCircle className="h-3 w-3 mr-1" />
-            ) : (
-              <AlertTriangle className="h-3 w-3 mr-1" />
-            )}
-            {partialSuccess ? 'Partial' : (isSuccess ? 'Exported' : 'Failed')}
-          </Badge>
+          <ToolViewIconTitle 
+            icon={Download} 
+            title={presentationName ? `Export: ${presentationName}` : 'Export Presentation'} 
+          />
+          {totalSlides && (
+            <span className="text-xs text-muted-foreground">{totalSlides} slides</span>
+          )}
         </div>
       </CardHeader>
 
-      <CardContent className="p-4">
-        <div className="space-y-2">
-          {hasPdf && renderDownloadButton('pdf')}
-          {hasPptx && renderDownloadButton('pptx')}
-          
-          {!hasPdf && !hasPptx && (
-            <div className="text-center py-6 text-muted-foreground">
-              <AlertTriangle className="h-5 w-5 mx-auto mb-2" />
-              <p className="text-sm">No exports available</p>
-            </div>
-          )}
+      {/* Download Buttons */}
+      <CardContent className="p-4 flex-1">
+        <div className="flex gap-3">
+          {/* PDF Button */}
+          <Button
+            onClick={() => handleDownload('pdf')}
+            disabled={!!downloadingFormat || !hasPdf}
+            className="flex-1 h-12 bg-black hover:bg-zinc-800 text-white dark:bg-white dark:hover:bg-zinc-200 dark:text-black font-medium"
+          >
+            {downloadingFormat === 'pdf' ? (
+              <KortixLoader customSize={16} variant="white" className="mr-2 dark:hidden" />
+            ) : (
+              <FileText className="h-4 w-4 mr-2" />
+            )}
+            {downloadingFormat === 'pdf' ? (
+              <KortixLoader customSize={16} variant="black" className="mr-2 hidden dark:flex" />
+            ) : null}
+            Download PDF
+          </Button>
+
+          {/* PPTX Button */}
+          <Button
+            onClick={() => handleDownload('pptx')}
+            disabled={!!downloadingFormat || !hasPptx}
+            className="flex-1 h-12 bg-black hover:bg-zinc-800 text-white dark:bg-white dark:hover:bg-zinc-200 dark:text-black font-medium"
+          >
+            {downloadingFormat === 'pptx' ? (
+              <KortixLoader customSize={16} variant="white" className="mr-2 dark:hidden" />
+            ) : (
+              <Presentation className="h-4 w-4 mr-2" />
+            )}
+            {downloadingFormat === 'pptx' ? (
+              <KortixLoader customSize={16} variant="black" className="mr-2 hidden dark:flex" />
+            ) : null}
+            Download PPTX
+          </Button>
         </div>
+
+        {/* Show message if no exports available */}
+        {!hasPdf && !hasPptx && (
+          <p className="text-sm text-muted-foreground text-center mt-3">
+            No export files available yet
+          </p>
+        )}
       </CardContent>
 
-      {/* Footer */}
-      <div className="px-4 py-2 h-10 bg-gradient-to-r from-zinc-50/90 to-zinc-100/90 dark:from-zinc-900/90 dark:to-zinc-800/90 border-t border-zinc-200 dark:border-zinc-800 flex justify-end items-center">
-        <div className="text-xs text-zinc-500 dark:text-zinc-400">
-          {toolTimestamp && !isStreaming
-            ? formatTimestamp(toolTimestamp)
-            : assistantTimestamp
-              ? formatTimestamp(assistantTimestamp)
-              : ''}
-        </div>
+      {/* Footer - pushed to bottom */}
+      <div className="px-4 py-2 h-10 bg-zinc-50/80 dark:bg-zinc-900/80 border-t flex justify-end items-center flex-shrink-0 mt-auto">
+        <span className="text-xs text-muted-foreground">
+          {toolTimestamp ? formatTimestamp(toolTimestamp) : assistantTimestamp ? formatTimestamp(assistantTimestamp) : ''}
+        </span>
       </div>
     </Card>
   );

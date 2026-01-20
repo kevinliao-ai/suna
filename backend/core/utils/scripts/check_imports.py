@@ -34,9 +34,9 @@ def main():
     """Check critical imports."""
     test_cases = [
         ("core.services.supabase", "from core.services.supabase import DBConnection"),
-        ("core.agents.runs", "from core.agents.runs import router"),
+        ("core.agents.api", "from core.agents.api import router"),
         ("core.threads.api", "from core.threads.api import router"),
-        ("core.worker.handlers", "from core.worker.handlers import get_handlers"),
+        ("core.memory.background_jobs", "from core.memory.background_jobs import start_memory_extraction"),
     ]
     
     errors = []

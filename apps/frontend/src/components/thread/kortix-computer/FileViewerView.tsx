@@ -3,8 +3,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import {
-  Loader,
-  Loader2,
   AlertTriangle,
   Check,
   RotateCcw,
@@ -18,6 +16,7 @@ import {
   FileText,
   Download,
 } from 'lucide-react';
+import { KortixLoader } from '@/components/ui/kortix-loader';
 import {
   EditableFileRenderer,
   getEditableFileType,
@@ -25,7 +24,7 @@ import {
   type MarkdownEditorControls,
 } from '@/components/file-editors';
 import { Project } from '@/lib/api/threads';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { useAuth } from '@/components/AuthProvider';
 import {
   useFileContentQuery,
@@ -153,6 +152,7 @@ export function FileViewerView({
     currentFileIndex,
     setCurrentFileIndex,
     goBackToBrowser,
+    navigateToPath,
     setUnsavedContent,
     getUnsavedContent,
     clearUnsavedContent,
@@ -246,7 +246,99 @@ export function FileViewerView({
   // File type checks
   const isMarkdownFile = fileExtension === 'md' || fileExtension === 'markdown';
   const isHtmlFile = fileExtension === 'html' || fileExtension === 'htm';
-  const isPresentationFolder = filePath.includes('/presentations/') && !filePath.endsWith('/presentations');
+  
+  // Check if path is a presentation slide file (e.g., presentations/[name]/slide_01.html)
+  const presentationSlideInfo = useMemo(() => {
+    const slideMatch = filePath.match(/\/presentations\/([^\/]+)\/slide_(\d+)\.html$/i);
+    if (slideMatch) {
+      return {
+        isSlide: true,
+        presentationName: slideMatch[1],
+        slideNumber: parseInt(slideMatch[2], 10),
+      };
+    }
+    return { isSlide: false, presentationName: null, slideNumber: null };
+  }, [filePath]);
+
+  // Check if path is a potential presentation folder (direct child of /presentations/, not a file)
+  const presentationFolderInfo = useMemo(() => {
+    // If it's a slide file, it's not a folder
+    if (presentationSlideInfo.isSlide) {
+      return { isFolder: false, presentationName: null };
+    }
+    
+    if (!filePath.includes('/presentations/')) {
+      return { isFolder: false, presentationName: null };
+    }
+    if (filePath.endsWith('/presentations')) {
+      return { isFolder: false, presentationName: null };
+    }
+    
+    // If filename has an extension with common file types, it's a file not a folder
+    if (fileName.includes('.') && /\.(png|jpg|jpeg|gif|svg|webp|html|css|js|ts|json|md|txt|pdf|mp4|mp3|wav|zip|tar|gz)$/i.test(fileName)) {
+      return { isFolder: false, presentationName: null };
+    }
+    
+    // Check if it's a direct child of /presentations/ (only one path segment after presentations)
+    const pathParts = filePath.split('/').filter(Boolean);
+    const presentationsIndex = pathParts.indexOf('presentations');
+    
+    // Should have exactly one segment after 'presentations'
+    // e.g., ["workspace", "presentations", "my_presentation"] - presentationsIndex is 1, length is 3
+    if (presentationsIndex >= 0 && presentationsIndex === pathParts.length - 2) {
+      return { isFolder: true, presentationName: pathParts[pathParts.length - 1] };
+    }
+    
+    return { isFolder: false, presentationName: null };
+  }, [filePath, fileName, presentationSlideInfo.isSlide]);
+
+  // Validate presentation folder by checking for metadata.json
+  const [isFolderValidated, setIsFolderValidated] = useState<boolean | null>(null);
+  const folderValidationRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    // Only validate folders, not slide files
+    if (!presentationFolderInfo.isFolder || !presentationFolderInfo.presentationName || !project?.sandbox?.sandbox_url) {
+      setIsFolderValidated(null);
+      folderValidationRef.current = null;
+      return;
+    }
+
+    const validationKey = presentationFolderInfo.presentationName;
+    
+    // Skip if already validated this folder
+    if (folderValidationRef.current === validationKey && isFolderValidated !== null) {
+      return;
+    }
+
+    const validateFolder = async () => {
+      const sandboxUrl = project.sandbox.sandbox_url;
+      const sanitizedName = presentationFolderInfo.presentationName!.replace(/[^a-zA-Z0-9\-_]/g, '').toLowerCase();
+      const metadataUrl = `${sandboxUrl}/workspace/presentations/${sanitizedName}/metadata.json?t=${Date.now()}`;
+
+      try {
+        const response = await fetch(metadataUrl, {
+          method: 'HEAD',
+          cache: 'no-cache',
+        });
+        
+        folderValidationRef.current = validationKey;
+        setIsFolderValidated(response.ok);
+      } catch {
+        folderValidationRef.current = validationKey;
+        setIsFolderValidated(false);
+      }
+    };
+
+    validateFolder();
+  }, [presentationFolderInfo.isFolder, presentationFolderInfo.presentationName, project?.sandbox?.sandbox_url, isFolderValidated]);
+
+  // Determine if this is a valid presentation
+  // - Slide files: always valid (the file existing proves it's a real presentation)
+  // - Folders: must have metadata.json validated
+  const isValidPresentationFolder = presentationFolderInfo.isFolder && isFolderValidated === true;
+  const isPresentation = presentationSlideInfo.isSlide || isValidPresentationFolder;
+  const presentationName = presentationSlideInfo.presentationName || (isValidPresentationFolder ? presentationFolderInfo.presentationName : null);
 
   // Multi-file navigation
   const hasMultipleFiles = filePathList && filePathList.length > 1;
@@ -747,26 +839,37 @@ export function FileViewerView({
 
   // Handle fullscreen for presentations
   const handleOpenPresentationFullscreen = useCallback(() => {
-    if (!project?.sandbox?.sandbox_url) return;
+    if (!project?.sandbox?.sandbox_url || !presentationName) return;
 
-    // Extract presentation name from path
-    const pathParts = filePath.split('/');
-    const presentationsIndex = pathParts.indexOf('presentations');
-    if (presentationsIndex >= 0 && presentationsIndex < pathParts.length - 1) {
-      const presentationName = pathParts[presentationsIndex + 1];
-      presentationViewerStore.openPresentation(presentationName, project.sandbox.sandbox_url, 1);
+    // Use slide number if available, otherwise start at slide 1
+    const initialSlide = presentationSlideInfo.slideNumber || 1;
+    presentationViewerStore.openPresentation(presentationName, project.sandbox.sandbox_url, initialSlide);
+  }, [presentationName, project?.sandbox?.sandbox_url, presentationViewerStore, presentationSlideInfo.slideNumber]);
+
+  // If folder validation failed (no metadata.json), navigate into it as a regular folder
+  useEffect(() => {
+    if (presentationFolderInfo.isFolder && isFolderValidated === false) {
+      navigateToPath(filePath);
     }
-  }, [filePath, project?.sandbox?.sandbox_url, presentationViewerStore]);
+  }, [presentationFolderInfo.isFolder, isFolderValidated, filePath, navigateToPath]);
 
-  // Render presentation viewer for presentation folders
-  if (isPresentationFolder) {
-    // Extract presentation name from path
-    const pathParts = filePath.split('/');
-    const presentationsIndex = pathParts.indexOf('presentations');
-    const presentationName = presentationsIndex >= 0 && presentationsIndex < pathParts.length - 1
-      ? pathParts[presentationsIndex + 1]
-      : '';
+  // Show loading state while validating a potential presentation folder
+  if (presentationFolderInfo.isFolder && isFolderValidated === null) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center bg-background">
+        <KortixLoader customSize={32} />
+        <p className="text-sm text-muted-foreground mt-4">Checking folder...</p>
+      </div>
+    );
+  }
 
+  // If folder validation failed, show nothing while navigation effect runs
+  if (presentationFolderInfo.isFolder && isFolderValidated === false) {
+    return null;
+  }
+
+  // Render presentation viewer for validated presentations (folders with metadata.json, or slide files)
+  if (isPresentation && presentationName) {
     return (
       <div className="h-full flex flex-col overflow-hidden bg-background">
         {/* Header */}
@@ -827,7 +930,10 @@ export function FileViewerView({
               success: true,
               output: {
                 presentation_name: presentationName,
-                presentation_path: filePath,
+                presentation_path: presentationSlideInfo.isSlide 
+                  ? `/workspace/presentations/${presentationName}`
+                  : filePath,
+                ...(presentationSlideInfo.slideNumber && { slide_number: presentationSlideInfo.slideNumber }),
               },
             }}
             isSuccess={true}
@@ -910,14 +1016,14 @@ export function FileViewerView({
                     className="h-8 w-8 p-0 bg-transparent border border-border rounded-xl text-muted-foreground"
                     title="Saving..."
                   >
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <KortixLoader size="small" />
                   </Button>
                 ) : mdEditorControls.saveState === 'saved' ? (
                   <Button
                     variant="outline"
                     size="sm"
                     disabled
-                    className="h-8 w-8 p-0 bg-transparent border border-green-500/20 rounded-xl text-green-600"
+                    className="h-8 w-8 p-0 bg-transparent border border-zinc-500/20 rounded-xl text-zinc-600 dark:text-zinc-400"
                     title="Saved"
                   >
                     <Check className="h-4 w-4" />
@@ -927,7 +1033,7 @@ export function FileViewerView({
                     variant="outline"
                     size="sm"
                     onClick={mdEditorControls.save}
-                    className="h-8 w-8 p-0 bg-transparent border border-red-500/20 rounded-xl text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
+                    className="h-8 w-8 p-0 bg-transparent border border-zinc-500/20 rounded-xl text-zinc-500 hover:text-zinc-600 hover:bg-zinc-50 dark:hover:bg-zinc-950/20"
                     title="Retry save"
                   >
                     <AlertCircle className="h-4 w-4" />
@@ -978,7 +1084,7 @@ export function FileViewerView({
                 className="h-8 px-3 gap-1.5 text-xs bg-transparent border border-border rounded-xl text-muted-foreground hover:text-foreground hover:bg-accent/50"
               >
                 {isLoadingVersions ? (
-                  <Loader className="h-3.5 w-3.5 animate-spin" />
+                  <KortixLoader size="small" />
                 ) : (
                   <svg className="h-3.5 w-3.5 text-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -1000,7 +1106,7 @@ export function FileViewerView({
             <DropdownMenuContent align="end" className="max-h-[400px] overflow-y-auto w-[320px]">
               {isLoadingVersions ? (
                 <div className="flex items-center justify-center py-8">
-                  <Loader className="h-5 w-5 animate-spin text-muted-foreground" />
+                  <KortixLoader size="small" />
                   <span className="ml-2 text-sm text-muted-foreground">Loading history...</span>
                 </div>
               ) : fileVersions.length === 0 ? (
@@ -1111,7 +1217,7 @@ export function FileViewerView({
               title="Download file"
             >
               {isDownloading ? (
-                <Loader className="h-4 w-4 animate-spin" />
+                <KortixLoader size="small" />
               ) : (
                 <Download className="h-4 w-4" />
               )}
@@ -1153,7 +1259,7 @@ export function FileViewerView({
           
           return (isCachedFileLoading || isLoadingVersionContent || (hasError && isStillRetrying)) ? (
           <div className="h-full w-full max-w-full flex flex-col items-center justify-center min-w-0">
-            <Loader className="h-8 w-8 animate-spin text-primary mb-3" />
+            <KortixLoader size="medium" className="mb-3" />
             <p className="text-sm text-muted-foreground">
               {isLoadingVersionContent ? 'Loading version...' : `Loading ${fileName}`}
             </p>
@@ -1170,7 +1276,7 @@ export function FileViewerView({
         ) : (contentError && !isStillRetrying) ? (
           <div className="h-full w-full flex items-center justify-center p-4">
             <div className="max-w-md p-6 text-center border rounded-lg bg-muted/10">
-              <AlertTriangle className="h-10 w-10 text-orange-500 mx-auto mb-4" />
+              <AlertTriangle className="h-10 w-10 text-zinc-500 dark:text-zinc-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium mb-2">Error Loading File</h3>
               <p className="text-sm text-muted-foreground mb-4">{contentError}</p>
               <div className="flex justify-center gap-3">
@@ -1274,13 +1380,13 @@ export function FileViewerView({
           </DialogHeader>
 
           <div className="flex items-start gap-2 p-2 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30">
-            <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-500 mt-0.5 shrink-0" />
-            <span className="text-xs text-red-700 dark:text-red-400">This will replace current files with the selected version snapshot. Your current changes will be overwritten.</span>
+            <AlertTriangle className="h-4 w-4 text-zinc-600 dark:text-zinc-500 mt-0.5 shrink-0" />
+            <span className="text-xs text-zinc-700 dark:text-zinc-400">This will replace current files with the selected version snapshot. Your current changes will be overwritten.</span>
           </div>
 
           {revertLoadingInfo ? (
             <div className="py-6 flex items-center justify-center">
-              <Loader className="h-6 w-6 animate-spin" />
+              <KortixLoader size="medium" />
             </div>
           ) : revertCommitInfo ? (
             <div className="mt-2">
@@ -1371,7 +1477,7 @@ export function FileViewerView({
           <DialogFooter>
             <Button variant="ghost" onClick={() => setRevertModalOpen(false)} disabled={revertInProgress}>Cancel</Button>
             <Button onClick={performRevert} disabled={revertInProgress || (revertMode === 'single' && !revertCurrentRelativePath)}>
-              {revertInProgress ? (<><Loader className="h-4 w-4 animate-spin mr-2" />Restoring...</>) : 'Restore'}
+              {revertInProgress ? (<><KortixLoader size="small" className="mr-2" />Restoring...</>) : 'Restore'}
             </Button>
           </DialogFooter>
 

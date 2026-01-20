@@ -1,8 +1,9 @@
 from typing import Dict, List
-from core.services.supabase import DBConnection
 from core.utils.cache import Cache
 from core.utils.logger import logger
 from core.billing.shared.config import TIERS, TRIAL_TIER
+from core.billing import repo as billing_repo
+
 
 class TierHandler:
     @staticmethod
@@ -11,36 +12,28 @@ class TierHandler:
         t_start = time.time()
         
         if not skip_cache:
-            # Try Redis cache first (5 min TTL - faster)
             try:
                 from core.cache.runtime_cache import get_cached_tier_info
                 redis_cached = await get_cached_tier_info(account_id)
                 if redis_cached:
-                    logger.debug(f"⚡ [TIER] Redis cache hit for {account_id} ({(time.time() - t_start) * 1000:.1f}ms)")
+                    logger.info(f"[TIER] Cache hit for {account_id[:8]}... tier={redis_cached.get('name')} thread_limit={redis_cached.get('thread_limit')} project_limit={redis_cached.get('project_limit')}")
                     return redis_cached
             except Exception:
-                pass  # Fall through to legacy cache
+                pass
             
-            # Fallback to legacy Cache
             cache_key = f"subscription_tier:{account_id}"
             cached = await Cache.get(cache_key)
             if cached:
                 return cached
         
-        db = DBConnection()
-        client = await db.client
-
-        credit_result = await client.from_('credit_accounts')\
-            .select('tier, trial_status')\
-            .eq('account_id', account_id)\
-            .execute()
+        credit_result = await billing_repo.get_credit_account_subscription_info(account_id)
         
         tier_name = 'none'
         trial_status = None
         
-        if credit_result.data and len(credit_result.data) > 0:
-            tier_name = credit_result.data[0].get('tier', 'none')
-            trial_status = credit_result.data[0].get('trial_status')
+        if credit_result:
+            tier_name = credit_result.get('tier', 'none')
+            trial_status = credit_result.get('trial_status')
         
         if trial_status == 'active' and tier_name == 'none':
             tier_name = TRIAL_TIER
@@ -63,7 +56,8 @@ class TierHandler:
             'is_trial': trial_status == 'active'
         }
         
-        # Cache in both Redis (5 min) and legacy cache (60s)
+        logger.info(f"[TIER] Fresh fetch for {account_id[:8]}... tier={tier_name} thread_limit={tier_obj.thread_limit} project_limit={tier_obj.project_limit}")
+        
         try:
             from core.cache.runtime_cache import set_cached_tier_info
             await set_cached_tier_info(account_id, tier_info)

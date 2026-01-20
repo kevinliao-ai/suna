@@ -22,7 +22,6 @@ import {
   KeyRound,
   Plug,
   Zap,
-  Shield,
   DollarSign,
   Users,
   BarChart3,
@@ -31,6 +30,7 @@ import {
   MessageSquare,
   Heart,
   LifeBuoy,
+  AlertTriangle,
 } from 'lucide-react';
 import { useAccounts } from '@/hooks/account';
 import { useAccountState } from '@/hooks/billing';
@@ -441,14 +441,6 @@ export function NavUserWithTeams({
                   <DropdownMenuGroup>
                     {user.isAdmin && (
                       <DropdownMenuItem asChild>
-                        <Link href="/admin/billing" className="gap-2 p-2">
-                          <Shield className="h-4 w-4" />
-                          <span>Admin Panel</span>
-                        </Link>
-                      </DropdownMenuItem>
-                    )}
-                    {user.isAdmin && (
-                      <DropdownMenuItem asChild>
                         <Link href="/admin/feedback" className="gap-2 p-2">
                           <MessageSquare className="h-4 w-4" />
                           <span>User Feedback</span>
@@ -468,6 +460,38 @@ export function NavUserWithTeams({
                         <Link href="/admin/notifications" className="gap-2 p-2">
                           <Bell className="h-4 w-4" />
                           <span>Notifications</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
+                    {user.isAdmin && (
+                      <DropdownMenuItem asChild>
+                        <Link href="/admin/utils" className="gap-2 p-2">
+                          <AlertTriangle className="h-4 w-4" />
+                          <span>Admin Utils</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
+                    {user.isAdmin && (
+                      <DropdownMenuItem asChild>
+                        <Link href="/admin/sandbox-pool" className="gap-2 p-2">
+                          <Bell className="h-4 w-4" />
+                          <span>Sandbox Pool</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
+                    {user.isAdmin && (
+                      <DropdownMenuItem asChild>
+                        <Link href="/admin/stateless" className="gap-2 p-2">
+                          <Bell className="h-4 w-4" />
+                          <span>Stateless</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
+                    {user.isAdmin && (
+                      <DropdownMenuItem asChild>
+                        <Link href="/admin/stress-test" className="gap-2 p-2">
+                          <Zap className="h-4 w-4" />
+                          <span>Stress Test</span>
                         </Link>
                       </DropdownMenuItem>
                     )}

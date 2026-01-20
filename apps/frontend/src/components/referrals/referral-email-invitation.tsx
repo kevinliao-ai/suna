@@ -3,11 +3,12 @@
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Mail, X, Loader2, Check } from 'lucide-react';
+import { Mail, X, Check } from 'lucide-react';
+import { KortixLoader } from '@/components/ui/kortix-loader';
 import { useSendReferralEmails } from '@/hooks/referrals/use-referrals';
 import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 
 interface ReferralEmailProps {
   className?: string;
@@ -149,7 +150,7 @@ export function ReferralEmailInvitation({ className }: ReferralEmailProps) {
               )}
             >
               {status === 'sending' && (
-                <Loader2 className="h-3 w-3 animate-spin" />
+                <KortixLoader size="small" />
               )}
               {status === 'sent' && (
                 <Check className="h-3 w-3" />
@@ -194,7 +195,7 @@ export function ReferralEmailInvitation({ className }: ReferralEmailProps) {
           disabled={!hasUnsentEmails || isSending}
         >
           {isSending ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <KortixLoader size="small" />
           ) : (
             <Mail className="h-4 w-4 sm:mr-1.5" />
           )}

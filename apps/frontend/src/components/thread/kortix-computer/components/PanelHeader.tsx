@@ -1,14 +1,15 @@
 'use client';
 
 import { memo, useState, useEffect } from 'react';
-import { CircleDashed, Minimize2, Maximize2, Wifi, Battery, BatteryLow, BatteryMedium, BatteryFull, BatteryCharging } from 'lucide-react';
+import { Minimize2, Wifi, BatteryLow, BatteryMedium, BatteryFull, BatteryCharging, FolderOpen, Activity } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DrawerTitle } from '@/components/ui/drawer';
 import { ViewType } from '@/stores/kortix-computer-store';
-import { KortixLogo } from '@/components/sidebar/kortix-logo';
 import { cn } from '@/lib/utils';
 import { ViewToggle } from './ViewToggle';
 import { ToolbarButtons } from './ToolbarButtons';
+import Image from 'next/image';
+import { motion } from 'framer-motion';
 
 function useBatteryStatus() {
   const [batteryInfo, setBatteryInfo] = useState<{ level: number; charging: boolean } | null>(null);
@@ -97,6 +98,70 @@ function StatusBar() {
   );
 }
 
+interface ActionFilesSwitcherProps {
+  currentView: ViewType;
+  onViewChange: (view: ViewType) => void;
+  size?: 'sm' | 'md';
+}
+
+function ActionFilesSwitcher({ currentView, onViewChange, size = 'md' }: ActionFilesSwitcherProps) {
+  const isAction = currentView === 'tools';
+  const isFiles = currentView === 'files';
+  
+  // Size variants
+  const config = size === 'sm' 
+    ? { height: 32, padding: 3, btnWidth: 72, iconSize: 12, fontSize: 11 }
+    : { height: 36, padding: 3, btnWidth: 80, iconSize: 14, fontSize: 12 };
+  
+  const totalWidth = config.btnWidth * 2 + config.padding * 2;
+
+  return (
+    <div 
+      className="relative flex items-center bg-zinc-100 dark:bg-zinc-800/90 rounded-full"
+      style={{ 
+        height: config.height, 
+        width: totalWidth,
+        padding: config.padding 
+      }}
+    >
+      {/* Sliding indicator */}
+      <motion.div
+        className="absolute top-[3px] bottom-[3px] rounded-full bg-white dark:bg-zinc-900 shadow-sm"
+        style={{ width: config.btnWidth }}
+        initial={false}
+        animate={{ x: isAction ? 0 : config.btnWidth }}
+        transition={{ type: "spring", stiffness: 500, damping: 35 }}
+      />
+      
+      {/* Actions button */}
+      <button
+        onClick={() => onViewChange('tools')}
+        className={cn(
+          "relative z-10 flex items-center justify-center gap-1.5 rounded-full font-medium transition-colors cursor-pointer",
+          isAction ? "text-zinc-900 dark:text-zinc-100" : "text-zinc-400 dark:text-zinc-500"
+        )}
+        style={{ width: config.btnWidth, height: config.height - config.padding * 2, fontSize: config.fontSize }}
+      >
+        <Activity style={{ width: config.iconSize, height: config.iconSize }} strokeWidth={2.5} />
+        <span>Actions</span>
+      </button>
+      
+      {/* Files button */}
+      <button
+        onClick={() => onViewChange('files')}
+        className={cn(
+          "relative z-10 flex items-center justify-center gap-1.5 rounded-full font-medium transition-colors cursor-pointer",
+          isFiles ? "text-zinc-900 dark:text-zinc-100" : "text-zinc-400 dark:text-zinc-500"
+        )}
+        style={{ width: config.btnWidth, height: config.height - config.padding * 2, fontSize: config.fontSize }}
+      >
+        <FolderOpen style={{ width: config.iconSize, height: config.iconSize }} strokeWidth={2.5} />
+        <span>Files</span>
+      </button>
+    </div>
+  );
+}
+
 interface PanelHeaderProps {
   agentName?: string;
   onClose: () => void;
@@ -128,21 +193,34 @@ export const PanelHeader = memo(function PanelHeader({
   onToggleSuiteMode,
   hideViewToggle = false,
 }: PanelHeaderProps) {
-  const title = "Kortix Computer";
-
   if (variant === 'drawer') {
     return (
       <div className="h-14 flex-shrink-0 px-4 flex items-center justify-between border-b border-border">
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 flex items-center justify-center">
-            <KortixLogo size={18}/>
-          </div>
-          <DrawerTitle className="text-sm font-semibold text-foreground">
-            {title}
-          </DrawerTitle>
+        <div className="flex items-center">
+          <Image
+            src="/kortix-computer-white.svg"
+            alt="Kortix Computer"
+            width={140}
+            height={16}
+            className="hidden dark:block"
+            priority
+          />
+          <Image
+            src="/kortix-computer-black.svg"
+            alt="Kortix Computer"
+            width={140}
+            height={16}
+            className="block dark:hidden"
+            priority
+          />
+          <DrawerTitle className="sr-only">Kortix Computer</DrawerTitle>
         </div>
         <div className="flex items-center gap-2">
-          <ViewToggle currentView={currentView} onViewChange={onViewChange} showFilesTab={showFilesTab} />
+          <ActionFilesSwitcher 
+            currentView={currentView} 
+            onViewChange={onViewChange} 
+            size="sm"
+          />
           <Button
             variant="ghost"
             size="icon"
@@ -172,26 +250,32 @@ export const PanelHeader = memo(function PanelHeader({
       </div>
       <div 
         onClick={() => onMaximize?.()} 
-        className="flex items-center justify-center gap-1.5 cursor-pointer select-none hover:opacity-80 transition-opacity"
+        className="flex items-center justify-center cursor-pointer select-none hover:opacity-80 transition-opacity"
       >
-        <div className="w-5 h-5 flex items-center justify-center">
-          <KortixLogo size={14}/>
-        </div>
-        <h2 className="text-sm font-semibold text-foreground">
-          {title}
-        </h2>
+        <Image
+          src="/kortix-computer-white.svg"
+          alt="Kortix Computer"
+          width={140}
+          height={16}
+          className="hidden dark:block"
+          priority
+        />
+        <Image
+          src="/kortix-computer-black.svg"
+          alt="Kortix Computer"
+          width={140}
+          height={16}
+          className="block dark:hidden"
+          priority
+        />
       </div>
       
       <div className="flex items-center justify-end gap-2">
-        {isStreaming && (
-          <div className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-primary/10 text-primary flex items-center gap-1">
-            <CircleDashed className="h-2.5 w-2.5 animate-spin" />
-            <span>Running</span>
-          </div>
-        )}
-        {!hideViewToggle && (
-          <ViewToggle currentView={currentView} onViewChange={onViewChange} showFilesTab={showFilesTab} />
-        )}
+        <ActionFilesSwitcher 
+          currentView={currentView} 
+          onViewChange={onViewChange} 
+          size={isMaximized ? 'sm' : 'md'}
+        />
         {isMaximized && (
           <>
             <StatusBar />

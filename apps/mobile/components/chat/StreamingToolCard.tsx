@@ -2,8 +2,10 @@ import React, { useMemo, useRef, useEffect, useState, useCallback } from 'react'
 import { View, ScrollView, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { Text } from '@/components/ui/text';
 import { Icon } from '@/components/ui/icon';
-import { CircleDashed, CheckCircle2 } from 'lucide-react-native';
+import { CheckCircle2, CircleDashed } from 'lucide-react-native';
+import { KortixLoader } from '@/components/ui/kortix-loader';
 import { getUserFriendlyToolName } from '@agentpress/shared';
+// NOTE: useSmoothText removed - displaying content immediately (following frontend pattern)
 import { getToolIcon } from '@/lib/icons/tool-icons';
 
 const STREAMABLE_TOOLS = {
@@ -170,18 +172,21 @@ export const StreamingToolCard = React.memo(function StreamingToolCard({ content
     const displayName = getUserFriendlyToolName(rawToolName);
     const IconComponent = getToolIcon(rawToolName);
     const primaryParam = extractPrimaryParameter(content);
-    const streamingContent = extractStreamingContent(content, displayName);
-    const shouldShowContent = isStreamableTool(displayName) && streamingContent.length > 0;
+    const rawStreamingContent = extractStreamingContent(content, displayName);
+    const shouldShowContent = isStreamableTool(displayName) && rawStreamingContent.length > 0;
 
     return {
       rawToolName,
       displayName,
       IconComponent,
       primaryParam,
-      streamingContent,
+      rawStreamingContent,
       shouldShowContent,
     };
   }, [content]);
+
+  // Display tool streaming content immediately (following frontend pattern - no artificial delay)
+  const smoothStreamingContent = toolInfo?.rawStreamingContent || '';
 
   // Track if user has scrolled away from bottom
   const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -193,10 +198,10 @@ export const StreamingToolCard = React.memo(function StreamingToolCard({ content
 
   // Only auto-scroll if user hasn't scrolled up
   useEffect(() => {
-    if (scrollViewRef.current && toolInfo?.streamingContent && !isUserScrolledUp) {
+    if (scrollViewRef.current && smoothStreamingContent && !isUserScrolledUp) {
       scrollViewRef.current.scrollToEnd({ animated: false });
     }
-  }, [toolInfo?.streamingContent, isUserScrolledUp]);
+  }, [smoothStreamingContent, isUserScrolledUp]);
 
   if (!toolInfo) {
     const fallbackIsCompleted = propIsCompleted || 
@@ -215,13 +220,13 @@ export const StreamingToolCard = React.memo(function StreamingToolCard({ content
         {fallbackIsCompleted ? (
           <Icon as={CheckCircle2} size={16} className="text-emerald-500" />
         ) : (
-          <Icon as={CircleDashed} size={16} className="text-primary animate-spin" />
+          <KortixLoader size="small" />
         )}
       </View>
     );
   }
 
-  const { displayName, IconComponent, primaryParam, streamingContent, shouldShowContent } = toolInfo;
+  const { displayName, IconComponent, primaryParam, shouldShowContent } = toolInfo;
   
   // Check if tool is completed (from prop or toolCall)
   const isCompleted = propIsCompleted || 
@@ -249,7 +254,7 @@ export const StreamingToolCard = React.memo(function StreamingToolCard({ content
         {isCompleted ? (
           <Icon as={CheckCircle2} size={16} className="text-emerald-500" />
         ) : (
-          <Icon as={CircleDashed} size={16} className="text-primary animate-spin" />
+          <KortixLoader size="small" />
         )}
       </View>
     );
@@ -274,7 +279,7 @@ export const StreamingToolCard = React.memo(function StreamingToolCard({ content
         {isCompleted ? (
           <Icon as={CheckCircle2} size={16} className="text-emerald-500" />
         ) : (
-          <Icon as={CircleDashed} size={16} className="text-primary animate-spin" />
+          <KortixLoader size="small" />
         )}
       </View>
 
@@ -290,7 +295,7 @@ export const StreamingToolCard = React.memo(function StreamingToolCard({ content
             className="text-xs text-foreground font-roobert-mono"
             style={{ fontFamily: 'monospace' }}
           >
-            {streamingContent}
+            {smoothStreamingContent}
           </Text>
         </View>
       </ScrollView>

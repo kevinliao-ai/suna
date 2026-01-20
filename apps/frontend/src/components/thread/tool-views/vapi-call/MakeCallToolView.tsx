@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Phone, CheckCircle, Clock, User, Mic, Brain, Loader2, AlertTriangle } from 'lucide-react';
+import { Phone, CheckCircle, Clock, User, Mic, Brain, AlertTriangle } from 'lucide-react';
+import { KortixLoader } from '@/components/ui/kortix-loader';
 import { ToolViewProps } from '../types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { ToolViewIconTitle } from '../shared/ToolViewIconTitle';
+import { ToolViewFooter } from '../shared/ToolViewFooter';
 import { cn } from '@/lib/utils';
 import { extractMakeCallData, formatPhoneNumber, statusConfig } from './_utils';
 import { getToolTitle } from '../utils';
@@ -183,13 +186,13 @@ export function MakeCallToolView({
         <div className="flex flex-row items-center justify-between">
           <div className="flex items-center gap-2">
             <div className={cn(
-              "relative p-2 rounded-xl bg-gradient-to-br from-green-500/20 to-green-600/10 border border-green-500/20",
+              "relative p-2 rounded-lg border bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 flex-shrink-0",
               isActive && "animate-pulse"
             )}>
               {isActive ? (
-                <Loader2 className="w-5 h-5 text-green-500 animate-spin" />
+                <KortixLoader customSize={20} />
               ) : (
-                <Phone className="w-5 h-5 text-green-500" />
+                <Phone className="w-5 h-5 text-zinc-700 dark:text-zinc-300" />
               )}
             </div>
             <div className="flex items-center gap-2">
@@ -198,24 +201,12 @@ export function MakeCallToolView({
               </CardTitle>
               {isActive && (
                 <span className="flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-green-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                  <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-zinc-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-zinc-500"></span>
                 </span>
               )}
             </div>
           </div>
-          {!isStreaming && (
-            <Badge
-              variant={isSuccess ? "default" : "destructive"}
-            >
-              {isSuccess ? (
-                <CheckCircle className="h-3.5 w-3.5 mr-1" />
-              ) : (
-                <AlertTriangle className="h-3.5 w-3.5 mr-1" />
-              )}
-              {isSuccess ? 'Call initiated successfully' : 'Failed to initiate call'}
-            </Badge>
-          )}
         </div>
       </CardHeader>
 
@@ -374,7 +365,7 @@ export function MakeCallToolView({
               )}
               {isActive && liveTranscript.length === 0 && (
                 <div className="text-center py-8">
-                  <Loader2 className="h-6 w-6 mx-auto mb-2 text-muted-foreground animate-spin" />
+                  <KortixLoader customSize={24} className="mx-auto mb-2" />
                   <p className="text-sm text-muted-foreground">Waiting for conversation to start...</p>
                 </div>
               )}

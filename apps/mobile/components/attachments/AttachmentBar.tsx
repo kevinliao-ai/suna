@@ -13,7 +13,7 @@ import React from 'react';
 import { View, ScrollView, Image, Pressable, ActivityIndicator } from 'react-native';
 import { Text } from '@/components/ui/text';
 import { Icon } from '@/components/ui/icon';
-import { X, FileText, File, Loader2 } from 'lucide-react-native';
+import { X, FileText, File } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import Animated, {
   useAnimatedStyle,
@@ -25,6 +25,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import type { Attachment } from '@/hooks/useChat';
 import { formatFileSize } from '@/lib/files/utils';
+import { log } from '@/lib/logger';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 const AnimatedView = Animated.createAnimatedComponent(View);
@@ -114,7 +115,7 @@ function AttachmentItem({
   };
 
   const handleRemove = () => {
-    console.log('🗑️ Removing attachment:', index);
+    log.log('🗑️ Removing attachment:', index);
     onRemove(index);
   };
 

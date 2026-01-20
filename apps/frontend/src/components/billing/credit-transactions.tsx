@@ -28,7 +28,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Loader2,
   AlertCircle,
   TrendingUp,
   TrendingDown,
@@ -42,7 +41,7 @@ import {
 } from 'lucide-react';
 import { useTransactions, useTransactionsSummary } from '@/hooks/billing/use-transactions';
 import { cn } from '@/lib/utils';
-import { formatCredits, formatCreditsWithSign } from '@/lib/utils/credit-formatter';
+import { formatCredits, formatCreditsWithSign } from '@agentpress/shared';
 
 interface Props {
   accountId?: string;

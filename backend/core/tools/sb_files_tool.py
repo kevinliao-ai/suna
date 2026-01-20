@@ -55,6 +55,12 @@ from typing import Optional
 - **NO PURPLE COLORS:** Purple is absolutely forbidden in any form - no purple backgrounds, no purple text, no purple accents, no purple anything
 - **NO GENERIC AI/TECH GRADIENTS:** Explicitly forbidden: purple-to-blue gradients, blue-to-purple gradients, any purple/blue/teal gradient combinations, or any other generic "AI tech" gradient schemes
 - **SOLID COLORS ONLY:** Use only solid black, white, or shades of gray - no gradients, no color transitions, no fancy effects, NO PURPLE
+
+**🚨 FILE DELETION SAFETY:**
+- NEVER delete files without explicit user confirmation
+- Before calling `delete_file`, MUST use `ask` tool to request permission
+- Example: "Can I delete [filename]? This cannot be undone."
+- Only proceed with deletion after user explicitly approves
 """
 )
 class SandboxFilesTool(SandboxToolsBase):
@@ -305,40 +311,6 @@ class SandboxFilesTool(SandboxToolsBase):
                 except Exception as e:
                     logger.warning(f"Failed to get preview URL for HTML file: {str(e)}")
             
-            # Auto-validate presentation slides
-            slide_pattern = r'^presentations/([^/]+)/slide_(\d+)\.html$'
-            slide_match = re.match(slide_pattern, file_path)
-            if slide_match:
-                presentation_name = slide_match.group(1)
-                slide_number = int(slide_match.group(2))
-                
-                try:
-                    # Import and instantiate the presentation tool to access validate_slide
-                    from core.tools.sb_presentation_tool import SandboxPresentationTool
-                    presentation_tool = SandboxPresentationTool(self.project_id, self.thread_manager)
-                    
-                    # Call validate_slide
-                    validation_result = await presentation_tool.validate_slide(presentation_name, slide_number)
-                    
-                    # Append validation message to response
-                    if validation_result.success and validation_result.output:
-                        # output can be a dict or string
-                        if isinstance(validation_result.output, dict):
-                            validation_message = validation_result.output.get("message", "")
-                            if validation_message:
-                                message += f"\n\n{validation_message}"
-                        elif isinstance(validation_result.output, str):
-                            message += f"\n\n{validation_result.output}"
-                    elif not validation_result.success:
-                        # If validation failed to run, append a warning but don't fail the rewrite
-                        logger.warning(f"Slide validation failed to execute: {validation_result.output}")
-                        message += f"\n\n⚠️ Note: Slide validation could not be completed."
-                        
-                except Exception as e:
-                    # Log the error but don't fail the file rewrite
-                    logger.warning(f"Failed to auto-validate slide: {str(e)}")
-                    message += f"\n\n⚠️ Note: Slide validation could not be completed."
-            
             return self.success_response(message)
         except Exception as e:
             return self.fail_response(f"Error rewriting file: {str(e)}")
@@ -347,18 +319,13 @@ class SandboxFilesTool(SandboxToolsBase):
         "type": "function",
         "function": {
             "name": "delete_file",
-            "description": "Delete a file at the given path. **IMPORTANT**: You MUST use the `ask` tool to get explicit user confirmation before calling this tool. Never delete files without user permission. The path must be relative to /workspace (e.g., 'src/main.py' for /workspace/src/main.py). Before using this tool: 1) Use `ask` to request confirmation with a clear message like 'Do you want me to delete [file_path]?'. 2) Only proceed with deletion if the user confirms. **🚨 PARAMETER NAMES**: Use EXACTLY this parameter name: `file_path` (REQUIRED).",
+            "description": "Delete a file at the given path. The path must be relative to /workspace (e.g., 'src/main.py' for /workspace/src/main.py). **🚨 PARAMETER NAMES**: Use EXACTLY this parameter name: `file_path` (REQUIRED).",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "file_path": {
                         "type": "string",
                         "description": "**REQUIRED** - Path to the file to be deleted, relative to /workspace. Example: 'src/main.py' for /workspace/src/main.py."
-                    },
-                    "user_confirmed": {
-                        "type": "boolean",
-                        "description": "**OPTIONAL** - Set to true only after receiving explicit user confirmation via the `ask` tool. Do not set to true without confirmation. Default: false.",
-                        "default": False
                     }
                 },
                 "required": ["file_path"],
@@ -366,23 +333,39 @@ class SandboxFilesTool(SandboxToolsBase):
             }
         }
     })
-    async def delete_file(self, file_path: str, user_confirmed: bool = False) -> ToolResult:
+    async def delete_file(self, file_path: str) -> ToolResult:
         try:
-            if not user_confirmed:
-                return self.fail_response(
-                    f"Cannot delete '{file_path}' without user confirmation. "
-                    f"Please use the `ask` tool to request user permission first, then call this tool again with user_confirmed=true."
-                )
-            
             await self._ensure_sandbox()
             
             full_path = self._get_full_path(file_path)
+            logger.debug(f"Attempting to delete file: '{file_path}' (full path: '{full_path}')")
+            
             if not await self._file_exists(full_path):
                 return self.fail_response(f"File '{file_path}' does not exist")
             
+            # Delete the file
             await self.sandbox.fs.delete_file(full_path)
+            
+            # Verify the file was actually deleted
+            await asyncio.sleep(0.1)  # Small delay to ensure deletion is processed
+            if await self._file_exists(full_path):
+                logger.warning(f"File '{file_path}' still exists after delete_file call. Attempting alternative deletion method.")
+                # Try alternative: use shell command as fallback
+                try:
+                    result = await self.sandbox.process.exec("rm", "-f", full_path)
+                    if result.exit_code != 0:
+                        return self.fail_response(f"Failed to delete file '{file_path}'. File still exists after deletion attempt. Exit code: {result.exit_code}, stderr: {result.stderr}")
+                    # Verify again
+                    await asyncio.sleep(0.1)
+                    if await self._file_exists(full_path):
+                        return self.fail_response(f"Failed to delete file '{file_path}'. File still exists after deletion attempt.")
+                except Exception as shell_error:
+                    return self.fail_response(f"Failed to delete file '{file_path}'. File still exists and shell deletion also failed: {str(shell_error)}")
+            
+            logger.debug(f"Successfully deleted file: '{file_path}'")
             return self.success_response(f"File '{file_path}' deleted successfully.")
         except Exception as e:
+            logger.error(f"Error deleting file '{file_path}': {str(e)}", exc_info=True)
             return self.fail_response(f"Error deleting file: {str(e)}")
 
     async def _call_morph_api(self, file_content: str, code_edit: str, instructions: str, file_path: str) -> tuple[Optional[str], Optional[str]]:

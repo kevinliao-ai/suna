@@ -1,4 +1,78 @@
 
+**0. Launching with Docker (Manual)**
+
+You can manually launch all Suna services using Docker Compose from the project root:
+
+```bash
+# From project root directory
+cd /path/to/suna
+```
+
+**0.1 Start all services**
+
+```bash
+# Start all services (Redis, Backend, Frontend, Worker)
+docker compose up -d
+
+# Or start specific services
+docker compose up -d redis backend frontend
+```
+
+**0.2 Start services individually**
+
+```bash
+# Start Redis only
+docker compose up -d redis
+
+# Start Backend (depends on Redis)
+docker compose up -d backend
+
+# Start Frontend (depends on Backend)
+docker compose up -d frontend
+
+# Start Worker (optional, for background tasks)
+docker compose up -d worker
+```
+
+**0.3 View logs**
+
+```bash
+# View all logs
+docker compose logs -f
+
+# View specific service logs
+docker compose logs -f backend
+docker compose logs -f frontend
+docker compose logs -f redis
+```
+
+**0.4 Stop services**
+
+```bash
+# Stop all services
+docker compose down
+
+# Stop and remove volumes           
+docker compose down -v
+```
+
+**0.5 Check status**
+
+```bash
+# Check running containers
+docker compose ps
+
+# Check all containers (including stopped)
+docker compose ps -a
+```
+
+**Access points:**
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:8000
+- Redis: localhost:6379
+
+---
+
 **1. Launching the backend**
 
 ```bash
@@ -15,26 +89,11 @@ docker compose up redis
 redis-server
 ```
 
-**1.2 Running the Worker**
-
-The worker processes background tasks (agent runs, memory extraction, etc.) using Redis Streams.
-
-```bash
-uv run python run_worker.py --concurrency 8
-```
-
-You should see:
-```
-🚀 Starting Redis Streams Worker
-✅ Worker resources initialized
-📡 Consumer loop started
-```
-
 
 **1.3 Running the API**
 
 ```bash
-uv run api.py
+cd backend && uv run api.py
 ```
 
 ---
@@ -42,7 +101,7 @@ uv run api.py
 **2. Launching the frontend**
 
 ```bash
-cd frontend
+cd apps/frontend
 pnpm install
 pnpm run dev
 ```

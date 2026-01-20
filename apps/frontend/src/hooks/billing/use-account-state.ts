@@ -13,7 +13,7 @@
  */
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { siteConfig } from '@/lib/site-config';
 import {
   billingApi,
@@ -133,16 +133,14 @@ export function useAccountState(options?: UseAccountStateOptions) {
     queryKey: accountStateKeys.state(),
     queryFn: () => billingApi.getAccountState(options?.skipCache ?? false),
     enabled,
-    staleTime: options?.staleTime ?? 1000 * 60 * 10, // 10 minutes
-    gcTime: 1000 * 60 * 15, // 15 minutes
+    staleTime: options?.staleTime ?? 1000 * 60 * 2,
+    gcTime: 1000 * 60 * 15,
     refetchOnWindowFocus: options?.refetchOnWindowFocus ?? false,
-    refetchOnMount: options?.refetchOnMount ?? false,
+    refetchOnMount: options?.refetchOnMount ?? 'always',
     refetchOnReconnect: true,
-    // Enable request deduplication - React Query will batch simultaneous requests
     structuralSharing: true,
     retry: enabled ? (failureCount, error) => {
       const message = (error as Error).message || '';
-      // Don't retry on auth errors
       if (message.includes('401') || message.includes('403')) {
         return false;
       }
@@ -397,21 +395,21 @@ export function useCancelTrial() {
 
 export const accountStateSelectors = {
   /** Check if user can run agents (has credits) */
-  canRun: (state: AccountState | undefined) => state?.credits.can_run ?? false,
+  canRun: (state: AccountState | undefined) => state?.credits?.can_run ?? false,
   
   /** Get total credits */
-  totalCredits: (state: AccountState | undefined) => state?.credits.total ?? 0,
+  totalCredits: (state: AccountState | undefined) => state?.credits?.total ?? 0,
   
   /** Get tier key */
-  tierKey: (state: AccountState | undefined) => state?.subscription.tier_key ?? 'none',
+  tierKey: (state: AccountState | undefined) => state?.subscription?.tier_key ?? 'none',
   
   /** Get tier display name */
   tierDisplayName: (state: AccountState | undefined) => 
-    state?.subscription.tier_display_name ?? 'No Plan',
+    state?.subscription?.tier_display_name ?? 'No Plan',
   
   /** Get plan name for TierBadge (e.g., 'Plus', 'Pro', 'Ultra', 'Basic') */
   planName: (state: AccountState | undefined) => {
-    if (!state) return 'Basic';
+    if (!state?.subscription) return 'Basic';
     const tierKey = state.subscription.tier_key || state.tier?.name;
     if (!tierKey || tierKey === 'none' || tierKey === 'free') return 'Basic';
     
@@ -421,34 +419,34 @@ export const accountStateSelectors = {
   },
   
   /** Check if on trial */
-  isTrial: (state: AccountState | undefined) => state?.subscription.is_trial ?? false,
+  isTrial: (state: AccountState | undefined) => state?.subscription?.is_trial ?? false,
   
   /** Check if subscription is cancelled */
-  isCancelled: (state: AccountState | undefined) => state?.subscription.is_cancelled ?? false,
+  isCancelled: (state: AccountState | undefined) => state?.subscription?.is_cancelled ?? false,
   
   /** Get allowed models */
   allowedModels: (state: AccountState | undefined) => 
-    state?.models.filter(m => m.allowed) ?? [],
+    state?.models?.filter(m => m.allowed) ?? [],
   
   /** Check if a specific model is allowed */
   isModelAllowed: (state: AccountState | undefined, modelId: string) =>
-    state?.models.find(m => m.id === modelId)?.allowed ?? false,
+    state?.models?.find(m => m.id === modelId)?.allowed ?? false,
   
   /** Get scheduled change info */
-  scheduledChange: (state: AccountState | undefined) => state?.subscription.scheduled_change,
+  scheduledChange: (state: AccountState | undefined) => state?.subscription?.scheduled_change,
   
   /** Check if has scheduled change */
   hasScheduledChange: (state: AccountState | undefined) => 
-    state?.subscription.has_scheduled_change ?? false,
+    state?.subscription?.has_scheduled_change ?? false,
   
   /** Get commitment info */
-  commitment: (state: AccountState | undefined) => state?.subscription.commitment,
+  commitment: (state: AccountState | undefined) => state?.subscription?.commitment,
   
   /** Check if can purchase credits */
   canPurchaseCredits: (state: AccountState | undefined) => 
-    state?.subscription.can_purchase_credits ?? false,
+    state?.subscription?.can_purchase_credits ?? false,
     
   /** Get daily credits info */
-  dailyCreditsInfo: (state: AccountState | undefined) => state?.credits.daily_refresh,
+  dailyCreditsInfo: (state: AccountState | undefined) => state?.credits?.daily_refresh,
 };
 

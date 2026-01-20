@@ -17,6 +17,8 @@ import {
 import { ToolViewProps } from '../types';
 import { formatTimestamp } from '../utils';
 import { LoadingState } from '../shared/LoadingState';
+import { ToolViewIconTitle } from '../shared/ToolViewIconTitle';
+import { ToolViewFooter } from '../shared/ToolViewFooter';
 
 interface DeletePresentationData {
   message: string;
@@ -123,42 +125,7 @@ export function DeletePresentationToolView({
     <Card className="gap-0 flex border-0 shadow-none p-0 py-0 rounded-none flex-col h-full overflow-hidden bg-card">
       <CardHeader className="h-14 bg-zinc-50/80 dark:bg-zinc-900/80 backdrop-blur-sm border-b p-2 px-4 space-y-2">
         <div className="flex flex-row items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="relative p-2 rounded-lg bg-gradient-to-br from-red-500/20 to-red-600/10 border border-red-500/20">
-              <FolderX className="w-5 h-5 text-red-500 dark:text-red-400" />
-            </div>
-            <div>
-              <CardTitle className="text-base font-medium text-zinc-900 dark:text-zinc-100">
-                Delete Presentation
-              </CardTitle>
-              {deleteData && (
-                <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                  {presentationName}
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {!isStreaming && !error && deleteData && (
-              <Badge
-                variant="secondary"
-                className="bg-gradient-to-b from-emerald-200 to-emerald-100 text-emerald-700 dark:from-emerald-800/50 dark:to-emerald-900/60 dark:text-emerald-300"
-              >
-                <CheckCircle className="h-3.5 w-3.5 mr-1" />
-                Deleted
-              </Badge>
-            )}
-            {!isStreaming && (error || !isSuccess) && (
-              <Badge
-                variant="secondary"
-                className="bg-gradient-to-b from-rose-200 to-rose-100 text-rose-700 dark:from-rose-800/50 dark:to-rose-900/60 dark:text-rose-300"
-              >
-                <AlertTriangle className="h-3.5 w-3.5 mr-1" />
-                Failed
-              </Badge>
-            )}
-          </div>
+          <ToolViewIconTitle icon={FolderX} title="Delete Presentation" subtitle={deleteData ? presentationName : undefined} />
         </div>
       </CardHeader>
 
@@ -187,7 +154,7 @@ export function DeletePresentationToolView({
         ) : (
           <div className="flex flex-col items-center justify-center h-full py-12 px-6 bg-gradient-to-b from-white to-zinc-50 dark:from-zinc-950 dark:to-zinc-900">
             <div className="w-20 h-20 rounded-full flex items-center justify-center mb-6 bg-gradient-to-b from-emerald-100 to-emerald-50 shadow-inner dark:from-emerald-800/40 dark:to-emerald-900/60">
-              <CheckCircle className="h-10 w-10 text-emerald-400 dark:text-emerald-600" />
+              <CheckCircle className="h-10 w-10 text-zinc-500 dark:text-zinc-400" />
             </div>
             <h3 className="text-xl font-semibold mb-2 text-zinc-900 dark:text-zinc-100">
               Presentation deleted successfully

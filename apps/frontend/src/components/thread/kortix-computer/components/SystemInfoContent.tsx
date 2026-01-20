@@ -1,7 +1,8 @@
 'use client';
 
 import { memo } from 'react';
-import { Cpu, HardDrive, MemoryStick, MapPin, Loader2 } from 'lucide-react';
+import { Cpu, HardDrive, MemoryStick, MapPin } from 'lucide-react';
+import { KortixLoader } from '@/components/ui/kortix-loader';
 import { KortixLogo } from '@/components/sidebar/kortix-logo';
 import { cn } from '@/lib/utils';
 import { SandboxDetails } from '@/hooks/files/use-sandbox-details';
@@ -51,7 +52,7 @@ export const SystemInfoContent = memo(function SystemInfoContent({
   if (isLoading) {
     return (
       <div className="h-full flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-muted-foreground animate-spin" />
+        <KortixLoader size="medium" />
       </div>
     );
   }
@@ -95,7 +96,7 @@ export const SystemInfoContent = memo(function SystemInfoContent({
 
         <div className="bg-muted/50 rounded-xl p-4 border border-border">
           <div className="flex items-center gap-2 mb-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-zinc-500 to-zinc-600 flex items-center justify-center">
               <MemoryStick className="w-4 h-4 text-white" />
             </div>
             <span className="text-xs text-muted-foreground uppercase tracking-wide font-medium">RAM</span>

@@ -4,7 +4,7 @@ import { useCallback } from 'react';
 import { useSubscriptionStore } from '@/stores/subscription-store';
 import { usePricingModalStore } from '@/stores/pricing-modal-store';
 import { isLocalMode } from '@/lib/config';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 
 interface UseDownloadRestrictionOptions {
   /** Custom feature name for the toast message (e.g., "files", "presentations", "images") */
@@ -51,8 +51,7 @@ export function useDownloadRestriction(options?: UseDownloadRestrictionOptions):
   const accountState = useSubscriptionStore((state) => state.accountState);
   const { openPricingModal } = usePricingModalStore();
 
-  // Check if user is on free tier
-  const isFreeTier = accountState && (
+  const isFreeTier = accountState?.subscription && (
     accountState.subscription.tier_key === 'free' ||
     accountState.subscription.tier_key === 'none' ||
     !accountState.subscription.tier_key

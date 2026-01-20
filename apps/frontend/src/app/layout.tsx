@@ -6,7 +6,6 @@ import { AuthProvider } from '@/components/AuthProvider';
 import { PresenceProvider } from '@/components/presence-provider';
 import { ReactQueryProvider } from './react-query-provider';
 import { Toaster } from '@/components/ui/sonner';
-import Script from 'next/script';
 import '@/lib/polyfills';
 import { roobert } from './fonts/roobert';
 import { roobertMono } from './fonts/roobert-mono';
@@ -15,15 +14,12 @@ import { I18nProvider } from '@/components/i18n-provider';
 import { featureFlags } from '@/lib/feature-flags';
 
 // Lazy load non-critical analytics and global components
-// Note: Analytics scripts will be automatically blocked by cookie consent service until consent is given
 const Analytics = lazy(() => import('@vercel/analytics/react').then(mod => ({ default: mod.Analytics })));
 const SpeedInsights = lazy(() => import('@vercel/speed-insights/next').then(mod => ({ default: mod.SpeedInsights })));
-const GoogleAnalytics = lazy(() => import('@next/third-parties/google').then(mod => ({ default: mod.GoogleAnalytics })));
 const GoogleTagManager = lazy(() => import('@next/third-parties/google').then(mod => ({ default: mod.GoogleTagManager })));
 const PostHogIdentify = lazy(() => import('@/components/posthog-identify').then(mod => ({ default: mod.PostHogIdentify })));
 const PlanSelectionModal = lazy(() => import('@/components/billing/pricing/plan-selection-modal').then(mod => ({ default: mod.PlanSelectionModal })));
 const AnnouncementDialog = lazy(() => import('@/components/announcements/announcement-dialog').then(mod => ({ default: mod.AnnouncementDialog })));
-const CookieConsent = lazy(() => import('@/components/cookie-consent').then(mod => ({ default: mod.CookieConsent })));
 const RouteChangeTracker = lazy(() => import('@/components/analytics/route-change-tracker').then(mod => ({ default: mod.RouteChangeTracker })));
 const AuthEventTracker = lazy(() => import('@/components/analytics/auth-event-tracker').then(mod => ({ default: mod.AuthEventTracker })));
 
@@ -116,7 +112,6 @@ export default function RootLayout({
         
         {/* DNS prefetch for analytics (loaded later but resolve DNS early) */}
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
-        <link rel="dns-prefetch" href="https://connect.facebook.net" />
         <link rel="dns-prefetch" href="https://eu.i.posthog.com" />
         
         {/* Container Load - Initialize dataLayer with page context BEFORE GTM loads */}
@@ -189,34 +184,6 @@ export default function RootLayout({
           <meta name="apple-itunes-app" content="app-id=6754448524, app-argument=kortix://" />
         ) : null}
 
-        {/* Facebook Pixel - Will be blocked by cookie consent service until marketing consent is given */}
-        {process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID && (
-          <>
-        <Script id="facebook-pixel" strategy="lazyOnload" data-cookieconsent="marketing">
-          {`
-            !function(f,b,e,v,n,t,s)
-            {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-            n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-            if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-            n.queue=[];t=b.createElement(e);t.async=!0;
-            t.src=v;s=b.getElementsByTagName(e)[0];
-            s.parentNode.insertBefore(t,s)}(window, document,'script',
-            'https://connect.facebook.net/en_US/fbevents.js');
-
-                fbq('init', '${process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID}');
-            fbq('track', 'PageView');
-          `}
-        </Script>
-        <noscript>
-          <img
-            height="1"
-            width="1"
-            style={{ display: "none" }}
-                src={`https://www.facebook.com/tr?id=${process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID}&ev=PageView&noscript=1`}
-          />
-        </noscript>
-          </>
-        )}
 
 
         <script
@@ -295,16 +262,6 @@ export default function RootLayout({
           <Suspense fallback={null}>
             <Analytics />
           </Suspense>
-          {process.env.NEXT_PUBLIC_GA_ID_1 && (
-            <Suspense fallback={null}>
-              <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID_1} />
-            </Suspense>
-          )}
-          {process.env.NEXT_PUBLIC_GA_ID_2 && (
-          <Suspense fallback={null}>
-              <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID_2} />
-          </Suspense>
-          )}
           {process.env.NEXT_PUBLIC_GTM_ID && (
           <Suspense fallback={null}>
               <GoogleTagManager gtmId={process.env.NEXT_PUBLIC_GTM_ID} />
@@ -315,9 +272,6 @@ export default function RootLayout({
           </Suspense>
           <Suspense fallback={null}>
             <PostHogIdentify />
-          </Suspense>
-          <Suspense fallback={null}>
-            <CookieConsent />
           </Suspense>
           <Suspense fallback={null}>
             <RouteChangeTracker />

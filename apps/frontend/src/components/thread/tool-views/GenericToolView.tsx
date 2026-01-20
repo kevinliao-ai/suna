@@ -8,7 +8,6 @@ import {
   Wrench,
   Copy,
   Check,
-  Loader2,
 } from 'lucide-react';
 import { ToolViewProps } from './types';
 import { formatTimestamp, getToolTitle } from './utils';
@@ -17,9 +16,11 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from '@/components/ui/button';
 import { LoadingState } from './shared/LoadingState';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { AppIcon } from './shared/AppIcon';
 import { SmartJsonViewer } from './shared/SmartJsonViewer';
+import { ToolViewIconTitle } from './shared/ToolViewIconTitle';
+import { useSmoothStream } from '@/lib/streaming';
 
 export function GenericToolView({
   toolCall,
@@ -93,10 +94,19 @@ export function GenericToolView({
     return String(content);
   };
 
-  const formattedAssistantContent = React.useMemo(
+  const rawAssistantContent = React.useMemo(
     () => parsedAssistantContent ? formatAsString(parsedAssistantContent) : null,
     [parsedAssistantContent]
   );
+
+  // Apply smooth text streaming for arguments when streaming
+  const smoothAssistantContent = useSmoothStream(
+    rawAssistantContent || '',
+    true
+  );
+  const isAssistantAnimating = isStreaming && !toolResult && !!rawAssistantContent;
+
+  const formattedAssistantContent = isStreaming && smoothAssistantContent ? smoothAssistantContent : rawAssistantContent;
 
   const formattedToolContent = React.useMemo(
     () => parsedToolContent ? formatAsString(parsedToolContent) : null,
@@ -170,41 +180,16 @@ export function GenericToolView({
     <Card className="gap-0 flex border-0 shadow-none p-0 py-0 rounded-none flex-col h-full overflow-hidden bg-card">
       <CardHeader className="h-14 bg-zinc-50/80 dark:bg-zinc-900/80 backdrop-blur-sm border-b p-2 px-4 space-y-2">
         <div className="flex flex-row items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="relative p-2 rounded-lg border bg-muted/10">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="relative p-2 rounded-lg border bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 flex-shrink-0">
               <AppIcon toolCall={toolCall} size={20} className="w-5 h-5" />
             </div>
-            <div>
-              <CardTitle className="text-base font-medium text-zinc-900 dark:text-zinc-100">
+            <div className="min-w-0 flex-1">
+              <CardTitle className="text-base font-medium text-zinc-900 dark:text-zinc-100 truncate">
                 {toolTitle}
               </CardTitle>
             </div>
           </div>
-
-          {!isStreaming && (
-            <Badge
-              variant="secondary"
-              className={
-                isSuccess
-                  ? "bg-gradient-to-b from-emerald-200 to-emerald-100 text-emerald-700 dark:from-emerald-800/50 dark:to-emerald-900/60 dark:text-emerald-300"
-                  : "bg-gradient-to-b from-rose-200 to-rose-100 text-rose-700 dark:from-rose-800/50 dark:to-rose-900/60 dark:text-rose-300"
-              }
-            >
-              {isSuccess ? (
-                <CheckCircle className="h-3.5 w-3.5" />
-              ) : (
-                <AlertTriangle className="h-3.5 w-3.5" />
-              )}
-              {isSuccess ? 'Tool executed successfully' : 'Tool execution failed'}
-            </Badge>
-          )}
-
-          {isStreaming && (
-            <Badge className="bg-gradient-to-b from-blue-200 to-blue-100 text-blue-700 dark:from-blue-800/50 dark:to-blue-900/60 dark:text-blue-300">
-              <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
-              Executing
-            </Badge>
-          )}
         </div>
       </CardHeader>
 
@@ -249,6 +234,7 @@ export function GenericToolView({
                       ) : (
                         <pre className="text-xs text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap break-words font-mono">
                           {formattedAssistantContent}
+                          {isAssistantAnimating && <span className="animate-pulse text-muted-foreground">▌</span>}
                         </pre>
                       )}
                     </div>

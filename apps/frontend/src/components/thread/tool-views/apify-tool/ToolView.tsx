@@ -4,7 +4,6 @@ import {
   Globe,
   CheckCircle,
   AlertTriangle,
-  Loader2,
   Search,
   Info,
   Play,
@@ -19,6 +18,7 @@ import {
   Download,
   ExternalLink,
 } from 'lucide-react';
+import { KortixLoader } from '@/components/ui/kortix-loader';
 import { ToolViewProps } from '../types';
 import { formatTimestamp } from '../utils';
 import { cn } from '@/lib/utils';
@@ -57,10 +57,10 @@ const VIEW_CONFIGS = {
   approval: {
     title: 'Apify Approval Request',
     icon: Clock,
-    color: 'from-yellow-500 to-yellow-600',
-    bgColor: 'bg-yellow-50 dark:bg-yellow-900/20',
-    textColor: 'text-yellow-700 dark:text-yellow-300',
-    borderColor: 'border-yellow-200 dark:border-yellow-800',
+    color: 'from-zinc-500 to-zinc-600',
+    bgColor: 'bg-zinc-50 dark:bg-zinc-900/20',
+    textColor: 'text-zinc-700 dark:text-zinc-300',
+    borderColor: 'border-zinc-200 dark:border-zinc-800',
   },
   run: {
     title: 'Run Apify Actor',
@@ -227,24 +227,6 @@ export function ApifyToolView({
             </div>
           </div>
 
-          {!isStreaming && (
-            <Badge
-              variant="secondary"
-              className={cn(
-                "text-xs font-medium",
-                actualIsSuccess
-                  ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800"
-                  : "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800"
-              )}
-            >
-              {actualIsSuccess ? (
-                <CheckCircle className="h-3 w-3 mr-1" />
-              ) : (
-                <AlertTriangle className="h-3 w-3 mr-1" />
-              )}
-              {actualIsSuccess ? 'Success' : 'Failed'}
-            </Badge>
-          )}
         </div>
       </CardHeader>
 
@@ -257,7 +239,7 @@ export function ApifyToolView({
                 `bg-gradient-to-br ${config.color}`,
                 "border-white/20"
               )}>
-                <Loader2 className="h-10 w-10 animate-spin text-white drop-shadow-sm" />
+                <KortixLoader size="medium" variant="white" />
               </div>
               
               {viewType === 'run' ? (
@@ -322,18 +304,18 @@ export function ApifyToolView({
               {viewType === 'run' && (
                 <div className="space-y-2 text-xs text-zinc-500 dark:text-zinc-400">
                   <div className="flex items-center gap-2 justify-center">
-                    <div className="w-1.5 h-1.5 rounded-full bg-zinc-500 animate-pulse" />
+                    <div className="w-3 h-3 rounded-full border border-zinc-400 border-t-zinc-600 animate-spin" />
                     <span>Initializing actor run...</span>
                   </div>
                   {elapsedTime > 5 && (
                     <div className="flex items-center gap-2 justify-center">
-                      <div className="w-1.5 h-1.5 rounded-full bg-zinc-500 animate-pulse" />
+                      <div className="w-3 h-3 rounded-full border border-zinc-400 border-t-zinc-600 animate-spin" />
                       <span>Executing actor tasks...</span>
                     </div>
                   )}
                   {elapsedTime > 15 && (
                     <div className="flex items-center gap-2 justify-center">
-                      <div className="w-1.5 h-1.5 rounded-full bg-zinc-500 animate-pulse" />
+                      <div className="w-3 h-3 rounded-full border border-zinc-400 border-t-zinc-600 animate-spin" />
                       <span>Collecting results...</span>
                     </div>
                   )}
@@ -636,7 +618,7 @@ export function ApifyToolView({
                                 </p>
                               </div>
                               <div>
-                                <p className="text-emerald-600 dark:text-emerald-400">Succeeded</p>
+                                <p className="text-zinc-600 dark:text-zinc-400">Succeeded</p>
                                 <p className="font-medium text-zinc-900 dark:text-zinc-100">
                                   {detailsData.stats.publicActorRunStats30Days.SUCCEEDED?.toLocaleString() || 0}
                                 </p>
@@ -648,7 +630,7 @@ export function ApifyToolView({
                                 </p>
                               </div>
                               <div>
-                                <p className="text-yellow-600 dark:text-yellow-400">Aborted</p>
+                                <p className="text-zinc-600 dark:text-zinc-400">Aborted</p>
                                 <p className="font-medium text-zinc-900 dark:text-zinc-100">
                                   {detailsData.stats.publicActorRunStats30Days.ABORTED?.toLocaleString() || 0}
                                 </p>
@@ -854,7 +836,7 @@ export function ApifyToolView({
                               <ChevronRight className="h-3 w-3 ml-auto text-zinc-400 group-open:rotate-90 transition-transform" />
                             </summary>
                             <div className="mt-2 p-3 bg-zinc-900 dark:bg-zinc-950 rounded-lg border border-zinc-200 dark:border-zinc-800">
-                              <pre className="text-xs font-mono text-emerald-400 dark:text-emerald-300 overflow-x-auto">
+                              <pre className="text-xs font-mono text-zinc-400 dark:text-zinc-300 overflow-x-auto">
                                 {JSON.stringify(result, null, 2)}
                               </pre>
                             </div>

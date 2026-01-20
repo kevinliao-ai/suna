@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { View, ScrollView, Pressable, Alert, Modal, FlatList } from 'react-native';
 import { Text } from '@/components/ui/text';
 import { Icon } from '@/components/ui/icon';
@@ -10,7 +10,6 @@ import {
   Home,
   FileText,
   Presentation,
-  Loader2,
   Clock,
   ChevronDown,
   RotateCcw,
@@ -101,6 +100,9 @@ export function FileBrowserView({
   const [isLoadingRevertInfo, setIsLoadingRevertInfo] = useState(false);
   const [isReverting, setIsReverting] = useState(false);
 
+  // Track validated presentation folders (folders that have metadata.json)
+  const [validatedPresentationFolders, setValidatedPresentationFolders] = useState<Set<string>>(new Set());
+
   // Current files query
   const {
     data: files = [],
@@ -161,25 +163,87 @@ export function FileBrowserView({
     [navigateToPath],
   );
 
-  const isPresentationFolder = useCallback((file: SandboxFile): boolean => {
-    if (file.type !== 'directory') return false;
-
-    const pathParts = file.path.split('/').filter(Boolean);
-
+  // Helper to check if a path is a direct child of /presentations/ folder
+  const isDirectChildOfPresentations = useCallback((filePath: string): boolean => {
+    const pathParts = filePath.split('/').filter(Boolean);
+    // Path should be like: /workspace/presentations/my_presentation
+    // PathParts would be: ["workspace", "presentations", "my_presentation"]
     if (pathParts.length >= 3) {
       const parentIndex = pathParts.length - 2;
       if (pathParts[parentIndex] === 'presentations') {
         return true;
       }
     }
-
     return false;
   }, []);
+
+  // Validate presentation folders by checking for metadata.json
+  const validatePresentationFolders = useCallback(async (folders: SandboxFile[]) => {
+    if (!project?.sandbox?.sandbox_url) return;
+    
+    const sandboxUrl = project.sandbox.sandbox_url;
+    const foldersToValidate = folders.filter(f => f.type === 'directory' && isDirectChildOfPresentations(f.path));
+    
+    if (foldersToValidate.length === 0) return;
+    
+    const newValidated = new Set(validatedPresentationFolders);
+    
+    // Validate each folder in parallel
+    await Promise.all(foldersToValidate.map(async (folder) => {
+      // Skip if already validated
+      if (newValidated.has(folder.path)) return;
+      
+      try {
+        const folderName = folder.path.split('/').pop() || '';
+        const sanitizedName = folderName.replace(/[^a-zA-Z0-9\-_]/g, '').toLowerCase();
+        const metadataUrl = `${sandboxUrl}/workspace/presentations/${sanitizedName}/metadata.json?t=${Date.now()}`;
+        
+        const response = await fetch(metadataUrl, {
+          method: 'HEAD', // Just check if it exists
+          cache: 'no-cache',
+        });
+        
+        if (response.ok) {
+          newValidated.add(folder.path);
+        }
+      } catch {
+        // Folder doesn't have valid metadata.json - not a presentation
+      }
+    }));
+    
+    setValidatedPresentationFolders(newValidated);
+  }, [project?.sandbox?.sandbox_url, validatedPresentationFolders, isDirectChildOfPresentations]);
+
+  // Trigger validation when viewing presentations folder
+  useEffect(() => {
+    const isInPresentationsFolder = currentPath === '/workspace/presentations' || 
+                                    currentPath === '/presentations' ||
+                                    currentPath.endsWith('/presentations');
+    
+    if (isInPresentationsFolder && displayFiles.length > 0 && project?.sandbox?.sandbox_url) {
+      validatePresentationFolders(displayFiles);
+    }
+  }, [currentPath, displayFiles, project?.sandbox?.sandbox_url, validatePresentationFolders]);
+
+  // Check if a folder is a presentation folder
+  // A presentation folder must be:
+  // 1. A direct child of /workspace/presentations/ or /presentations/
+  // 2. Have a metadata.json file (validated)
+  const isPresentationFolder = useCallback((file: SandboxFile): boolean => {
+    if (file.type !== 'directory') return false;
+    
+    // Must be a direct child of /presentations/
+    if (!isDirectChildOfPresentations(file.path)) return false;
+    
+    // Must have been validated (has metadata.json)
+    return validatedPresentationFolders.has(file.path);
+  }, [isDirectChildOfPresentations, validatedPresentationFolders]);
 
   const handleItemClick = useCallback(
     (file: SandboxFile) => {
       if (file.type === 'directory') {
-        if (isPresentationFolder(file)) {
+        // Use structural check for click behavior - viewer will validate metadata.json
+        if (isDirectChildOfPresentations(file.path)) {
           if (selectedVersion) {
             Alert.alert('Info', 'Cannot view presentations from historical versions');
             return;
@@ -192,7 +256,7 @@ export function FileBrowserView({
         openFile(file.path);
       }
     },
-    [navigateToPath, openFile, isPresentationFolder, selectedVersion],
+    [navigateToPath, openFile, isDirectChildOfPresentations, selectedVersion],
   );
 
   const handleUploadImage = async () => {
@@ -375,12 +439,16 @@ export function FileBrowserView({
               disabled={isUploading || !!selectedVersion}
               className={`h-9 w-9 items-center justify-center rounded-xl bg-card border border-border active:opacity-70 ${selectedVersion ? 'opacity-50' : ''}`}
             >
-              <Icon
-                as={isUploading ? Loader2 : Upload}
-                size={17}
-                className="text-primary"
-                strokeWidth={2}
-              />
+              {isUploading ? (
+                <KortixLoader size="small" customSize={17} />
+              ) : (
+                <Icon
+                  as={Upload}
+                  size={17}
+                  className="text-primary"
+                  strokeWidth={2}
+                />
+              )}
             </Pressable>
 
             {/* History Button */}
@@ -656,7 +724,7 @@ export function FileBrowserView({
               >
                 {isReverting ? (
                   <View className="flex-row items-center gap-2">
-                    <Icon as={Loader2} size={14} color="#ffffff" />
+                    <KortixLoader size="small" customSize={14} forceTheme="dark" />
                     <Text className="text-sm font-roobert-medium" style={{ color: '#ffffff' }}>Restoring...</Text>
                   </View>
                 ) : (

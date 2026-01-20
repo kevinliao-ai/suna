@@ -2,7 +2,8 @@ import React from 'react';
 import { ToolViewProps } from '../types';
 import { formatTimestamp, getToolTitle } from '../utils';
 import { getToolIcon } from '../../utils';
-import { CircleDashed, CheckCircle, AlertTriangle } from 'lucide-react';
+import { CheckCircle, AlertTriangle } from 'lucide-react';
+import { KortixLoader } from '@/components/ui/kortix-loader';
 import { cn } from '@/lib/utils';
 
 export interface ToolViewWrapperProps extends ToolViewProps {
@@ -55,7 +56,15 @@ export function ToolViewWrapper({
               {toolTitle}
             </span>
           </div>
-          {headerContent}
+          <div className="flex items-center gap-2">
+            {isStreaming && (
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700">
+                <div className="w-1.5 h-1.5 rounded-full bg-zinc-500 animate-pulse" />
+                <span className="text-[10px] font-medium text-zinc-700 dark:text-zinc-400">Running</span>
+              </div>
+            )}
+            {headerContent}
+          </div>
         </div>
       )}
 
@@ -72,7 +81,7 @@ export function ToolViewWrapper({
             {!isStreaming && showStatus && (
               <div className="flex items-center gap-2">
                 {isSuccess ? (
-                  <CheckCircle className="h-3.5 w-3.5 text-emerald-500" />
+                  <CheckCircle className="h-3.5 w-3.5 text-zinc-500 dark:text-zinc-400" />
                 ) : (
                   <AlertTriangle className="h-3.5 w-3.5 text-red-500" />
                 )}
@@ -86,7 +95,7 @@ export function ToolViewWrapper({
 
             {isStreaming && showStatus && (
               <div className="flex items-center gap-2">
-                <CircleDashed className="h-3.5 w-3.5 text-blue-500 animate-spin" />
+                <KortixLoader customSize={14} />
                 <span>{customStatus?.streaming || "Processing..."}</span>
               </div>
             )}

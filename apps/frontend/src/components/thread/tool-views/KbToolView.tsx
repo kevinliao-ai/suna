@@ -21,7 +21,9 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from '@/components/ui/button';
 import { LoadingState } from './shared/LoadingState';
-import { toast } from 'sonner';
+import { ToolViewIconTitle } from './shared/ToolViewIconTitle';
+import { ToolViewFooter } from './shared/ToolViewFooter';
+import { toast } from '@/lib/toast';
 
 interface KbOperation {
   type: 'search' | 'sync' | 'list' | 'create' | 'upload' | 'delete' | 'enable' | 'cleanup' | 'init';
@@ -131,7 +133,7 @@ const KbResultDisplay: React.FC<{ operation: KbOperation; toolOutput: any }> = (
             </div>
           )}
           {message && (
-            <div className="text-sm text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/20 rounded p-3">
+            <div className="text-sm text-zinc-600 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-900/20 rounded p-3">
               {message}
             </div>
           )}
@@ -324,7 +326,9 @@ const KbResultDisplay: React.FC<{ operation: KbOperation; toolOutput: any }> = (
           const size = parseInt(parts[1]);
           const date = parts[2];
           const path = parts.slice(4).join(' ');
-          const filename = path.split('/').pop() || path;
+          const rawFilename = path.split('/').pop() || path;
+          // Trim whitespace, newlines, and other control characters
+          const filename = rawFilename.trim().replace(/[\r\n]+/g, '').replace(/\s+$/g, '');
           return { status, size, date, path, filename };
         }
         return null;
@@ -346,7 +350,7 @@ const KbResultDisplay: React.FC<{ operation: KbOperation; toolOutput: any }> = (
                 <div className="flex justify-between text-xs text-zinc-600 dark:text-zinc-400">
                   <span>{(file.size / 1024).toFixed(1)} KB</span>
                   <span>{file.date}</span>
-                  <span className={file.status === 'active' ? 'text-green-600' : 'text-zinc-500'}>
+                  <span className={file.status === 'active' ? 'text-zinc-600 dark:text-zinc-400' : 'text-zinc-500'}>
                     {file.status}
                   </span>
                 </div>
@@ -400,7 +404,7 @@ const KbResultDisplay: React.FC<{ operation: KbOperation; toolOutput: any }> = (
         <div className="space-y-2">
           {message && (
             <div className={`text-sm p-3 rounded ${success
-              ? 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/20'
+              ? 'text-zinc-600 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-900/20'
               : 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/20'
               }`}>
               {message}
@@ -416,7 +420,7 @@ const KbResultDisplay: React.FC<{ operation: KbOperation; toolOutput: any }> = (
         <div className="space-y-2">
           {message && (
             <div className={`text-sm p-3 rounded ${success
-              ? 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/20'
+              ? 'text-zinc-600 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-900/20'
               : 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/20'
               }`}>
               {message}
@@ -432,7 +436,7 @@ const KbResultDisplay: React.FC<{ operation: KbOperation; toolOutput: any }> = (
         <div className="space-y-2">
           {message && (
             <div className={`text-sm p-3 rounded ${success
-              ? 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/20'
+              ? 'text-zinc-600 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-900/20'
               : 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/20'
               }`}>
               {message}
@@ -448,7 +452,7 @@ const KbResultDisplay: React.FC<{ operation: KbOperation; toolOutput: any }> = (
         <div className="space-y-2">
           {message && (
             <div className={`text-sm p-3 rounded ${success
-              ? 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/20'
+              ? 'text-zinc-600 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-900/20'
               : 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/20'
               }`}>
               {message}
@@ -464,7 +468,7 @@ const KbResultDisplay: React.FC<{ operation: KbOperation; toolOutput: any }> = (
         <div className="space-y-2">
           {message && (
             <div className={`text-sm p-3 rounded ${success
-              ? 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/20'
+              ? 'text-zinc-600 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-900/20'
               : 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/20'
               }`}>
               {message}
@@ -478,7 +482,7 @@ const KbResultDisplay: React.FC<{ operation: KbOperation; toolOutput: any }> = (
       <div className="space-y-3">
         {message && (
           <div className={`text-sm p-3 rounded ${success
-            ? 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/20'
+            ? 'text-zinc-600 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-900/20'
             : 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/20'
             }`}>
             {message}
@@ -538,10 +542,10 @@ const KbParametersDisplay: React.FC<{ operation: KbOperation }> = ({ operation }
         <div className="space-y-1 text-xs">
           {Object.entries(operation.data).map(([key, value]) => (
             <div key={key} className="flex">
-              <span className="font-medium text-blue-700 dark:text-blue-300 min-w-20">
+              <span className="font-medium text-zinc-700 dark:text-zinc-300 min-w-20">
                 {key}:
               </span>
-              <span className="ml-2 text-blue-600 dark:text-blue-400">
+              <span className="ml-2 text-zinc-600 dark:text-zinc-400">
                 {Array.isArray(value) ? value.join(', ') : String(value)}
               </span>
             </div>
@@ -595,60 +599,33 @@ export function KbToolView({
     <Card className="gap-0 flex border-0 shadow-none p-0 py-0 rounded-none flex-col h-full overflow-hidden bg-card">
       <CardHeader className="h-14 bg-zinc-50/80 dark:bg-zinc-900/80 backdrop-blur-sm border-b p-2 px-4 space-y-2">
         <div className="flex flex-row items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className={isGlobal
-              ? "relative p-2 rounded-lg bg-gradient-to-br from-zinc-500/20 to-zinc-600/10 border border-zinc-500/20"
-              : "relative p-2 rounded-lg bg-gradient-to-br from-green-500/20 to-green-600/10 border border-green-500/20"
-            }>
-              <Icon className={isGlobal
-                ? "w-5 h-5 text-zinc-500 dark:text-zinc-400"
-                : "w-5 h-5 text-green-500 dark:text-green-400"
-              } />
-            </div>
-            <div>
-              <CardTitle className="text-base font-medium text-zinc-900 dark:text-zinc-100">
-                {operation.type === 'init' ? 'Initialize KB' :
-                  operation.type === 'search' ? 'Search Files' :
-                    operation.type === 'sync' ? 'Sync KB' :
-                      operation.type === 'list' ? 'List Contents' :
-                        operation.type === 'create' ? 'Create Folder' :
-                          operation.type === 'upload' ? 'Upload File' :
-                            operation.type === 'delete' ? 'Delete Item' :
-                              operation.type === 'enable' ? 'Toggle Item' :
-                                operation.type === 'cleanup' ? 'Cleanup KB' :
-                                  (operation.type as string).charAt(0).toUpperCase() + (operation.type as string).slice(1)
-                } • {scopeLabel}
-              </CardTitle>
-            </div>
-          </div>
-
-          {!isStreaming && (
-            <div className="flex items-center gap-2">
-              <Badge
-                variant="secondary"
-                className={
-                  isSuccess
-                    ? "bg-gradient-to-b from-emerald-200 to-emerald-100 text-emerald-700 dark:from-emerald-800/50 dark:to-emerald-900/60 dark:text-emerald-300"
-                    : "bg-gradient-to-b from-rose-200 to-rose-100 text-rose-700 dark:from-rose-800/50 dark:to-rose-900/60 dark:text-rose-300"
-                }
-              >
-                {isSuccess ? 'Success' : 'Failed'}
-              </Badge>
-              {toolResult?.output && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={copyContent}
-                  className="h-7 px-2"
-                >
-                  {copied ? (
-                    <Check className="h-3.5 w-3.5" />
-                  ) : (
-                    <Copy className="h-3.5 w-3.5" />
-                  )}
-                </Button>
+          <ToolViewIconTitle 
+            icon={Icon} 
+            title={`${operation.type === 'init' ? 'Initialize KB' :
+              operation.type === 'search' ? 'Search Files' :
+                operation.type === 'sync' ? 'Sync KB' :
+                  operation.type === 'list' ? 'List Contents' :
+                    operation.type === 'create' ? 'Create Folder' :
+                      operation.type === 'upload' ? 'Upload File' :
+                        operation.type === 'delete' ? 'Delete Item' :
+                          operation.type === 'enable' ? 'Toggle Item' :
+                            operation.type === 'cleanup' ? 'Cleanup KB' :
+                              (operation.type as string).charAt(0).toUpperCase() + (operation.type as string).slice(1)
+            } • ${scopeLabel}`}
+          />
+          {!isStreaming && toolResult?.output && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={copyContent}
+              className="h-7 px-2"
+            >
+              {copied ? (
+                <Check className="h-3.5 w-3.5" />
+              ) : (
+                <Copy className="h-3.5 w-3.5" />
               )}
-            </div>
+            </Button>
           )}
         </div>
       </CardHeader>
@@ -658,7 +635,7 @@ export function KbToolView({
           <LoadingState
             iconColor={isGlobal
               ? "text-zinc-500 dark:text-zinc-400"
-              : "text-green-500 dark:text-green-400"
+              : "text-zinc-500 dark:text-zinc-400"
             }
             bgColor={isGlobal
               ? "bg-gradient-to-b from-zinc-100 to-zinc-50 shadow-inner dark:from-zinc-800/40 dark:to-zinc-900/60"

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 import { useAgents, useUpdateAgent, useDeleteAgent, useOptimisticAgentUpdate, useAgentDeletionState } from '@/hooks/agents/use-agents';
@@ -182,7 +182,7 @@ export default function AgentsPage() {
   const createTemplateMutation = useCreateTemplate();
   const deleteTemplateMutation = useDeleteTemplate();
 
-  const agents = agentsResponse?.agents || [];
+  const agents = Array.isArray(agentsResponse?.agents) ? agentsResponse.agents : [];
   const agentsPagination = agentsResponse?.pagination;
 
   const allMarketplaceItems = useMemo(() => {

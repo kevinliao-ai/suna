@@ -16,6 +16,7 @@ from core.utils.logger import logger
 from core.utils.auth_utils import get_optional_user_id, verify_and_get_user_id_from_jwt, verify_sandbox_access, verify_sandbox_access_optional
 from core.services.supabase import DBConnection
 from core.utils.sandbox_utils import generate_unique_filename, get_uploads_directory
+from core.utils.file_name_generator import rename_ugly_files, has_ugly_name
 
 T = TypeVar('T')
 
@@ -761,7 +762,7 @@ async def create_file_in_project(
     
     try:
         # Reuse existing sandbox creation/retrieval logic from agent_runs
-        from core.agents.runs import _ensure_sandbox_for_thread
+        from core.files import ensure_sandbox_for_thread
         
         # Check if sandbox existed before
         from core.resources import ResourceService
@@ -770,7 +771,7 @@ async def create_file_in_project(
         existing_sandbox_id = sandbox_resource.get('external_id') if sandbox_resource else None
         
         # Ensure sandbox exists (creates if needed)
-        sandbox, sandbox_id = await _ensure_sandbox_for_thread(client, project_id, [file])
+        sandbox, sandbox_id = await ensure_sandbox_for_thread(client, project_id, [file])
         
         if not sandbox or not sandbox_id:
             raise HTTPException(status_code=500, detail="Failed to ensure sandbox for file upload")
@@ -1847,9 +1848,9 @@ async def websocket_pty_terminal(
             await websocket.close()
             return
         
-        from core.utils.auth_utils import _decode_jwt_with_verification
+        from core.utils.auth_utils import _decode_jwt_with_verification_async
         try:
-            decoded = _decode_jwt_with_verification(access_token)
+            decoded = await _decode_jwt_with_verification_async(access_token)
             user_id = decoded.get("sub")
             if not user_id:
                 raise ValueError("No user ID in token")
@@ -1935,3 +1936,203 @@ async def websocket_pty_terminal(
             await websocket.close()
         except:
             pass
+
+
+class RenameFilesRequest(BaseModel):
+    dry_run: bool = True
+    path: str = "/workspace"
+
+
+class RenameResult(BaseModel):
+    old_name: str
+    new_name: str
+
+
+class RenameFilesResponse(BaseModel):
+    success: bool
+    message: str
+    renames: list
+    dry_run: bool
+
+
+@router.post("/sandboxes/{sandbox_id}/files/smart-rename")
+async def smart_rename_files(
+    sandbox_id: str,
+    request_body: RenameFilesRequest,
+    user_id: str = Depends(verify_and_get_user_id_from_jwt)
+):
+    """
+    Rename files with ugly auto-generated names (like 'generated_image_abc123.png')
+    to descriptive names using AI vision analysis.
+    
+    This endpoint scans for files matching patterns like:
+    - generated_image_*.png
+    - generated_video_*.mp4
+    - design_*x*_*.png
+    - etc.
+    
+    And renames them to descriptive names based on their content.
+    
+    Args:
+        sandbox_id: The sandbox to scan
+        request_body.dry_run: If True, only returns proposed renames without executing
+        request_body.path: Base path to scan (default: /workspace)
+    """
+    try:
+        client = await db.client
+        await verify_sandbox_access(client, sandbox_id, user_id)
+        
+        sandbox = await get_sandbox_by_id_safely(client, sandbox_id)
+        
+        logger.info(f"Starting smart rename for sandbox {sandbox_id}, dry_run={request_body.dry_run}")
+        
+        renames = await rename_ugly_files(
+            sandbox=sandbox,
+            workspace_path=request_body.path,
+            dry_run=request_body.dry_run
+        )
+        
+        if request_body.dry_run:
+            message = f"Found {len(renames)} file(s) with ugly names that can be renamed"
+        else:
+            message = f"Successfully renamed {len(renames)} file(s)"
+        
+        return RenameFilesResponse(
+            success=True,
+            message=message,
+            renames=[{"old_name": old, "new_name": new} for old, new in renames],
+            dry_run=request_body.dry_run
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in smart rename for sandbox {sandbox_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
+# Sandbox Pool Monitoring Endpoints
+# ============================================================================
+
+@router.get("/sandbox-pool/stats")
+async def get_sandbox_pool_stats(
+    user_id: str = Depends(verify_and_get_user_id_from_jwt)
+):
+    """
+    Get sandbox pool statistics (admin only).
+    
+    Returns:
+        - pool_size: Current number of available sandboxes in pool
+        - total_created: Total sandboxes created by pool service
+        - total_claimed: Total sandboxes claimed from pool
+        - total_expired: Total sandboxes cleaned up due to age
+        - avg_claim_time_ms: Average time to claim a sandbox
+        - pool_hit_rate: Percentage of requests served from pool
+        - last_replenish_at: When pool was last replenished
+        - last_cleanup_at: When stale sandboxes were last cleaned
+    """
+    try:
+        # Check if user is admin
+        client = await db.client
+        
+        # Get user's account role
+        account_user_result = await client.schema('basejump').from_('account_user').select(
+            'account_role'
+        ).eq('user_id', user_id).execute()
+        
+        is_admin = False
+        if account_user_result.data:
+            for row in account_user_result.data:
+                if row.get('account_role') == 'owner':
+                    is_admin = True
+                    break
+        
+        if not is_admin:
+            raise HTTPException(status_code=403, detail="Admin access required")
+        
+        from core.sandbox.pool_service import get_pool_service
+        from core.sandbox.pool_config import get_pool_config
+        from core.sandbox import pool_repo
+        
+        service = get_pool_service()
+        config = get_pool_config()
+        
+        # Get current pool size from database
+        pool_size = await pool_repo.get_pool_size()
+        
+        stats = service.get_stats()
+        stats['pool_size'] = pool_size  # Use fresh count
+        
+        # Add config info
+        stats['config'] = {
+            'enabled': config.enabled,
+            'min_size': config.min_size,
+            'max_size': config.max_size,
+            'replenish_threshold': config.replenish_threshold,
+            'check_interval': config.check_interval,
+            'max_age': config.max_age,
+        }
+        
+        return stats
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting sandbox pool stats: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/sandbox-pool/replenish")
+async def trigger_pool_replenish(
+    user_id: str = Depends(verify_and_get_user_id_from_jwt)
+):
+    """
+    Manually trigger pool replenishment (admin only).
+    
+    Useful for testing or when you need to quickly fill the pool.
+    """
+    try:
+        # Check if user is admin
+        client = await db.client
+        
+        account_user_result = await client.schema('basejump').from_('account_user').select(
+            'account_role'
+        ).eq('user_id', user_id).execute()
+        
+        is_admin = False
+        if account_user_result.data:
+            for row in account_user_result.data:
+                if row.get('account_role') == 'owner':
+                    is_admin = True
+                    break
+        
+        if not is_admin:
+            raise HTTPException(status_code=403, detail="Admin access required")
+        
+        from core.sandbox.pool_service import get_pool_service
+        from core.sandbox import pool_repo
+        
+        service = get_pool_service()
+        
+        # Get current size before
+        size_before = await pool_repo.get_pool_size()
+        
+        # Trigger replenishment
+        created = await service.ensure_pool_size()
+        
+        # Get size after
+        size_after = await pool_repo.get_pool_size()
+        
+        return {
+            "success": True,
+            "sandboxes_created": created,
+            "pool_size_before": size_before,
+            "pool_size_after": size_after,
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error triggering pool replenish: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

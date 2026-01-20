@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useMemo, useState, useEffect } from 'react';
-import { CircleDashed, Play, Pause, Loader2 } from 'lucide-react';
+import { Play, Pause } from 'lucide-react';
+import { KortixLoader } from '@/components/ui/kortix-loader';
 import { useImageContent, useFileContent } from '@/hooks/files';
 import { getToolIcon } from '@/components/thread/utils';
 import { AppIcon } from '@/components/thread/tool-views/shared/AppIcon';
@@ -29,14 +30,18 @@ function extractGeneratedMedia(output: string | undefined): { path: string; type
   if (!output) return null;
   
   // Check for video first - handle /workspace/ prefix
-  const videoMatch = output.match(/Video saved as:\s*(?:\/workspace\/)?([^\s\n]+\.(?:mp4|webm|mov))/i);
+  // Supports filenames with spaces (e.g., "Mock Video abc123.mp4")
+  const videoMatch = output.match(/Video saved as:\s*(?:\/workspace\/)?(.+\.(?:mp4|webm|mov))/i);
   if (videoMatch?.[1]) return { path: videoMatch[1].trim(), type: 'video' };
+  // Legacy format with underscores
   const directVideoMatch = output.match(/(?:\/workspace\/)?(generated_video_[a-z0-9]+\.(?:mp4|webm|mov))/i);
   if (directVideoMatch?.[1]) return { path: directVideoMatch[1].trim(), type: 'video' };
   
   // Check for image - handle /workspace/ prefix
-  const imageMatch = output.match(/Image saved as:\s*(?:\/workspace\/)?([^\s\n]+\.(?:png|jpg|jpeg|webp|gif))/i);
+  // Supports filenames with spaces (e.g., "Geometric Glass Facade.png")
+  const imageMatch = output.match(/Image saved as:\s*(?:\/workspace\/)?(.+\.(?:png|jpg|jpeg|webp|gif))/i);
   if (imageMatch?.[1]) return { path: imageMatch[1].trim(), type: 'image' };
+  // Legacy format with underscores
   const directImageMatch = output.match(/(?:\/workspace\/)?(generated_image_[a-z0-9]+\.(?:png|jpg|jpeg|webp|gif))/i);
   if (directImageMatch?.[1]) return { path: directImageMatch[1].trim(), type: 'image' };
   
@@ -50,12 +55,12 @@ function extractGeneratedImage(output: string | undefined): string | null {
 }
 
 const BLOB_COLORS = [
-  'from-purple-300/60 to-pink-300/60',
-  'from-blue-300/60 to-cyan-300/60',
-  'from-emerald-300/60 to-teal-300/60',
-  'from-orange-300/60 to-amber-300/60',
-  'from-rose-300/60 to-red-300/60',
-  'from-indigo-300/60 to-violet-300/60',
+  'from-zinc-300/60 to-zinc-400/60',
+  'from-zinc-350/60 to-zinc-450/60',
+  'from-neutral-300/60 to-neutral-400/60',
+  'from-stone-300/60 to-stone-400/60',
+  'from-gray-300/60 to-gray-400/60',
+  'from-slate-300/60 to-slate-400/60',
 ];
 
 function ShimmerBox({ aspectVideo = false }: { aspectVideo?: boolean }) {
@@ -245,7 +250,7 @@ export function MediaGenerationInline({
       >
         <AppIcon toolCall={toolCall} size={14} className="h-3.5 w-3.5 text-muted-foreground shrink-0" fallbackIcon={IconComponent} />
         <span className="font-mono text-xs text-foreground truncate">Generate Media</span>
-        {!isComplete && <CircleDashed className="h-3.5 w-3.5 text-muted-foreground shrink-0 animate-spin ml-1" />}
+        {!isComplete && <KortixLoader size="small" className="ml-1" />}
       </button>
 
       {/* Media below - image or video */}

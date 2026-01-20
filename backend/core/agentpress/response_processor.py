@@ -26,7 +26,7 @@ from core.agentpress.xml_tool_parser import (
     extract_xml_chunks,
     parse_xml_tool_calls_with_ids
 )
-from core.worker.tool_output_streaming_context import set_current_tool_call_id
+from core.utils.tool_output_streaming import set_current_tool_call_id
 from core.agentpress.native_tool_parser import (
     extract_tool_call_chunk_data,
     is_tool_call_complete,
@@ -138,7 +138,10 @@ class ResponseProcessor:
         # Per-thread locks for race condition protection during parallel tool execution
         # Locks are used to serialize DB writes for the same thread while allowing
         # parallel execution across different threads
+        # Using deque with maxlen to prevent unbounded growth
+        from collections import deque
         self._thread_locks: Dict[str, asyncio.Lock] = {}
+        self._thread_lock_order: deque = deque(maxlen=100)  # Track order for LRU eviction
         self._locks_lock = asyncio.Lock()  # Lock for managing the thread_locks dict itself
 
     async def _get_thread_lock(self, thread_id: str) -> asyncio.Lock:
@@ -158,8 +161,21 @@ class ResponseProcessor:
             async with self._locks_lock:
                 # Check again after acquiring the lock (another coroutine might have created it)
                 if thread_id not in self._thread_locks:
+                    # Evict oldest lock if at max capacity
+                    if len(self._thread_locks) >= 100:
+                        oldest_thread_id = self._thread_lock_order[0] if self._thread_lock_order else None
+                        if oldest_thread_id and oldest_thread_id in self._thread_locks:
+                            self._thread_locks.pop(oldest_thread_id, None)
+                    
                     self._thread_locks[thread_id] = asyncio.Lock()
+                    self._thread_lock_order.append(thread_id)
         return self._thread_locks[thread_id]
+    
+    async def cleanup(self) -> None:
+        """Cleanup response processor resources."""
+        async with self._locks_lock:
+            self._thread_locks.clear()
+            self._thread_lock_order.clear()
 
     def _log_frontend_message(self, message: Dict[str, Any], debug_file: Optional[Path] = None):
         """Log a message being sent to the frontend to a debug file.
@@ -521,6 +537,7 @@ class ResponseProcessor:
         # Don't carry over accumulated_content when auto-continuing after tool_calls
         # Each assistant message should be separate
         accumulated_content = ""
+        accumulated_reasoning_content = ""  # Accumulate reasoning content separately
         tool_calls_buffer = {}
         current_xml_content = ""
         xml_chunks_buffer = []
@@ -548,6 +565,11 @@ class ResponseProcessor:
         streaming_tool_result_ids = []  # Track tool result message IDs for batch update after streaming
         partial_assistant_message_id = None  # Track partial assistant message ID for updates
         tool_results_buffer = []  # Buffer for tool results that need final processing
+        
+        # Buffer for deferred image context saves - these must be saved AFTER all tool_results
+        # to prevent image_context messages from being inserted between tool_results
+        # which breaks Bedrock's requirement that all tool_results immediately follow assistant
+        deferred_image_contexts: List[ToolResult] = []
 
         # Store the complete LiteLLM response object as received
         final_llm_response = None
@@ -691,7 +713,22 @@ class ResponseProcessor:
             _chunk_metadata_cached = to_json_string_fast({"stream_status": "chunk", "thread_run_id": thread_run_id})
             _stream_start_time = datetime.now(timezone.utc).isoformat()
             
+            llm_ttft_seconds = None  # Actual LLM TTFT from llm.py
+            
             async for chunk in llm_response:
+                # Check for special TTFT metadata chunk from llm.py wrapper
+                if isinstance(chunk, dict) and "__llm_ttft_seconds__" in chunk:
+                    llm_ttft_seconds = chunk["__llm_ttft_seconds__"]
+                    logger.info(f"[ResponseProcessor] 📊 Received LLM TTFT metadata: {llm_ttft_seconds:.2f}s")
+                    # Yield a special message with the LLM TTFT for downstream consumers
+                    yield {
+                        "type": "llm_ttft",
+                        "ttft_seconds": llm_ttft_seconds,
+                        "model": chunk.get("model"),
+                        "thread_id": thread_id,
+                    }
+                    continue  # Don't process this as a regular chunk
+                
                 # Check for cancellation before processing each chunk
                 if cancellation_event.is_set():
                     logger.info(f"Cancellation signal received for thread {thread_id} - stopping LLM stream processing")
@@ -785,6 +822,7 @@ class ResponseProcessor:
                     
                     # Check for and log Anthropic thinking content (MiniMax reasoning m2.1 with reasoning_split=True, we avoid yielding such chunks)
                     # NOTE: With reasoning_split=True, reasoning comes separately and should NOT be included in content
+                    reasoning_chunk = None
                     if delta and hasattr(delta, 'reasoning_content') and delta.reasoning_content:
                         if not has_printed_thinking_prefix:
                             # print("[THINKING]: ", end='', flush=True)
@@ -796,6 +834,9 @@ class ResponseProcessor:
                         # logger.debug(f"Processing reasoning_content: type={type(reasoning_content)}, value={reasoning_content}")
                         if isinstance(reasoning_content, list):
                             reasoning_content = ''.join(str(item) for item in reasoning_content)
+                        # Accumulate reasoning content separately from text content
+                        accumulated_reasoning_content += reasoning_content
+                        reasoning_chunk = reasoning_content
                         # logger.debug(f"Reasoning content received (not included in final message): {reasoning_content[:100]}...")
                         # DO NOT add reasoning_content to accumulated_content - only actual text content should be saved
 
@@ -809,17 +850,41 @@ class ResponseProcessor:
 
                         # Yield content chunk IMMEDIATELY - no datetime call, use pre-built metadata
                         # This is the hot path - every microsecond counts!
+                        # Build metadata dynamically if we have reasoning_content (otherwise use cached)
+                        if reasoning_chunk:
+                            # Include reasoning_content in metadata when present
+                            chunk_metadata = {"stream_status": "chunk", "thread_run_id": thread_run_id, "reasoning_content": reasoning_chunk}
+                            chunk_metadata_str = to_json_string_fast(chunk_metadata)
+                        else:
+                            chunk_metadata_str = _chunk_metadata_cached
+                        
                         content_chunk_message = {
                             "sequence": __sequence,
                             "message_id": None, "thread_id": thread_id, "type": "assistant",
                             "is_llm_message": True,
                             "content": to_json_string_fast({"role": "assistant", "content": chunk_content}),
-                            "metadata": _chunk_metadata_cached,  # Pre-built, no serialization per chunk
+                            "metadata": chunk_metadata_str,
                             "created_at": _stream_start_time,  # Reuse start time, no datetime.now() per chunk
                             "updated_at": _stream_start_time
                         }
                         self._log_frontend_message(content_chunk_message, frontend_debug_file)
                         yield content_chunk_message
+                        __sequence += 1
+                    elif reasoning_chunk:
+                        # Yield reasoning chunk separately if there's no content chunk
+                        # This handles cases where reasoning comes without text content
+                        reasoning_metadata = {"stream_status": "chunk", "thread_run_id": thread_run_id, "reasoning_content": reasoning_chunk}
+                        reasoning_chunk_message = {
+                            "sequence": __sequence,
+                            "message_id": None, "thread_id": thread_id, "type": "assistant",
+                            "is_llm_message": True,
+                            "content": to_json_string_fast({"role": "assistant", "content": ""}),  # Empty content, reasoning in metadata
+                            "metadata": to_json_string_fast(reasoning_metadata),
+                            "created_at": _stream_start_time,
+                            "updated_at": _stream_start_time
+                        }
+                        self._log_frontend_message(reasoning_chunk_message, frontend_debug_file)
+                        yield reasoning_chunk_message
                         __sequence += 1
 
                         # --- Process XML Tool Calls (if enabled) ---
@@ -989,12 +1054,13 @@ class ResponseProcessor:
                                         result = execution["task"].result()
                                         execution["context"].result = result
                                         
-                                        # Save immediately
+                                        # Save immediately (pass deferred_image_contexts buffer for deferred image saving)
                                         updated_id, saved_result, saved_assistant = await self._handle_tool_execution_completion(
                                             thread_id, thread_run_id,
                                             execution["tool_call"], result, execution["tool_index"],
                                             execution["context"], tool_calls_buffer, accumulated_content,
-                                            xml_tool_calls_with_ids, config, partial_assistant_message_id
+                                            xml_tool_calls_with_ids, config, partial_assistant_message_id,
+                                            deferred_image_contexts=deferred_image_contexts
                                         )
                                         
                                         if updated_id:
@@ -1099,7 +1165,8 @@ class ResponseProcessor:
                             last_assistant_message_object,
                             yielded_tool_indices,
                             agent_should_terminate,
-                            frontend_debug_file
+                            frontend_debug_file,
+                            deferred_image_contexts=deferred_image_contexts
                         ):
                             if isinstance(item, tuple):
                                 # Final state tuple - extract and update state atomically
@@ -1216,7 +1283,8 @@ class ResponseProcessor:
                     thread_run_id,
                     last_assistant_message_object,
                     yielded_tool_indices,
-                    agent_should_terminate
+                    agent_should_terminate,
+                    deferred_image_contexts=deferred_image_contexts
                 ):
                     if isinstance(item, tuple):
                         # Final state tuple - extract and update state atomically
@@ -1311,23 +1379,17 @@ class ResponseProcessor:
 
                 # If we already have a placeholder assistant message, update it instead of creating a new one
                 if last_assistant_message_object and last_assistant_message_object.get('message_id'):
+                    from core.threads import repo as threads_repo
                     # Store placeholder message_id for cleanup if update fails
                     placeholder_message_id = last_assistant_message_object['message_id']
                     # Update the existing placeholder message with final content and metadata
-                    from core.services.supabase import DBConnection
-                    db = DBConnection()
-                    client = await db.client
                     try:
-                        await client.table('messages').update({
-                            'content': message_data,
-                            'metadata': assistant_metadata,
-                            'updated_at': datetime.now(timezone.utc).isoformat()
-                        }).eq('message_id', placeholder_message_id).execute()
+                        updated_msg = await threads_repo.update_message_content(
+                            placeholder_message_id, message_data, assistant_metadata
+                        )
                         
-                        # Fetch the updated message
-                        result = await client.table('messages').select('*').eq('message_id', placeholder_message_id).single().execute()
-                        if result.data:
-                            last_assistant_message_object = result.data
+                        if updated_msg:
+                            last_assistant_message_object = updated_msg
                             logger.debug(f"Updated placeholder assistant message {last_assistant_message_object['message_id']} with final content")
                             self.trace.event(
                                 name="updated_placeholder_assistant_message",
@@ -1348,24 +1410,23 @@ class ResponseProcessor:
                                 new_message_id = last_assistant_message_object['message_id']
                                 try:
                                     # Update tool results to point to the new message_id
-                                    tool_results = await client.table('messages').select('message_id, metadata').eq('thread_id', thread_id).eq('type', 'tool').execute()
-                                    if tool_results.data:
+                                    tool_results = await threads_repo.get_tool_results_by_thread(thread_id)
+                                    if tool_results:
                                         updated_count = 0
-                                        for tool_result in tool_results.data:
+                                        for tool_result in tool_results:
                                             metadata = tool_result.get('metadata', {})
                                             if metadata.get('assistant_message_id') == placeholder_message_id:
-                                                # Update this tool result to point to the new message
                                                 updated_metadata = metadata.copy()
                                                 updated_metadata['assistant_message_id'] = new_message_id
-                                                await client.table('messages').update({
-                                                    'metadata': updated_metadata
-                                                }).eq('message_id', tool_result['message_id']).execute()
+                                                await threads_repo.update_message_metadata(
+                                                    tool_result['message_id'], updated_metadata
+                                                )
                                                 updated_count += 1
                                         if updated_count > 0:
                                             logger.debug(f"Migrated {updated_count} tool result(s) from placeholder {placeholder_message_id} to new message {new_message_id}")
                                     
                                     # Delete the orphaned placeholder message
-                                    await client.table('messages').delete().eq('message_id', placeholder_message_id).eq('thread_id', thread_id).execute()
+                                    await threads_repo.delete_message_by_id(placeholder_message_id, thread_id)
                                     logger.info(f"Deleted orphaned placeholder message {placeholder_message_id} after failed update")
                                     self.trace.event(
                                         name="deleted_orphaned_placeholder_message",
@@ -1388,24 +1449,23 @@ class ResponseProcessor:
                             new_message_id = last_assistant_message_object['message_id']
                             try:
                                 # Update tool results to point to the new message_id
-                                tool_results = await client.table('messages').select('message_id, metadata').eq('thread_id', thread_id).eq('type', 'tool').execute()
-                                if tool_results.data:
+                                tool_results = await threads_repo.get_tool_results_by_thread(thread_id)
+                                if tool_results:
                                     updated_count = 0
-                                    for tool_result in tool_results.data:
+                                    for tool_result in tool_results:
                                         metadata = tool_result.get('metadata', {})
                                         if metadata.get('assistant_message_id') == placeholder_message_id:
-                                            # Update this tool result to point to the new message
                                             updated_metadata = metadata.copy()
                                             updated_metadata['assistant_message_id'] = new_message_id
-                                            await client.table('messages').update({
-                                                'metadata': updated_metadata
-                                            }).eq('message_id', tool_result['message_id']).execute()
+                                            await threads_repo.update_message_metadata(
+                                                tool_result['message_id'], updated_metadata
+                                            )
                                             updated_count += 1
                                     if updated_count > 0:
                                         logger.debug(f"Migrated {updated_count} tool result(s) from placeholder {placeholder_message_id} to new message {new_message_id}")
                                 
                                 # Delete the orphaned placeholder message
-                                await client.table('messages').delete().eq('message_id', placeholder_message_id).eq('thread_id', thread_id).execute()
+                                await threads_repo.delete_message_by_id(placeholder_message_id, thread_id)
                                 logger.info(f"Deleted orphaned placeholder message {placeholder_message_id} after failed update")
                                 self.trace.event(
                                     name="deleted_orphaned_placeholder_message",
@@ -1556,9 +1616,9 @@ class ResponseProcessor:
                             context.assistant_message_id
                         )
                         
-                        # Save deferred image context if present (after tool result)
+                        # Collect deferred image context for later saving (after ALL tool_results)
                         if saved_tool_result_object:
-                            await self._save_deferred_image_context(thread_id, result)
+                            self._collect_deferred_image_context(result, deferred_image_contexts)
 
                         # Yield completed/failed status (linked to saved result ID if available)
                         completed_msg_obj = await self._yield_and_save_tool_completed(
@@ -1594,15 +1654,14 @@ class ResponseProcessor:
                     )
                     
                     # Acquire thread lock to prevent race conditions with concurrent tool result saves
+                    from core.threads import repo as threads_repo
                     thread_lock = await self._get_thread_lock(thread_id)
                     async with thread_lock:
-                        client = await self.thread_manager.db.client
-                        update_result = await client.table('messages').update({
-                            'is_llm_message': True
-                        }).in_('message_id', streaming_tool_result_ids).execute()
+                        updated_count = await threads_repo.update_messages_is_llm_message(
+                            streaming_tool_result_ids, is_llm_message=True
+                        )
                     
-                    if update_result.data:
-                        updated_count = len(update_result.data)
+                    if updated_count > 0:
                         logger.info(f"✅ Successfully batch-updated {updated_count}/{len(streaming_tool_result_ids)} streaming tool results to is_llm_message=True")
                         self.trace.event(
                             name="batch_update_streaming_tool_results_success",
@@ -1642,6 +1701,15 @@ class ResponseProcessor:
                         status_message=(f"Error batch-updating streaming tool results: {str(batch_update_error)}")
                     )
                     # Don't fail the entire operation - tool results are still saved, just not visible to LLM yet
+
+            # --- Save deferred image contexts AFTER all tool results are saved and visible ---
+            # This is the fix for Bedrock tool pairing: image_context messages must come AFTER
+            # all tool_results from the same assistant message, not interleaved between them.
+            # Without this fix, the message sequence could become:
+            #   assistant -> tool_result_1 -> image_context_1 -> tool_result_2
+            # Which breaks Bedrock's requirement that tool_results immediately follow assistant.
+            if deferred_image_contexts:
+                await self._save_all_deferred_image_contexts(thread_id, deferred_image_contexts)
 
             # --- Re-check auto-continue after tool executions ---
             # The should_auto_continue flag was set earlier, but tool executions may have set agent_should_terminate
@@ -1874,7 +1942,7 @@ class ResponseProcessor:
                     else:
                         logger.warning("💰 No LLM response with usage - ESTIMATING token usage for billing")
                         from core.agentpress.context_manager import ContextManager
-                        context_mgr = ContextManager()
+                        context_mgr = ContextManager(db=self.thread_manager.db if self.thread_manager else None)
                         estimated_usage = await context_mgr.estimate_token_usage(prompt_messages, accumulated_content, llm_model)
                         llm_end_content = {
                             "model": llm_model,
@@ -1895,7 +1963,7 @@ class ResponseProcessor:
                             "index": 0,
                             "message": {
                                 "role": "assistant",
-                                "content": accumulated_content,
+                                "content": accumulated_content if accumulated_content else "\n",
                                 "tool_calls": complete_native_tool_calls or None
                             }
                         }
@@ -1956,14 +2024,12 @@ class ResponseProcessor:
                             updated_content.pop('tool_calls', None)
                             
                             # Update in database (protected by lock to prevent race conditions)
+                            from core.threads import repo as threads_repo
                             thread_lock = await self._get_thread_lock(thread_id)
                             async with thread_lock:
-                                from core.services.supabase import DBConnection
-                                db = DBConnection()
-                                client = await db.client
-                                await client.table('messages').update({
-                                    'content': updated_content
-                                }).eq('message_id', last_assistant_message_object['message_id']).execute()
+                                await threads_repo.update_message_content(
+                                    last_assistant_message_object['message_id'], updated_content
+                                )
                             
                             logger.info(f"✅ Removed {len(tool_call_ids)} orphaned tool_calls from message {last_assistant_message_object['message_id']}: {tool_call_ids}")
                 except Exception as cleanup_e:
@@ -2062,6 +2128,9 @@ class ResponseProcessor:
         assistant_message_object = None
         tool_result_message_objects = {}
         finish_reason = None
+        
+        # Buffer for deferred image context saves - same fix as streaming path
+        deferred_image_contexts: List[ToolResult] = []
         native_tool_calls_for_message = []
 
         # Setup frontend message logging (only if DEBUG_SAVE_LLM_IO is enabled)
@@ -2225,9 +2294,9 @@ class ResponseProcessor:
                         current_assistant_id
                     )
                     
-                    # Save deferred image context if present (after tool result)
+                    # Collect deferred image context for later saving (after ALL tool_results)
                     if saved_tool_result_object:
-                        await self._save_deferred_image_context(thread_id, result)
+                        self._collect_deferred_image_context(result, deferred_image_contexts)
 
                     # Save and Yield completed/failed status
                     completed_msg_obj = await self._yield_and_save_tool_completed(
@@ -2249,6 +2318,11 @@ class ResponseProcessor:
                          self.trace.event(name="failed_to_save_tool_result_for_index", level="ERROR", status_message=(f"Failed to save tool result for index {tool_index}"))
 
                     tool_index += 1
+
+            # --- Save deferred image contexts AFTER all tool results (non-streaming path) ---
+            # Same fix as streaming path for Bedrock tool pairing
+            if deferred_image_contexts:
+                await self._save_all_deferred_image_contexts(thread_id, deferred_image_contexts)
 
             # --- Save and Yield Final Status ---
             if finish_reason:
@@ -2891,16 +2965,14 @@ class ResponseProcessor:
             
             # If partial_assistant_message_id exists, UPDATE the existing message
             if partial_assistant_message_id:
+                from core.threads import repo as threads_repo
                 async with thread_lock:
-                    client = await self.thread_manager.db.client
-                    result = await client.table('messages').update({
-                        'content': message_data,
-                        'metadata': assistant_metadata
-                    }).eq('message_id', partial_assistant_message_id).execute()
+                    updated_message = await threads_repo.update_message_content(
+                        partial_assistant_message_id, message_data, assistant_metadata
+                    )
                     
-                    if result.data and len(result.data) > 0:
+                    if updated_message:
                         logger.debug(f"Updated partial assistant message {partial_assistant_message_id} with {len(unified_tool_calls)} tool calls")
-                        updated_message = result.data[0]
                         # Log DB write for assistant message update
                         if hasattr(self, '_log_db_write') and updated_message:
                             self._log_db_write("update", "assistant", updated_message, is_update=True)
@@ -2941,11 +3013,16 @@ class ResponseProcessor:
         accumulated_content: str,
         xml_tool_calls_with_ids: List[Dict[str, Any]],
         config: ProcessorConfig,
-        partial_assistant_message_id: Optional[str]
+        partial_assistant_message_id: Optional[str],
+        deferred_image_contexts: Optional[List[ToolResult]] = None
     ) -> Tuple[Optional[str], Optional[Dict[str, Any]], Optional[Dict[str, Any]]]:
         """
         Handle immediate saving when a tool execution completes during streaming.
         Returns: (updated_partial_assistant_message_id, saved_tool_result_object, saved_assistant_message_object)
+        
+        Args:
+            deferred_image_contexts: Buffer to collect image contexts for deferred saving.
+                                    If provided, image contexts are collected instead of saved immediately.
         """
         try:
             # Step 1: Save or update partial assistant message to ensure it exists
@@ -2989,9 +3066,14 @@ class ResponseProcessor:
                 context.saved_during_streaming = True
                 context.saved_result_object = saved_tool_result_object
                 
-                # Step 5: Check if tool result contains image_context data that needs to be saved
-                # This is used by the vision tool to defer image_context saving until after tool result
-                await self._save_deferred_image_context(thread_id, result)
+                # Step 5: Collect image_context data for deferred saving (if buffer provided)
+                # This is the fix for Bedrock tool pairing - we now collect image contexts
+                # and save them AFTER all tool_results are saved and made visible to LLM
+                if deferred_image_contexts is not None:
+                    self._collect_deferred_image_context(result, deferred_image_contexts)
+                else:
+                    # Fallback: save immediately if no buffer provided (legacy behavior)
+                    await self._save_deferred_image_context(thread_id, result)
             else:
                 logger.error(f"Failed to save tool result for tool {tool_idx}")
             
@@ -3324,20 +3406,90 @@ class ResponseProcessor:
                 logger.warning("_image_context_data missing message_content, skipping")
                 return
             
-            # Save the image_context message AFTER the tool result
+            # Set has_images flag on thread metadata
+            from core.agentpress.thread_manager import ThreadState
+            await ThreadState.set_has_images(thread_id)
+            
             await self.add_message(
                 thread_id=thread_id,
                 type="image_context",
                 content=message_content,
-                is_llm_message=True,
+                is_llm_message=False,
                 metadata=metadata
             )
+            
+            from core.cache.runtime_cache import invalidate_message_history_cache
+            await invalidate_message_history_cache(thread_id)
             
             file_path = metadata.get('file_path', 'unknown')
             logger.info(f"[LoadImage] Added '{file_path}' to context (deferred save after tool result)")
             
         except Exception as e:
             logger.error(f"Error saving deferred image context: {str(e)}", exc_info=True)
+
+    def _collect_deferred_image_context(self, result: ToolResult, deferred_image_contexts: List[ToolResult]) -> None:
+        """
+        Collect image_context data from a tool result to be saved LATER.
+        
+        This is the FIX for the Bedrock tool pairing bug. Previously, image_context messages
+        were saved immediately after each tool_result, which could cause them to be inserted
+        BETWEEN tool_results when multiple tools are executed in parallel. This breaks Bedrock's
+        requirement that all tool_results must immediately follow the assistant message.
+        
+        Example of the bug:
+        - assistant (tool_use_1, tool_use_2) -> tool_result_1 -> image_context_1 -> tool_result_2
+        - Bedrock expects: assistant -> tool_result_1 -> tool_result_2 -> image_context_1
+        
+        Now we collect image contexts and save them AFTER all tool_results are batch-updated.
+        
+        Args:
+            result: The tool result that may contain _image_context_data
+            deferred_image_contexts: Buffer to collect results with image context for later saving
+        """
+        try:
+            # Extract output from the result
+            output = result.output if hasattr(result, 'output') else None
+            if not output:
+                return
+            
+            # Parse if it's a JSON string
+            if isinstance(output, str):
+                try:
+                    output = json.loads(output)
+                except (json.JSONDecodeError, ValueError):
+                    return
+            
+            # Check if this result contains deferred image context data
+            if not isinstance(output, dict) or '_image_context_data' not in output:
+                return
+            
+            # Collect for later saving
+            logger.debug(f"[DeferredImageContext] Collected image_context for deferred save (total collected: {len(deferred_image_contexts) + 1})")
+            deferred_image_contexts.append(result)
+            
+        except Exception as e:
+            logger.error(f"Error collecting deferred image context: {str(e)}", exc_info=True)
+
+    async def _save_all_deferred_image_contexts(self, thread_id: str, deferred_image_contexts: List[ToolResult]) -> None:
+        """
+        Save all collected image_context messages AFTER all tool_results have been saved and made visible.
+        
+        This ensures proper message ordering for Bedrock:
+        - assistant (with tool_use blocks) -> all tool_results -> all image_contexts
+        
+        Args:
+            thread_id: The thread ID
+            deferred_image_contexts: List of tool results containing image context data
+        """
+        if not deferred_image_contexts:
+            return
+        
+        logger.info(f"[DeferredImageContext] Saving {len(deferred_image_contexts)} deferred image_context messages AFTER all tool_results")
+        
+        for result in deferred_image_contexts:
+            await self._save_deferred_image_context(thread_id, result)
+        
+        logger.info(f"[DeferredImageContext] Successfully saved all {len(deferred_image_contexts)} deferred image_context messages")
 
     def _create_tool_context(self, tool_call: Dict[str, Any], tool_index: int, assistant_message_id: Optional[str] = None) -> ToolExecutionContext:
         """Create a tool execution context with display name populated."""
@@ -3360,11 +3512,15 @@ class ResponseProcessor:
         last_assistant_message_object: Optional[Dict[str, Any]],
         yielded_tool_indices: set,
         agent_should_terminate: bool,
-        frontend_debug_file: Optional[Path] = None
+        frontend_debug_file: Optional[Path] = None,
+        deferred_image_contexts: Optional[List[ToolResult]] = None
     ):
         """
         Process any completed tool executions in real-time during streaming.
         Uses asyncio.wait() with FIRST_COMPLETED to yield results immediately as each tool completes.
+        
+        Args:
+            deferred_image_contexts: Buffer to collect image contexts for deferred saving.
         
         Yields:
             Dict: Tool result messages and status messages (yielded immediately)
@@ -3423,6 +3579,13 @@ class ResponseProcessor:
                     
                     # Task completed successfully - get result and process
                     try:
+                        # Skip if already saved during streaming (prevents duplicate saves)
+                        if execution.get("saved", False):
+                            logger.debug(f"Tool {tool_idx} already saved during streaming, skipping")
+                            updated_yielded_indices.add(tool_idx)
+                            tasks.remove(task)
+                            continue
+                        
                         result = task.result()
                         context.result = result
                         
@@ -3438,9 +3601,13 @@ class ResponseProcessor:
                             thread_id, tool_call, result, assistant_message_id
                         )
                         
-                        # Save deferred image context if present (after tool result)
+                        # Collect deferred image context for later saving (after ALL tool_results)
                         if saved_tool_result_object:
-                            await self._save_deferred_image_context(thread_id, result)
+                            if deferred_image_contexts is not None:
+                                self._collect_deferred_image_context(result, deferred_image_contexts)
+                            else:
+                                # Fallback: save immediately if no buffer provided (legacy behavior)
+                                await self._save_deferred_image_context(thread_id, result)
                         
                         # Get tool_message_id from saved result
                         tool_message_id = saved_tool_result_object['message_id'] if saved_tool_result_object else None

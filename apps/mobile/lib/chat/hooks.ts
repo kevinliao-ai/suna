@@ -12,6 +12,7 @@ import {
   type UseMutationOptions,
   type UseQueryOptions,
 } from '@tanstack/react-query';
+import { log } from '@/lib/logger';
 import { Share } from 'react-native';
 import { API_URL, FRONTEND_SHARE_URL, getAuthHeaders, getAuthToken } from '@/api/config';
 import type {
@@ -137,31 +138,32 @@ export function useShareThread(
 
   return useMutation({
     mutationFn: async (threadId) => {
-      const headers = await getAuthHeaders();
-      
-      // Make thread public
-      const updateRes = await fetch(`${API_URL}/threads/${threadId}`, {
-        method: 'PATCH',
-        headers,
-        body: JSON.stringify({ is_public: true }),
-      });
-      
-      if (!updateRes.ok) throw new Error(`Failed to share thread: ${updateRes.status}`);
-      
-      // Generate share URL using frontend URL
+      // Generate share URL immediately - it's deterministic
       const shareUrl = `${FRONTEND_SHARE_URL}/share/${threadId}`;
-      
-      // Open native share menu
+
+      // Open native share menu right away for instant UX
       // Use message instead of url to prevent iOS duplication issue
       await Share.share({
         message: shareUrl,
       });
-      
+
+      // Make thread public in background (fire-and-forget)
+      getAuthHeaders().then((headers) => {
+        fetch(`${API_URL}/threads/${threadId}`, {
+          method: 'PATCH',
+          headers,
+          body: JSON.stringify({ is_public: true }),
+        }).then((res) => {
+          if (res.ok) {
+            queryClient.invalidateQueries({ queryKey: chatKeys.threads() });
+            queryClient.invalidateQueries({ queryKey: chatKeys.thread(threadId) });
+          }
+        }).catch((err) => {
+          log.error('Failed to make thread public:', err);
+        });
+      });
+
       return { shareUrl };
-    },
-    onSuccess: (_, threadId) => {
-      queryClient.invalidateQueries({ queryKey: chatKeys.threads() });
-      queryClient.invalidateQueries({ queryKey: chatKeys.thread(threadId) });
     },
     ...options,
   });
@@ -344,15 +346,15 @@ export function useSendMessage(
 
   return useMutation({
     mutationFn: async (input) => {
-      console.log('🚀 [useSendMessage] Step 1: Adding message to thread', input.threadId);
+      log.log('🚀 [useSendMessage] Step 1: Adding message to thread', input.threadId);
 
       const message = await addMessage.mutateAsync({
         threadId: input.threadId,
         message: input.message,
       });
 
-      console.log('✅ [useSendMessage] Step 1 complete: Message added', message);
-      console.log('🚀 [useSendMessage] Step 2: Starting agent run');
+      log.log('✅ [useSendMessage] Step 1 complete: Message added', message);
+      log.log('🚀 [useSendMessage] Step 2: Starting agent run');
 
       const agentRun = await unifiedAgentStart.mutateAsync({
         threadId: input.threadId,
@@ -360,7 +362,7 @@ export function useSendMessage(
         agentId: input.agentId,
       });
 
-      console.log('✅ [useSendMessage] Step 2 complete: Agent started', agentRun);
+      log.log('✅ [useSendMessage] Step 2 complete: Agent started', agentRun);
 
       return {
         message,
@@ -487,24 +489,26 @@ export function useActiveAgentRuns(
       try {
         const res = await fetch(`${API_URL}/agent-runs/active`, { headers });
         if (!res.ok) {
-          console.warn(`Failed to fetch active runs: ${res.status}`);
+          log.warn(`Failed to fetch active runs: ${res.status}`);
           return [];
         }
         const data = await res.json();
         return data.active_runs || [];
       } catch (error) {
-        console.error('Error fetching active runs:', error);
-        return [];
+        // IMPORTANT: Re-throw network errors so fetchQuery catches them for retry logic
+        // This allows retryLastMessage to detect network failures
+        log.error('Error fetching active runs:', error);
+        throw error;
       }
     },
+    // Don't retry on error for this query - let the UI handle retry
+    retry: false,
     staleTime: 10 * 1000, // Cache for 10 seconds
     refetchInterval: (query) => {
       // Smart polling: only poll every 15 seconds if there are active runs
       const hasActiveRuns = query.state.data && query.state.data.length > 0;
       return hasActiveRuns ? 15000 : false;
     },
-    retry: 1,
-    retryDelay: 5000,
     ...options,
   });
 }

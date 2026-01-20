@@ -6,7 +6,7 @@ Supports multiple models: GPT Image (via Replicate), Gemini (via OpenRouter), an
 
 import os
 import base64
-import httpx
+import asyncio
 import replicate
 from io import BytesIO
 from typing import Optional, Literal
@@ -16,6 +16,7 @@ from pydantic import BaseModel
 from core.utils.logger import logger
 from core.utils.auth_utils import verify_and_get_user_id_from_jwt
 from core.utils.config import get_config
+from core.services.http_client import get_http_client
 from core.billing.credits.media_integration import media_billing
 
 router = APIRouter(prefix="/canvas-ai", tags=["Canvas AI"])
@@ -145,7 +146,9 @@ async def process_with_replicate_gpt(image_bytes: bytes, mime_type: str, prompt:
     logger.info(f"Calling Replicate openai/gpt-image-1.5 for editing with quality: low (image size: {len(image_bytes)} bytes)")
     
     try:
-        output = replicate.run(
+        # Wrap replicate.run() in thread pool to avoid blocking event loop
+        output = await asyncio.to_thread(
+            replicate.run,
             "openai/gpt-image-1.5",
             input={
                 "prompt": prompt,
@@ -215,11 +218,12 @@ async def process_with_gemini(
         "app": "Kortix.com"
     }
     
-    async with httpx.AsyncClient(timeout=120.0) as client:
+    async with get_http_client() as client:
         response = await client.post(
             f"{OPENROUTER_BASE_URL}/chat/completions",
             headers=headers,
-            json=payload
+            json=payload,
+            timeout=120.0
         )
         
         if response.status_code != 200:
@@ -292,7 +296,9 @@ async def process_with_replicate_remove_bg(image_bytes: bytes, mime_type: str) -
     logger.info("Calling Replicate 851-labs/background-remover")
     
     try:
-        output = replicate.run(
+        # Wrap replicate.run() in thread pool to avoid blocking event loop
+        output = await asyncio.to_thread(
+            replicate.run,
             "851-labs/background-remover:a029dff38972b5fda4ec5d75d7d1cd25aeff621d2cf4946a41055d7db66b80bc",
             input={"image": image_data_url}
         )
@@ -313,7 +319,9 @@ async def process_with_replicate_upscale(image_bytes: bytes, mime_type: str) -> 
     logger.info("Calling Replicate recraft-ai/recraft-crisp-upscale")
     
     try:
-        output = replicate.run(
+        # Wrap replicate.run() in thread pool to avoid blocking event loop
+        output = await asyncio.to_thread(
+            replicate.run,
             "recraft-ai/recraft-crisp-upscale",
             input={"image": image_data_url}
         )
@@ -511,7 +519,9 @@ The result should be a high-quality merged image."""
         logger.info(f"Calling Replicate openai/gpt-image-1.5 for merge with {len(input_images)} images")
         
         try:
-            output = replicate.run(
+            # Wrap replicate.run() in thread pool to avoid blocking event loop
+            output = await asyncio.to_thread(
+                replicate.run,
                 "openai/gpt-image-1.5",
                 input={
                     "prompt": merge_prompt,
@@ -592,7 +602,9 @@ async def generate_images(
         logger.info(f"Generating {num_to_generate} images with flux-schnell")
         
         try:
-            output = replicate.run(
+            # Wrap replicate.run() in thread pool to avoid blocking event loop
+            output = await asyncio.to_thread(
+                replicate.run,
                 "black-forest-labs/flux-schnell",
                 input={
                     "prompt": request.prompt,
@@ -679,8 +691,8 @@ async def _convert_with_recraft(image_data_url: str) -> Optional[str]:
         )
         # Output is a FileOutput URL to the SVG
         if output:
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                resp = await client.get(str(output))
+            async with get_http_client() as client:
+                resp = await client.get(str(output), timeout=30.0)
                 if resp.status_code == 200:
                     return resp.text
         return None
@@ -814,7 +826,9 @@ async def detect_text(
         logger.info("Calling Replicate datalab-to/ocr")
         
         try:
-            output = replicate.run(
+            # Wrap replicate.run() in thread pool to avoid blocking event loop
+            output = await asyncio.to_thread(
+                replicate.run,
                 "datalab-to/ocr",
                 input={
                     "file": image_data_url,

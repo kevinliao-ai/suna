@@ -3,13 +3,13 @@ import {
   Globe,
   CheckCircle,
   AlertTriangle,
-  Loader2,
   FileText,
   Copy,
   Check,
   ArrowUpRight,
   BookOpen
 } from 'lucide-react';
+import { KortixLoader } from '@/components/ui/kortix-loader';
 import { ToolViewProps } from './types';
 import {
   formatTimestamp,
@@ -22,8 +22,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ToolViewIconTitle } from './shared/ToolViewIconTitle';
+import { ToolViewFooter } from './shared/ToolViewFooter';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import Image from 'next/image';
+import { useSmoothToolField, useSmoothText } from '@/hooks/messages';
 
 export function WebCrawlToolView({
   toolCall,
@@ -37,6 +40,36 @@ export function WebCrawlToolView({
   const { resolvedTheme } = useTheme();
   const [progress, setProgress] = useState(0);
   const [copiedContent, setCopiedContent] = useState(false);
+
+  // Prepare data for hooks - must be done before hooks are called
+  const rawArguments = toolCall?.rawArguments || toolCall?.arguments;
+  
+  // Extract webpage content from toolResult for hook
+  const webpageContentText = React.useMemo(() => {
+    if (!toolResult?.output) return '';
+    const output = toolResult.output;
+    if (typeof output === 'string') {
+      return output;
+    } else if (typeof output === 'object' && output !== null && 'text' in output) {
+      return (output as { text?: string }).text || '';
+    }
+    return '';
+  }, [toolResult?.output]);
+
+  // Apply smooth text streaming for URL field - MUST be called unconditionally
+  const smoothFields = useSmoothToolField(
+    typeof rawArguments === 'object' && rawArguments ? rawArguments : {},
+    { interval: 50 }
+  );
+  const smoothUrl = (smoothFields as any).url || (typeof rawArguments === 'object' ? rawArguments?.url : '') || '';
+  const isUrlAnimating = isStreaming && !toolResult && !!toolCall;
+
+  // Apply smooth text streaming for content - MUST be called unconditionally
+  const smoothContent = useSmoothText(
+    webpageContentText,
+    { speed: 120 }
+  );
+  const isContentAnimating = isStreaming && !toolResult && !!webpageContentText;
 
   useEffect(() => {
     if (isStreaming) {
@@ -77,6 +110,12 @@ export function WebCrawlToolView({
     }
   }
 
+  // Use smooth URL when streaming
+  const displayUrl = isStreaming && smoothUrl ? smoothUrl : url;
+  
+  // Use smooth content when streaming
+  const displayContent = isStreaming && smoothContent ? smoothContent : webpageContent?.text;
+
   const toolTitle = getToolTitle(name);
 
   // Format domain for display
@@ -89,7 +128,7 @@ export function WebCrawlToolView({
     }
   };
 
-  const domain = url ? formatDomain(url) : 'Unknown';
+  const domain = displayUrl ? formatDomain(displayUrl) : 'Unknown';
 
   // Get favicon
   const getFavicon = (url: string) => {
@@ -101,13 +140,14 @@ export function WebCrawlToolView({
     }
   };
 
-  const favicon = url ? getFavicon(url) : null;
+  const favicon = displayUrl || url ? getFavicon(displayUrl || url) : null;
 
   const copyContent = async () => {
-    if (!webpageContent?.text) return;
+    const contentToCopy = displayContent || webpageContent?.text;
+    if (!contentToCopy) return;
 
     try {
-      await navigator.clipboard.writeText(webpageContent.text);
+      await navigator.clipboard.writeText(contentToCopy);
       setCopiedContent(true);
       setTimeout(() => setCopiedContent(false), 2000);
     } catch (err) {
@@ -126,41 +166,13 @@ export function WebCrawlToolView({
     return { wordCount, charCount, lineCount };
   };
 
-  const contentStats = webpageContent?.text ? getContentStats(webpageContent.text) : null;
+  const contentStats = displayContent || webpageContent?.text ? getContentStats(displayContent || webpageContent?.text || '') : null;
 
   return (
     <Card className="gap-0 flex border-0 shadow-none p-0 py-0 rounded-none flex-col h-full overflow-hidden bg-card">
       <CardHeader className="h-14 bg-zinc-50/80 dark:bg-zinc-900/80 backdrop-blur-sm border-b p-2 px-4 space-y-2">
         <div className="flex flex-row items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="relative p-2 rounded-lg bg-gradient-to-br from-primary/20 to-primary/10 border border-primary/20">
-              <Globe className="w-5 h-5 text-primary" />
-            </div>
-
-            <div>
-              <CardTitle className="text-base font-medium text-zinc-900 dark:text-zinc-100">
-                {toolTitle}
-              </CardTitle>
-            </div>
-          </div>
-
-          {!isStreaming && (
-            <Badge
-              variant="secondary"
-              className={
-                isSuccess
-                  ? "bg-gradient-to-b from-emerald-200 to-emerald-100 text-emerald-700 dark:from-emerald-800/50 dark:to-emerald-900/60 dark:text-emerald-300"
-                  : "bg-gradient-to-b from-rose-200 to-rose-100 text-rose-700 dark:from-rose-800/50 dark:to-rose-900/60 dark:text-rose-300"
-              }
-            >
-              {isSuccess ? (
-                <CheckCircle className="h-3.5 w-3.5" />
-              ) : (
-                <AlertTriangle className="h-3.5 w-3.5" />
-              )}
-              {isSuccess ? 'Crawling completed' : 'Crawling failed'}
-            </Badge>
-          )}
+          <ToolViewIconTitle icon={Globe} title={toolTitle} />
         </div>
       </CardHeader>
 
@@ -169,19 +181,20 @@ export function WebCrawlToolView({
           <div className="flex flex-col items-center justify-center h-full py-12 px-6 bg-gradient-to-b from-white to-zinc-50 dark:from-zinc-950 dark:to-zinc-900">
             <div className="text-center w-full max-w-xs">
               <div className="w-16 h-16 rounded-full mx-auto mb-6 flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/10 border border-primary/20">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <KortixLoader customSize={32} />
               </div>
               <h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-100 mb-2">
                 Crawling Webpage
               </h3>
               <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6">
-                Fetching content from <span className="font-mono text-xs break-all">{domain}</span>
+                Fetching content from <span className="font-mono text-xs break-all">{displayUrl || domain}</span>
+                {isUrlAnimating && <span className="animate-pulse text-muted-foreground ml-1">▌</span>}
               </p>
               <Progress value={progress} className="w-full h-1" />
               <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-2">{progress}% complete</p>
             </div>
           </div>
-        ) : url ? (
+        ) : (displayUrl || url) ? (
           // Results State
           <ScrollArea className="h-full w-full">
             <div className="p-4 py-0 my-4">
@@ -207,8 +220,9 @@ export function WebCrawlToolView({
                       />
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="font-mono text-sm text-zinc-900 dark:text-zinc-100 truncate">{truncateString(url, 70)}</p>
+                      <p className="font-mono text-sm text-zinc-900 dark:text-zinc-100 truncate">{truncateString(displayUrl || '', 70)}</p>
                       <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">{domain}</p>
+                      {isUrlAnimating && <span className="animate-pulse text-muted-foreground ml-1">▌</span>}
                     </div>
                     <Button
                       variant="ghost"
@@ -216,7 +230,7 @@ export function WebCrawlToolView({
                       className="opacity-70 group-hover:opacity-100 transition-opacity"
                       asChild
                     >
-                      <a href={url} target="_blank" rel="noopener noreferrer">
+                      <a href={displayUrl || url} target="_blank" rel="noopener noreferrer">
                         <ArrowUpRight className="w-4 h-4" />
                       </a>
                     </Button>
@@ -243,7 +257,7 @@ export function WebCrawlToolView({
                   )}
                 </div>
 
-                {webpageContent?.text ? (
+                {(displayContent || webpageContent?.text) ? (
                   <div className="group relative bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden hover:border-zinc-300 dark:hover:border-zinc-700 transition-all duration-200 hover:shadow-sm">
                     {/* Content Header */}
                     <div className="flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-800/50 border-b border-zinc-200 dark:border-zinc-700">
@@ -277,7 +291,7 @@ export function WebCrawlToolView({
                                 onClick={copyContent}
                               >
                                 {copiedContent ? (
-                                  <Check className="w-4 h-4 text-green-600" />
+                                  <Check className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
                                 ) : (
                                   <Copy className="w-4 h-4" />
                                 )}
@@ -294,7 +308,8 @@ export function WebCrawlToolView({
                     {/* Content Body */}
                     <div className="p-4 max-h-96 overflow-auto">
                       <pre className="text-xs font-mono text-zinc-800 dark:text-zinc-300 whitespace-pre-wrap leading-relaxed">
-                        {webpageContent.text}
+                        {displayContent || webpageContent?.text}
+                        {isContentAnimating && <span className="animate-pulse text-muted-foreground">▌</span>}
                       </pre>
                     </div>
                   </div>
