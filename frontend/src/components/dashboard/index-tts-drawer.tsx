@@ -10,7 +10,7 @@ interface Props {
 }
 
 export function IndexTtsDrawer({ open, onOpenChange }: Props) {
-  const demoUrl = 'https://indexteam-indextts-2-demo.ms.show/?t=1772586114540&__theme=light&studio_token=ec6175d4-64e6-469b-b12e-f15a1b33c4c6&backend_url=/';
+  const demoUrl = 'https://indexteam-indextts-2-demo.ms.show/?t=1772672752943&__theme=light&studio_token=e61cdfc9-14a4-4eaf-b0cb-b2cf9d355f9d&backend_url=/';
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
