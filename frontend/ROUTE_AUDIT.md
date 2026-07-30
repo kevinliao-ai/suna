@@ -1,55 +1,47 @@
 # Frontend route audit
 
-Baseline inventory:
+Audit refreshed: 2026-07-30.
 
-- 43 page routes
-- 8 route handlers
-- 696 source files
-- 165 production dependencies
-- 19 development dependencies
+## Current inventory
 
-This is substantially larger than the current AniSora product surface.
+- 7 page files
+- 2 route handlers
+- 70 files under `src`
+- no unused source files reported by Knip
+- no unused or unlisted production dependencies reported by Knip
 
-## Retain for the first migration
+The retained product routes are:
 
 - `/`
-- `/auth` and the Supabase callback/reset flows required by production
+- `/auth`, `/auth/callback`, and `/auth/reset-password`
 - `/dashboard`
 - `/index-tts`
 - `/sora-watermark-remove`
 - `/legal`
+- `/api/watermark/parse`
+- the generated Open Graph image route
 
-## Candidate for removal
+## Completed removal
 
-These routes belong to the inherited Suna agent platform and should be removed
-after the retained routes pass a Vercel Preview acceptance test:
+The inherited Suna agent, project, task, billing, team, template, trigger,
+webhook, document-export, enterprise, changelog, and documentation route groups
+were removed from the AniSora frontend. The legacy GitHub popup callback was
+also removed after Google and GitHub were unified on `/auth/callback`.
 
-- `/agents/**`
-- `/projects/**`
-- `/tasks`
-- `/composio-test`
-- `/model-pricing`
-- `/settings/api-keys`
-- `/settings/credentials`
-- team-account settings and invitations
-- agent webhooks, triggers, template sharing and document export handlers
+Knip reports a small set of unused named exports, primarily reusable methods
+from the retained UI primitives. These are not unreachable files or runtime
+dependencies and can be pruned opportunistically when the component API is
+next revised.
 
-## Product decision required
+## Verification gate
 
-These routes may be useful later but should not remain simply because they came
-from Suna:
+The current route surface is accepted only while all of the following remain
+true:
 
-- `/subscription`
-- personal billing and transaction history
-- `/enterprise`
-- `/changelog`
-- `/docs/**`
-
-## Removal gate
-
-Before deleting a route group:
-
-1. Trace imports reachable from the retained routes.
-2. Confirm no Supabase callback, database function or Vercel rewrite depends on it.
-3. Run lint, TypeScript and the production build.
-4. Verify login, logout, both embedded tools and mobile navigation in Preview.
+1. `npm run test`, lint, type checking, and the production build pass.
+2. Unauthenticated `/dashboard` requests redirect to `/auth`.
+3. Google, GitHub, email confirmation, and recovery return through the
+   allow-listed `/auth/callback`.
+4. Both external tools remain constrained to their configured HTTPS hosts.
+5. The public Sora resolver accepts only official HTTPS share URLs.
+6. No removed Suna route is reintroduced merely to follow upstream.
