@@ -16,6 +16,7 @@ export const viewport: Viewport = {
 };
 
 const googleAnalyticsId = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID;
+const isVercelProduction = process.env.VERCEL_ENV === 'production';
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
@@ -92,7 +93,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning data-scroll-behavior="smooth">
       <body
         className={`${GeistSans.variable} ${GeistMono.variable} antialiased font-sans bg-background`}
       >
@@ -106,11 +107,11 @@ export default function RootLayout({
             {children}
             <Toaster />
           </Providers>
-          <Analytics />
+          {isVercelProduction ? <Analytics /> : null}
           {googleAnalyticsId ? (
             <GoogleAnalytics gaId={googleAnalyticsId} />
           ) : null}
-          <SpeedInsights />
+          {isVercelProduction ? <SpeedInsights /> : null}
           <PostHogIdentify />
         </ThemeProvider>
       </body>

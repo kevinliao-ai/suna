@@ -17,17 +17,41 @@ All three tables use Supabase row-level security. A signed-in user can only
 read or mutate rows owned by their `auth.uid()`. Asset and task policies also
 verify ownership of the parent project.
 
+## Current implementation
+
+The frontend now includes a repository layer with these safeguards:
+
+- browser storage remains the default and is always updated first;
+- cloud synchronization is gated by
+  `NEXT_PUBLIC_STUDIO_SYNC_ENABLED=true`;
+- an existing browser workspace is never uploaded automatically when the
+  cloud workspace is empty;
+- the user must select **Import local projects to cloud** before that first
+  upload;
+- failed cloud reads or writes leave the browser copy intact.
+
+The feature flag must remain `false` until the migration is applied and
+verified.
+
 ## Rollout order
 
-1. Review and apply the migration in a non-production Supabase project.
-2. Generate typed Supabase database definitions for the frontend.
-3. Add a repository layer with local-first optimistic updates.
-4. Import existing browser projects only after explicit user confirmation.
-5. Enable synchronization for internal accounts, then a small production
+1. Apply the migration in a non-production Supabase project.
+2. Run the RLS verification queries below with two separate test users.
+3. Enable synchronization only on a Vercel Preview deployment.
+4. Test first-time cloud creation, explicit local import, updates, deletion,
+   sign-out, and sign-in on a second browser.
+5. Apply the migration to production during a low-traffic window.
+6. Enable synchronization for internal accounts, then a small production
    cohort.
-6. Add object storage and signed uploads only when real media persistence is
+7. Add object storage and signed uploads only when real media persistence is
    required.
 
-Do not enable database synchronization merely by adding the migration. The
-browser-local MVP remains the safe default until the repository and import
-flow are shipped and tested.
+## RLS verification
+
+For each table, confirm that an authenticated user can only select, insert,
+update, and delete rows where `user_id = auth.uid()`. Also verify that a task
+or asset cannot reference a project owned by a different user.
+
+Keep the browser-local mode available as the operational fallback. Turning the
+feature flag back to `false` immediately stops cloud reads and writes without
+removing local data.

@@ -6,7 +6,21 @@ import { ThemeToggle } from '@/components/home/theme-toggle';
 import { ToolEmbed } from '@/components/tool-embed';
 import { embedConfig } from '@/lib/embed-config';
 import {
+  createStudioId,
+  createStudioProject,
+  parseStoredProjects,
+  STUDIO_STORAGE_PREFIX,
+  type StudioProject,
+  type ToolId,
+} from '@/lib/studio/model';
+import {
+  loadCloudProjects,
+  saveCloudProjects,
+} from '@/lib/studio/repository';
+import {
   AudioWaveform,
+  Cloud,
+  CloudOff,
   ExternalLink,
   Film,
   FolderOpen,
@@ -19,35 +33,18 @@ import {
   Trash2,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
-type ToolId = 'anisora' | 'index-tts';
+type SyncState =
+  | 'local'
+  | 'loading'
+  | 'import-needed'
+  | 'syncing'
+  | 'synced'
+  | 'error';
 
-interface StudioAsset {
-  id: string;
-  name: string;
-  url: string;
-  createdAt: string;
-}
-
-interface StudioTask {
-  id: string;
-  title: string;
-  status: 'todo' | 'done';
-  createdAt: string;
-}
-
-interface StudioProject {
-  id: string;
-  name: string;
-  createdAt: string;
-  updatedAt: string;
-  activeTool: ToolId;
-  assets: StudioAsset[];
-  tasks: StudioTask[];
-}
-
-const STORAGE_KEY = 'anisora:studio:v1';
+const CLOUD_SYNC_ENABLED =
+  process.env.NEXT_PUBLIC_STUDIO_SYNC_ENABLED === 'true';
 
 const tools: Record<
   ToolId,
@@ -75,60 +72,67 @@ const tools: Record<
   },
 };
 
-function createId() {
-  return typeof crypto !== 'undefined' && 'randomUUID' in crypto
-    ? crypto.randomUUID()
-    : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-}
-
-function createProject(name = 'My first project'): StudioProject {
-  const now = new Date().toISOString();
-  return {
-    id: createId(),
-    name,
-    createdAt: now,
-    updatedAt: now,
-    activeTool: 'anisora',
-    assets: [],
-    tasks: [],
-  };
-}
-
-function isProject(value: unknown): value is StudioProject {
-  if (!value || typeof value !== 'object') return false;
-  const project = value as Partial<StudioProject>;
-  return (
-    typeof project.id === 'string' &&
-    typeof project.name === 'string' &&
-    (project.activeTool === 'anisora' || project.activeTool === 'index-tts') &&
-    Array.isArray(project.assets) &&
-    (project.tasks === undefined || Array.isArray(project.tasks))
-  );
-}
-
 export default function DashboardPage() {
-  const { user } = useAuth();
+  const { isLoading, supabase, user } = useAuth();
   const [projects, setProjects] = useState<StudioProject[]>([]);
   const [activeProjectId, setActiveProjectId] = useState('');
   const [hydrated, setHydrated] = useState(false);
+  const [syncState, setSyncState] = useState<SyncState>(
+    CLOUD_SYNC_ENABLED ? 'loading' : 'local',
+  );
+  const [syncError, setSyncError] = useState('');
   const [projectName, setProjectName] = useState('');
   const [assetName, setAssetName] = useState('');
   const [assetUrl, setAssetUrl] = useState('');
   const [taskTitle, setTaskTitle] = useState('');
-  const storageKey = `${STORAGE_KEY}:${user?.id || 'anonymous'}`;
+  const saveQueue = useRef(Promise.resolve());
+  const cloudSyncReady = useRef(false);
+  const userId = user?.id;
+  const storageKey = `${STUDIO_STORAGE_PREFIX}:${userId || 'anonymous'}`;
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(storageKey);
-      const parsed = stored ? (JSON.parse(stored) as unknown) : null;
-      const savedProjects = Array.isArray(parsed)
-        ? parsed.filter(isProject).map((project) => ({
-            ...project,
-            tasks: Array.isArray(project.tasks) ? project.tasks : [],
-          }))
-        : [];
-      const nextProjects =
-        savedProjects.length > 0 ? savedProjects : [createProject()];
+    if (isLoading) return;
+
+    let cancelled = false;
+
+    const hydrateWorkspace = async () => {
+      const savedProjects = parseStoredProjects(
+        localStorage.getItem(storageKey),
+      );
+      let nextProjects =
+        savedProjects.length > 0
+          ? savedProjects
+          : [createStudioProject()];
+      let nextSyncState: SyncState = 'local';
+
+      if (CLOUD_SYNC_ENABLED && userId) {
+        setSyncState('loading');
+        try {
+          const cloudProjects = await loadCloudProjects(supabase, userId);
+          if (cloudProjects.length > 0) {
+            nextProjects = cloudProjects;
+            cloudSyncReady.current = true;
+            nextSyncState = 'synced';
+          } else if (savedProjects.length > 0) {
+            cloudSyncReady.current = false;
+            nextSyncState = 'import-needed';
+          } else {
+            cloudSyncReady.current = true;
+            nextSyncState = 'synced';
+          }
+        } catch (error) {
+          cloudSyncReady.current = false;
+          nextSyncState = 'error';
+          setSyncError(
+            error instanceof Error
+              ? error.message
+              : 'Cloud workspace is unavailable.',
+          );
+        }
+      } else {
+        cloudSyncReady.current = false;
+      }
+
       const requestedTool = new URLSearchParams(window.location.search).get(
         'tool',
       );
@@ -140,22 +144,69 @@ export default function DashboardPage() {
         };
       }
 
-      setProjects(nextProjects);
-      setActiveProjectId(nextProjects[0].id);
-    } catch {
-      const initial = createProject();
-      setProjects([initial]);
-      setActiveProjectId(initial.id);
-    } finally {
-      setHydrated(true);
-    }
-  }, [storageKey]);
+      if (!cancelled) {
+        setProjects(nextProjects);
+        setActiveProjectId(nextProjects[0].id);
+        setSyncState(nextSyncState);
+        setHydrated(true);
+      }
+    };
+
+    void hydrateWorkspace();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isLoading, storageKey, supabase, userId]);
 
   useEffect(() => {
-    if (hydrated) {
-      localStorage.setItem(storageKey, JSON.stringify(projects));
+    if (!hydrated) return;
+
+    localStorage.setItem(storageKey, JSON.stringify(projects));
+
+    if (!CLOUD_SYNC_ENABLED || !userId || !cloudSyncReady.current) return;
+
+    const snapshot = projects;
+    const timer = window.setTimeout(() => {
+      setSyncState('syncing');
+      saveQueue.current = saveQueue.current
+        .then(() => saveCloudProjects(supabase, userId, snapshot))
+        .then(() => {
+          setSyncError('');
+          setSyncState('synced');
+        })
+        .catch((error: unknown) => {
+          setSyncError(
+            error instanceof Error
+              ? error.message
+              : 'Cloud workspace could not be saved.',
+          );
+          setSyncState('error');
+        });
+    }, 700);
+
+    return () => window.clearTimeout(timer);
+  }, [hydrated, projects, storageKey, supabase, userId]);
+
+  const importLocalWorkspace = async () => {
+    if (!userId || projects.length === 0) return;
+
+    setSyncState('syncing');
+    try {
+      await saveCloudProjects(supabase, userId, projects);
+      cloudSyncReady.current = true;
+      setSyncError('');
+      setSyncState('synced');
+    } catch (error) {
+      cloudSyncReady.current = false;
+      setSyncError(
+        error instanceof Error
+          ? error.message
+          : 'Local projects could not be imported.',
+      );
+      setSyncState('error');
     }
-  }, [hydrated, projects, storageKey]);
+  };
 
   const activeProject = useMemo(
     () => projects.find((project) => project.id === activeProjectId),
@@ -178,7 +229,7 @@ export default function DashboardPage() {
   };
 
   const addProject = () => {
-    const next = createProject(
+    const next = createStudioProject(
       projectName.trim() || `Untitled project ${projects.length + 1}`,
     );
     setProjects((current) => [...current, next]);
@@ -189,7 +240,8 @@ export default function DashboardPage() {
   const removeProject = (projectId: string) => {
     setProjects((current) => {
       const remaining = current.filter((project) => project.id !== projectId);
-      const next = remaining.length > 0 ? remaining : [createProject()];
+      const next =
+        remaining.length > 0 ? remaining : [createStudioProject()];
       if (projectId === activeProjectId) {
         setActiveProjectId(next[0].id);
       }
@@ -220,7 +272,7 @@ export default function DashboardPage() {
       ...project,
       assets: [
         {
-          id: createId(),
+          id: createStudioId(),
           name,
           url,
           createdAt: new Date().toISOString(),
@@ -240,7 +292,7 @@ export default function DashboardPage() {
       tasks: [
         ...project.tasks,
         {
-          id: createId(),
+          id: createStudioId(),
           title,
           status: 'todo',
           createdAt: new Date().toISOString(),
@@ -277,8 +329,21 @@ export default function DashboardPage() {
         <div className="mx-auto flex min-w-0 items-center gap-2 rounded-full border border-black/10 bg-white px-3 py-1.5 text-sm shadow-sm dark:border-white/10 dark:bg-white/5">
           <FolderOpen className="size-4 shrink-0 text-zinc-500" />
           <span className="truncate font-medium">{activeProject.name}</span>
-          <span className="hidden text-xs text-zinc-400 md:inline">
-            saved locally
+          <span
+            className="hidden items-center gap-1 text-xs text-zinc-400 md:inline-flex"
+            title={syncError || undefined}
+          >
+            {syncState === 'local' || syncState === 'error' ? (
+              <CloudOff className="size-3" />
+            ) : (
+              <Cloud className="size-3" />
+            )}
+            {syncState === 'loading' && 'checking cloud'}
+            {syncState === 'import-needed' && 'local only'}
+            {syncState === 'syncing' && 'saving'}
+            {syncState === 'synced' && 'cloud saved'}
+            {syncState === 'error' && 'local saved'}
+            {syncState === 'local' && 'saved locally'}
           </span>
         </div>
 
@@ -370,10 +435,28 @@ export default function DashboardPage() {
           <div className="mt-5 rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
             <div className="mb-1 flex items-center gap-2 font-medium text-zinc-800 dark:text-zinc-200">
               <ShieldCheck className="size-4" />
-              MVP data boundary
+              Data boundary
             </div>
-            Project metadata stays in this browser. Media and prompts entered in
-            an embedded tool are processed by that tool&apos;s operator.
+            {syncState === 'synced'
+              ? 'Project metadata is saved to your AniSora account.'
+              : 'Project metadata stays in this browser.'}{' '}
+            Media and prompts entered in an embedded tool are processed by that
+            tool&apos;s operator.
+            {syncState === 'import-needed' && (
+              <button
+                type="button"
+                onClick={() => void importLocalWorkspace()}
+                className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-950 px-3 py-2 font-medium text-white transition hover:opacity-80 dark:bg-white dark:text-zinc-950"
+              >
+                <Cloud className="size-3.5" />
+                Import local projects to cloud
+              </button>
+            )}
+            {syncState === 'error' && syncError && (
+              <p className="mt-2 break-words text-red-600 dark:text-red-400">
+                Cloud sync unavailable. Your local copy is safe.
+              </p>
+            )}
           </div>
         </aside>
 
