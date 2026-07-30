@@ -75,11 +75,12 @@ Password recovery uses the separate exact `/auth/recovery/callback` handler.
 The local `/auth/github-popup` entry is legacy and can be removed after
 returning-user OAuth tests pass.
 
-GitHub returning-user OAuth has now passed end to end on the listed Preview:
-the user returned to `/dashboard`, the session survived refresh, and an
-authenticated visit to `/auth` was redirected back to the workspace. Google,
-new-email confirmation, and password recovery remain separate acceptance
-tests.
+GitHub and Google returning-user OAuth have now passed end to end on the listed
+Preview: the user returned to `/dashboard`, the session survived refresh, and
+an authenticated visit to `/auth` was redirected back to the workspace.
+Signing out and returning through Google preserved that user's local Studio
+workspace. New-email confirmation and password recovery remain separate
+acceptance tests.
 
 Before testing OAuth or recovery on a Vercel Preview deployment, add that
 deployment's exact `/auth/callback` and `/auth/recovery/callback` URLs. Avoid a

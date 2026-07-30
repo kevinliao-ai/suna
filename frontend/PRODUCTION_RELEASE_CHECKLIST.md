@@ -6,29 +6,29 @@ production approval.
 
 ## 1. Pull request gate
 
-- [ ] The PR targets `dev` and remains Draft until Preview acceptance is
+- [x] The PR targets `dev` and remains Draft until Preview acceptance is
       complete.
-- [ ] `npm run check` passes from a clean install.
-- [ ] GitHub `verify` and Vercel Preview checks pass for the current head SHA.
-- [ ] The worktree contains no `.env`, credentials, tokens, database exports,
+- [x] `npm run check` passes from a clean install.
+- [x] GitHub `verify` and Vercel Preview checks pass for the current head SHA.
+- [x] The worktree contains no `.env`, credentials, tokens, database exports,
       or generated build output.
 - [ ] A reviewer confirms the large upstream-code deletion is intentional.
 
 ## 2. Preview authentication
 
-- [ ] Supabase contains only the exact Preview
+- [x] Supabase contains only the exact Preview
       `https://<branch>.vercel.app/auth/callback` and
       `https://<branch>.vercel.app/auth/recovery/callback` redirects, not a
       broad wildcard.
-- [ ] A returning Google user reaches `/dashboard`.
-- [ ] A returning GitHub user reaches `/dashboard`.
+- [x] A returning Google user reaches `/dashboard`.
+- [x] A returning GitHub user reaches `/dashboard`.
 - [ ] A new email user receives a confirmation link and returns through
       `/auth/callback`.
 - [ ] Password recovery exchanges the callback code, allows one password
       update, and signs out existing sessions.
-- [ ] `returnUrl=//external.example` and backslash variants resolve to
+- [x] `returnUrl=//external.example` and backslash variants resolve to
       `/dashboard`.
-- [ ] Signing out does not delete the browser-local Studio workspace.
+- [x] Signing out does not delete the browser-local Studio workspace.
 
 ## 3. Studio local-mode acceptance
 
