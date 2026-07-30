@@ -100,6 +100,50 @@ migration: do not delete or rewrite legacy users, preserve current provider
 compatibility, and test returning-user login as well as new-user signup before
 promotion.
 
+### Supabase staging
+
+A separate free-plan project was created on 2026-07-30:
+
+- project name: `anisora-staging`
+- project reference: `gkoncguonhidpxjwxbnt`
+- region: Singapore (`ap-southeast-1`)
+- Data API: enabled
+- automatic exposure of new tables: disabled
+- automatic RLS for new tables: enabled
+
+The generated database password shown during provisioning was immediately
+rotated and was not stored in source control. Use the SQL Editor or reset the
+password again if a direct database connection is later required.
+
+The additive Studio migration was applied and verified against the live
+staging schema:
+
+- 3 Studio tables, 3 RLS policies, and 3 update triggers exist;
+- RLS is enabled on all 3 tables;
+- `anon` has 0 table privileges;
+- `authenticated` has the expected 12 CRUD grants;
+- the transactional two-user verification passed;
+- cross-user project, asset, and task operations were rejected;
+- the test transaction left all Studio tables empty;
+- the guarded empty-schema rollback succeeded;
+- the migration was reapplied after the rollback rehearsal.
+
+Two confirmed users under the reserved `anisora.invalid` domain exist only for
+RLS verification. They do not receive email and must never be copied to
+production.
+
+Vercel has branch-scoped Preview overrides for
+`codex/anisora-web-v2`: the staging project URL, its publishable key in the
+existing anon-key variable, and `NEXT_PUBLIC_STUDIO_SYNC_ENABLED=true`.
+Production variables are unchanged. The next branch deployment activates
+these values.
+
+The staging Site URL points to the exact Vercel Preview origin. Supabase's
+dashboard currently returns an internal error when adding staging redirect
+URLs, so email/password sync acceptance can proceed, but OAuth callback testing
+must continue against production Supabase until the staging allow list can be
+saved.
+
 ## Cloudflare
 
 Current routing:

@@ -49,14 +49,14 @@ production approval.
 
 - [ ] A restorable production backup exists and its restore procedure has been
       rehearsed.
-- [ ] The additive migration is first applied to a non-production project.
-- [ ] `anisora_studio_rls.sql` passes with two distinct test users.
-- [ ] Anonymous users have no table privileges.
-- [ ] Cross-user project, asset, and task reads/writes are rejected.
+- [x] The additive migration is first applied to a non-production project.
+- [x] `anisora_studio_rls.sql` passes with two distinct test users.
+- [x] Anonymous users have no table privileges.
+- [x] Cross-user project, asset, and task reads/writes are rejected.
 - [ ] A stale second browser cannot delete rows it never previously synced.
 - [ ] Explicit local import requires a user action and never runs on sign-in.
-- [ ] The empty-schema rollback is tested before any Studio data is created.
-- [ ] Cloud sync is enabled only on Preview for the first acceptance cycle.
+- [x] The empty-schema rollback is tested before any Studio data is created.
+- [x] Cloud sync is enabled only on Preview for the first acceptance cycle.
 
 ## 5. Platform and secret gate
 
