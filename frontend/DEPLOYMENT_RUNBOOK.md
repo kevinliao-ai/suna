@@ -144,6 +144,35 @@ URLs, so email/password sync acceptance can proceed, but OAuth callback testing
 must continue against production Supabase until the staging allow list can be
 saved.
 
+### Preview cloud-sync acceptance
+
+The branch deployment created from commit `ea03d5eb1` passed GitHub `verify`,
+Vercel, Vercel Preview Comments, and the legacy Cloudflare Pages check. Its
+branch-scoped variables resolved to `anisora-staging`; the production
+environment remained unchanged.
+
+Email/password acceptance was completed on 2026-07-30 with two additional
+confirmed `anisora.invalid` users that exist only in staging:
+
+- user A created a project with a task and an HTTPS asset reference;
+- the Studio reported `cloud saved`;
+- a full page refresh restored the project, task, and asset;
+- user B could not see any of user A's project, task, or asset data;
+- user B created a separate project, and user A could not see it after signing
+  back in;
+- two concurrently open pages for user A were loaded from the same initial
+  snapshot;
+- the newer page created another project, then the stale page saved an
+  unrelated task without seeing that project;
+- refreshing from the cloud preserved both the new project and the stale
+  page's task, confirming that the stale client did not infer a deletion for a
+  record it had never synced.
+
+The explicit local-to-cloud import remains a separate acceptance item. It must
+be tested with a browser that already has a user-scoped local workspace and an
+empty staging cloud workspace; do not mark it complete based only on unit
+coverage.
+
 ## Cloudflare
 
 Current routing:

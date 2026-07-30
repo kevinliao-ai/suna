@@ -53,7 +53,7 @@ production approval.
 - [x] `anisora_studio_rls.sql` passes with two distinct test users.
 - [x] Anonymous users have no table privileges.
 - [x] Cross-user project, asset, and task reads/writes are rejected.
-- [ ] A stale second browser cannot delete rows it never previously synced.
+- [x] A stale second browser cannot delete rows it never previously synced.
 - [ ] Explicit local import requires a user action and never runs on sign-in.
 - [x] The empty-schema rollback is tested before any Studio data is created.
 - [x] Cloud sync is enabled only on Preview for the first acceptance cycle.
@@ -70,7 +70,7 @@ production approval.
 - [ ] Cloudflare SSL is moved to Full (strict) only after origin certificate
       verification.
 - [ ] Minimum TLS is raised to 1.2 and HTTP/apex redirects are rechecked.
-- [ ] Production and Preview environment variables are reviewed separately.
+- [x] Production and Preview environment variables are reviewed separately.
 
 ## 6. Production promotion
 
