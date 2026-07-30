@@ -32,7 +32,11 @@ import {
 } from '@/components/ui/dialog';
 import GitHubSignIn from '@/components/GithubSignIn';
 import { Ripple } from '@/components/ui/ripple';
-import { persistAuthReturnPath, sanitizeReturnPath } from '@/lib/auth-redirect';
+import {
+  getAuthErrorMessage,
+  persistAuthReturnPath,
+  sanitizeReturnPath,
+} from '@/lib/auth-redirect';
 
 function LoginContent() {
   const router = useRouter();
@@ -41,6 +45,7 @@ function LoginContent() {
   const mode = searchParams.get('mode');
   const returnUrl = sanitizeReturnPath(searchParams.get('returnUrl'));
   const message = searchParams.get('message');
+  const authErrorMessage = getAuthErrorMessage(searchParams.get('error'));
 
   const isSignUp = mode === 'signup';
 
@@ -289,6 +294,20 @@ function LoginContent() {
                 {isSignUp ? 'Create your account' : 'Log into your account'}
               </h1>
             </div>
+            {authErrorMessage && (
+              <div
+                role="alert"
+                className="mb-4 flex gap-3 rounded-lg border border-destructive/25 bg-destructive/10 p-3 text-destructive"
+              >
+                <AlertCircle className="mt-0.5 size-4 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium">
+                    Authentication link failed
+                  </p>
+                  <p className="text-sm">{authErrorMessage}</p>
+                </div>
+              </div>
+            )}
             <div className="space-y-3 mb-4">
               <GoogleSignIn returnUrl={returnUrl} />
               <GitHubSignIn returnUrl={returnUrl} />

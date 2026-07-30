@@ -22,10 +22,11 @@ production approval.
       broad wildcard.
 - [x] A returning Google user reaches `/dashboard`.
 - [x] A returning GitHub user reaches `/dashboard`.
-- [ ] A new email user receives a confirmation link and returns through
+- [x] A new email user receives a confirmation link and returns through
       `/auth/callback`.
-- [ ] Password recovery exchanges the callback code, allows one password
-      update, and signs out existing sessions.
+- [x] Password recovery exchanges the callback code, allows one password
+      update, rejects link reuse, invalidates the old password, and completes
+      the global sign-out call without an error.
 - [x] `returnUrl=//external.example` and backslash variants resolve to
       `/dashboard`.
 - [x] Signing out does not delete the browser-local Studio workspace.

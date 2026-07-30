@@ -79,8 +79,23 @@ GitHub and Google returning-user OAuth have now passed end to end on the listed
 Preview: the user returned to `/dashboard`, the session survived refresh, and
 an authenticated visit to `/auth` was redirected back to the workspace.
 Signing out and returning through Google preserved that user's local Studio
-workspace. New-email confirmation and password recovery remain separate
-acceptance tests.
+workspace.
+
+Staging email authentication was completed end to end on 2026-07-30 with the
+Gmail alias `liaokuanya0907+anisora-qa-01@gmail.com`:
+
+- signup sent a real confirmation email;
+- the confirmation link returned through `/auth/callback`, created the
+  session, and reached `/dashboard`;
+- password recovery sent a real reset email and returned through
+  `/auth/recovery/callback`;
+- the new password was accepted, the old password was rejected, and the
+  recovery link was rejected as expired when reused;
+- the reset action completed its global sign-out call without an error.
+
+The reused-link test also exposed a UI gap: Supabase correctly returned
+`access_denied`/`otp_expired`, but `/auth` silently ignored it. The auth page
+now maps provider error codes to a persistent, non-reflective error notice.
 
 Before testing OAuth or recovery on a Vercel Preview deployment, add that
 deployment's exact `/auth/callback` and `/auth/recovery/callback` URLs. Avoid a
@@ -156,10 +171,18 @@ Production variables are unchanged. The next branch deployment activates
 these values.
 
 The staging Site URL points to the exact Vercel Preview origin. Supabase's
-dashboard currently returns an internal error when adding staging redirect
-URLs, so email/password sync acceptance can proceed, but OAuth callback testing
-must continue against production Supabase until the staging allow list can be
-saved.
+dashboard still shows no separate Redirect URL entries and returns an error
+when `Add URL` is selected. Same-origin email confirmation and recovery links
+nonetheless completed successfully through the exact callback routes.
+
+The shared Google Cloud OAuth client now also allows the staging Supabase
+callback `https://gkoncguonhidpxjwxbnt.supabase.co/auth/v1/callback`. The
+staging Supabase Google provider remains disabled because its client secret
+has not been copied into staging. Do not reveal or reuse that credential
+without an explicit provider-rollout decision. Two Preview application
+callback URLs were also added directly to the Google client during manual
+setup; they are not the Google-to-Supabase callback and should be removed
+after the staging Supabase allow-list issue is resolved.
 
 ### Preview cloud-sync acceptance
 

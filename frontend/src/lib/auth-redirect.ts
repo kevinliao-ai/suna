@@ -64,6 +64,24 @@ export function sanitizeReturnPath(
   }
 }
 
+export function getAuthErrorMessage(value: string | null | undefined) {
+  if (!value) return null;
+
+  if (
+    value === 'access_denied' ||
+    value === 'invalid_recovery_link' ||
+    value === 'otp_expired'
+  ) {
+    return 'This sign-in or recovery link is invalid or has expired. Request a new link and try again.';
+  }
+
+  if (value === 'unexpected_recovery_error') {
+    return "We couldn't verify this password recovery link. Request a new link and try again.";
+  }
+
+  return "We couldn't complete authentication. Please try again.";
+}
+
 export function resolveAuthOrigin(options: AuthOriginOptions = {}) {
   if (options.vercelEnv === 'preview') {
     const requestOrigin = normalizeHttpsOrigin(options.requestOrigin);

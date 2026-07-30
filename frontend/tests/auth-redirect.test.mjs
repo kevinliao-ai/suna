@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  getAuthErrorMessage,
   readAuthReturnPath,
   resolveAuthOrigin,
   sanitizeReturnPath,
@@ -33,6 +34,25 @@ test('restores only safe URL-encoded return paths from the auth cookie', () => {
   );
   assert.equal(readAuthReturnPath('%2F%2Fevil.example'), '/dashboard');
   assert.equal(readAuthReturnPath('%E0%A4%A'), '/dashboard');
+});
+
+test('describes expired authentication links without reflecting provider text', () => {
+  for (const value of [
+    'access_denied',
+    'invalid_recovery_link',
+    'otp_expired',
+  ]) {
+    assert.match(getAuthErrorMessage(value), /invalid or has expired/);
+  }
+
+  assert.equal(getAuthErrorMessage(null), null);
+});
+
+test('uses a safe generic message for unknown authentication errors', () => {
+  assert.equal(
+    getAuthErrorMessage('<script>alert(1)</script>'),
+    "We couldn't complete authentication. Please try again.",
+  );
 });
 
 test('uses the exact Vercel Preview origin for Preview auth callbacks', () => {
