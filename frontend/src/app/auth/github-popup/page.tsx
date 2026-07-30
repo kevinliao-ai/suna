@@ -113,9 +113,13 @@ export default function GitHubOAuthPopup() {
               subscription.unsubscribe();
               handleError('Authentication timeout - please try again');
             }, 10000); // 10 second timeout
-          } catch (authError: any) {
+          } catch (authError: unknown) {
             console.error('Auth processing error:', authError);
-            handleError(authError.message || 'Authentication failed');
+            handleError(
+              authError instanceof Error
+                ? authError.message
+                : 'Authentication failed',
+            );
           }
         } else {
           // Start the OAuth flow
@@ -136,9 +140,13 @@ export default function GitHubOAuthPopup() {
             throw error;
           }
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('OAuth error:', err);
-        handleError(err.message || 'Failed to authenticate with GitHub');
+        handleError(
+          err instanceof Error
+            ? err.message
+            : 'Failed to authenticate with GitHub',
+        );
       }
     };
 

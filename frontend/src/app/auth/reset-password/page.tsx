@@ -1,17 +1,18 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
 import { useState, useEffect, Suspense } from 'react';
 import { AlertCircle, ArrowLeft, CheckCircle } from 'lucide-react';
 
 import { Input } from '@/components/ui/input';
-import { SubmitButton } from '@/components/ui/submit-button';
+import {
+  SubmitButton,
+  type FormActionState,
+} from '@/components/ui/submit-button';
 import { resetPassword } from '../actions';
 
 function ResetPasswordContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const code = searchParams.get('code');
 
@@ -27,7 +28,10 @@ function ResetPasswordContent() {
     }
   }, [code]);
 
-  const handleResetPassword = async (prevState: any, formData: FormData) => {
+  const handleResetPassword = async (
+    prevState: FormActionState,
+    formData: FormData,
+  ): Promise<FormActionState> => {
     if (!code) {
       return { message: 'Invalid reset code' };
     }

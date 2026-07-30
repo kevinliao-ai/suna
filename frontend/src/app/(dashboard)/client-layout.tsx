@@ -1,37 +1,13 @@
 'use client';
 
-import { DeleteOperationProvider } from '@/contexts/DeleteOperationContext';
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
-import { MaintenanceAlert } from '@/components/maintenance-alert';
-import { StatusOverlay } from '@/components/ui/status-overlay';
-import { FooterSection } from '@/components/home/sections/footer-section';
 interface ClientLayoutProps {
   children: React.ReactNode;
-  showMaintenanceAlert: boolean;
-  onMaintenanceAlertChange: (open: boolean) => void;
 }
 
-export function ClientLayout({
-  children,
-  showMaintenanceAlert,
-  onMaintenanceAlertChange,
-}: ClientLayoutProps) {
+export function ClientLayout({ children }: ClientLayoutProps) {
   return (
-    <DeleteOperationProvider>
-      <SidebarProvider>
-        <SidebarInset>
-          <div className="bg-background h-screen flex flex-col">
-            <div className="flex-1 min-h-0">{children}</div>
-          </div>
-        </SidebarInset>
-        <MaintenanceAlert
-          open={showMaintenanceAlert}
-          onOpenChange={onMaintenanceAlertChange}
-          closeable={true}
-        />
-
-        <StatusOverlay />
-      </SidebarProvider>
-    </DeleteOperationProvider>
+    <div className="flex h-screen flex-col bg-background">
+      <div className="min-h-0 flex-1">{children}</div>
+    </div>
   );
 }

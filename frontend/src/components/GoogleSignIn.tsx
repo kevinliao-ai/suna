@@ -29,9 +29,11 @@ export default function GoogleSignIn({ returnUrl }: GoogleSignInProps) {
       if (error) {
         throw error;
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Google sign-in error:', error);
-      toast.error(error.message || 'Failed to sign in with Google');
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to sign in with Google',
+      );
       setIsLoading(false);
     }
   };

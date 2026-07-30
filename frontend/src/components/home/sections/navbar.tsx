@@ -1,360 +1,90 @@
 'use client';
 
-import { NavMenu } from '@/components/home/nav-menu';
+import { useAuth } from '@/components/AuthProvider';
 import { ThemeToggle } from '@/components/home/theme-toggle';
 import { siteConfig } from '@/lib/home';
-import { cn } from '@/lib/utils';
-import { Menu, X, Github } from 'lucide-react';
-import { AnimatePresence, motion, useScroll } from 'motion/react';
+import { Menu, Sparkles, X } from 'lucide-react';
 import Link from 'next/link';
-import Image from 'next/image';
-import { useEffect, useState } from 'react';
-import { useTheme } from 'next-themes';
-import { useAuth } from '@/components/AuthProvider';
-import { useGitHubStars } from '@/hooks/use-github-stars';
-import { useRouter, usePathname } from 'next/navigation';
-
-const INITIAL_WIDTH = '70rem';
-const MAX_WIDTH = '1000px';
-
-const overlayVariants = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1 },
-  exit: { opacity: 0 },
-};
-
-const drawerVariants = {
-  hidden: { opacity: 0, y: 100 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    rotate: 0,
-    transition: {
-      type: 'spring' as const,
-      damping: 15,
-      stiffness: 200,
-      staggerChildren: 0.03,
-    },
-  },
-  exit: {
-    opacity: 0,
-    y: 100,
-    transition: { duration: 0.1 },
-  },
-};
-
-const drawerMenuContainerVariants = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1 },
-};
-
-const drawerMenuVariants = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1 },
-};
+import { usePathname } from 'next/navigation';
+import { useState } from 'react';
 
 export function Navbar() {
-  const { scrollY } = useScroll();
-  const [hasScrolled, setHasScrolled] = useState(false);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState('hero');
-  const { theme, resolvedTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
   const { user } = useAuth();
-  const router = useRouter();
   const pathname = usePathname();
-  // show Index‑TTS repo when on /index-tts page, otherwise show AniSora repo
-  const isIndexTTS = pathname === '/index-tts';
-  const ghOwner = isIndexTTS ? 'index-tts' : 'bilibili';
-  const ghRepo = isIndexTTS ? 'index-tts' : 'Index-anisora';
-  const { formattedStars, loading: starsLoading } = useGitHubStars(ghOwner, ghRepo);
+  const [open, setOpen] = useState(false);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const sections = siteConfig.nav.links.map((item) =>
-        item.href.substring(1),
-      );
-
-      for (const section of sections) {
-        const element = document.getElementById(section);
-        if (element) {
-          const rect = element.getBoundingClientRect();
-          if (rect.top <= 150 && rect.bottom >= 150) {
-            setActiveSection(section);
-            break;
-          }
-        }
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    handleScroll();
-
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  useEffect(() => {
-    const unsubscribe = scrollY.on('change', (latest) => {
-      setHasScrolled(latest > 10);
-    });
-    return unsubscribe;
-  }, [scrollY]);
-
-  const toggleDrawer = () => setIsDrawerOpen((prev) => !prev);
-  const handleOverlayClick = () => setIsDrawerOpen(false);
-
-  const logoSrc = !mounted
-    ? 'https://cdn.anisora.ai/anisora-logo.png'
-    : resolvedTheme === 'dark'
-      ? 'https://cdn.anisora.ai/anisora-logo.png'
-      : 'https://cdn.anisora.ai/anisora-logo.png';
+  const hrefFor = (href: string) =>
+    href.startsWith('#') && pathname !== '/' ? `/${href}` : href;
 
   return (
-    <header
-      className={cn(
-        'sticky z-50 flex justify-center transition-all duration-300',
-        hasScrolled ? 'top-6 mx-4 md:mx-0' : 'top-4 mx-2 md:mx-0',
-      )}
-    >
-      <motion.div
-        initial={{ width: INITIAL_WIDTH }}
-        animate={{ width: hasScrolled ? MAX_WIDTH : INITIAL_WIDTH }}
-        transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-      >
-        <div
-          className={cn(
-            'mx-auto max-w-7xl rounded-2xl transition-all duration-300 xl:px-0',
-            hasScrolled
-              ? 'px-2 md:px-2 border border-border backdrop-blur-lg bg-background/75'
-              : 'shadow-none px-3 md:px-7',
-          )}
+    <header className="sticky top-0 z-50 border-b border-border/70 bg-background/80 backdrop-blur-xl">
+      <div className="mx-auto flex h-16 max-w-6xl items-center px-6">
+        <Link href="/" className="flex items-center gap-2 font-semibold">
+          <span className="grid size-8 place-items-center rounded-xl bg-foreground text-background">
+            <Sparkles className="size-4" />
+          </span>
+          AniSora Studio
+        </Link>
+
+        <nav className="mx-auto hidden items-center gap-6 md:flex">
+          {siteConfig.nav.links.map((item) => (
+            <Link
+              key={item.id}
+              href={hrefFor(item.href)}
+              className="text-sm text-muted-foreground transition hover:text-foreground"
+            >
+              {item.name}
+            </Link>
+          ))}
+        </nav>
+
+        <div className="ml-auto hidden items-center gap-2 md:flex">
+          <ThemeToggle />
+          <Link
+            href={user ? '/dashboard' : '/auth?returnUrl=/dashboard'}
+            className="rounded-full bg-foreground px-4 py-2 text-sm font-medium text-background transition hover:opacity-80"
+          >
+            {user ? 'Open Studio' : 'Sign in'}
+          </Link>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setOpen((value) => !value)}
+          className="ml-auto grid size-9 place-items-center rounded-lg hover:bg-accent md:hidden"
+          aria-label={open ? 'Close navigation' : 'Open navigation'}
+          aria-expanded={open}
         >
-          <div className="flex h-[56px] items-center p-2 md:p-4">
-            {/* Left Section - Logo */}
-            <div className="flex items-center justify-start flex-shrink-0 w-auto md:w-[200px]">
-              <Link href="/" className="flex items-center gap-3">
-              <Image
-                src={logoSrc}
-                alt="AniSora Logo"
-                width={120}
-                height={22}
-                priority
-              />
+          {open ? <X className="size-5" /> : <Menu className="size-5" />}
+        </button>
+      </div>
+
+      {open ? (
+        <div className="border-t border-border bg-background p-4 md:hidden">
+          <nav className="mx-auto flex max-w-6xl flex-col gap-1">
+            {siteConfig.nav.links.map((item) => (
+              <Link
+                key={item.id}
+                href={hrefFor(item.href)}
+                onClick={() => setOpen(false)}
+                className="rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground"
+              >
+                {item.name}
+              </Link>
+            ))}
+            <div className="mt-2 flex items-center gap-2 border-t border-border pt-3">
+              <ThemeToggle />
+              <Link
+                href={user ? '/dashboard' : '/auth?returnUrl=/dashboard'}
+                onClick={() => setOpen(false)}
+                className="flex-1 rounded-lg bg-foreground px-4 py-2 text-center text-sm font-medium text-background"
+              >
+                {user ? 'Open Studio' : 'Sign in'}
               </Link>
             </div>
-
-            {/* Center Section - Navigation Menu */}
-            <div className="hidden md:flex items-center justify-center flex-grow">
-              <NavMenu />
-            </div>
-
-            {/* Right Section - Actions */}
-            <div className="flex items-center justify-end flex-shrink-0 w-auto md:w-[200px] ml-auto">
-              <div className="flex flex-row items-center gap-2 md:gap-3 shrink-0">
-                <div className="flex items-center space-x-3">
-                  <Link
-                    href="https://github.com/bilibili/Index-anisora"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hidden md:flex items-center gap-1.5 h-7 px-2.5 text-xs font-medium rounded-full bg-transparent text-muted-foreground/60 hover:text-muted-foreground hover:bg-accent/30 transition-all duration-200"
-                    aria-label="GitHub Repository"
-                  >
-                    <Github className="size-3.5" />
-                    <span className={`text-xs font-medium transition-opacity duration-200 ${starsLoading ? 'opacity-50' : 'opacity-100'}`}>
-                      {formattedStars}
-                    </span>
-                  </Link>
-                  {user ? (
-                    <a
-                      className="bg-secondary h-8 hidden md:flex items-center justify-center text-sm font-normal tracking-wide rounded-full text-primary-foreground dark:text-secondary-foreground w-fit px-4 shadow-[inset_0_1px_2px_rgba(255,255,255,0.25),0_3px_3px_-1.5px_rgba(16,24,40,0.06),0_1px_1px_rgba(16,24,40,0.08)] border border-white/[0.12] cursor-pointer"
-                      onClick={() => {
-                        try {
-                          // if current page is index-tts, open dashboard with tool param
-                          if (pathname === '/index-tts') {
-                            router.push('/dashboard?tool=index-tts');
-                          } else {
-                            router.push('/dashboard');
-                          }
-                        } catch (e) {
-                          router.push('/dashboard');
-                        }
-                      }}
-                    >
-                      Dashboard
-                    </a>
-                  ) : (
-                    <Link
-                      className="bg-secondary h-8 hidden md:flex items-center justify-center text-sm font-normal tracking-wide rounded-full text-primary-foreground dark:text-secondary-foreground w-fit px-4 shadow-[inset_0_1px_2px_rgba(255,255,255,0.25),0_3px_3px_-1.5px_rgba(16,24,40,0.06),0_1px_1px_rgba(16,24,40,0.08)] border border-white/[0.12]"
-                      href="/auth"
-                    >
-                      Try free
-                    </Link>
-                  )}
-                </div>
-                <ThemeToggle />
-                <button
-                  className="md:hidden border border-border size-8 rounded-md cursor-pointer flex items-center justify-center"
-                  onClick={toggleDrawer}
-                >
-                  {isDrawerOpen ? (
-                    <X className="size-5" />
-                  ) : (
-                    <Menu className="size-5" />
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
+          </nav>
         </div>
-      </motion.div>
-
-      {/* Mobile Drawer */}
-      <AnimatePresence>
-        {isDrawerOpen && (
-          <>
-            <motion.div
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm"
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              variants={overlayVariants}
-              transition={{ duration: 0.2 }}
-              onClick={handleOverlayClick}
-            />
-
-            <motion.div
-              className="fixed inset-x-0 w-[95%] mx-auto bottom-3 bg-background border border-border p-4 rounded-xl shadow-lg"
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              variants={drawerVariants}
-            >
-              {/* Mobile menu content */}
-              <div className="flex flex-col gap-4">
-                <div className="flex items-center justify-between">
-                  <Link href="/" className="flex items-center gap-3">
-                    <Image
-                      src={logoSrc}
-                      alt="Kortix Logo"
-                      width={120}
-                      height={22}
-                      priority
-                    />
-                    {/* <span className="font-medium text-primary text-sm">
-                      / AniSora
-                    </span> */}
-                  </Link>
-                  <button
-                    onClick={toggleDrawer}
-                    className="border border-border rounded-md p-1 cursor-pointer"
-                  >
-                    <X className="size-5" />
-                  </button>
-                </div>
-
-                <motion.ul
-                  className="flex flex-col text-sm mb-4 border border-border rounded-md"
-                  variants={drawerMenuContainerVariants}
-                >
-                  <AnimatePresence>
-                    {siteConfig.nav.links.map((item) => (
-                      <motion.li
-                        key={item.id}
-                        className="p-2.5 border-b border-border last:border-b-0"
-                        variants={drawerMenuVariants}
-                      >
-                        <a
-                          href={item.href}
-                          onClick={(e) => {
-                            // If it's an external link (not starting with #), let it navigate normally
-                            if (!item.href.startsWith('#')) {
-                              setIsDrawerOpen(false);
-                              return;
-                            }
-                            
-                            e.preventDefault();
-                            
-                            // If we're not on the homepage, redirect to homepage with the section
-                            if (pathname !== '/') {
-                              router.push(`/${item.href}`);
-                              setIsDrawerOpen(false);
-                              return;
-                            }
-                            
-                            const element = document.getElementById(
-                              item.href.substring(1),
-                            );
-                            element?.scrollIntoView({ behavior: 'smooth' });
-                            setIsDrawerOpen(false);
-                          }}
-                          className={`underline-offset-4 hover:text-primary/80 transition-colors ${
-                            (item.href.startsWith('#') && pathname === '/' && activeSection === item.href.substring(1)) || (item.href === pathname)
-                              ? 'text-primary font-medium'
-                              : 'text-primary/60'
-                          }`}
-                        >
-                          {item.name}
-                        </a>
-                      </motion.li>
-                    ))}
-                  </AnimatePresence>
-                </motion.ul>
-
-                {/* GitHub link for mobile */}
-                <Link
-                  href="https://github.com/bilibili/Index-anisora"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-1.5 h-7 px-2.5 text-xs font-medium rounded-full bg-transparent text-muted-foreground/60 hover:text-muted-foreground hover:bg-accent/30 transition-all duration-200"
-                  aria-label="GitHub Repository"
-                >
-                  <Github className="size-3.5" />
-                  <span className={`text-xs font-medium transition-opacity duration-200 ${starsLoading ? 'opacity-50' : 'opacity-100'}`}>
-                    ⭐ {formattedStars}
-                  </span>
-                </Link>
-
-                {/* Action buttons */}
-                <div className="flex flex-col gap-2">
-                  {user ? (
-                    <button
-                      onClick={() => {
-                        setIsDrawerOpen(false);
-                        try {
-                          if (pathname === '/index-tts') {
-                            router.push('/dashboard?tool=index-tts');
-                          } else {
-                            router.push('/dashboard');
-                          }
-                        } catch (e) {
-                          router.push('/dashboard');
-                        }
-                      }}
-                      className="bg-secondary h-8 flex items-center justify-center text-sm font-normal tracking-wide rounded-full text-primary-foreground dark:text-secondary-foreground w-full px-4 shadow-[inset_0_1px_2px_rgba(255,255,255,0.25),0_3px_3px_-1.5px_rgba(16,24,40,0.06),0_1px_1px_rgba(16,24,40,0.08)] border border-white/[0.12] hover:bg-secondary/80 transition-all ease-out active:scale-95"
-                    >
-                      Dashboard
-                    </button>
-                  ) : (
-                    <Link
-                      href="/auth"
-                      className="bg-secondary h-8 flex items-center justify-center text-sm font-normal tracking-wide rounded-full text-primary-foreground dark:text-secondary-foreground w-full px-4 shadow-[inset_0_1px_2px_rgba(255,255,255,0.25),0_3px_3px_-1.5px_rgba(16,24,40,0.06),0_1px_1px_rgba(16,24,40,0.08)] border border-white/[0.12] hover:bg-secondary/80 transition-all ease-out active:scale-95"
-                    >
-                      Try free
-                    </Link>
-                  )}
-                  <div className="flex justify-between">
-                    <ThemeToggle />
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+      ) : null}
     </header>
-  ); 
+  );
 }

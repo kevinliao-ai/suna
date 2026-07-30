@@ -1,30 +1,21 @@
 import { ThemeProvider } from '@/components/home/theme-provider';
 import { siteConfig } from '@/lib/site';
 import type { Metadata, Viewport } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { GeistSans } from 'geist/font/sans';
+import { GeistMono } from 'geist/font/mono';
 import './globals.css';
 import { Providers } from './providers';
 import { Toaster } from '@/components/ui/sonner';
 import { Analytics } from '@vercel/analytics/react';
 import { GoogleAnalytics } from '@next/third-parties/google';
 import { SpeedInsights } from '@vercel/speed-insights/next';
-import Script from 'next/script';
 import { PostHogIdentify } from '@/components/posthog-identify';
-import '@/lib/polyfills'; // Load polyfills early
-
-const geistSans = Geist({
-  variable: '--font-geist-sans',
-  subsets: ['latin'],
-});
-
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
-  subsets: ['latin'],
-});
 
 export const viewport: Viewport = {
   themeColor: 'black',
 };
+
+const googleAnalyticsId = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID;
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
@@ -33,13 +24,11 @@ export const metadata: Metadata = {
     template: `%s - ${siteConfig.name}`,
   },
   description: siteConfig.description,
-  keywords: siteConfig.keywords,
-  authors: [
-    { name: 'AniSora Team', url: 'https://github.com/bilibili/Index-anisora' },
-  ],
-  creator: 'AniSora Team',
-  publisher: 'Bilibili',
-  applicationName: 'AniSora',
+  keywords: [...siteConfig.keywords],
+  authors: [{ name: 'AniSora Studio' }],
+  creator: 'AniSora Studio',
+  publisher: 'AniSora Studio',
+  applicationName: siteConfig.name,
   category: 'Technology',
   formatDetection: {
     telephone: false,
@@ -69,7 +58,7 @@ export const metadata: Metadata = {
         url: '/banner.png',
         width: 1200,
         height: 630,
-        alt: 'AniSora - Open Source Generalist AI Agent',
+        alt: 'AniSora Studio — AI anime video and voice workspace',
         type: 'image/png',
       },
     ],
@@ -78,14 +67,12 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: siteConfig.title,
     description: siteConfig.description,
-    creator: '@bilibili',
-    site: '@bilibili',
     images: [
       {
         url: '/banner.png',
         width: 1200,
         height: 630,
-        alt: 'AniSora - Open Source Generalist AI Agent',
+        alt: 'AniSora Studio — AI anime video and voice workspace',
       },
     ],
   },
@@ -96,9 +83,6 @@ export const metadata: Metadata = {
   // manifest: "/manifest.json",
   alternates: {
     canonical: siteConfig.url,
-    types: {
-      'application/rss+xml': [{ url: '/rss.xml', title: 'AniSora RSS Feed' }],
-    },
   },
 };
 
@@ -109,51 +93,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        {/* Google Tag Manager */}
-        <Script id="google-tag-manager" strategy="afterInteractive">
-          {`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-          new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-          j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-          'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-          })(window,document,'script','dataLayer','GTM-PCHSN4M2');`}
-        </Script>
-        <Script
-          async
-          src="https://cdn.tolt.io/tolt.js"
-          data-tolt={process.env.NEXT_PUBLIC_TOLT_REFERRAL_ID}
-        ></Script>
-        {/* Google AdSense */}
-        <Script
-          id="google-adsense"
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4146045147843356"
-          strategy="afterInteractive"
-          crossOrigin="anonymous"
-          async
-        />
-        {/* End Google AdSense */}
-        {/* Google AdSense */}
-        <Script
-          src="https://cdn.ampproject.org/v0/amp-auto-ads-0.1.js"
-          async
-          custom-element="amp-auto-ads"
-        />
-        {/* End Google AdSense */}
-      </head>
-
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased font-sans bg-background`}
+        className={`${GeistSans.variable} ${GeistMono.variable} antialiased font-sans bg-background`}
       >
-        <noscript>
-          <iframe
-            src="https://www.googletagmanager.com/ns.html?id=GTM-MPT74VX8"
-            height="0"
-            width="0"
-            style={{ display: 'none', visibility: 'hidden' }}
-          />
-        </noscript>
-        {/* End Google Tag Manager (noscript) */}
-
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -165,7 +107,9 @@ export default function RootLayout({
             <Toaster />
           </Providers>
           <Analytics />
-          <GoogleAnalytics gaId="G-6ETJFB3PT3" />
+          {googleAnalyticsId ? (
+            <GoogleAnalytics gaId={googleAnalyticsId} />
+          ) : null}
           <SpeedInsights />
           <PostHogIdentify />
         </ThemeProvider>

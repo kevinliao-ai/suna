@@ -1,310 +1,621 @@
 'use client';
 
-import dynamic from 'next/dynamic';
-import { Suspense, useEffect, useState } from 'react';
-import { AnimatePresence, motion } from 'motion/react';
-import { useTheme } from 'next-themes';
-import Image from 'next/image';
+import { signOut } from '@/app/auth/actions';
+import { useAuth } from '@/components/AuthProvider';
+import { ThemeToggle } from '@/components/home/theme-toggle';
+import { ToolEmbed } from '@/components/tool-embed';
+import { embedConfig } from '@/lib/embed-config';
+import {
+  AudioWaveform,
+  ExternalLink,
+  Film,
+  FolderOpen,
+  Home,
+  Link2,
+  LogOut,
+  Plus,
+  ShieldCheck,
+  Sparkles,
+  Trash2,
+} from 'lucide-react';
 import Link from 'next/link';
-import { Portal } from '@/components/ui/portal';
-import { Menu, X, Github } from 'lucide-react';
-import { useGitHubStars } from '@/hooks/use-github-stars';
-import { useRouter } from 'next/navigation';
-// Dynamically import the BilibiliEmbed component with no SSR
-const BilibiliEmbed = dynamic(
-  () => import('@/components/bilibili-embed').then((mod) => mod.BilibiliEmbed),
+import { useEffect, useMemo, useState } from 'react';
+
+type ToolId = 'anisora' | 'index-tts';
+
+interface StudioAsset {
+  id: string;
+  name: string;
+  url: string;
+  createdAt: string;
+}
+
+interface StudioTask {
+  id: string;
+  title: string;
+  status: 'todo' | 'done';
+  createdAt: string;
+}
+
+interface StudioProject {
+  id: string;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+  activeTool: ToolId;
+  assets: StudioAsset[];
+  tasks: StudioTask[];
+}
+
+const STORAGE_KEY = 'anisora:studio:v1';
+
+const tools: Record<
+  ToolId,
   {
-    ssr: false,
-    loading: () => (
-      <div className="flex items-center justify-center h-full">
-        <div className="animate-pulse text-muted-foreground">
-          Loading Bilibili content...
-        </div>
-      </div>
-    ),
+    name: string;
+    description: string;
+    url: string;
+    icon: typeof Film;
+    title: string;
+  }
+> = {
+  anisora: {
+    name: 'Anime video',
+    description: 'Image and text guided animation',
+    url: embedConfig.anisora,
+    icon: Film,
+    title: 'External anime video generation tool',
   },
-);
+  'index-tts': {
+    name: 'Voice studio',
+    description: 'Expressive speech synthesis',
+    url: embedConfig.indexTts,
+    icon: AudioWaveform,
+    title: 'External IndexTTS voice generation tool',
+  },
+};
+
+function createId() {
+  return typeof crypto !== 'undefined' && 'randomUUID' in crypto
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function createProject(name = 'My first project'): StudioProject {
+  const now = new Date().toISOString();
+  return {
+    id: createId(),
+    name,
+    createdAt: now,
+    updatedAt: now,
+    activeTool: 'anisora',
+    assets: [],
+    tasks: [],
+  };
+}
+
+function isProject(value: unknown): value is StudioProject {
+  if (!value || typeof value !== 'object') return false;
+  const project = value as Partial<StudioProject>;
+  return (
+    typeof project.id === 'string' &&
+    typeof project.name === 'string' &&
+    (project.activeTool === 'anisora' || project.activeTool === 'index-tts') &&
+    Array.isArray(project.assets) &&
+    (project.tasks === undefined || Array.isArray(project.tasks))
+  );
+}
 
 export default function DashboardPage() {
-  const { resolvedTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-  const [activeTool, setActiveTool] = useState<'anisora' | 'index-tts'>('anisora');
-  const [iframeLoading, setIframeLoading] = useState(false);
-  const [iframeError, setIframeError] = useState<string | null>(null);
-  const [mobileToolsOpen, setMobileToolsOpen] = useState(false);
-  const router = useRouter();
-  // determine GitHub repo based on active tool
-  const ghOwner = activeTool === 'anisora' ? 'bilibili' : 'index-tts';
-  const ghRepo = activeTool === 'anisora' ? 'Index-anisora' : 'index-tts';
-  const ghHref = activeTool === 'anisora' ? 'https://github.com/bilibili/Index-anisora' : 'https://github.com/index-tts/index-tts';
-  const { formattedStars, loading: starsLoading } = useGitHubStars(ghOwner, ghRepo);
-
-  const overlayVariants = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1 },
-    exit: { opacity: 0 },
-  };
-
-  const drawerVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { type: 'spring' as const, damping: 15, stiffness: 200 } },
-    exit: { opacity: 0, y: 10, transition: { duration: 0.12 } },
-  };
+  const { user } = useAuth();
+  const [projects, setProjects] = useState<StudioProject[]>([]);
+  const [activeProjectId, setActiveProjectId] = useState('');
+  const [hydrated, setHydrated] = useState(false);
+  const [projectName, setProjectName] = useState('');
+  const [assetName, setAssetName] = useState('');
+  const [assetUrl, setAssetUrl] = useState('');
+  const [taskTitle, setTaskTitle] = useState('');
+  const storageKey = `${STORAGE_KEY}:${user?.id || 'anonymous'}`;
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // read query param after mount to avoid hydration mismatch
-  useEffect(() => {
-    if (!mounted) return;
     try {
-      const params = new URLSearchParams(window.location.search);
-      const t = params.get('tool');
-      if (t === 'index-tts') setActiveTool('index-tts');
-    } catch (e) {
-      // ignore
-    }
-  }, [mounted]);
+      const stored = localStorage.getItem(storageKey);
+      const parsed = stored ? (JSON.parse(stored) as unknown) : null;
+      const savedProjects = Array.isArray(parsed)
+        ? parsed.filter(isProject).map((project) => ({
+            ...project,
+            tasks: Array.isArray(project.tasks) ? project.tasks : [],
+          }))
+        : [];
+      const nextProjects =
+        savedProjects.length > 0 ? savedProjects : [createProject()];
+      const requestedTool = new URLSearchParams(window.location.search).get(
+        'tool',
+      );
 
-  const logoSrc = !mounted
-    ? 'https://cdn.anisora.ai/anisora-logo.png'
-    : resolvedTheme === 'dark'
-      ? 'https://cdn.anisora.ai/anisora-logo.png'
-      : 'https://cdn.anisora.ai/anisora-logo.png';
+      if (requestedTool === 'index-tts') {
+        nextProjects[0] = {
+          ...nextProjects[0],
+          activeTool: 'index-tts',
+        };
+      }
+
+      setProjects(nextProjects);
+      setActiveProjectId(nextProjects[0].id);
+    } catch {
+      const initial = createProject();
+      setProjects([initial]);
+      setActiveProjectId(initial.id);
+    } finally {
+      setHydrated(true);
+    }
+  }, [storageKey]);
+
+  useEffect(() => {
+    if (hydrated) {
+      localStorage.setItem(storageKey, JSON.stringify(projects));
+    }
+  }, [hydrated, projects, storageKey]);
+
+  const activeProject = useMemo(
+    () => projects.find((project) => project.id === activeProjectId),
+    [activeProjectId, projects],
+  );
+
+  const updateActiveProject = (
+    updater: (project: StudioProject) => StudioProject,
+  ) => {
+    setProjects((current) =>
+      current.map((project) =>
+        project.id === activeProjectId
+          ? {
+              ...updater(project),
+              updatedAt: new Date().toISOString(),
+            }
+          : project,
+      ),
+    );
+  };
+
+  const addProject = () => {
+    const next = createProject(
+      projectName.trim() || `Untitled project ${projects.length + 1}`,
+    );
+    setProjects((current) => [...current, next]);
+    setActiveProjectId(next.id);
+    setProjectName('');
+  };
+
+  const removeProject = (projectId: string) => {
+    setProjects((current) => {
+      const remaining = current.filter((project) => project.id !== projectId);
+      const next = remaining.length > 0 ? remaining : [createProject()];
+      if (projectId === activeProjectId) {
+        setActiveProjectId(next[0].id);
+      }
+      return next;
+    });
+  };
+
+  const chooseTool = (tool: ToolId) => {
+    updateActiveProject((project) => ({ ...project, activeTool: tool }));
+    const nextUrl = new URL(window.location.href);
+    nextUrl.searchParams.set('tool', tool);
+    window.history.replaceState({}, '', nextUrl);
+  };
+
+  const addAsset = () => {
+    const name = assetName.trim();
+    const url = assetUrl.trim();
+    if (!activeProject || !name || !url) return;
+
+    try {
+      const parsed = new URL(url);
+      if (!['http:', 'https:'].includes(parsed.protocol)) return;
+    } catch {
+      return;
+    }
+
+    updateActiveProject((project) => ({
+      ...project,
+      assets: [
+        {
+          id: createId(),
+          name,
+          url,
+          createdAt: new Date().toISOString(),
+        },
+        ...project.assets,
+      ],
+    }));
+    setAssetName('');
+    setAssetUrl('');
+  };
+
+  const addTask = () => {
+    const title = taskTitle.trim();
+    if (!title) return;
+    updateActiveProject((project) => ({
+      ...project,
+      tasks: [
+        ...project.tasks,
+        {
+          id: createId(),
+          title,
+          status: 'todo',
+          createdAt: new Date().toISOString(),
+        },
+      ],
+    }));
+    setTaskTitle('');
+  };
+
+  if (!hydrated || !activeProject) {
+    return (
+      <div className="grid h-full place-items-center">
+        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+          <span className="size-4 animate-spin rounded-full border-2 border-current border-r-transparent" />
+          Preparing your workspace…
+        </div>
+      </div>
+    );
+  }
+
+  const activeTool = tools[activeProject.activeTool];
+  const ActiveToolIcon = activeTool.icon;
 
   return (
-    <div className="flex flex-col h-full w-full">
-      {/* Simple Header with Logo */}
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-14 items-center px-4">
-          <Link href="/" className="flex items-center -ml-1.5">
-            <Image
-              src={logoSrc}
-              alt="AniSora Logo"
-              width={120}
-              height={24}
-              className="h-6 w-auto"
-              priority
-            />
+    <div className="flex h-full min-h-screen flex-col bg-[#f7f7f5] text-zinc-950 dark:bg-[#0c0c0d] dark:text-zinc-50">
+      <header className="flex h-16 shrink-0 items-center gap-4 border-b border-black/10 bg-white/80 px-4 backdrop-blur-xl dark:border-white/10 dark:bg-black/40 md:px-6">
+        <Link href="/" className="flex items-center gap-2 font-semibold">
+          <span className="grid size-8 place-items-center rounded-xl bg-zinc-950 text-white dark:bg-white dark:text-zinc-950">
+            <Sparkles className="size-4" />
+          </span>
+          <span className="hidden sm:inline">AniSora Studio</span>
+        </Link>
+
+        <div className="mx-auto flex min-w-0 items-center gap-2 rounded-full border border-black/10 bg-white px-3 py-1.5 text-sm shadow-sm dark:border-white/10 dark:bg-white/5">
+          <FolderOpen className="size-4 shrink-0 text-zinc-500" />
+          <span className="truncate font-medium">{activeProject.name}</span>
+          <span className="hidden text-xs text-zinc-400 md:inline">
+            saved locally
+          </span>
+        </div>
+
+        <div className="flex items-center gap-1">
+          <ThemeToggle />
+          <Link
+            href="/"
+            aria-label="Home"
+            className="grid size-9 place-items-center rounded-lg hover:bg-black/5 dark:hover:bg-white/10"
+          >
+            <Home className="size-4" />
           </Link>
-          {/* Tool switcher on the right */}
-          <div className="ml-auto flex items-center gap-2">
-            {/* Desktop buttons */}
-            <div className="hidden sm:flex items-center gap-2">
-              <button
-                type="button"
-                aria-pressed={activeTool === 'anisora'}
-                aria-label="Switch to AniSora tool"
-                title="Switch to AniSora"
-                className={`px-3 py-1 rounded-lg text-sm font-medium transition-all duration-150 ${activeTool === 'anisora' ? 'bg-accent text-accent-foreground shadow-md ring-2 ring-accent/30' : 'bg-transparent border border-accent/20 text-accent-foreground/80 hover:bg-accent/10 hover:text-accent-foreground'}`}
-                onClick={() => {
-                  setActiveTool('anisora');
-                  try { const url = new URL(window.location.href); url.searchParams.set('tool','anisora'); window.history.replaceState({},'',url.toString()); } catch(e){ }
-                }}
-              >
-                AniSora
-              </button>
-
-              <button
-                type="button"
-                aria-pressed={activeTool === 'index-tts'}
-                aria-label="Switch to Index‑TTS demo"
-                title="Switch to Index‑TTS"
-                className={`px-3 py-1 rounded-lg text-sm font-medium transition-all duration-150 ${activeTool === 'index-tts' ? 'bg-accent text-accent-foreground shadow-md ring-2 ring-accent/30' : 'bg-transparent border border-accent/20 text-accent-foreground/80 hover:bg-accent/10 hover:text-accent-foreground'}`}
-                onClick={() => {
-                  setActiveTool('index-tts');
-                  try { const url = new URL(window.location.href); url.searchParams.set('tool','index-tts'); window.history.replaceState({},'',url.toString()); } catch(e){ }
-                }}
-              >
-                Index‑TTS
-              </button>
-            </div>
-            {/* Mobile: small menu button (styled like navbar) */}
-            <div className="flex sm:hidden items-center relative">
-              <button
-                className="md:hidden border border-border size-8 rounded-md cursor-pointer flex items-center justify-center"
-                onClick={() => setMobileToolsOpen((s) => !s)}
-                aria-label="Tools menu"
-                title="Tools"
-              >
-                {mobileToolsOpen ? <X className="size-5" /> : <Menu className="size-5" />}
-              </button>
-
-              <Portal>
-                <AnimatePresence>
-                  {mobileToolsOpen && (
-                    <>
-                      <motion.div
-                        className="fixed inset-0 bg-black/50 backdrop-blur-sm"
-                        initial="hidden"
-                        animate="visible"
-                        exit="exit"
-                        variants={overlayVariants}
-                        transition={{ duration: 0.2 }}
-                        onClick={() => setMobileToolsOpen(false)}
-                      />
-
-                      <motion.div
-                        className="fixed inset-x-0 w-[95%] mx-auto bottom-3 bg-background border border-border p-4 rounded-xl shadow-lg z-50"
-                        initial="hidden"
-                        animate="visible"
-                        exit="exit"
-                        variants={drawerVariants}
-                      >
-                        <div className="flex flex-col gap-4">
-                          <div className="flex items-center justify-between">
-                            <Link href="/" className="flex items-center gap-3">
-                              <Image src={logoSrc} alt="AniSora Logo" width={120} height={22} priority />
-                            </Link>
-                            <button onClick={() => setMobileToolsOpen(false)} className="border border-border rounded-md p-1 cursor-pointer">
-                              <X className="size-5" />
-                            </button>
-                          </div>
-
-                          <motion.ul className="flex flex-col text-sm mb-4 border border-border rounded-md" variants={drawerVariants}>
-                            <li className="p-2.5 border-b border-border last:border-b-0">
-                              <button className={`w-full text-left px-3 py-2 ${activeTool === 'anisora' ? 'text-primary font-medium' : 'text-primary/60'}`} onClick={() => { setActiveTool('anisora'); try { const url = new URL(window.location.href); url.searchParams.set('tool','anisora'); window.history.replaceState({},'',url.toString()); } catch(e){ } setMobileToolsOpen(false); }}>AniSora</button>
-                            </li>
-                            <li className="p-2.5 border-b border-border last:border-b-0">
-                              <button className={`w-full text-left px-3 py-2 ${activeTool === 'index-tts' ? 'text-primary font-medium' : 'text-primary/60'}`} onClick={() => { setActiveTool('index-tts'); try { const url = new URL(window.location.href); url.searchParams.set('tool','index-tts'); window.history.replaceState({},'',url.toString()); } catch(e){ } setMobileToolsOpen(false); }}>Index‑TTS</button>
-                            </li>
-                          </motion.ul>
-
-                          <Link
-                            href={ghHref}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center justify-center gap-1.5 h-7 px-2.5 text-xs font-medium rounded-full bg-transparent text-muted-foreground/60 hover:text-muted-foreground hover:bg-accent/30 transition-all duration-200"
-                            aria-label="GitHub Repository"
-                          >
-                            <Github className="size-3.5" />
-                            <span className={`text-xs font-medium transition-opacity duration-200 ${starsLoading ? 'opacity-50' : 'opacity-100'}`}>
-                              ⭐ {formattedStars}
-                            </span>
-                          </Link>
-
-                          <div className="flex flex-col gap-2">
-                            <div className="flex justify-between">
-                              <button
-                                onClick={() => {
-                                  // navigate to home or index-tts marketing page depending on activeTool
-                                  setMobileToolsOpen(false);
-                                  try {
-                                    if (activeTool === 'index-tts') {
-                                      router.push('/index-tts');
-                                    } else {
-                                      router.push('/');
-                                    }
-                                  } catch (e) {
-                                    // fallback to full navigation
-                                    try {
-                                      if (activeTool === 'index-tts') {
-                                        window.location.href = '/index-tts';
-                                      } else {
-                                        window.location.href = '/';
-                                      }
-                                    } catch (err) {
-                                      /* ignore */
-                                    }
-                                  }
-                                }}
-                                className="bg-secondary h-8 flex items-center justify-center text-sm font-normal tracking-wide rounded-full text-primary-foreground dark:text-secondary-foreground w-full px-4 border border-white/[0.12] hover:bg-secondary/80 transition-all ease-out active:scale-95"
-                              >
-                                Home
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </motion.div>
-                    </>
-                  )}
-                </AnimatePresence>
-              </Portal>
-            </div>
-          </div>
+          <form action={signOut}>
+            <button
+              type="submit"
+              aria-label="Sign out"
+              className="grid size-9 place-items-center rounded-lg hover:bg-black/5 dark:hover:bg-white/10"
+            >
+              <LogOut className="size-4" />
+            </button>
+          </form>
         </div>
       </header>
 
-      {/* Content */}
-      <div className="flex-1 w-full overflow-hidden">
-        <Suspense
-          fallback={
-            <div className="flex-1 flex items-center justify-center h-full">
-              <div className="animate-pulse">Loading Bilibili content...</div>
-            </div>
-          }
-        >
-          <div className="h-[calc(100vh-58px)] w-full">
-            {activeTool === 'anisora' ? (
-              <BilibiliEmbed url="https://bilibili-index-anisora.ms.show/" />
-            ) : (
-              <>
-                <div className="h-full w-full flex items-center justify-center bg-muted/5">
-                  {iframeLoading && (
-                    <div className="animate-pulse">Loading Index‑TTS demo…</div>
-                  )}
-                  {iframeError ? (
-                    <div className="p-4 text-center">
-                      <div className="mb-2">Unable to load demo (the remote site may block embedding).</div>
-                      <div className="flex items-center justify-center gap-2">
-                        <a
-                          className="underline"
-                          href="https://indexteam-indextts-2-demo.ms.show/?t=1784625823747&__theme=dark&studio_token=42ff9ed3-9075-4dd6-a15f-c88f1828c59d&backend_url=/"
-                          rel="noreferrer"
-                        >Open in new window</a>
-                        <button
-                          className="px-2 py-1 rounded bg-muted/50"
-                          onClick={() => {
-                            setIframeError(null);
-                            setIframeLoading(true);
-                            // retry by forcing reload
-                            const el = document.getElementById('index-tts-iframe') as HTMLIFrameElement | null;
-                            if (el) {
-                              el.src = el.src;
-                            }
-                          }}
-                        >Retry</button>
-                      </div>
-                    </div>
-                  ) : (
-                    <iframe
-                      id="index-tts-iframe"
-                      title="Index-TTS Demo"
-                      src="https://indexteam-indextts-2-demo.ms.show/?t=1784625823747&__theme=dark&studio_token=42ff9ed3-9075-4dd6-a15f-c88f1828c59d&backend_url=/"
-                      className="h-full w-full border-0"
-                      sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-modals"
-                      allow="microphone; autoplay"
-                      onLoad={() => { setIframeLoading(false); setIframeError(null); }}
-                      onError={() => { setIframeLoading(false); setIframeError('load-failed'); }}
-                    />
-                  )}
-                  {/* show loader only when iframe not yet loaded */}
-                  {!iframeLoading && !iframeError && (
-                    // start loading when index-tts is selected
-                    <script dangerouslySetInnerHTML={{ __html: '/* loader marker */' }} />
-                  )}
-                </div>
+      <div className="grid min-h-0 flex-1 lg:grid-cols-[248px_minmax(0,1fr)_300px]">
+        <aside className="border-b border-black/10 bg-white/50 p-4 dark:border-white/10 dark:bg-white/[0.02] lg:border-b-0 lg:border-r">
+          <div className="mb-3 flex items-center justify-between">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">
+              Projects
+            </p>
+            <span className="text-xs text-zinc-400">{projects.length}</span>
+          </div>
 
-                {/* Desktop GitHub info (same style as mobile drawer) */}
-                <div className="hidden sm:flex items-center gap-3 ml-2">
-                  <Link
-                    href={ghHref}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hidden sm:flex items-center gap-1.5 h-7 px-2.5 text-xs font-medium rounded-full bg-transparent text-muted-foreground/60 hover:text-muted-foreground hover:bg-accent/30 transition-all duration-200"
-                    aria-label="GitHub Repository"
+          <div className="mb-3 flex gap-2">
+            <input
+              value={projectName}
+              onChange={(event) => setProjectName(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') addProject();
+              }}
+              placeholder="New project"
+              className="min-w-0 flex-1 rounded-lg border border-black/10 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-400 dark:border-white/10 dark:bg-white/5"
+            />
+            <button
+              type="button"
+              onClick={addProject}
+              aria-label="Create project"
+              className="grid size-9 shrink-0 place-items-center rounded-lg bg-zinc-950 text-white transition hover:opacity-80 dark:bg-white dark:text-zinc-950"
+            >
+              <Plus className="size-4" />
+            </button>
+          </div>
+
+          <div className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible">
+            {projects.map((project) => (
+              <div
+                key={project.id}
+                className={`group flex min-w-48 items-center gap-2 rounded-xl border px-3 py-2.5 text-sm transition lg:min-w-0 ${
+                  project.id === activeProjectId
+                    ? 'border-zinc-300 bg-white shadow-sm dark:border-zinc-700 dark:bg-white/10'
+                    : 'border-transparent hover:bg-black/5 dark:hover:bg-white/5'
+                }`}
+              >
+                <button
+                  type="button"
+                  onClick={() => setActiveProjectId(project.id)}
+                  className="min-w-0 flex-1 text-left"
+                >
+                  <span className="block truncate font-medium">
+                    {project.name}
+                  </span>
+                  <span className="block text-xs text-zinc-400">
+                    {project.tasks.filter((task) => task.status === 'done').length}
+                    /{project.tasks.length} tasks · {project.assets.length} assets
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => removeProject(project.id)}
+                  aria-label={`Delete ${project.name}`}
+                  className="grid size-7 place-items-center rounded-md text-zinc-400 opacity-0 transition hover:bg-red-500/10 hover:text-red-500 group-hover:opacity-100 focus:opacity-100"
+                >
+                  <Trash2 className="size-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-5 rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
+            <div className="mb-1 flex items-center gap-2 font-medium text-zinc-800 dark:text-zinc-200">
+              <ShieldCheck className="size-4" />
+              MVP data boundary
+            </div>
+            Project metadata stays in this browser. Media and prompts entered in
+            an embedded tool are processed by that tool&apos;s operator.
+          </div>
+        </aside>
+
+        <main className="flex min-h-[720px] min-w-0 flex-col p-3 md:p-5">
+          <div className="mb-3 flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <ActiveToolIcon className="size-5" />
+                <h1 className="text-lg font-semibold">{activeTool.name}</h1>
+              </div>
+              <p className="mt-1 text-sm text-zinc-500">
+                {activeTool.description}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {(Object.keys(tools) as ToolId[]).map((toolId) => {
+                const tool = tools[toolId];
+                const Icon = tool.icon;
+                return (
+                  <button
+                    key={toolId}
+                    type="button"
+                    onClick={() => chooseTool(toolId)}
+                    className={`inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm transition ${
+                      activeProject.activeTool === toolId
+                        ? 'bg-zinc-950 text-white dark:bg-white dark:text-zinc-950'
+                        : 'border border-black/10 bg-white hover:bg-zinc-100 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10'
+                    }`}
                   >
-                    <Github className="size-3.5" />
-                    <span className={`text-xs font-medium transition-opacity duration-200 ${starsLoading ? 'opacity-50' : 'opacity-100'}`}>
-                      ⭐ {formattedStars}
-                    </span>
-                  </Link>
+                    <Icon className="size-4" />
+                    {tool.name}
+                  </button>
+                );
+              })}
+              <a
+                href={activeTool.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="grid size-9 place-items-center rounded-full border border-black/10 bg-white hover:bg-zinc-100 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
+                aria-label="Open tool in a new tab"
+              >
+                <ExternalLink className="size-4" />
+              </a>
+            </div>
+          </div>
+
+          <div className="min-h-[620px] flex-1 overflow-hidden rounded-2xl border border-black/10 bg-white p-1 shadow-sm dark:border-white/10 dark:bg-white/[0.03]">
+            <ToolEmbed title={activeTool.title} url={activeTool.url} />
+          </div>
+        </main>
+
+        <aside className="border-t border-black/10 bg-white/50 p-4 dark:border-white/10 dark:bg-white/[0.02] lg:border-l lg:border-t-0">
+          <div className="mb-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">
+              Tasks
+            </p>
+            <p className="mt-1 text-xs text-zinc-400">
+              Track the next step for this project.
+            </p>
+          </div>
+
+          <div className="flex gap-2">
+            <input
+              value={taskTitle}
+              onChange={(event) => setTaskTitle(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') addTask();
+              }}
+              placeholder="Add a task"
+              className="min-w-0 flex-1 rounded-lg border border-black/10 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-400 dark:border-white/10 dark:bg-white/5"
+            />
+            <button
+              type="button"
+              onClick={addTask}
+              disabled={!taskTitle.trim()}
+              aria-label="Add task"
+              className="grid size-9 shrink-0 place-items-center rounded-lg bg-zinc-950 text-white transition hover:opacity-80 disabled:opacity-40 dark:bg-white dark:text-zinc-950"
+            >
+              <Plus className="size-4" />
+            </button>
+          </div>
+
+          <div className="mt-3 space-y-1">
+            {activeProject.tasks.length === 0 ? (
+              <p className="rounded-lg border border-dashed border-black/10 px-3 py-4 text-center text-xs text-zinc-400 dark:border-white/10">
+                No tasks yet
+              </p>
+            ) : (
+              activeProject.tasks.map((task) => (
+                <div
+                  key={task.id}
+                  className="group flex items-center gap-2 rounded-lg px-2 py-2 hover:bg-black/5 dark:hover:bg-white/5"
+                >
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateActiveProject((project) => ({
+                        ...project,
+                        tasks: project.tasks.map((item) =>
+                          item.id === task.id
+                            ? {
+                                ...item,
+                                status:
+                                  item.status === 'done' ? 'todo' : 'done',
+                              }
+                            : item,
+                        ),
+                      }))
+                    }
+                    aria-label={`Mark ${task.title} ${
+                      task.status === 'done' ? 'incomplete' : 'complete'
+                    }`}
+                    className={`size-4 shrink-0 rounded-full border ${
+                      task.status === 'done'
+                        ? 'border-emerald-500 bg-emerald-500'
+                        : 'border-zinc-400'
+                    }`}
+                  />
+                  <span
+                    className={`min-w-0 flex-1 truncate text-sm ${
+                      task.status === 'done'
+                        ? 'text-zinc-400 line-through'
+                        : ''
+                    }`}
+                  >
+                    {task.title}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateActiveProject((project) => ({
+                        ...project,
+                        tasks: project.tasks.filter(
+                          (item) => item.id !== task.id,
+                        ),
+                      }))
+                    }
+                    aria-label={`Remove ${task.title}`}
+                    className="grid size-7 place-items-center rounded-md text-zinc-400 opacity-0 transition hover:text-red-500 group-hover:opacity-100 focus:opacity-100"
+                  >
+                    <Trash2 className="size-3.5" />
+                  </button>
                 </div>
-              </>
+              ))
             )}
           </div>
-        </Suspense>
+
+          <div className="my-5 border-t border-black/10 dark:border-white/10" />
+
+          <div className="mb-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">
+              Project assets
+            </p>
+            <p className="mt-1 text-xs text-zinc-400">
+              Keep source and output links together.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <input
+              value={assetName}
+              onChange={(event) => setAssetName(event.target.value)}
+              placeholder="Asset name"
+              className="w-full rounded-lg border border-black/10 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-400 dark:border-white/10 dark:bg-white/5"
+            />
+            <input
+              value={assetUrl}
+              onChange={(event) => setAssetUrl(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') addAsset();
+              }}
+              placeholder="https://…"
+              inputMode="url"
+              className="w-full rounded-lg border border-black/10 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-400 dark:border-white/10 dark:bg-white/5"
+            />
+            <button
+              type="button"
+              onClick={addAsset}
+              disabled={!assetName.trim() || !assetUrl.trim()}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-950 px-3 py-2 text-sm font-medium text-white transition hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-white dark:text-zinc-950"
+            >
+              <Link2 className="size-4" />
+              Add reference
+            </button>
+          </div>
+
+          <div className="mt-4 space-y-2">
+            {activeProject.assets.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-black/15 p-5 text-center dark:border-white/15">
+                <Link2 className="mx-auto mb-2 size-5 text-zinc-400" />
+                <p className="text-sm font-medium">No assets yet</p>
+                <p className="mt-1 text-xs text-zinc-400">
+                  Add links to prompts, source images, or generated outputs.
+                </p>
+              </div>
+            ) : (
+              activeProject.assets.map((asset) => (
+                <div
+                  key={asset.id}
+                  className="group flex items-center gap-2 rounded-xl border border-black/10 bg-white p-3 dark:border-white/10 dark:bg-white/5"
+                >
+                  <a
+                    href={asset.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="min-w-0 flex-1"
+                  >
+                    <span className="block truncate text-sm font-medium">
+                      {asset.name}
+                    </span>
+                    <span className="block truncate text-xs text-zinc-400">
+                      {asset.url}
+                    </span>
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateActiveProject((project) => ({
+                        ...project,
+                        assets: project.assets.filter(
+                          (item) => item.id !== asset.id,
+                        ),
+                      }))
+                    }
+                    aria-label={`Remove ${asset.name}`}
+                    className="grid size-7 place-items-center rounded-md text-zinc-400 opacity-0 transition hover:bg-red-500/10 hover:text-red-500 group-hover:opacity-100 focus:opacity-100"
+                  >
+                    <Trash2 className="size-3.5" />
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+
+          <div className="mt-5 border-t border-black/10 pt-4 text-xs text-zinc-400 dark:border-white/10">
+            Signed in as
+            <span className="mt-1 block truncate text-zinc-600 dark:text-zinc-300">
+              {user?.email || 'AniSora user'}
+            </span>
+          </div>
+        </aside>
       </div>
     </div>
   );

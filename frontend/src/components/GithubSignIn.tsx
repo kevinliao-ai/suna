@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useTheme } from 'next-themes';
 import { toast } from 'sonner';
 import { Icons } from './home/icons';
 // Using proper GitHub brand icon from Icons component
@@ -20,8 +19,6 @@ interface AuthMessage {
 
 export default function GitHubSignIn({ returnUrl }: GitHubSignInProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const { resolvedTheme } = useTheme();
-  
   const { wasLastMethod, markAsUsed } = useAuthMethodTracking('github');
 
   const cleanupAuthState = useCallback(() => {

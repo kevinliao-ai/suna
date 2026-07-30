@@ -1,86 +1,95 @@
-'use client';
-
-import { SoraWatermarkHero } from '@/components/home/sections/sora-watermark-hero';
-import { SoraWatermarkSteps } from '@/components/home/sections/sora-watermark-steps';
-import { SoraWatermarkFeatures } from '@/components/home/sections/sora-watermark-features';
-import { SoraWatermarkFAQ } from '@/components/home/sections/sora-watermark-faq';
-import { SoraWatermarkCTA } from '@/components/home/sections/sora-watermark-cta';
 import { FooterSection } from '@/components/home/sections/footer-section';
-import { ModalProviders } from '@/providers/modal-providers';
-import { BackgroundAALChecker } from '@/components/auth/background-aal-checker';
+import { SoraWatermarkFAQ } from '@/components/home/sections/sora-watermark-faq';
+import { SoraWatermarkHero } from '@/components/home/sections/sora-watermark-hero';
 import { StructuredData } from '@/components/seo/structured-data';
+import { Link2, Scale, ServerOff } from 'lucide-react';
+import type { Metadata } from 'next';
 
-const breadcrumbs = [
-  { name: 'Home', url: 'https://anisora.ai' },
-  { name: 'Tools', url: 'https://anisora.ai/tools' },
-  { name: 'Sora Watermark Remover', url: 'https://anisora.ai/sora-watermark-remove' },
-];
+export const metadata: Metadata = {
+  title: 'Sora Share Link Resolver (Beta)',
+  description:
+    'Resolve an official Sora share link through an external provider. Availability and output quality are not guaranteed.',
+  alternates: {
+    canonical: 'https://www.anisora.ai/sora-watermark-remove',
+  },
+};
 
 const faqData = [
   {
-    question: 'Is it free to download Sora videos without watermarks?',
-    answer: 'Yes, our Sora video watermark remover is 100% free with no hidden charges. You can download unlimited HD videos without any watermark, no registration or subscription required.',
+    question: 'Which links are accepted?',
+    answer:
+      'Only HTTPS share links hosted on sora.com are accepted by the AniSora endpoint.',
   },
   {
-    question: 'How do I download Sora videos without watermarks?',
-    answer: 'Simply copy the Sora video link, paste it into our tool, click Parse, and then click Download. The entire process takes less than 30 seconds and requires no technical knowledge.',
+    question: 'Does AniSora remove the watermark itself?',
+    answer:
+      'No. AniSora forwards the public share URL to an external resolver and returns the media link supplied by that provider.',
   },
   {
-    question: 'Does this tool work on mobile devices?',
-    answer: 'Absolutely! Our Sora watermark remover is fully optimized for mobile devices including iPhone, iPad, Android phones, and tablets. Download Sora videos on any device with ease.',
+    question: 'Is a result guaranteed?',
+    answer:
+      'No. The resolver can be unavailable, rate-limited, or unable to process a particular link.',
   },
   {
-    question: 'Is the downloaded video quality the same as the original?',
-    answer: 'Yes, we maintain the original HD quality of Sora videos. You can download videos in their native resolution without any quality loss or compression.',
+    question: 'Can I republish the downloaded file?',
+    answer:
+      'Only if you have the necessary rights and your use complies with the model, platform, and applicable legal terms.',
+  },
+];
+
+const boundaries = [
+  {
+    icon: Link2,
+    title: 'Official share URLs only',
+    text: 'The server accepts HTTPS links on sora.com and rejects unrelated hosts.',
   },
   {
-    question: 'Do I need to install any software?',
-    answer: 'No installation required! Our tool is completely web-based. Just visit our website and start downloading Sora videos instantly from any browser.',
+    icon: ServerOff,
+    title: 'External dependency',
+    text: 'Resolution is performed by a third party and can stop working without notice.',
   },
   {
-    question: 'Is it safe to use this Sora downloader?',
-    answer: 'Absolutely safe. We don\'t store any of your data or downloaded videos. Your privacy is fully protected, and we use secure HTTPS connections for all operations.',
-  },
-  {
-    question: 'What video formats are supported?',
-    answer: 'Our tool downloads Sora videos in MP4 format, which is universally compatible with all devices and video players. You can play the downloaded videos anywhere.',
-  },
-  {
-    question: 'Are there any download limits?',
-    answer: 'No limits! You can download as many Sora videos as you want, whenever you want. Enjoy unlimited free downloads with no restrictions or daily caps.',
+    icon: Scale,
+    title: 'Rights remain your responsibility',
+    text: 'A downloadable URL does not grant copyright or commercial usage rights.',
   },
 ];
 
 export default function SoraWatermarkRemovePage() {
   return (
     <>
-      <ModalProviders />
-      <StructuredData 
-        type="tool" 
-        breadcrumbs={breadcrumbs}
+      <StructuredData
+        type="tool"
+        breadcrumbs={[
+          { name: 'Home', url: 'https://www.anisora.ai' },
+          {
+            name: 'Sora Share Link Resolver',
+            url: 'https://www.anisora.ai/sora-watermark-remove',
+          },
+        ]}
         faq={faqData}
       />
-      <BackgroundAALChecker>
-        <main 
-          className="flex flex-col items-center justify-center min-h-screen w-full"
-          itemScope
-          itemType="https://schema.org/WebApplication"
-        >
-          <meta itemProp="name" content="Sora Video Watermark Remover" />
-          <meta itemProp="description" content="Free online tool to download Sora AI videos without watermarks" />
-          <meta itemProp="applicationCategory" content="MultimediaApplication" />
-          <meta itemProp="operatingSystem" content="Any" />
-          
-          <div className="w-full divide-y divide-border">
-            <SoraWatermarkHero />
-            <SoraWatermarkSteps />
-            <SoraWatermarkFeatures />
-            <SoraWatermarkFAQ />
-            <SoraWatermarkCTA />
-            <FooterSection />
+      <main className="flex min-h-screen w-full flex-col items-center">
+        <SoraWatermarkHero />
+        <section className="w-full border-y border-border bg-muted/20 px-6 py-16">
+          <div className="mx-auto grid max-w-6xl gap-4 md:grid-cols-3">
+            {boundaries.map((item) => (
+              <article
+                key={item.title}
+                className="rounded-2xl border border-border bg-background p-6"
+              >
+                <item.icon className="size-5" />
+                <h2 className="mt-5 font-semibold">{item.title}</h2>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                  {item.text}
+                </p>
+              </article>
+            ))}
           </div>
-        </main>
-      </BackgroundAALChecker>
+        </section>
+        <SoraWatermarkFAQ />
+        <FooterSection />
+      </main>
     </>
   );
 }

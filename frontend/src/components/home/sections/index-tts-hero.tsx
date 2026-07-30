@@ -5,7 +5,6 @@ import { FlickeringGrid } from '@/components/home/ui/flickering-grid';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { useState, useEffect, useRef } from 'react';
 import { useScroll } from 'motion/react';
-import Link from 'next/link';
 
 const IndexTTSVideo = `https://cdn.anisora.ai/index-tts2.mp4`;
 
