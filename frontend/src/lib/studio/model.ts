@@ -164,26 +164,42 @@ export function parseStoredProjects(value: string | null): StudioProject[] {
   }
 }
 
+function isPristineWorkspace(projects: StudioProject[]) {
+  return (
+    projects.length === 1 &&
+    projects[0].name === 'My first project' &&
+    projects[0].activeTool === 'anisora' &&
+    projects[0].assets.length === 0 &&
+    projects[0].tasks.length === 0
+  );
+}
+
 export function resolveCloudHydration(
   localProjects: StudioProject[],
   cloudProjects: StudioProject[],
   fallbackProjects: StudioProject[],
 ): CloudHydrationResult {
+  const shouldOfferLocalImport =
+    localProjects.length > 0 &&
+    (cloudProjects.length === 0 ||
+      (isPristineWorkspace(cloudProjects) &&
+        !isPristineWorkspace(localProjects)));
+
+  if (shouldOfferLocalImport) {
+    return {
+      projects: localProjects,
+      lastSyncedProjects: cloudProjects,
+      cloudSyncReady: false,
+      syncState: 'import-needed',
+    };
+  }
+
   if (cloudProjects.length > 0) {
     return {
       projects: cloudProjects,
       lastSyncedProjects: cloudProjects,
       cloudSyncReady: true,
       syncState: 'synced',
-    };
-  }
-
-  if (localProjects.length > 0) {
-    return {
-      projects: localProjects,
-      lastSyncedProjects: [],
-      cloudSyncReady: false,
-      syncState: 'import-needed',
     };
   }
 

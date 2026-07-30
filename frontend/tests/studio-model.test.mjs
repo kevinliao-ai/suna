@@ -69,6 +69,46 @@ test('prefers cloud projects and enables synchronization after hydration', () =>
   assert.deepEqual(result.lastSyncedProjects, [cloudProject]);
 });
 
+test('offers explicit import when another tab created only a pristine cloud workspace', () => {
+  const localProject = {
+    ...createStudioProject('Local draft'),
+    tasks: [
+      {
+        id: 'task-local',
+        title: 'Keep this local task',
+        status: 'todo',
+        createdAt: '2026-07-30T00:00:00.000Z',
+      },
+    ],
+  };
+  const pristineCloudProject = createStudioProject();
+  const result = resolveCloudHydration(
+    [localProject],
+    [pristineCloudProject],
+    [createStudioProject()],
+  );
+
+  assert.equal(result.syncState, 'import-needed');
+  assert.equal(result.cloudSyncReady, false);
+  assert.deepEqual(result.projects, [localProject]);
+  assert.deepEqual(result.lastSyncedProjects, [pristineCloudProject]);
+});
+
+test('keeps a pristine cloud workspace when the browser copy is also pristine', () => {
+  const localProject = createStudioProject();
+  const cloudProject = createStudioProject();
+  const result = resolveCloudHydration(
+    [localProject],
+    [cloudProject],
+    [createStudioProject()],
+  );
+
+  assert.equal(result.syncState, 'synced');
+  assert.equal(result.cloudSyncReady, true);
+  assert.deepEqual(result.projects, [cloudProject]);
+  assert.deepEqual(result.lastSyncedProjects, [cloudProject]);
+});
+
 test('enables synchronization for a brand-new empty workspace', () => {
   const fallbackProject = createStudioProject('My first project');
   const result = resolveCloudHydration([], [], [fallbackProject]);
