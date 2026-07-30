@@ -77,6 +77,12 @@ The production database currently has no migration history, database branch,
 or visible scheduled backup. Apply the additive AniSora migration only after a
 restorable backup or a verified non-production rehearsal exists.
 
+The Auth project currently contains approximately 7,000 users from the
+existing product. Treat authentication and schema changes as a live production
+migration: do not delete or rewrite legacy users, preserve current provider
+compatibility, and test returning-user login as well as new-user signup before
+promotion.
+
 ## Cloudflare
 
 Current routing:
@@ -123,6 +129,40 @@ reviewed before removal.
 
 SPF and DMARC records are not configured. Add them if `@anisora.ai` sends
 email.
+
+### Legacy Cloudflare Pages project
+
+Cloudflare Pages also has an `anisora` project connected to the same GitHub
+repository. Its production branch is `master`, automatic deployment is
+enabled, and every watched path can trigger a second build in addition to
+Vercel.
+
+The Pages project is not a valid fallback for the current application:
+
+- it sets `NEXT_OUTPUT=export`;
+- its configured build output is `.next/static`, not the Next.js export
+  directory;
+- a successful Preview build currently returns HTTP 404 at its public
+  `pages.dev` URL;
+- production has no successful Pages deployment.
+
+Treat Vercel as the only application host. After preserving any required build
+logs, disconnect or delete the legacy Pages project so pull requests do not
+produce misleading green deployment checks and public 404 Preview URLs.
+
+The Pages project also contains `SUPABASE_SERVICE_ROLE_KEY` as a plaintext
+production build variable. The frontend does not reference that variable, and
+a browser-facing build must never receive it. Before removing it, audit the
+Railway backend and any other server deployment for the same credential. Then:
+
+1. create or rotate the server-only Supabase credential;
+2. update every confirmed server-side consumer;
+3. verify those services;
+4. remove the variable from Cloudflare Pages;
+5. revoke the old credential.
+
+Never copy the value into Vercel frontend variables, source control, logs, or
+client-side code.
 
 ## Preview release sequence
 
