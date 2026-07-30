@@ -66,6 +66,11 @@ Current redirect allow list:
 - `http://localhost:3000/dashboard`
 - `http://localhost:3000/auth/github-popup`
 
+The frontend now routes Google, GitHub, email confirmation, and password
+recovery through the single `/auth/callback` handler. The local
+`/auth/github-popup` entry is legacy and can be removed after returning-user
+OAuth tests pass.
+
 Before testing OAuth on a Vercel Preview deployment, add that deployment's
 exact `/auth/callback` URL. Avoid a broad `https://*.vercel.app/**` wildcard.
 

@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 import { Icons } from './home/icons';
 import { Loader2 } from 'lucide-react';
+import { sanitizeReturnPath } from '@/lib/auth-redirect';
 
 interface GoogleSignInProps {
   returnUrl?: string;
@@ -17,12 +18,11 @@ export default function GoogleSignIn({ returnUrl }: GoogleSignInProps) {
   const handleGoogleSignIn = async () => {
     try {
       setIsLoading(true);
+      const safeReturnUrl = sanitizeReturnPath(returnUrl);
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback${
-            returnUrl ? `?returnUrl=${encodeURIComponent(returnUrl)}` : ''
-          }`,
+          redirectTo: `${window.location.origin}/auth/callback?returnUrl=${encodeURIComponent(safeReturnUrl)}`,
         },
       });
 
@@ -32,7 +32,9 @@ export default function GoogleSignIn({ returnUrl }: GoogleSignInProps) {
     } catch (error: unknown) {
       console.error('Google sign-in error:', error);
       toast.error(
-        error instanceof Error ? error.message : 'Failed to sign in with Google',
+        error instanceof Error
+          ? error.message
+          : 'Failed to sign in with Google',
       );
       setIsLoading(false);
     }

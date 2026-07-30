@@ -32,13 +32,14 @@ import {
 } from '@/components/ui/dialog';
 import GitHubSignIn from '@/components/GithubSignIn';
 import { Ripple } from '@/components/ui/ripple';
+import { sanitizeReturnPath } from '@/lib/auth-redirect';
 
 function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, isLoading } = useAuth();
   const mode = searchParams.get('mode');
-  const returnUrl = searchParams.get('returnUrl');
+  const returnUrl = sanitizeReturnPath(searchParams.get('returnUrl'));
   const message = searchParams.get('message');
 
   const isSignUp = mode === 'signup';
@@ -48,7 +49,7 @@ function LoginContent() {
 
   useEffect(() => {
     if (!isLoading && user) {
-      router.push(returnUrl || '/dashboard');
+      router.push(returnUrl);
     }
   }, [user, isLoading, router, returnUrl]);
 
@@ -82,11 +83,7 @@ function LoginContent() {
   ): Promise<FormActionState> => {
     markEmailAsUsed();
 
-    if (returnUrl) {
-      formData.append('returnUrl', returnUrl);
-    } else {
-      formData.append('returnUrl', '/dashboard');
-    }
+    formData.append('returnUrl', returnUrl);
     const result = await signIn(prevState, formData);
 
     if (
@@ -120,12 +117,7 @@ function LoginContent() {
     const email = formData.get('email') as string;
     setRegistrationEmail(email);
 
-    if (returnUrl) {
-      formData.append('returnUrl', returnUrl);
-    }
-
-    // Add origin for email redirects
-    formData.append('origin', window.location.origin);
+    formData.append('returnUrl', returnUrl);
 
     const result = await signUp(prevState, formData);
 
@@ -186,7 +178,6 @@ function LoginContent() {
 
     const formData = new FormData();
     formData.append('email', forgotPasswordEmail);
-    formData.append('origin', window.location.origin);
 
     const result = await forgotPassword({}, formData);
 
@@ -298,8 +289,8 @@ function LoginContent() {
               </h1>
             </div>
             <div className="space-y-3 mb-4">
-              <GoogleSignIn returnUrl={returnUrl || undefined} />
-              <GitHubSignIn returnUrl={returnUrl || undefined} />
+              <GoogleSignIn returnUrl={returnUrl} />
+              <GitHubSignIn returnUrl={returnUrl} />
             </div>
             <div className="relative my-4">
               <div className="absolute inset-0 flex items-center">
@@ -373,8 +364,8 @@ function LoginContent() {
                 <Link
                   href={
                     isSignUp
-                      ? `/auth${returnUrl ? `?returnUrl=${returnUrl}` : ''}`
-                      : `/auth?mode=signup${returnUrl ? `&returnUrl=${returnUrl}` : ''}`
+                      ? `/auth?returnUrl=${encodeURIComponent(returnUrl)}`
+                      : `/auth?mode=signup&returnUrl=${encodeURIComponent(returnUrl)}`
                   }
                   className="text-muted-foreground hover:text-foreground transition-colors"
                 >

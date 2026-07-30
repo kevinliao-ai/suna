@@ -13,7 +13,7 @@ export const PostHogIdentify = () => {
     const supabase = createClient();
     const listener = supabase.auth.onAuthStateChange((_, session) => {
       if (session) {
-        posthog.identify(session.user.id, { email: session.user.email });
+        posthog.identify(session.user.id);
       } else {
         posthog.reset();
       }

@@ -1,17 +1,12 @@
 import { createClient } from '@/lib/supabase/server';
+import { getServerAuthOrigin, sanitizeReturnPath } from '@/lib/auth-redirect';
 import { NextResponse, type NextRequest } from 'next/server';
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get('code');
-  const requestedPath =
-    requestUrl.searchParams.get('returnUrl') ?? '/dashboard';
-  const next =
-    requestedPath.startsWith('/') && !requestedPath.startsWith('//')
-      ? requestedPath
-      : '/dashboard';
-  const baseUrl =
-    process.env.NEXT_PUBLIC_SITE_URL || requestUrl.origin;
+  const next = sanitizeReturnPath(requestUrl.searchParams.get('returnUrl'));
+  const baseUrl = getServerAuthOrigin(requestUrl.origin);
   const providerError = requestUrl.searchParams.get('error');
 
   if (providerError) {

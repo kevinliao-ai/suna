@@ -1,6 +1,7 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
+import { getServerAuthOrigin, sanitizeReturnPath } from '@/lib/auth-redirect';
 import { redirect } from 'next/navigation';
 
 type AuthActionState = {
@@ -38,7 +39,7 @@ export async function signIn(
 
   return {
     success: true,
-    redirectTo: returnUrl.startsWith('/') ? returnUrl : '/dashboard',
+    redirectTo: sanitizeReturnPath(returnUrl),
   };
 }
 
@@ -46,7 +47,6 @@ export async function signUp(
   _previousState: AuthActionState,
   formData: FormData,
 ): Promise<AuthActionState> {
-  const origin = formString(formData, 'origin');
   const email = formString(formData, 'email');
   const password = formString(formData, 'password');
   const confirmPassword = formString(formData, 'confirmPassword');
@@ -62,7 +62,8 @@ export async function signUp(
     return { message: 'Passwords do not match' };
   }
 
-  const safeReturnUrl = returnUrl.startsWith('/') ? returnUrl : '/dashboard';
+  const safeReturnUrl = sanitizeReturnPath(returnUrl);
+  const origin = getServerAuthOrigin();
   const supabase = await createClient();
   const { error } = await supabase.auth.signUp({
     email,
@@ -95,15 +96,15 @@ export async function forgotPassword(
   formData: FormData,
 ): Promise<AuthActionState> {
   const email = formString(formData, 'email');
-  const origin = formString(formData, 'origin');
 
   if (!email.includes('@')) {
     return { message: 'Please enter a valid email address' };
   }
 
   const supabase = await createClient();
+  const origin = getServerAuthOrigin();
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${origin}/auth/reset-password`,
+    redirectTo: `${origin}/auth/callback?returnUrl=${encodeURIComponent('/auth/reset-password')}`,
   });
 
   if (error) {
@@ -135,6 +136,13 @@ export async function resetPassword(
 
   if (error) {
     return { message: error.message || 'Could not update password' };
+  }
+
+  const { error: signOutError } = await supabase.auth.signOut({
+    scope: 'global',
+  });
+  if (signOutError) {
+    console.error('Password changed but global sign-out failed:', signOutError);
   }
 
   return { success: true, message: 'Password updated successfully' };
