@@ -37,6 +37,8 @@ production approval.
 - [ ] Add, complete, and remove tasks.
 - [ ] Add and remove HTTP/HTTPS asset links; unsafe schemes are rejected.
 - [ ] Switch between the AniSora and IndexTTS adapters.
+- [ ] Switching adapters resets the loading state; a slow provider shows retry
+      and open-in-new-tab fallbacks without losing Studio metadata.
 - [ ] Refresh the page and confirm the user-scoped browser workspace restores.
 - [ ] Sign in as another user and confirm workspaces do not cross.
 - [ ] Rename a project and confirm the new name survives refresh.
