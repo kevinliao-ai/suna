@@ -13,10 +13,7 @@ import {
   type StudioProject,
   type ToolId,
 } from '@/lib/studio/model';
-import {
-  loadCloudProjects,
-  saveCloudProjects,
-} from '@/lib/studio/repository';
+import { loadCloudProjects, saveCloudProjects } from '@/lib/studio/repository';
 import {
   AudioWaveform,
   Cloud,
@@ -36,12 +33,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 type SyncState =
-  | 'local'
-  | 'loading'
-  | 'import-needed'
-  | 'syncing'
-  | 'synced'
-  | 'error';
+  'local' | 'loading' | 'import-needed' | 'syncing' | 'synced' | 'error';
 
 const CLOUD_SYNC_ENABLED =
   process.env.NEXT_PUBLIC_STUDIO_SYNC_ENABLED === 'true';
@@ -87,6 +79,7 @@ export default function DashboardPage() {
   const [taskTitle, setTaskTitle] = useState('');
   const saveQueue = useRef(Promise.resolve());
   const cloudSyncReady = useRef(false);
+  const lastSyncedProjects = useRef<StudioProject[]>([]);
   const userId = user?.id;
   const storageKey = `${STUDIO_STORAGE_PREFIX}:${userId || 'anonymous'}`;
 
@@ -96,13 +89,13 @@ export default function DashboardPage() {
     let cancelled = false;
 
     const hydrateWorkspace = async () => {
+      cloudSyncReady.current = false;
+      lastSyncedProjects.current = [];
       const savedProjects = parseStoredProjects(
         localStorage.getItem(storageKey),
       );
       let nextProjects =
-        savedProjects.length > 0
-          ? savedProjects
-          : [createStudioProject()];
+        savedProjects.length > 0 ? savedProjects : [createStudioProject()];
       let nextSyncState: SyncState = 'local';
 
       if (CLOUD_SYNC_ENABLED && userId) {
@@ -111,12 +104,14 @@ export default function DashboardPage() {
           const cloudProjects = await loadCloudProjects(supabase, userId);
           if (cloudProjects.length > 0) {
             nextProjects = cloudProjects;
+            lastSyncedProjects.current = cloudProjects;
             cloudSyncReady.current = true;
             nextSyncState = 'synced';
           } else if (savedProjects.length > 0) {
             cloudSyncReady.current = false;
             nextSyncState = 'import-needed';
           } else {
+            lastSyncedProjects.current = [];
             cloudSyncReady.current = true;
             nextSyncState = 'synced';
           }
@@ -170,8 +165,16 @@ export default function DashboardPage() {
     const timer = window.setTimeout(() => {
       setSyncState('syncing');
       saveQueue.current = saveQueue.current
-        .then(() => saveCloudProjects(supabase, userId, snapshot))
+        .then(() =>
+          saveCloudProjects(
+            supabase,
+            userId,
+            snapshot,
+            lastSyncedProjects.current,
+          ),
+        )
         .then(() => {
+          lastSyncedProjects.current = snapshot;
           setSyncError('');
           setSyncState('synced');
         })
@@ -193,7 +196,13 @@ export default function DashboardPage() {
 
     setSyncState('syncing');
     try {
-      await saveCloudProjects(supabase, userId, projects);
+      await saveCloudProjects(
+        supabase,
+        userId,
+        projects,
+        lastSyncedProjects.current,
+      );
+      lastSyncedProjects.current = projects;
       cloudSyncReady.current = true;
       setSyncError('');
       setSyncState('synced');
@@ -240,8 +249,7 @@ export default function DashboardPage() {
   const removeProject = (projectId: string) => {
     setProjects((current) => {
       const remaining = current.filter((project) => project.id !== projectId);
-      const next =
-        remaining.length > 0 ? remaining : [createStudioProject()];
+      const next = remaining.length > 0 ? remaining : [createStudioProject()];
       if (projectId === activeProjectId) {
         setActiveProjectId(next[0].id);
       }
@@ -416,8 +424,12 @@ export default function DashboardPage() {
                     {project.name}
                   </span>
                   <span className="block text-xs text-zinc-400">
-                    {project.tasks.filter((task) => task.status === 'done').length}
-                    /{project.tasks.length} tasks · {project.assets.length} assets
+                    {
+                      project.tasks.filter((task) => task.status === 'done')
+                        .length
+                    }
+                    /{project.tasks.length} tasks · {project.assets.length}{' '}
+                    assets
                   </span>
                 </button>
                 <button
@@ -578,9 +590,7 @@ export default function DashboardPage() {
                   />
                   <span
                     className={`min-w-0 flex-1 truncate text-sm ${
-                      task.status === 'done'
-                        ? 'text-zinc-400 line-through'
-                        : ''
+                      task.status === 'done' ? 'text-zinc-400 line-through' : ''
                     }`}
                   >
                     {task.title}

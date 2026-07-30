@@ -1,11 +1,12 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-import type {
-  StudioAsset,
-  StudioProject,
-  StudioTask,
-  ToolId,
-} from './model';
+import {
+  collectDeletedStudioIds,
+  type StudioAsset,
+  type StudioProject,
+  type StudioTask,
+  type ToolId,
+} from './model.ts';
 
 interface ProjectRow {
   id: string;
@@ -94,36 +95,23 @@ export async function loadCloudProjects(
     assets: assets
       .filter((asset) => asset.project_id === project.id)
       .map(mapAsset),
-    tasks: tasks
-      .filter((task) => task.project_id === project.id)
-      .map(mapTask),
+    tasks: tasks.filter((task) => task.project_id === project.id).map(mapTask),
   }));
 }
 
-async function deleteMissingRows(
+async function deleteRowsById(
   supabase: SupabaseClient,
   table: 'anisora_projects' | 'anisora_assets' | 'anisora_tasks',
   userId: string,
-  currentIds: string[],
+  ids: string[],
 ) {
-  const { data, error: selectError } = await supabase
-    .from(table)
-    .select('id')
-    .eq('user_id', userId);
-  throwOnError(selectError);
-
-  const currentIdSet = new Set(currentIds);
-  const staleIds = (data || [])
-    .map((row) => row.id as string)
-    .filter((id) => !currentIdSet.has(id));
-
-  if (staleIds.length === 0) return;
+  if (ids.length === 0) return;
 
   const { error: deleteError } = await supabase
     .from(table)
     .delete()
     .eq('user_id', userId)
-    .in('id', staleIds);
+    .in('id', ids);
   throwOnError(deleteError);
 }
 
@@ -131,7 +119,9 @@ export async function saveCloudProjects(
   supabase: SupabaseClient,
   userId: string,
   projects: StudioProject[],
+  previousProjects: StudioProject[] = [],
 ) {
+  const deletedIds = collectDeletedStudioIds(previousProjects, projects);
   const projectRows = projects.map((project) => ({
     id: project.id,
     user_id: userId,
@@ -171,13 +161,6 @@ export async function saveCloudProjects(
     throwOnError(error);
   }
 
-  await deleteMissingRows(
-    supabase,
-    'anisora_projects',
-    userId,
-    projectRows.map((row) => row.id),
-  );
-
   if (assetRows.length > 0) {
     const { error } = await supabase
       .from('anisora_assets')
@@ -193,17 +176,13 @@ export async function saveCloudProjects(
   }
 
   await Promise.all([
-    deleteMissingRows(
-      supabase,
-      'anisora_assets',
-      userId,
-      assetRows.map((row) => row.id),
-    ),
-    deleteMissingRows(
-      supabase,
-      'anisora_tasks',
-      userId,
-      taskRows.map((row) => row.id),
-    ),
+    deleteRowsById(supabase, 'anisora_assets', userId, deletedIds.assetIds),
+    deleteRowsById(supabase, 'anisora_tasks', userId, deletedIds.taskIds),
   ]);
+  await deleteRowsById(
+    supabase,
+    'anisora_projects',
+    userId,
+    deletedIds.projectIds,
+  );
 }

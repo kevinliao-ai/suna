@@ -4,12 +4,14 @@ on:
   pull_request:
     paths:
       - "frontend/**"
+      - "backend/supabase/**"
       - ".github/workflows/frontend-ci.yml"
   push:
     branches:
       - dev
     paths:
       - "frontend/**"
+      - "backend/supabase/**"
       - ".github/workflows/frontend-ci.yml"
 
 concurrency:

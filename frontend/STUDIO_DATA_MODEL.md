@@ -28,6 +28,9 @@ The frontend now includes a repository layer with these safeguards:
   cloud workspace is empty;
 - the user must select **Import local projects to cloud** before that first
   upload;
+- synchronization deletes only IDs that were present in the last successful
+  local sync and were explicitly removed in the current session; it never
+  infers deletion from an older full-device snapshot;
 - failed cloud reads or writes leave the browser copy intact.
 
 The feature flag must remain `false` until the migration is applied and
@@ -36,7 +39,9 @@ verified.
 ## Rollout order
 
 1. Apply the migration in a non-production Supabase project.
-2. Run the RLS verification queries below with two separate test users.
+2. Run
+   `backend/supabase/verification/anisora_studio_rls.sql` with two separate
+   test users.
 3. Enable synchronization only on a Vercel Preview deployment.
 4. Test first-time cloud creation, explicit local import, updates, deletion,
    sign-out, and sign-in on a second browser.
@@ -45,6 +50,12 @@ verified.
    cohort.
 7. Add object storage and signed uploads only when real media persistence is
    required.
+
+The empty-schema rollback at
+`backend/supabase/rollback/20260729090000_anisora_studio.sql` deliberately
+refuses to remove tables after any Studio data exists. Once real data has been
+created, rollback means disabling the feature flag and restoring or migrating
+from a validated export, not dropping the schema.
 
 ## RLS verification
 

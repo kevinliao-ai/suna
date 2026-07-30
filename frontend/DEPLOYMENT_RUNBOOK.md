@@ -171,6 +171,9 @@ client-side code.
 
 ## Preview release sequence
 
+The detailed sign-off and rollback gates are tracked in
+`PRODUCTION_RELEASE_CHECKLIST.md`.
+
 1. Push `codex/anisora-web-v2`.
 2. Open a Draft PR targeting `dev`.
 3. Wait for GitHub CI and Vercel Preview.

@@ -20,7 +20,10 @@ create table if not exists public.anisora_assets (
     references public.anisora_projects(id) on delete cascade,
   user_id uuid not null references auth.users(id) on delete cascade,
   name text not null check (char_length(name) between 1 and 180),
-  url text not null check (char_length(url) between 8 and 2048),
+  url text not null check (
+    char_length(url) between 8 and 2048
+    and url ~ '^https?://'
+  ),
   kind text not null default 'reference'
     check (kind in ('reference', 'source', 'output')),
   metadata jsonb not null default '{}'::jsonb,
@@ -147,3 +150,7 @@ with check (
 grant select, insert, update, delete
   on public.anisora_projects, public.anisora_assets, public.anisora_tasks
   to authenticated;
+
+revoke all
+  on public.anisora_projects, public.anisora_assets, public.anisora_tasks
+  from anon;

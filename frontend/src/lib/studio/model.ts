@@ -24,6 +24,12 @@ export interface StudioProject {
   tasks: StudioTask[];
 }
 
+export interface DeletedStudioIds {
+  projectIds: string[];
+  assetIds: string[];
+  taskIds: string[];
+}
+
 export const STUDIO_STORAGE_PREFIX = 'anisora:studio:v1';
 
 export function createStudioId() {
@@ -32,9 +38,7 @@ export function createStudioId() {
     : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
-export function createStudioProject(
-  name = 'My first project',
-): StudioProject {
+export function createStudioProject(name = 'My first project'): StudioProject {
   const now = new Date().toISOString();
   return {
     id: createStudioId(),
@@ -56,8 +60,7 @@ export function isStudioProject(value: unknown): value is StudioProject {
     typeof project.name === 'string' &&
     typeof project.createdAt === 'string' &&
     typeof project.updatedAt === 'string' &&
-    (project.activeTool === 'anisora' ||
-      project.activeTool === 'index-tts') &&
+    (project.activeTool === 'anisora' || project.activeTool === 'index-tts') &&
     Array.isArray(project.assets) &&
     (project.tasks === undefined || Array.isArray(project.tasks))
   );
@@ -77,4 +80,35 @@ export function parseStoredProjects(value: string | null): StudioProject[] {
   } catch {
     return [];
   }
+}
+
+export function collectDeletedStudioIds(
+  previousProjects: StudioProject[],
+  currentProjects: StudioProject[],
+): DeletedStudioIds {
+  const currentProjectIds = new Set(
+    currentProjects.map((project) => project.id),
+  );
+  const currentAssetIds = new Set(
+    currentProjects.flatMap((project) =>
+      project.assets.map((asset) => asset.id),
+    ),
+  );
+  const currentTaskIds = new Set(
+    currentProjects.flatMap((project) => project.tasks.map((task) => task.id)),
+  );
+
+  return {
+    projectIds: previousProjects
+      .filter((project) => !currentProjectIds.has(project.id))
+      .map((project) => project.id),
+    assetIds: previousProjects
+      .flatMap((project) => project.assets)
+      .filter((asset) => !currentAssetIds.has(asset.id))
+      .map((asset) => asset.id),
+    taskIds: previousProjects
+      .flatMap((project) => project.tasks)
+      .filter((task) => !currentTaskIds.has(task.id))
+      .map((task) => task.id),
+  };
 }
