@@ -55,6 +55,12 @@ production approval.
 - [x] Cross-user project, asset, and task reads/writes are rejected.
 - [x] A stale second browser cannot delete rows it never previously synced.
 - [ ] Explicit local import requires a user action and never runs on sign-in.
+- [x] Staging Security Advisor has zero errors and no client-executable
+      `SECURITY DEFINER` helper.
+- [x] Staging Performance Advisor has zero errors or warnings after adding the
+      user-scoped asset and task indexes.
+- [ ] Leaked-password protection is enabled for production Auth, or the
+      temporary exception is explicitly accepted.
 - [x] The empty-schema rollback is tested before any Studio data is created.
 - [x] Cloud sync is enabled only on Preview for the first acceptance cycle.
 

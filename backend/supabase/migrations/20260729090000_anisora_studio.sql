@@ -52,8 +52,12 @@ create index if not exists anisora_projects_user_updated_idx
   on public.anisora_projects(user_id, updated_at desc);
 create index if not exists anisora_assets_project_created_idx
   on public.anisora_assets(project_id, created_at desc);
+create index if not exists anisora_assets_user_created_idx
+  on public.anisora_assets(user_id, created_at desc);
 create index if not exists anisora_tasks_project_created_idx
   on public.anisora_tasks(project_id, created_at desc);
+create index if not exists anisora_tasks_user_created_idx
+  on public.anisora_tasks(user_id, created_at asc);
 
 create or replace function public.set_anisora_updated_at()
 returns trigger

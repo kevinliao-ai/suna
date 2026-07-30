@@ -14,6 +14,10 @@ const verificationUrl = new URL(
   '../../backend/supabase/verification/anisora_studio_rls.sql',
   import.meta.url,
 );
+const autoRlsHardeningUrl = new URL(
+  '../../backend/supabase/migrations/20260730100000_restrict_rls_auto_enable.sql',
+  import.meta.url,
+);
 
 test('Studio migration preserves required RLS and privilege boundaries', async () => {
   const sql = (await readFile(migrationUrl, 'utf8')).toLowerCase();
@@ -29,6 +33,14 @@ test('Studio migration preserves required RLS and privilege boundaries', async (
   assert.match(sql, /to authenticated;/);
   assert.match(sql, /from anon;/);
   assert.match(sql, /url ~ '\^https\?:\/\/'/);
+  assert.match(
+    sql,
+    /anisora_assets_user_created_idx[\s\S]*?\(user_id, created_at desc\)/,
+  );
+  assert.match(
+    sql,
+    /anisora_tasks_user_created_idx[\s\S]*?\(user_id, created_at asc\)/,
+  );
 });
 
 test('rollback refuses to drop data-bearing Studio tables', async () => {
@@ -48,4 +60,14 @@ test('RLS verification is transactional and exercises two identities', async () 
   assert.match(sql, /anisora\.test_user_a/);
   assert.match(sql, /anisora\.test_user_b/);
   assert.match(sql, /cross_task_insert_blocked/);
+});
+
+test('automatic RLS helper is not executable by client roles', async () => {
+  const sql = (await readFile(autoRlsHardeningUrl, 'utf8')).toLowerCase();
+
+  assert.match(sql, /to_regprocedure\('public\.rls_auto_enable\(\)'\)/);
+  assert.match(
+    sql,
+    /revoke execute on function public\.rls_auto_enable\(\)[\s\S]*from public, anon, authenticated/,
+  );
 });

@@ -128,6 +128,23 @@ staging schema:
 - the guarded empty-schema rollback succeeded;
 - the migration was reapplied after the rollback rehearsal.
 
+Supabase's automatic-RLS option had also installed
+`public.rls_auto_enable()` as a `SECURITY DEFINER` helper in the exposed
+schema. The Security Advisor reported that both anonymous and authenticated
+clients could execute it. The idempotent
+`20260730100000_restrict_rls_auto_enable.sql` migration now revokes execution
+from `public`, `anon`, and `authenticated` when that helper exists. After it was
+applied, Security Advisor reported zero errors and only one remaining warning:
+leaked-password protection is disabled on the free staging project.
+
+Performance Advisor initially reported the `user_id` foreign keys on Studio
+assets and tasks as unindexed. The main Studio migration now includes
+`(user_id, created_at)` indexes for both tables, matching the frontend's
+per-user load queries. After those indexes were applied, Performance Advisor
+reported zero errors and zero warnings. Its four remaining information items
+are expected unused-index notices in this newly created, low-traffic staging
+database; do not remove the indexes based on that initial sample.
+
 Two confirmed users under the reserved `anisora.invalid` domain exist only for
 RLS verification. They do not receive email and must never be copied to
 production.
