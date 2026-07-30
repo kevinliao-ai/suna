@@ -6,6 +6,7 @@ import {
   createStudioProject,
   parseStudioBackup,
   parseStoredProjects,
+  resolveCloudHydration,
   serializeStudioBackup,
 } from '../src/lib/studio/model.ts';
 
@@ -36,6 +37,46 @@ test('adds an empty task list to older stored projects', () => {
 
   const [restored] = parseStoredProjects(JSON.stringify([legacy]));
   assert.deepEqual(restored.tasks, []);
+});
+
+test('requires an explicit import when cloud is empty but local projects exist', () => {
+  const localProject = createStudioProject('Local draft');
+  const fallbackProject = createStudioProject('Empty workspace');
+  const result = resolveCloudHydration(
+    [localProject],
+    [],
+    [fallbackProject],
+  );
+
+  assert.equal(result.syncState, 'import-needed');
+  assert.equal(result.cloudSyncReady, false);
+  assert.deepEqual(result.projects, [localProject]);
+  assert.deepEqual(result.lastSyncedProjects, []);
+});
+
+test('prefers cloud projects and enables synchronization after hydration', () => {
+  const localProject = createStudioProject('Local draft');
+  const cloudProject = createStudioProject('Cloud workspace');
+  const result = resolveCloudHydration(
+    [localProject],
+    [cloudProject],
+    [createStudioProject()],
+  );
+
+  assert.equal(result.syncState, 'synced');
+  assert.equal(result.cloudSyncReady, true);
+  assert.deepEqual(result.projects, [cloudProject]);
+  assert.deepEqual(result.lastSyncedProjects, [cloudProject]);
+});
+
+test('enables synchronization for a brand-new empty workspace', () => {
+  const fallbackProject = createStudioProject('My first project');
+  const result = resolveCloudHydration([], [], [fallbackProject]);
+
+  assert.equal(result.syncState, 'synced');
+  assert.equal(result.cloudSyncReady, true);
+  assert.deepEqual(result.projects, [fallbackProject]);
+  assert.deepEqual(result.lastSyncedProjects, []);
 });
 
 test('filters unsafe nested data when restoring browser storage', () => {

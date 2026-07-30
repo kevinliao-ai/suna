@@ -13,6 +13,7 @@ import {
   MAX_STUDIO_PROJECTS,
   parseStudioBackup,
   parseStoredProjects,
+  resolveCloudHydration,
   serializeStudioBackup,
   STUDIO_STORAGE_PREFIX,
   type StudioProject,
@@ -122,19 +123,15 @@ export default function DashboardPage() {
         setSyncState('loading');
         try {
           const cloudProjects = await loadCloudProjects(supabase, userId);
-          if (cloudProjects.length > 0) {
-            nextProjects = cloudProjects;
-            lastSyncedProjects.current = cloudProjects;
-            cloudSyncReady.current = true;
-            nextSyncState = 'synced';
-          } else if (savedProjects.length > 0) {
-            cloudSyncReady.current = false;
-            nextSyncState = 'import-needed';
-          } else {
-            lastSyncedProjects.current = [];
-            cloudSyncReady.current = true;
-            nextSyncState = 'synced';
-          }
+          const resolution = resolveCloudHydration(
+            savedProjects,
+            cloudProjects,
+            nextProjects,
+          );
+          nextProjects = resolution.projects;
+          lastSyncedProjects.current = resolution.lastSyncedProjects;
+          cloudSyncReady.current = resolution.cloudSyncReady;
+          nextSyncState = resolution.syncState;
         } catch (error) {
           cloudSyncReady.current = false;
           nextSyncState = 'error';

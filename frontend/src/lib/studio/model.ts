@@ -30,6 +30,13 @@ export interface DeletedStudioIds {
   taskIds: string[];
 }
 
+export interface CloudHydrationResult {
+  projects: StudioProject[];
+  lastSyncedProjects: StudioProject[];
+  cloudSyncReady: boolean;
+  syncState: 'import-needed' | 'synced';
+}
+
 export const STUDIO_STORAGE_PREFIX = 'anisora:studio:v1';
 export const STUDIO_BACKUP_PRODUCT = 'anisora-studio';
 export const STUDIO_BACKUP_VERSION = 1;
@@ -155,6 +162,37 @@ export function parseStoredProjects(value: string | null): StudioProject[] {
   } catch {
     return [];
   }
+}
+
+export function resolveCloudHydration(
+  localProjects: StudioProject[],
+  cloudProjects: StudioProject[],
+  fallbackProjects: StudioProject[],
+): CloudHydrationResult {
+  if (cloudProjects.length > 0) {
+    return {
+      projects: cloudProjects,
+      lastSyncedProjects: cloudProjects,
+      cloudSyncReady: true,
+      syncState: 'synced',
+    };
+  }
+
+  if (localProjects.length > 0) {
+    return {
+      projects: localProjects,
+      lastSyncedProjects: [],
+      cloudSyncReady: false,
+      syncState: 'import-needed',
+    };
+  }
+
+  return {
+    projects: fallbackProjects,
+    lastSyncedProjects: [],
+    cloudSyncReady: true,
+    syncState: 'synced',
+  };
 }
 
 export function serializeStudioBackup(
