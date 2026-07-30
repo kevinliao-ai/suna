@@ -30,13 +30,28 @@ function errorName(error: unknown) {
 }
 
 export async function POST(request: NextRequest) {
+  const contentType = request.headers.get('content-type')?.toLowerCase() ?? '';
+  if (!contentType.startsWith('application/json')) {
+    return errorResponse(
+      415,
+      'Unsupported media type',
+      'Send the request as JSON.',
+    );
+  }
+
   const contentLength = Number(request.headers.get('content-length') || 0);
-  if (contentLength > MAX_BODY_BYTES) {
+  if (!Number.isFinite(contentLength) || contentLength > MAX_BODY_BYTES) {
     return errorResponse(413, 'Payload too large', 'The request is too large.');
   }
 
+  let body: { videoUrl?: unknown };
   try {
-    const body = (await request.json()) as { videoUrl?: unknown };
+    body = (await request.json()) as { videoUrl?: unknown };
+  } catch {
+    return errorResponse(400, 'Invalid JSON', 'Provide a valid JSON request.');
+  }
+
+  try {
     if (
       typeof body.videoUrl !== 'string' ||
       body.videoUrl.length > MAX_URL_LENGTH
@@ -111,17 +126,16 @@ export async function POST(request: NextRequest) {
             ? data.links.thumbnail
             : '',
           post_id:
-            typeof data.links?.post_id === 'string'
-              ? data.links.post_id
-              : '',
+            typeof data.links?.post_id === 'string' ? data.links.post_id : '',
         },
         provider: 'external',
         parsedAt: new Date().toISOString(),
       },
     });
   } catch (error: unknown) {
-    console.error('Sora link resolver error:', error);
-    if (['AbortError', 'TimeoutError'].includes(errorName(error))) {
+    const name = errorName(error);
+    console.error('Sora link resolver error:', name || 'UnknownError');
+    if (['AbortError', 'TimeoutError'].includes(name)) {
       return errorResponse(
         504,
         'Request timeout',
