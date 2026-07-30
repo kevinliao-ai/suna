@@ -185,10 +185,31 @@ confirmed `anisora.invalid` users that exist only in staging:
   page's task, confirming that the stale client did not infer a deletion for a
   record it had never synced.
 
-The explicit local-to-cloud import remains a separate acceptance item. It must
-be tested with a browser that already has a user-scoped local workspace and an
-empty staging cloud workspace; do not mark it complete based only on unit
-coverage.
+Explicit local-to-cloud import acceptance was completed on 2026-07-30 with
+the staging-only `sync-import@anisora.invalid` user. The rehearsal temporarily
+set the branch-scoped sync flag to `false`, redeployed commit `22571ab8a`, and
+created a browser-local project with a task and an HTTPS asset. The flag was
+then restored to `true` and the same commit was redeployed:
+
+- local-mode deployment: `AhT4LGAFzQ6tiCD8ZAEe41zu5cSW`;
+- restored cloud-sync deployment: `5wadzzxgXY79saVm2seZhUy1Rpcv`;
+- before user action, the Studio showed `local only`, retained the project,
+  task, and asset, and did not show `cloud saved`;
+- waiting and fully refreshing the page still did not upload the workspace;
+- the upload occurred only after selecting `Import local projects to cloud`;
+- after the Studio reported `cloud saved`, a full refresh restored the
+  imported project, task, and asset from staging.
+
+The first rehearsal also exposed a multi-tab edge case: another already-open
+cloud-enabled tab could create only the untouched `My first project` row for a
+newly signed-in user. That pristine placeholder previously caused cloud
+hydration to hide a meaningful local workspace. Commit `22571ab8a` treats an
+untouched cloud placeholder as importable when the browser copy contains real
+work, and includes regression tests for both the conflicting and
+all-pristine cases. The complete frontend check passed with 31 tests.
+
+The branch-scoped `NEXT_PUBLIC_STUDIO_SYNC_ENABLED` value is restored to
+`true`. Production variables and production Supabase were not changed.
 
 ## Cloudflare
 

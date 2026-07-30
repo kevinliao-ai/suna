@@ -54,7 +54,8 @@ production approval.
 - [x] Anonymous users have no table privileges.
 - [x] Cross-user project, asset, and task reads/writes are rejected.
 - [x] A stale second browser cannot delete rows it never previously synced.
-- [ ] Explicit local import requires a user action and never runs on sign-in.
+- [x] Explicit local import requires a user action and never runs on sign-in;
+      waiting and a full refresh were verified before the import action.
 - [x] Staging Security Advisor has zero errors and no client-executable
       `SECURITY DEFINER` helper.
 - [x] Staging Performance Advisor has zero errors or warnings after adding the
