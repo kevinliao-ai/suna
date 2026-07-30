@@ -5,15 +5,16 @@ Audit refreshed: 2026-07-30.
 ## Current inventory
 
 - 7 page files
-- 2 route handlers
-- 70 files under `src`
+- 3 route handlers
+- 71 files under `src`
 - no unused source files reported by Knip
 - no unused or unlisted production dependencies reported by Knip
 
 The retained product routes are:
 
 - `/`
-- `/auth`, `/auth/callback`, and `/auth/reset-password`
+- `/auth`, `/auth/callback`, `/auth/recovery/callback`, and
+  `/auth/reset-password`
 - `/dashboard`
 - `/index-tts`
 - `/sora-watermark-remove`

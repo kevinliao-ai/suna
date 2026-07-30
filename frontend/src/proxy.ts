@@ -29,9 +29,11 @@ export async function proxy(request: NextRequest) {
 
   const isDashboard = request.nextUrl.pathname.startsWith('/dashboard');
   const isAuth = request.nextUrl.pathname.startsWith('/auth');
-  const isAuthFlowRoute = ['/auth/callback', '/auth/reset-password'].includes(
-    request.nextUrl.pathname,
-  );
+  const isAuthFlowRoute = [
+    '/auth/callback',
+    '/auth/recovery/callback',
+    '/auth/reset-password',
+  ].includes(request.nextUrl.pathname);
 
   if (isDashboard && !user) {
     const redirectUrl = new URL('/auth', request.url);

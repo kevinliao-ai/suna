@@ -17,8 +17,9 @@ production approval.
 ## 2. Preview authentication
 
 - [ ] Supabase contains only the exact Preview
-      `https://<branch>.vercel.app/auth/callback` redirect, not a broad
-      wildcard.
+      `https://<branch>.vercel.app/auth/callback` and
+      `https://<branch>.vercel.app/auth/recovery/callback` redirects, not a
+      broad wildcard.
 - [ ] A returning Google user reaches `/dashboard`.
 - [ ] A returning GitHub user reaches `/dashboard`.
 - [ ] A new email user receives a confirmation link and returns through

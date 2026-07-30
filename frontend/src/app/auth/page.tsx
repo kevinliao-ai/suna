@@ -32,7 +32,7 @@ import {
 } from '@/components/ui/dialog';
 import GitHubSignIn from '@/components/GithubSignIn';
 import { Ripple } from '@/components/ui/ripple';
-import { sanitizeReturnPath } from '@/lib/auth-redirect';
+import { persistAuthReturnPath, sanitizeReturnPath } from '@/lib/auth-redirect';
 
 function LoginContent() {
   const router = useRouter();
@@ -118,6 +118,7 @@ function LoginContent() {
     setRegistrationEmail(email);
 
     formData.append('returnUrl', returnUrl);
+    persistAuthReturnPath(returnUrl);
 
     const result = await signUp(prevState, formData);
 

@@ -1,11 +1,25 @@
 import { createClient } from '@/lib/supabase/server';
-import { getServerAuthOrigin, sanitizeReturnPath } from '@/lib/auth-redirect';
+import {
+  AUTH_RETURN_COOKIE,
+  getServerAuthOrigin,
+  readAuthReturnPath,
+  sanitizeReturnPath,
+} from '@/lib/auth-redirect';
 import { NextResponse, type NextRequest } from 'next/server';
+
+function redirectAndClearReturnCookie(url: string) {
+  const response = NextResponse.redirect(url);
+  response.cookies.delete(AUTH_RETURN_COOKIE);
+  return response;
+}
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get('code');
-  const next = sanitizeReturnPath(requestUrl.searchParams.get('returnUrl'));
+  const returnCookie = request.cookies.get(AUTH_RETURN_COOKIE)?.value;
+  const next = returnCookie
+    ? readAuthReturnPath(returnCookie)
+    : sanitizeReturnPath(requestUrl.searchParams.get('returnUrl'));
   const baseUrl = getServerAuthOrigin(requestUrl.origin);
   const providerError = requestUrl.searchParams.get('error');
 
@@ -15,13 +29,13 @@ export async function GET(request: NextRequest) {
       providerError,
       requestUrl.searchParams.get('error_description'),
     );
-    return NextResponse.redirect(
+    return redirectAndClearReturnCookie(
       `${baseUrl}/auth?error=${encodeURIComponent(providerError)}`,
     );
   }
 
   if (!code) {
-    return NextResponse.redirect(`${baseUrl}/auth`);
+    return redirectAndClearReturnCookie(`${baseUrl}/auth`);
   }
 
   try {
@@ -29,15 +43,20 @@ export async function GET(request: NextRequest) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (error) {
-      console.error('Error exchanging code for session:', error);
-      return NextResponse.redirect(
+      console.error('Error exchanging auth code:', error.message);
+      return redirectAndClearReturnCookie(
         `${baseUrl}/auth?error=${encodeURIComponent(error.message)}`,
       );
     }
 
-    return NextResponse.redirect(`${baseUrl}${next}`);
+    return redirectAndClearReturnCookie(`${baseUrl}${next}`);
   } catch (error) {
-    console.error('Unexpected error in auth callback:', error);
-    return NextResponse.redirect(`${baseUrl}/auth?error=unexpected_error`);
+    console.error(
+      'Unexpected error in auth callback:',
+      error instanceof Error ? error.name : 'UnknownError',
+    );
+    return redirectAndClearReturnCookie(
+      `${baseUrl}/auth?error=unexpected_error`,
+    );
   }
 }

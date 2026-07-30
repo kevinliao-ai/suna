@@ -1,5 +1,6 @@
 const FALLBACK_ORIGIN = 'https://www.anisora.ai';
 const RETURN_URL_BASE = 'https://anisora.invalid';
+export const AUTH_RETURN_COOKIE = 'anisora-auth-return';
 
 interface AuthOriginOptions {
   nodeEnv?: string;
@@ -101,4 +102,22 @@ export function getServerAuthOrigin(requestOrigin?: string) {
     vercelEnv: process.env.VERCEL_ENV,
     vercelUrl: process.env.VERCEL_URL,
   });
+}
+
+export function persistAuthReturnPath(value?: string | null) {
+  if (typeof document === 'undefined') return;
+
+  const returnPath = sanitizeReturnPath(value);
+  const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+  document.cookie = `${AUTH_RETURN_COOKIE}=${encodeURIComponent(returnPath)}; Path=/; Max-Age=3600; SameSite=Lax${secure}`;
+}
+
+export function readAuthReturnPath(value?: string | null) {
+  if (!value) return '/dashboard';
+
+  try {
+    return sanitizeReturnPath(decodeURIComponent(value));
+  } catch {
+    return '/dashboard';
+  }
 }

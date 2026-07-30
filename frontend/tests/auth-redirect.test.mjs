@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  readAuthReturnPath,
   resolveAuthOrigin,
   sanitizeReturnPath,
 } from '../src/lib/auth-redirect.ts';
@@ -23,6 +24,15 @@ test('rejects protocol-relative, absolute, backslash, and control URLs', () => {
   ]) {
     assert.equal(sanitizeReturnPath(value), '/dashboard');
   }
+});
+
+test('restores only safe URL-encoded return paths from the auth cookie', () => {
+  assert.equal(
+    readAuthReturnPath('%2Fdashboard%3Fproject%3Ddemo'),
+    '/dashboard?project=demo',
+  );
+  assert.equal(readAuthReturnPath('%2F%2Fevil.example'), '/dashboard');
+  assert.equal(readAuthReturnPath('%E0%A4%A'), '/dashboard');
 });
 
 test('uses the exact Vercel Preview origin for Preview auth callbacks', () => {

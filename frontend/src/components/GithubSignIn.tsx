@@ -5,7 +5,7 @@ import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Icons } from './home/icons';
-import { sanitizeReturnPath } from '@/lib/auth-redirect';
+import { persistAuthReturnPath, sanitizeReturnPath } from '@/lib/auth-redirect';
 import { useAuthMethodTracking } from '@/lib/stores/auth-tracking';
 import { createClient } from '@/lib/supabase/client';
 
@@ -24,10 +24,11 @@ export default function GitHubSignIn({ returnUrl }: GitHubSignInProps) {
     try {
       setIsLoading(true);
       const safeReturnUrl = sanitizeReturnPath(returnUrl);
+      persistAuthReturnPath(safeReturnUrl);
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback?returnUrl=${encodeURIComponent(safeReturnUrl)}`,
+          redirectTo: `${window.location.origin}/auth/callback`,
         },
       });
 

@@ -69,7 +69,7 @@ export async function signUp(
     email,
     password,
     options: {
-      emailRedirectTo: `${origin}/auth/callback?returnUrl=${encodeURIComponent(safeReturnUrl)}`,
+      emailRedirectTo: `${origin}/auth/callback`,
     },
   });
 
@@ -104,7 +104,7 @@ export async function forgotPassword(
   const supabase = await createClient();
   const origin = getServerAuthOrigin();
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${origin}/auth/callback?returnUrl=${encodeURIComponent('/auth/reset-password')}`,
+    redirectTo: `${origin}/auth/recovery/callback`,
   });
 
   if (error) {

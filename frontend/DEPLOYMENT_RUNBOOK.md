@@ -65,14 +65,18 @@ Current redirect allow list:
 - `http://localhost:3000/auth/callback`
 - `http://localhost:3000/dashboard`
 - `http://localhost:3000/auth/github-popup`
+- `https://anisora-git-codex-anisora-web-v2-kevinliao-ais-projects.vercel.app/auth/callback`
 
-The frontend now routes Google, GitHub, email confirmation, and password
-recovery through the single `/auth/callback` handler. The local
-`/auth/github-popup` entry is legacy and can be removed after returning-user
-OAuth tests pass.
+The frontend routes Google, GitHub, and email confirmation through the exact
+`/auth/callback` handler. Internal return paths are kept in a short-lived,
+same-site cookie so query parameters do not broaden the Supabase allow list.
+Password recovery uses the separate exact `/auth/recovery/callback` handler.
+The local `/auth/github-popup` entry is legacy and can be removed after
+returning-user OAuth tests pass.
 
-Before testing OAuth on a Vercel Preview deployment, add that deployment's
-exact `/auth/callback` URL. Avoid a broad `https://*.vercel.app/**` wildcard.
+Before testing OAuth or recovery on a Vercel Preview deployment, add that
+deployment's exact `/auth/callback` and `/auth/recovery/callback` URLs. Avoid a
+broad `https://*.vercel.app/**` wildcard.
 
 Supabase currently reports that email OTP expiry exceeds the recommended
 one-hour threshold. Reduce it to 3600 seconds or less before production
