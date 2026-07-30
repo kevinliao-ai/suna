@@ -39,6 +39,9 @@ production approval.
 - [ ] Switch between the AniSora and IndexTTS adapters.
 - [ ] Refresh the page and confirm the user-scoped browser workspace restores.
 - [ ] Sign in as another user and confirm workspaces do not cross.
+- [ ] Rename a project and confirm the new name survives refresh.
+- [ ] Download a JSON backup, restore it in local mode, and confirm malformed
+      or oversized files are rejected without replacing the workspace.
 
 ## 4. Supabase cloud-sync gate
 

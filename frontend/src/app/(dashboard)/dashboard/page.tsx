@@ -8,7 +8,12 @@ import { embedConfig } from '@/lib/embed-config';
 import {
   createStudioId,
   createStudioProject,
+  MAX_STUDIO_BACKUP_BYTES,
+  MAX_STUDIO_ITEMS_PER_PROJECT,
+  MAX_STUDIO_PROJECTS,
+  parseStudioBackup,
   parseStoredProjects,
+  serializeStudioBackup,
   STUDIO_STORAGE_PREFIX,
   type StudioProject,
   type ToolId,
@@ -16,24 +21,36 @@ import {
 import { loadCloudProjects, saveCloudProjects } from '@/lib/studio/repository';
 import {
   AudioWaveform,
+  Check,
   Cloud,
   CloudOff,
+  Download,
   ExternalLink,
   Film,
   FolderOpen,
   Home,
   Link2,
   LogOut,
+  Pencil,
   Plus,
   ShieldCheck,
   Sparkles,
   Trash2,
+  Upload,
+  X,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
 
 type SyncState =
-  'local' | 'loading' | 'import-needed' | 'syncing' | 'synced' | 'error';
+  | 'local'
+  | 'loading'
+  | 'import-needed'
+  | 'syncing'
+  | 'synced'
+  | 'error'
+  | 'storage-error';
 
 const CLOUD_SYNC_ENABLED =
   process.env.NEXT_PUBLIC_STUDIO_SYNC_ENABLED === 'true';
@@ -77,6 +94,9 @@ export default function DashboardPage() {
   const [assetName, setAssetName] = useState('');
   const [assetUrl, setAssetUrl] = useState('');
   const [taskTitle, setTaskTitle] = useState('');
+  const [renamingProjectId, setRenamingProjectId] = useState('');
+  const [renamingProjectName, setRenamingProjectName] = useState('');
+  const backupInputRef = useRef<HTMLInputElement>(null);
   const saveQueue = useRef(Promise.resolve());
   const cloudSyncReady = useRef(false);
   const lastSyncedProjects = useRef<StudioProject[]>([]);
@@ -157,7 +177,15 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!hydrated) return;
 
-    localStorage.setItem(storageKey, JSON.stringify(projects));
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(projects));
+    } catch {
+      setSyncError(
+        'This browser could not save the workspace. Download a backup before leaving this page.',
+      );
+      setSyncState('storage-error');
+      return;
+    }
 
     if (!CLOUD_SYNC_ENABLED || !userId || !cloudSyncReady.current) return;
 
@@ -238,6 +266,13 @@ export default function DashboardPage() {
   };
 
   const addProject = () => {
+    if (projects.length >= MAX_STUDIO_PROJECTS) {
+      toast.error(
+        `A workspace can contain up to ${MAX_STUDIO_PROJECTS} projects.`,
+      );
+      return;
+    }
+
     const next = createStudioProject(
       projectName.trim() || `Untitled project ${projects.length + 1}`,
     );
@@ -246,7 +281,45 @@ export default function DashboardPage() {
     setProjectName('');
   };
 
+  const beginProjectRename = (project: StudioProject) => {
+    setRenamingProjectId(project.id);
+    setRenamingProjectName(project.name);
+  };
+
+  const cancelProjectRename = () => {
+    setRenamingProjectId('');
+    setRenamingProjectName('');
+  };
+
+  const commitProjectRename = () => {
+    const name = renamingProjectName.trim();
+    if (!renamingProjectId || !name) return;
+
+    setProjects((current) =>
+      current.map((project) =>
+        project.id === renamingProjectId
+          ? {
+              ...project,
+              name,
+              updatedAt: new Date().toISOString(),
+            }
+          : project,
+      ),
+    );
+    cancelProjectRename();
+  };
+
   const removeProject = (projectId: string) => {
+    const project = projects.find((item) => item.id === projectId);
+    if (
+      project &&
+      !window.confirm(
+        `Delete "${project.name}" and its local tasks and asset links?`,
+      )
+    ) {
+      return;
+    }
+
     setProjects((current) => {
       const remaining = current.filter((project) => project.id !== projectId);
       const next = remaining.length > 0 ? remaining : [createStudioProject()];
@@ -255,6 +328,54 @@ export default function DashboardPage() {
       }
       return next;
     });
+  };
+
+  const exportWorkspace = () => {
+    const backup = serializeStudioBackup(projects);
+    const blob = new Blob([backup], { type: 'application/json' });
+    const href = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    const date = new Date().toISOString().slice(0, 10);
+    anchor.href = href;
+    anchor.download = `anisora-studio-backup-${date}.json`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    window.setTimeout(() => URL.revokeObjectURL(href), 0);
+    toast.success('Workspace backup downloaded.');
+  };
+
+  const importWorkspace = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+
+    try {
+      if (file.size > MAX_STUDIO_BACKUP_BYTES) {
+        throw new Error('The backup file is larger than 2 MB.');
+      }
+
+      const importedProjects = parseStudioBackup(await file.text());
+      const confirmed = window.confirm(
+        `Replace this browser workspace with ${importedProjects.length} project${
+          importedProjects.length === 1 ? '' : 's'
+        } from the backup? Export the current workspace first if you need it.`,
+      );
+      if (!confirmed) return;
+
+      setProjects(importedProjects);
+      setActiveProjectId(importedProjects[0].id);
+      cancelProjectRename();
+      toast.success('Workspace restored from backup.');
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : 'The workspace backup could not be restored.',
+      );
+    }
   };
 
   const chooseTool = (tool: ToolId) => {
@@ -268,6 +389,12 @@ export default function DashboardPage() {
     const name = assetName.trim();
     const url = assetUrl.trim();
     if (!activeProject || !name || !url) return;
+    if (activeProject.assets.length >= MAX_STUDIO_ITEMS_PER_PROJECT) {
+      toast.error(
+        `A project can contain up to ${MAX_STUDIO_ITEMS_PER_PROJECT} asset links.`,
+      );
+      return;
+    }
 
     try {
       const parsed = new URL(url);
@@ -294,7 +421,13 @@ export default function DashboardPage() {
 
   const addTask = () => {
     const title = taskTitle.trim();
-    if (!title) return;
+    if (!title || !activeProject) return;
+    if (activeProject.tasks.length >= MAX_STUDIO_ITEMS_PER_PROJECT) {
+      toast.error(
+        `A project can contain up to ${MAX_STUDIO_ITEMS_PER_PROJECT} tasks.`,
+      );
+      return;
+    }
     updateActiveProject((project) => ({
       ...project,
       tasks: [
@@ -341,7 +474,9 @@ export default function DashboardPage() {
             className="hidden items-center gap-1 text-xs text-zinc-400 md:inline-flex"
             title={syncError || undefined}
           >
-            {syncState === 'local' || syncState === 'error' ? (
+            {syncState === 'local' ||
+            syncState === 'error' ||
+            syncState === 'storage-error' ? (
               <CloudOff className="size-3" />
             ) : (
               <Cloud className="size-3" />
@@ -351,6 +486,7 @@ export default function DashboardPage() {
             {syncState === 'syncing' && 'saving'}
             {syncState === 'synced' && 'cloud saved'}
             {syncState === 'error' && 'local saved'}
+            {syncState === 'storage-error' && 'not saved'}
             {syncState === 'local' && 'saved locally'}
           </span>
         </div>
@@ -393,6 +529,7 @@ export default function DashboardPage() {
                 if (event.key === 'Enter') addProject();
               }}
               placeholder="New project"
+              maxLength={120}
               className="min-w-0 flex-1 rounded-lg border border-black/10 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-400 dark:border-white/10 dark:bg-white/5"
             />
             <button
@@ -415,33 +552,112 @@ export default function DashboardPage() {
                     : 'border-transparent hover:bg-black/5 dark:hover:bg-white/5'
                 }`}
               >
-                <button
-                  type="button"
-                  onClick={() => setActiveProjectId(project.id)}
-                  className="min-w-0 flex-1 text-left"
-                >
-                  <span className="block truncate font-medium">
-                    {project.name}
-                  </span>
-                  <span className="block text-xs text-zinc-400">
-                    {
-                      project.tasks.filter((task) => task.status === 'done')
-                        .length
-                    }
-                    /{project.tasks.length} tasks · {project.assets.length}{' '}
-                    assets
-                  </span>
-                </button>
+                {renamingProjectId === project.id ? (
+                  <div className="flex min-w-0 flex-1 items-center gap-1">
+                    <input
+                      value={renamingProjectName}
+                      onChange={(event) =>
+                        setRenamingProjectName(event.target.value)
+                      }
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter') commitProjectRename();
+                        if (event.key === 'Escape') cancelProjectRename();
+                      }}
+                      aria-label={`Rename ${project.name}`}
+                      maxLength={120}
+                      autoFocus
+                      className="min-w-0 flex-1 rounded-md border border-black/15 bg-white px-2 py-1 text-sm outline-none focus:border-zinc-400 dark:border-white/15 dark:bg-zinc-900"
+                    />
+                    <button
+                      type="button"
+                      onClick={commitProjectRename}
+                      disabled={!renamingProjectName.trim()}
+                      aria-label="Save project name"
+                      className="grid size-7 place-items-center rounded-md text-emerald-600 hover:bg-emerald-500/10 disabled:opacity-40"
+                    >
+                      <Check className="size-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={cancelProjectRename}
+                      aria-label="Cancel project rename"
+                      className="grid size-7 place-items-center rounded-md text-zinc-400 hover:bg-black/5 dark:hover:bg-white/10"
+                    >
+                      <X className="size-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setActiveProjectId(project.id)}
+                    className="min-w-0 flex-1 text-left"
+                  >
+                    <span className="block truncate font-medium">
+                      {project.name}
+                    </span>
+                    <span className="block text-xs text-zinc-400">
+                      {
+                        project.tasks.filter((task) => task.status === 'done')
+                          .length
+                      }
+                      /{project.tasks.length} tasks · {project.assets.length}{' '}
+                      assets
+                    </span>
+                  </button>
+                )}
+                {renamingProjectId !== project.id && (
+                  <button
+                    type="button"
+                    onClick={() => beginProjectRename(project)}
+                    aria-label={`Rename ${project.name}`}
+                    className="grid size-7 place-items-center rounded-md text-zinc-400 opacity-60 transition hover:bg-black/5 hover:text-zinc-700 focus:opacity-100 dark:hover:bg-white/10 dark:hover:text-zinc-200 md:opacity-0 md:group-hover:opacity-100"
+                  >
+                    <Pencil className="size-3.5" />
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => removeProject(project.id)}
                   aria-label={`Delete ${project.name}`}
-                  className="grid size-7 place-items-center rounded-md text-zinc-400 opacity-0 transition hover:bg-red-500/10 hover:text-red-500 group-hover:opacity-100 focus:opacity-100"
+                  className="grid size-7 place-items-center rounded-md text-zinc-400 opacity-60 transition hover:bg-red-500/10 hover:text-red-500 focus:opacity-100 md:opacity-0 md:group-hover:opacity-100"
                 >
                   <Trash2 className="size-3.5" />
                 </button>
               </div>
             ))}
+          </div>
+
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={exportWorkspace}
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-black/10 bg-white px-3 py-2 text-xs font-medium transition hover:bg-zinc-100 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
+            >
+              <Download className="size-3.5" />
+              Back up
+            </button>
+            <button
+              type="button"
+              onClick={() => backupInputRef.current?.click()}
+              disabled={CLOUD_SYNC_ENABLED}
+              title={
+                CLOUD_SYNC_ENABLED
+                  ? 'Restore is disabled while cloud sync is enabled.'
+                  : 'Restore a local AniSora Studio backup'
+              }
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-black/10 bg-white px-3 py-2 text-xs font-medium transition hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
+            >
+              <Upload className="size-3.5" />
+              Restore
+            </button>
+            <input
+              ref={backupInputRef}
+              type="file"
+              accept="application/json,.json"
+              onChange={(event) => void importWorkspace(event)}
+              className="sr-only"
+              tabIndex={-1}
+            />
           </div>
 
           <div className="mt-5 rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
@@ -467,6 +683,11 @@ export default function DashboardPage() {
             {syncState === 'error' && syncError && (
               <p className="mt-2 break-words text-red-600 dark:text-red-400">
                 Cloud sync unavailable. Your local copy is safe.
+              </p>
+            )}
+            {syncState === 'storage-error' && syncError && (
+              <p className="mt-2 break-words text-red-600 dark:text-red-400">
+                {syncError}
               </p>
             )}
           </div>
@@ -539,6 +760,7 @@ export default function DashboardPage() {
                 if (event.key === 'Enter') addTask();
               }}
               placeholder="Add a task"
+              maxLength={240}
               className="min-w-0 flex-1 rounded-lg border border-black/10 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-400 dark:border-white/10 dark:bg-white/5"
             />
             <button
@@ -631,6 +853,7 @@ export default function DashboardPage() {
               value={assetName}
               onChange={(event) => setAssetName(event.target.value)}
               placeholder="Asset name"
+              maxLength={200}
               className="w-full rounded-lg border border-black/10 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-400 dark:border-white/10 dark:bg-white/5"
             />
             <input
@@ -641,6 +864,7 @@ export default function DashboardPage() {
               }}
               placeholder="https://…"
               inputMode="url"
+              maxLength={2048}
               className="w-full rounded-lg border border-black/10 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-400 dark:border-white/10 dark:bg-white/5"
             />
             <button

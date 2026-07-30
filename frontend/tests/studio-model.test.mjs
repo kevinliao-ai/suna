@@ -4,7 +4,9 @@ import test from 'node:test';
 import {
   collectDeletedStudioIds,
   createStudioProject,
+  parseStudioBackup,
   parseStoredProjects,
+  serializeStudioBackup,
 } from '../src/lib/studio/model.ts';
 
 test('creates a valid local-first studio project', () => {
@@ -34,6 +36,114 @@ test('adds an empty task list to older stored projects', () => {
 
   const [restored] = parseStoredProjects(JSON.stringify([legacy]));
   assert.deepEqual(restored.tasks, []);
+});
+
+test('filters unsafe nested data when restoring browser storage', () => {
+  const project = {
+    ...createStudioProject(),
+    assets: [
+      {
+        id: 'asset-safe',
+        name: 'Reference',
+        url: 'https://example.com/reference.png',
+        createdAt: '2026-07-30T00:00:00.000Z',
+      },
+      {
+        id: 'asset-unsafe',
+        name: 'Unsafe reference',
+        url: 'javascript:alert(1)',
+        createdAt: '2026-07-30T00:00:00.000Z',
+      },
+    ],
+    tasks: [
+      {
+        id: 'task-safe',
+        title: 'Render',
+        status: 'todo',
+        createdAt: '2026-07-30T00:00:00.000Z',
+      },
+      {
+        id: 'task-invalid',
+        title: 'Invalid state',
+        status: 'running',
+        createdAt: '2026-07-30T00:00:00.000Z',
+      },
+    ],
+  };
+
+  const [restored] = parseStoredProjects(JSON.stringify([project]));
+
+  assert.deepEqual(
+    restored.assets.map((asset) => asset.id),
+    ['asset-safe'],
+  );
+  assert.deepEqual(
+    restored.tasks.map((task) => task.id),
+    ['task-safe'],
+  );
+});
+
+test('round-trips an AniSora Studio backup', () => {
+  const project = createStudioProject('Launch trailer');
+  const exportedAt = '2026-07-30T00:00:00.000Z';
+  const backup = serializeStudioBackup([project], exportedAt);
+  const parsed = JSON.parse(backup);
+
+  assert.equal(parsed.product, 'anisora-studio');
+  assert.equal(parsed.version, 1);
+  assert.equal(parsed.exportedAt, exportedAt);
+  assert.deepEqual(parseStudioBackup(backup), [project]);
+});
+
+test('rejects malformed, oversized, or unsafe backup files', () => {
+  assert.throws(() => parseStudioBackup('{broken'), /not valid JSON/);
+  assert.throws(
+    () => parseStudioBackup(JSON.stringify({ product: 'other' })),
+    /not an AniSora Studio v1 backup/,
+  );
+  assert.throws(
+    () => parseStudioBackup('x'.repeat(2_000_001)),
+    /larger than 2 MB/,
+  );
+
+  const unsafeProject = {
+    ...createStudioProject(),
+    assets: [
+      {
+        id: 'asset-unsafe',
+        name: 'Unsafe reference',
+        url: 'javascript:alert(1)',
+        createdAt: '2026-07-30T00:00:00.000Z',
+      },
+    ],
+  };
+  const unsafeBackup = JSON.stringify({
+    product: 'anisora-studio',
+    version: 1,
+    exportedAt: '2026-07-30T00:00:00.000Z',
+    projects: [unsafeProject],
+  });
+
+  assert.throws(
+    () => parseStudioBackup(unsafeBackup),
+    /invalid or unsupported project data/,
+  );
+
+  const duplicateIdProject = {
+    ...createStudioProject(),
+    id: 'duplicate-id',
+    tasks: [
+      {
+        id: 'duplicate-id',
+        title: 'Conflicting task',
+        status: 'todo',
+        createdAt: '2026-07-30T00:00:00.000Z',
+      },
+    ],
+  };
+  const duplicateBackup = serializeStudioBackup([duplicateIdProject]);
+
+  assert.throws(() => parseStudioBackup(duplicateBackup), /duplicate/);
 });
 
 test('only marks records explicitly removed from the last synced snapshot', () => {
