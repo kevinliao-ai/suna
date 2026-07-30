@@ -30,11 +30,15 @@ const sections: Record<Tab, { title: string; content: React.ReactNode }> = {
           activity. You are responsible for reviewing model and provider
           licenses before publishing or commercializing an output.
         </p>
-        <h2>4. Accounts and local project data</h2>
+        <h2>4. Accounts and project data</h2>
         <p>
-          Account authentication is provided through Supabase. The current MVP
-          saves project names and asset links in your browser. Clearing browser
-          storage removes that local project data.
+          Account authentication is provided through Supabase. AniSora keeps a
+          browser copy of your Studio projects, tasks, selected tools, and saved
+          asset links. When cloud synchronization is enabled for your
+          deployment and account, that project metadata is also stored in
+          Supabase so it can be restored after a refresh or on another browser.
+          Prompts, uploads, and generated media entered inside an embedded tool
+          are not part of this Studio metadata.
         </p>
         <h2>5. Availability and warranties</h2>
         <p>
@@ -57,12 +61,15 @@ const sections: Record<Tab, { title: string; content: React.ReactNode }> = {
           and usage events through Vercel Analytics, Vercel Speed Insights, and
           PostHog when those services are enabled in the deployment.
         </p>
-        <h2>2. Browser-local project data</h2>
+        <h2>2. Studio project metadata</h2>
         <p>
-          Project names and saved asset links in the Studio MVP are stored in
-          local browser storage. They are not currently synchronized to an
-          AniSora database. Anyone with access to the same browser profile may
-          be able to access them.
+          AniSora stores a browser copy of Studio project names, tasks, selected
+          tools, and saved asset links. Anyone with access to the same browser
+          profile may be able to access that copy. When cloud synchronization
+          is enabled, the same metadata is stored in Supabase under your account
+          and protected by per-user access policies. AniSora does not include
+          prompts, uploads, or generated media entered inside an embedded tool
+          in this metadata sync.
         </p>
         <h2>3. Embedded tools</h2>
         <p>
@@ -75,8 +82,10 @@ const sections: Record<Tab, { title: string; content: React.ReactNode }> = {
         <p>
           Authentication cookies maintain your session. Analytics providers may
           use cookies or similar identifiers according to their configuration.
-          Local project data remains until you remove it or clear browser
-          storage.
+          The browser copy remains until you remove it or clear browser
+          storage. Cloud-synchronized metadata remains until you delete it,
+          delete your account, or request deletion, subject to operational
+          backup retention.
         </p>
         <h2>5. Contact and requests</h2>
         <p>
@@ -113,7 +122,7 @@ export default async function LegalPage({
         </Link>
 
         <p className="mt-14 text-sm font-medium text-muted-foreground">
-          Last updated: July 29, 2026
+          Last updated: July 30, 2026
         </p>
         <h1 className="mt-3 text-4xl font-semibold tracking-tight md:text-5xl">
           {section.title}
