@@ -146,6 +146,28 @@ reviewed before removal.
 SPF and DMARC records are not configured. Add them if `@anisora.ai` sends
 email.
 
+### Railway audit
+
+Railway was inspected read-only on 2026-07-30. The workspace trial has
+expired. Its three projects contain five services in total, and all services
+are offline.
+
+- `trustworthy-amazement` retains an offline `suna` service connected to
+  `kevinliao-ai/suna`, a second offline service, and Redis.
+- The offline `suna` service still declares `SUPABASE_URL`,
+  `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY`. Variable values were
+  not opened or copied.
+- `friendly-flow` and `vivacious-integrity` each show a staged removal of a
+  `suna` service. The staged destructive changes were not applied.
+- `https://api-production.anisora.ai/` currently reaches Railway's fallback
+  edge and returns HTTP 404; it is not an active application API.
+
+The retained Railway variable means the old service-role credential still has
+at least one historical server consumer in addition to the unsafe Cloudflare
+Pages copy. Because the service is offline, it does not block the current
+frontend, but its configuration should be preserved until the credential is
+rotated. Do not redeploy the legacy service.
+
 ### Legacy Cloudflare Pages project
 
 Cloudflare Pages also has an `anisora` project connected to the same GitHub
