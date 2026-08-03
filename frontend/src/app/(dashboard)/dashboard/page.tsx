@@ -55,6 +55,8 @@ type SyncState =
   | 'error'
   | 'storage-error';
 
+type BillingNotice = 'success' | 'canceled' | null;
+
 const CLOUD_SYNC_ENABLED =
   process.env.NEXT_PUBLIC_STUDIO_SYNC_ENABLED === 'true';
 const STUDIO_PRO_GATE_ENABLED =
@@ -95,6 +97,7 @@ export default function DashboardPage() {
     CLOUD_SYNC_ENABLED ? 'loading' : 'local',
   );
   const [syncError, setSyncError] = useState('');
+  const [billingNotice, setBillingNotice] = useState<BillingNotice>(null);
   const [projectName, setProjectName] = useState('');
   const [assetName, setAssetName] = useState('');
   const [assetUrl, setAssetUrl] = useState('');
@@ -112,6 +115,18 @@ export default function DashboardPage() {
     CLOUD_SYNC_ENABLED &&
     (!STUDIO_PRO_GATE_ENABLED || billing.entitlement?.tier === 'pro');
   const storageKey = `${STUDIO_STORAGE_PREFIX}:${userId || 'anonymous'}`;
+
+  useEffect(() => {
+    const billingResult = new URLSearchParams(window.location.search).get(
+      'billing',
+    );
+    if (billingResult !== 'success' && billingResult !== 'canceled') return;
+
+    setBillingNotice(billingResult);
+    const url = new URL(window.location.href);
+    url.searchParams.delete('billing');
+    window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
+  }, []);
 
   useEffect(() => {
     if (isLoading || billingDecisionPending) return;
@@ -524,6 +539,29 @@ export default function DashboardPage() {
           </form>
         </div>
       </header>
+
+      {billingNotice ? (
+        <div
+          role="status"
+          aria-live="polite"
+          className={`border-b px-4 py-3 text-sm md:px-6 ${
+            billingNotice === 'success'
+              ? 'border-emerald-500/20 bg-emerald-500/5 text-emerald-700 dark:text-emerald-300'
+              : 'border-amber-500/20 bg-amber-500/5 text-amber-700 dark:text-amber-300'
+          }`}
+        >
+          {billingNotice === 'success'
+            ? 'Checkout completed. Your Studio Pro access will appear as soon as Stripe finishes syncing your subscription.'
+            : 'Checkout was canceled. No charge was made.'}
+          <button
+            type="button"
+            onClick={() => setBillingNotice(null)}
+            className="ml-3 underline underline-offset-2"
+          >
+            Dismiss
+          </button>
+        </div>
+      ) : null}
 
       <div className="grid min-h-0 flex-1 lg:grid-cols-[248px_minmax(0,1fr)_300px]">
         <aside className="border-b border-black/10 bg-white/50 p-4 dark:border-white/10 dark:bg-white/[0.02] lg:border-b-0 lg:border-r">
