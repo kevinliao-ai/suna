@@ -10,7 +10,6 @@ import React, {
 import { createClient } from '@/lib/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
 import { SupabaseClient } from '@supabase/supabase-js';
-import { checkAndInstallSunaAgent } from '@/lib/utils/install-suna-agent';
 import { clearUserLocalStorage } from '@/lib/utils/clear-local-storage';
 
 type AuthContextType = {
@@ -24,7 +23,7 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const supabase = createClient();
+  const [supabase] = useState(() => createClient());
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -38,6 +37,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
       } catch (error) {
+        console.error('Unable to restore the Supabase session', error);
       } finally {
         setIsLoading(false);
       }
@@ -50,22 +50,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setSession(newSession);
         setUser(newSession?.user ?? null);
 
-        if (isLoading) setIsLoading(false);
-        switch (event) {
-          case 'SIGNED_IN':
-            if (newSession?.user) {
-              await checkAndInstallSunaAgent(newSession.user.id, newSession.user.created_at);
-            }
-            break;
-          case 'SIGNED_OUT':
-            // Clear local storage when user is signed out (handles all logout scenarios)
-            clearUserLocalStorage();
-            break;
-          case 'TOKEN_REFRESHED':
-            break;
-          case 'MFA_CHALLENGE_VERIFIED':
-            break;
-          default:
+        setIsLoading(false);
+        if (event === 'SIGNED_OUT') {
+          clearUserLocalStorage();
         }
       },
     );
@@ -73,15 +60,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       authListener?.subscription.unsubscribe();
     };
-  }, [supabase]); // Removed isLoading from dependencies to prevent infinite loops
+  }, [supabase]);
 
   const signOut = async () => {
     try {
       await supabase.auth.signOut();
-      // Clear local storage after successful sign out
       clearUserLocalStorage();
     } catch (error) {
-      console.error('❌ Error signing out:', error);
+      console.error('Unable to sign out', error);
     }
   };
 

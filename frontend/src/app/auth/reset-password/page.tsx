@@ -1,35 +1,30 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useSearchParams } from 'next/navigation';
-import { useState, useEffect, Suspense } from 'react';
+import { useState } from 'react';
 import { AlertCircle, ArrowLeft, CheckCircle } from 'lucide-react';
 
+import { useAuth } from '@/components/AuthProvider';
 import { Input } from '@/components/ui/input';
-import { SubmitButton } from '@/components/ui/submit-button';
+import {
+  SubmitButton,
+  type FormActionState,
+} from '@/components/ui/submit-button';
 import { resetPassword } from '../actions';
 
 function ResetPasswordContent() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const code = searchParams.get('code');
-
+  const { user, isLoading } = useAuth();
   const [resetSuccess, setResetSuccess] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Check if code is present in URL
-  useEffect(() => {
-    if (!code) {
-      setErrorMessage(
-        'Invalid or missing reset code. Please request a new password reset link.',
-      );
-    }
-  }, [code]);
-
-  const handleResetPassword = async (prevState: any, formData: FormData) => {
-    if (!code) {
-      return { message: 'Invalid reset code' };
+  const handleResetPassword = async (
+    prevState: FormActionState,
+    formData: FormData,
+  ): Promise<FormActionState> => {
+    if (!user) {
+      return {
+        message:
+          'This reset session is invalid or expired. Request a new link.',
+      };
     }
 
     const result = await resetPassword(prevState, formData);
@@ -46,6 +41,18 @@ function ResetPasswordContent() {
 
     return result;
   };
+
+  if (isLoading) {
+    return (
+      <main className="flex min-h-screen w-full items-center justify-center">
+        <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </main>
+    );
+  }
+
+  const errorMessage = user
+    ? null
+    : 'This reset link is invalid or expired. Please request a new password reset link.';
 
   if (resetSuccess) {
     return (
@@ -181,15 +188,5 @@ function ResetPasswordContent() {
 }
 
 export default function ResetPassword() {
-  return (
-    <Suspense
-      fallback={
-        <main className="flex flex-col items-center justify-center min-h-screen w-full">
-          <div className="w-12 h-12 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
-        </main>
-      }
-    >
-      <ResetPasswordContent />
-    </Suspense>
-  );
+  return <ResetPasswordContent />;
 }

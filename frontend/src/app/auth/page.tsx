@@ -1,25 +1,26 @@
 'use client';
 
 import Link from 'next/link';
-import { SubmitButton } from '@/components/ui/submit-button';
+import {
+  SubmitButton,
+  type FormActionState,
+} from '@/components/ui/submit-button';
 import { Input } from '@/components/ui/input';
 import GoogleSignIn from '@/components/GoogleSignIn';
-import { useMediaQuery } from '@/hooks/use-media-query';
 import { useState, useEffect, Suspense } from 'react';
 import { signIn, signUp, forgotPassword } from './actions';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
   ArrowLeft,
-  X,
   CheckCircle,
   AlertCircle,
   MailCheck,
   Loader2,
+  Sparkles,
 } from 'lucide-react';
 import { useAuth } from '@/components/AuthProvider';
 import { useAuthMethodTracking } from '@/lib/stores/auth-tracking';
 import { toast } from 'sonner';
-import Image from 'next/image';
 
 import {
   Dialog,
@@ -30,28 +31,30 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import GitHubSignIn from '@/components/GithubSignIn';
-import { KortixLogo } from '@/components/sidebar/kortix-logo';
 import { Ripple } from '@/components/ui/ripple';
-import { ReleaseBadge } from '@/components/auth/release-badge';
+import {
+  getAuthErrorMessage,
+  persistAuthReturnPath,
+  sanitizeReturnPath,
+} from '@/lib/auth-redirect';
 
 function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, isLoading } = useAuth();
   const mode = searchParams.get('mode');
-  const returnUrl = searchParams.get('returnUrl');
+  const returnUrl = sanitizeReturnPath(searchParams.get('returnUrl'));
   const message = searchParams.get('message');
+  const authErrorMessage = getAuthErrorMessage(searchParams.get('error'));
 
   const isSignUp = mode === 'signup';
-  const isMobile = useMediaQuery('(max-width: 768px)');
-  const [mounted, setMounted] = useState(false);
 
   const { wasLastMethod: wasEmailLastMethod, markAsUsed: markEmailAsUsed } =
     useAuthMethodTracking('email');
 
   useEffect(() => {
     if (!isLoading && user) {
-      router.push(returnUrl || '/dashboard');
+      router.push(returnUrl);
     }
   }, [user, isLoading, router, returnUrl]);
 
@@ -74,23 +77,18 @@ function LoginContent() {
   }>({});
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
     if (isSuccessMessage) {
       setRegistrationSuccess(true);
     }
   }, [isSuccessMessage]);
 
-  const handleSignIn = async (prevState: any, formData: FormData) => {
+  const handleSignIn = async (
+    prevState: FormActionState,
+    formData: FormData,
+  ): Promise<FormActionState> => {
     markEmailAsUsed();
 
-    if (returnUrl) {
-      formData.append('returnUrl', returnUrl);
-    } else {
-      formData.append('returnUrl', '/dashboard');
-    }
+    formData.append('returnUrl', returnUrl);
     const result = await signIn(prevState, formData);
 
     if (
@@ -101,7 +99,7 @@ function LoginContent() {
       'redirectTo' in result
     ) {
       window.location.href = result.redirectTo as string;
-      return null;
+      return {};
     }
 
     if (result && typeof result === 'object' && 'message' in result) {
@@ -115,18 +113,17 @@ function LoginContent() {
     return result;
   };
 
-  const handleSignUp = async (prevState: any, formData: FormData) => {
+  const handleSignUp = async (
+    prevState: FormActionState,
+    formData: FormData,
+  ): Promise<FormActionState> => {
     markEmailAsUsed();
 
     const email = formData.get('email') as string;
     setRegistrationEmail(email);
 
-    if (returnUrl) {
-      formData.append('returnUrl', returnUrl);
-    }
-
-    // Add origin for email redirects
-    formData.append('origin', window.location.origin);
+    formData.append('returnUrl', returnUrl);
+    persistAuthReturnPath(returnUrl);
 
     const result = await signUp(prevState, formData);
 
@@ -140,7 +137,7 @@ function LoginContent() {
     ) {
       // Use window.location for hard navigation to avoid stale state
       window.location.href = result.redirectTo as string;
-      return null; // Return null to prevent normal form action completion
+      return {};
     }
 
     // Check if registration was successful but needs email verification
@@ -187,9 +184,8 @@ function LoginContent() {
 
     const formData = new FormData();
     formData.append('email', forgotPasswordEmail);
-    formData.append('origin', window.location.origin);
 
-    const result = await forgotPassword(null, formData);
+    const result = await forgotPassword({}, formData);
 
     setForgotPasswordStatus(result);
   };
@@ -271,15 +267,11 @@ function LoginContent() {
   return (
     <div className="min-h-screen bg-background relative">
       <div className="absolute top-6 left-6 z-10">
-        <Link href="/" className="flex items-center">
-          <Image
-            src="https://cdn.anisora.ai/anisora-logo.png"
-            alt="AniSora Logo"
-            width={120}
-            height={24}
-            className="h-6 w-auto"
-            priority
-          />
+        <Link href="/" className="flex items-center gap-2 font-semibold">
+          <span className="grid size-8 place-items-center rounded-xl bg-foreground text-background">
+            <Sparkles className="size-4" />
+          </span>
+          AniSora Studio
         </Link>
       </div>
       <div className="flex min-h-screen">
@@ -295,18 +287,30 @@ function LoginContent() {
           </div>
           <div className="w-full max-w-sm">
             <div className="mb-4 flex items-center flex-col gap-3 sm:gap-4 justify-center">
-              <ReleaseBadge
-                className="mb-2 sm:mb-4"
-                text="🚀 Anisora V3 Released - Now Available!"
-                link="/changelog"
-              />
+              <p className="text-sm font-medium text-muted-foreground">
+                AniSora Creative Studio
+              </p>
               <h1 className="text-xl sm:text-2xl font-semibold text-foreground text-center leading-tight">
                 {isSignUp ? 'Create your account' : 'Log into your account'}
               </h1>
             </div>
+            {authErrorMessage && (
+              <div
+                role="alert"
+                className="mb-4 flex gap-3 rounded-lg border border-destructive/25 bg-destructive/10 p-3 text-destructive"
+              >
+                <AlertCircle className="mt-0.5 size-4 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium">
+                    Authentication link failed
+                  </p>
+                  <p className="text-sm">{authErrorMessage}</p>
+                </div>
+              </div>
+            )}
             <div className="space-y-3 mb-4">
-              <GoogleSignIn returnUrl={returnUrl || undefined} />
-              <GitHubSignIn returnUrl={returnUrl || undefined} />
+              <GoogleSignIn returnUrl={returnUrl} />
+              <GitHubSignIn returnUrl={returnUrl} />
             </div>
             <div className="relative my-4">
               <div className="absolute inset-0 flex items-center">
@@ -380,8 +384,8 @@ function LoginContent() {
                 <Link
                   href={
                     isSignUp
-                      ? `/auth${returnUrl ? `?returnUrl=${returnUrl}` : ''}`
-                      : `/auth?mode=signup${returnUrl ? `&returnUrl=${returnUrl}` : ''}`
+                      ? `/auth?returnUrl=${encodeURIComponent(returnUrl)}`
+                      : `/auth?mode=signup&returnUrl=${encodeURIComponent(returnUrl)}`
                   }
                   className="text-muted-foreground hover:text-foreground transition-colors"
                 >
