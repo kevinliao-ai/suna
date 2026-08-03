@@ -32,9 +32,9 @@ export const siteConfig = {
       },
       {
         id: 2,
-        question: 'Why do some tools open an external application?',
+        question: 'Why do the tools run inside AniSora Studio?',
         answer:
-          'The current release uses selected third-party demos for generation. We are replacing these integrations incrementally with first-party project, task and asset workflows.',
+          'AniSora keeps selected third-party generation tools embedded inside the Studio so projects, tasks and asset references remain in one focused workspace.',
       },
       {
         id: 3,
