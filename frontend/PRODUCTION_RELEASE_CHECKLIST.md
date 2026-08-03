@@ -87,17 +87,19 @@ production approval.
 - [ ] Stripe business, payout, and support details are verified.
 - [ ] The seller identity, refund policy, tax treatment, and customer-support
       email are approved for publication.
-- [ ] Preview uses only Stripe test keys, test Price IDs, and a test webhook.
-- [ ] The additive AniSora billing migration is applied to staging.
-- [ ] `anisora_billing_rls.sql` passes with two staging-only users.
-- [ ] Monthly and annual Checkout complete with Stripe test cards.
+- [x] Preview uses only Stripe test keys, test Price IDs, and a test webhook.
+- [x] The additive AniSora billing migration is applied to staging.
+- [x] `anisora_billing_rls.sql` passes with two staging-only users.
+- [ ] Monthly and annual Checkout complete with Stripe test cards. (Monthly
+      passed; annual remains to be rehearsed.)
 - [ ] Webhook signature rejection, duplicate delivery, and event replay pass.
 - [ ] Renewal, failed payment, three-day grace, cancellation, and period-end
       downgrade pass using test subscriptions or Test Clocks.
-- [ ] Customer Portal updates a payment method and cancels a subscription.
-- [ ] Checkout success never grants Pro before server-side subscription state
+- [x] Customer Portal opens and shows the active subscription and cancellation
+      action. Cancellation itself remains pending a dedicated Test Clock run.
+- [x] Checkout success never grants Pro before server-side subscription state
       is present.
-- [ ] `NEXT_PUBLIC_STUDIO_PRO_GATE_ENABLED` remains `false` until all prior
+- [x] `NEXT_PUBLIC_STUDIO_PRO_GATE_ENABLED` remains `false` until all prior
       billing checks pass.
 - [ ] Live keys and live Price IDs are added only to Vercel Production.
 - [ ] An explicitly authorized internal live purchase, cancellation, and

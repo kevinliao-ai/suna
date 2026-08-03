@@ -1,6 +1,6 @@
 # AniSora deployment runbook
 
-Environment audit date: 2026-07-30.
+Environment audit date: 2026-08-03.
 
 This document contains configuration names and project identifiers only. It
 must not contain API keys, tokens, database passwords, or revealed environment
@@ -186,8 +186,9 @@ added to this client.
 
 ### Stripe staging rollout
 
-The AniSora-owned subscription implementation is present in source but is not
-enabled in staging or production yet. It uses Stripe-hosted Checkout and
+The AniSora-owned subscription implementation is enabled for the branch
+Preview staging rehearsal (the Pro gate remains disabled). It uses
+Stripe-hosted Checkout and
 Customer Portal, the additive
 `20260803090000_anisora_billing.sql` migration, and a signed webhook at
 `/api/stripe/webhook`. It does not depend on the legacy Suna/Basejump billing
@@ -208,6 +209,13 @@ Before enabling billing on Preview:
 No Stripe live-mode product, key, endpoint, or charge is authorized by this
 source rollout. Complete the unchecked billing release gates before any live
 mode change.
+
+The completed staging objects are recorded in `BILLING.md`. The branch Preview
+deployment accepted a replayed `checkout.session.completed` webhook with
+`200 OK`, persisted the subscription entitlement, and opened Customer Portal.
+The Test subscription remains active so renewal, payment-failure, and
+period-end cancellation can be tested with a Test Clock without touching live
+customers or production data.
 
 ### Preview cloud-sync acceptance
 

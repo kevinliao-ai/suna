@@ -38,6 +38,27 @@ Use only Stripe test-mode objects in Preview. Keep
 webhook, Checkout, portal, renewal, payment-failure, and cancellation paths
 have all passed in staging.
 
+### Staging rollout record (2026-08-03)
+
+- Supabase project: `anisora-staging` (`gkoncguonhidpxjwxbnt`); the additive
+  billing migration and RLS verification were applied successfully.
+- Stripe Test product: `AniSora Studio Pro` (`prod_V0BdqXSl73vDpA`). Monthly
+  Price: `price_1U0BGPIjKQTkZhk86YGTnArp` (US$5.99/month). Annual Price:
+  `price_1U0BHoIjKQTkZhk8SUZaoSvz` (US$59/year).
+- The six-event Test Workbench endpoint is named `anisora-staging-preview`.
+  It targets the branch Preview webhook route and uses Vercel's deployment
+  protection automation bypass; the bypass value is stored only in Stripe and
+  Vercel configuration, never in source control.
+- The branch-scoped Preview deployment completed a Test Checkout with card
+  `4242 4242 4242 4242`. A replayed `checkout.session.completed` delivery
+  returned `200 OK`, and the dashboard displayed `Studio Pro` with an active
+  entitlement. Customer Portal opened successfully and showed the active
+  subscription and a cancellation link. The test subscription was left active
+  in Stripe Test Mode for follow-up renewal/failure/cancellation rehearsals.
+- Preview billing variables contain only Stripe Test credentials and the
+  staging Supabase service-role key. Production Stripe, production Supabase,
+  and the Pro gate were not changed.
+
 ## Database
 
 Apply `backend/supabase/migrations/20260803090000_anisora_billing.sql` only to
