@@ -134,6 +134,7 @@ export async function resolveUserIdForStripeCustomer(
 export async function upsertStripeSubscription(
   subscription: Stripe.Subscription,
   metadataUserId?: string | null,
+  stripeEventCreated = 0,
 ) {
   const customerId = stripeObjectId(subscription.customer);
   const item = subscription.items.data[0];
@@ -165,24 +166,26 @@ export async function upsertStripeSubscription(
     );
   if (customerError) throw customerError;
 
-  const { error } = await admin.from('anisora_subscriptions').upsert(
+  const { data: applied, error } = await admin.rpc(
+    'upsert_anisora_subscription',
     {
-      stripe_subscription_id: subscription.id,
-      user_id: userId,
-      stripe_customer_id: customerId,
-      stripe_price_id: priceId,
-      plan_id: planId as BillingPlanId,
-      status: subscription.status,
-      currency: subscription.currency,
-      cancel_at_period_end: subscription.cancel_at_period_end,
-      current_period_start: stripeTimestamp(item?.current_period_start),
-      current_period_end: stripeTimestamp(item?.current_period_end),
-      canceled_at: stripeTimestamp(subscription.canceled_at),
-      metadata: subscription.metadata,
+      p_stripe_subscription_id: subscription.id,
+      p_user_id: userId,
+      p_stripe_customer_id: customerId,
+      p_stripe_price_id: priceId,
+      p_plan_id: planId as BillingPlanId,
+      p_status: subscription.status,
+      p_currency: subscription.currency,
+      p_cancel_at_period_end: subscription.cancel_at_period_end,
+      p_current_period_start: stripeTimestamp(item?.current_period_start),
+      p_current_period_end: stripeTimestamp(item?.current_period_end),
+      p_canceled_at: stripeTimestamp(subscription.canceled_at),
+      p_metadata: subscription.metadata,
+      p_stripe_event_created: stripeEventCreated,
     },
-    { onConflict: 'stripe_subscription_id' },
   );
   if (error) throw error;
+  return applied;
 }
 
 export async function getUserBillingEntitlement(userId: string) {
