@@ -23,6 +23,7 @@ export interface BillingSubscriptionRecord {
   cancel_at_period_end: boolean;
   current_period_start: string | null;
   current_period_end: string | null;
+  cancel_at: string | null;
   canceled_at: string | null;
   updated_at?: string | null;
 }
@@ -32,6 +33,7 @@ export interface BillingEntitlement {
   status: BillingSubscriptionStatus | 'none';
   planId: string | null;
   cancelAtPeriodEnd: boolean;
+  cancelAt: string | null;
   currentPeriodEnd: string | null;
   inGracePeriod: boolean;
 }
@@ -48,6 +50,7 @@ export function resolveBillingEntitlement(
       status: 'none',
       planId: null,
       cancelAtPeriodEnd: false,
+      cancelAt: null,
       currentPeriodEnd: null,
       inGracePeriod: false,
     };
@@ -69,6 +72,7 @@ export function resolveBillingEntitlement(
     subscription.cancel_at_period_end &&
     hasValidPeriodEnd &&
     now.getTime() < periodEndTime;
+  const hasScheduledCancellation = Boolean(subscription.cancel_at);
 
   return {
     tier:
@@ -77,7 +81,9 @@ export function resolveBillingEntitlement(
         : 'free',
     status: subscription.status,
     planId: subscription.plan_id,
-    cancelAtPeriodEnd: subscription.cancel_at_period_end,
+    cancelAtPeriodEnd:
+      subscription.cancel_at_period_end || hasScheduledCancellation,
+    cancelAt: subscription.cancel_at,
     currentPeriodEnd: subscription.current_period_end,
     inGracePeriod,
   };

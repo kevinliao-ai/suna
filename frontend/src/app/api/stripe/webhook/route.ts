@@ -59,19 +59,21 @@ async function processStripeEvent(event: Stripe.Event) {
           typeof session.subscription === 'string'
             ? await getStripeClient().subscriptions.retrieve(subscriptionId)
             : session.subscription;
-        await upsertStripeSubscription(subscription, userId);
+        await upsertStripeSubscription(subscription, userId, event.created);
       }
       break;
     }
     case 'customer.subscription.created':
     case 'customer.subscription.updated':
     case 'customer.subscription.deleted':
-      await upsertStripeSubscription(event.data.object);
+      await upsertStripeSubscription(event.data.object, null, event.created);
       break;
     case 'invoice.paid':
     case 'invoice.payment_failed': {
       const subscription = await subscriptionFromInvoice(event.data.object);
-      if (subscription) await upsertStripeSubscription(subscription);
+      if (subscription) {
+        await upsertStripeSubscription(subscription, null, event.created);
+      }
       break;
     }
     default:

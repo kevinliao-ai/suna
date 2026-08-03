@@ -21,6 +21,7 @@ function subscription(overrides = {}) {
     cancel_at_period_end: false,
     current_period_start: '2026-07-03T00:00:00.000Z',
     current_period_end: '2026-08-04T00:00:00.000Z',
+    cancel_at: null,
     canceled_at: null,
     ...overrides,
   };
@@ -30,6 +31,15 @@ test('only allows server-defined AniSora plans', () => {
   assert.equal(getBillingPlan('studio-pro-monthly')?.amount, 599);
   assert.equal(getBillingPlan('studio-pro-annual')?.amount, 5900);
   assert.equal(getBillingPlan('price_attacker_controlled'), null);
+});
+
+test('Stripe scheduled cancellation keeps access and is shown as ending', () => {
+  const cancelAt = '2026-08-04T00:00:00.000Z';
+  const result = resolveBillingEntitlement(subscription({ cancel_at: cancelAt }), now);
+
+  assert.equal(result.tier, 'pro');
+  assert.equal(result.cancelAtPeriodEnd, true);
+  assert.equal(result.cancelAt, cancelAt);
 });
 
 test('active and trialing subscriptions receive Pro access', () => {

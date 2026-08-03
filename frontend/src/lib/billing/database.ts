@@ -27,8 +27,10 @@ type BillingSubscriptionRow = {
   cancel_at_period_end: boolean;
   current_period_start: string | null;
   current_period_end: string | null;
+  cancel_at: string | null;
   canceled_at: string | null;
   metadata: Json;
+  last_stripe_event_created: number;
   created_at: string;
   updated_at: string;
 };
@@ -77,7 +79,27 @@ export type BillingDatabase = {
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      upsert_anisora_subscription: {
+        Args: {
+          p_stripe_subscription_id: string;
+          p_user_id: string;
+          p_stripe_customer_id: string;
+          p_stripe_price_id: string;
+          p_plan_id: string;
+          p_status: BillingSubscriptionStatus;
+          p_currency: string;
+          p_cancel_at_period_end: boolean;
+          p_current_period_start: string | null;
+          p_current_period_end: string | null;
+          p_cancel_at: string | null;
+          p_canceled_at: string | null;
+          p_metadata: Json;
+          p_stripe_event_created: number;
+        };
+        Returns: boolean;
+      };
+    };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
   };
