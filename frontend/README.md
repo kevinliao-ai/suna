@@ -34,11 +34,17 @@ NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 NEXT_PUBLIC_STUDIO_SYNC_ENABLED=false
+NEXT_PUBLIC_STUDIO_PRO_GATE_ENABLED=false
 ```
 
 `NEXT_PUBLIC_STUDIO_SYNC_ENABLED` must remain `false` until the additive
 Supabase migration and RLS verification have passed in a non-production
 project.
+
+Stripe billing is optional and remains unavailable until its server-only test
+keys, webhook secret, and allow-listed Price IDs are configured. See
+[BILLING.md](./BILLING.md). Never put Stripe or Supabase service-role secrets
+in a `NEXT_PUBLIC_` variable.
 
 ## Quality gate
 
@@ -68,3 +74,4 @@ This runs the Node test suite, ESLint, TypeScript, and the production build.
 - [Deployment runbook](./DEPLOYMENT_RUNBOOK.md)
 - [Production release checklist](./PRODUCTION_RELEASE_CHECKLIST.md)
 - [Route audit](./ROUTE_AUDIT.md)
+- [Billing runbook](./BILLING.md)

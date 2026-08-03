@@ -74,13 +74,36 @@ production approval.
 - [ ] Every server consumer of the existing Supabase service-role credential
       is inventoried.
 - [ ] Server consumers are updated before the old credential is revoked.
-- [ ] No service-role credential exists in a frontend build environment.
+- [ ] The Supabase service-role credential exists only as a server-side Vercel
+      variable and is absent from client bundles, logs, and `NEXT_PUBLIC_`
+      variables.
 - [ ] Cloudflare SSL is moved to Full (strict) only after origin certificate
       verification.
 - [ ] Minimum TLS is raised to 1.2 and HTTP/apex redirects are rechecked.
 - [x] Production and Preview environment variables are reviewed separately.
 
-## 6. Production promotion
+## 6. Stripe billing gate
+
+- [ ] Stripe business, payout, and support details are verified.
+- [ ] The seller identity, refund policy, tax treatment, and customer-support
+      email are approved for publication.
+- [ ] Preview uses only Stripe test keys, test Price IDs, and a test webhook.
+- [ ] The additive AniSora billing migration is applied to staging.
+- [ ] `anisora_billing_rls.sql` passes with two staging-only users.
+- [ ] Monthly and annual Checkout complete with Stripe test cards.
+- [ ] Webhook signature rejection, duplicate delivery, and event replay pass.
+- [ ] Renewal, failed payment, three-day grace, cancellation, and period-end
+      downgrade pass using test subscriptions or Test Clocks.
+- [ ] Customer Portal updates a payment method and cancels a subscription.
+- [ ] Checkout success never grants Pro before server-side subscription state
+      is present.
+- [ ] `NEXT_PUBLIC_STUDIO_PRO_GATE_ENABLED` remains `false` until all prior
+      billing checks pass.
+- [ ] Live keys and live Price IDs are added only to Vercel Production.
+- [ ] An explicitly authorized internal live purchase, cancellation, and
+      refund pass before public rollout.
+
+## 7. Production promotion
 
 - [ ] Merge to `dev` and complete a final Preview smoke test.
 - [ ] Obtain explicit approval before merging or promoting to `master`.
@@ -90,11 +113,13 @@ production approval.
 - [ ] Confirm CSP, frame protection, referrer policy, HSTS, and cache headers.
 - [ ] Watch Vercel errors, Supabase Auth errors, and resolver 4xx/5xx rates.
 
-## 7. Rollback
+## 8. Rollback
 
 - [ ] Frontend rollback: promote the last known-good Vercel deployment.
 - [ ] Cloud-sync rollback: set `NEXT_PUBLIC_STUDIO_SYNC_ENABLED=false` and
       redeploy; do not drop data-bearing tables.
+- [ ] Billing rollback: set `NEXT_PUBLIC_STUDIO_PRO_GATE_ENABLED=false` and
+      redeploy; preserve Stripe and Supabase billing records.
 - [ ] Authentication rollback: restore the previous deployment and keep the
       production callback URL valid.
 - [ ] Database rollback: use the guarded empty-schema script only before user

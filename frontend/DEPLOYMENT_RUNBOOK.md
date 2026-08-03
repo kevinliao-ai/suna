@@ -184,6 +184,31 @@ to end on 2026-08-03. Google should redirect only to Supabase here; Preview
 application callback URLs are not Google OAuth redirect URIs and should not be
 added to this client.
 
+### Stripe staging rollout
+
+The AniSora-owned subscription implementation is present in source but is not
+enabled in staging or production yet. It uses Stripe-hosted Checkout and
+Customer Portal, the additive
+`20260803090000_anisora_billing.sql` migration, and a signed webhook at
+`/api/stripe/webhook`. It does not depend on the legacy Suna/Basejump billing
+schema.
+
+Before enabling billing on Preview:
+
+1. Create the monthly and annual `Studio Pro` products in Stripe test mode.
+2. Apply and verify the billing migration in `anisora-staging` with
+   `anisora_billing_rls.sql`.
+3. Add only test-mode Stripe secrets and Price IDs to the branch-scoped Vercel
+   Preview environment.
+4. Register the exact Preview `/api/stripe/webhook` endpoint for the six event
+   types listed in `BILLING.md`.
+5. Leave `NEXT_PUBLIC_STUDIO_PRO_GATE_ENABLED=false` until Checkout, portal,
+   webhook replay, renewal, payment failure, cancellation, and downgrade pass.
+
+No Stripe live-mode product, key, endpoint, or charge is authorized by this
+source rollout. Complete the unchecked billing release gates before any live
+mode change.
+
 ### Preview cloud-sync acceptance
 
 The branch deployment created from commit `ea03d5eb1` passed GitHub `verify`,

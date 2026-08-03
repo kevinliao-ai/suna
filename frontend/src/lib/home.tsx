@@ -11,6 +11,7 @@ export const siteConfig = {
       { id: 4, name: 'FAQ', href: '#faq' },
       { id: 5, name: 'Index-TTS', href: '/index-tts' },
       { id: 6, name: 'Watermark Tool', href: '/sora-watermark-remove' },
+      { id: 7, name: 'Pricing', href: '/pricing' },
     ],
   },
   hero: {
@@ -79,6 +80,7 @@ export const siteConfig = {
           title: 'Model repository',
           url: 'https://github.com/bilibili/Index-anisora',
         },
+        { id: 3, title: 'Pricing', url: '/pricing' },
       ],
     },
     {

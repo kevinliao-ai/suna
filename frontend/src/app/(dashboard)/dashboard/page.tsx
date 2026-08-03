@@ -2,9 +2,11 @@
 
 import { signOut } from '@/app/auth/actions';
 import { useAuth } from '@/components/AuthProvider';
+import { BillingStatusCard } from '@/components/billing-status-card';
 import { ThemeToggle } from '@/components/home/theme-toggle';
 import { ToolEmbed } from '@/components/tool-embed';
 import { embedConfig } from '@/lib/embed-config';
+import { useBillingStatus } from '@/hooks/use-billing';
 import {
   createStudioId,
   createStudioProject,
@@ -55,6 +57,8 @@ type SyncState =
 
 const CLOUD_SYNC_ENABLED =
   process.env.NEXT_PUBLIC_STUDIO_SYNC_ENABLED === 'true';
+const STUDIO_PRO_GATE_ENABLED =
+  process.env.NEXT_PUBLIC_STUDIO_PRO_GATE_ENABLED === 'true';
 
 const tools: Record<
   ToolId,
@@ -102,10 +106,15 @@ export default function DashboardPage() {
   const cloudSyncReady = useRef(false);
   const lastSyncedProjects = useRef<StudioProject[]>([]);
   const userId = user?.id;
+  const billing = useBillingStatus(Boolean(userId));
+  const billingDecisionPending = STUDIO_PRO_GATE_ENABLED && billing.isLoading;
+  const cloudSyncAllowed =
+    CLOUD_SYNC_ENABLED &&
+    (!STUDIO_PRO_GATE_ENABLED || billing.entitlement?.tier === 'pro');
   const storageKey = `${STUDIO_STORAGE_PREFIX}:${userId || 'anonymous'}`;
 
   useEffect(() => {
-    if (isLoading) return;
+    if (isLoading || billingDecisionPending) return;
 
     let cancelled = false;
 
@@ -119,7 +128,7 @@ export default function DashboardPage() {
         savedProjects.length > 0 ? savedProjects : [createStudioProject()];
       let nextSyncState: SyncState = 'local';
 
-      if (CLOUD_SYNC_ENABLED && userId) {
+      if (cloudSyncAllowed && userId) {
         setSyncState('loading');
         try {
           const cloudProjects = await loadCloudProjects(supabase, userId);
@@ -169,7 +178,14 @@ export default function DashboardPage() {
     return () => {
       cancelled = true;
     };
-  }, [isLoading, storageKey, supabase, userId]);
+  }, [
+    billingDecisionPending,
+    cloudSyncAllowed,
+    isLoading,
+    storageKey,
+    supabase,
+    userId,
+  ]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -184,7 +200,7 @@ export default function DashboardPage() {
       return;
     }
 
-    if (!CLOUD_SYNC_ENABLED || !userId || !cloudSyncReady.current) return;
+    if (!cloudSyncAllowed || !userId || !cloudSyncReady.current) return;
 
     const snapshot = projects;
     const timer = window.setTimeout(() => {
@@ -214,7 +230,7 @@ export default function DashboardPage() {
     }, 700);
 
     return () => window.clearTimeout(timer);
-  }, [hydrated, projects, storageKey, supabase, userId]);
+  }, [cloudSyncAllowed, hydrated, projects, storageKey, supabase, userId]);
 
   const importLocalWorkspace = async () => {
     if (!userId || projects.length === 0) return;
@@ -636,9 +652,9 @@ export default function DashboardPage() {
             <button
               type="button"
               onClick={() => backupInputRef.current?.click()}
-              disabled={CLOUD_SYNC_ENABLED}
+              disabled={cloudSyncAllowed}
               title={
-                CLOUD_SYNC_ENABLED
+                cloudSyncAllowed
                   ? 'Restore is disabled while cloud sync is enabled.'
                   : 'Restore a local AniSora Studio backup'
               }
@@ -921,6 +937,14 @@ export default function DashboardPage() {
                 </div>
               ))
             )}
+          </div>
+
+          <div className="mt-5">
+            <BillingStatusCard
+              entitlement={billing.entitlement}
+              isLoading={billing.isLoading}
+              isAvailable={billing.isAvailable}
+            />
           </div>
 
           <div className="mt-5 border-t border-black/10 pt-4 text-xs text-zinc-400 dark:border-white/10">

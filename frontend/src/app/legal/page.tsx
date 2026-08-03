@@ -34,13 +34,31 @@ const sections: Record<Tab, { title: string; content: React.ReactNode }> = {
         <p>
           Account authentication is provided through Supabase. AniSora keeps a
           browser copy of your Studio projects, tasks, selected tools, and saved
-          asset links. When cloud synchronization is enabled for your
-          deployment and account, that project metadata is also stored in
-          Supabase so it can be restored after a refresh or on another browser.
-          Prompts, uploads, and generated media entered inside an embedded tool
-          are not part of this Studio metadata.
+          asset links. When cloud synchronization is enabled for your deployment
+          and account, that project metadata is also stored in Supabase so it
+          can be restored after a refresh or on another browser. Prompts,
+          uploads, and generated media entered inside an embedded tool are not
+          part of this Studio metadata.
         </p>
-        <h2>5. Availability and warranties</h2>
+        <h2>5. Studio Pro subscriptions</h2>
+        <p>
+          Studio Pro is a recurring subscription for AniSora-owned workspace
+          features such as cloud project synchronization and recovery. It does
+          not include generation credits, service guarantees, or paid access
+          from an embedded provider. The price, billing interval, and any
+          applicable tax are shown before checkout. Subscriptions renew until
+          canceled through the billing portal.
+        </p>
+        <h2>6. Cancellation and refunds</h2>
+        <p>
+          You can cancel from the Stripe-hosted billing portal. Unless the
+          checkout terms or applicable law require otherwise, access continues
+          through the paid billing period and completed subscription charges are
+          not automatically refundable. Contact support if a charge was made in
+          error. Canceling never authorizes AniSora to delete your project
+          metadata without a separate deletion request or action.
+        </p>
+        <h2>7. Availability and warranties</h2>
         <p>
           The service is provided on an “as available” basis. Features may be
           modified or removed as the product and its providers evolve. To the
@@ -65,8 +83,8 @@ const sections: Record<Tab, { title: string; content: React.ReactNode }> = {
         <p>
           AniSora stores a browser copy of Studio project names, tasks, selected
           tools, and saved asset links. Anyone with access to the same browser
-          profile may be able to access that copy. When cloud synchronization
-          is enabled, the same metadata is stored in Supabase under your account
+          profile may be able to access that copy. When cloud synchronization is
+          enabled, the same metadata is stored in Supabase under your account
           and protected by per-user access policies. AniSora does not include
           prompts, uploads, or generated media entered inside an embedded tool
           in this metadata sync.
@@ -82,17 +100,22 @@ const sections: Record<Tab, { title: string; content: React.ReactNode }> = {
         <p>
           Authentication cookies maintain your session. Analytics providers may
           use cookies or similar identifiers according to their configuration.
-          The browser copy remains until you remove it or clear browser
-          storage. Cloud-synchronized metadata remains until you delete it,
-          delete your account, or request deletion, subject to operational
-          backup retention.
+          The browser copy remains until you remove it or clear browser storage.
+          Cloud-synchronized metadata remains until you delete it, delete your
+          account, or request deletion, subject to operational backup retention.
         </p>
-        <h2>5. Contact and requests</h2>
+        <h2>5. Payments</h2>
+        <p>
+          Stripe processes checkout, payment method, billing address, invoice,
+          subscription, refund, and dispute information. AniSora stores Stripe
+          customer and subscription identifiers plus the minimum subscription
+          status needed to provide paid features. AniSora does not receive or
+          store complete payment card numbers.
+        </p>
+        <h2>6. Contact and requests</h2>
         <p>
           For privacy questions or account deletion requests, email{' '}
-          <a href="mailto:liaokuanya0907@gmail.com">
-            liaokuanya0907@gmail.com
-          </a>
+          <a href="mailto:liaokuanya0907@gmail.com">liaokuanya0907@gmail.com</a>
           . Requests are handled subject to identity verification and applicable
           law.
         </p>
@@ -122,7 +145,7 @@ export default async function LegalPage({
         </Link>
 
         <p className="mt-14 text-sm font-medium text-muted-foreground">
-          Last updated: July 30, 2026
+          Last updated: August 3, 2026
         </p>
         <h1 className="mt-3 text-4xl font-semibold tracking-tight md:text-5xl">
           {section.title}
