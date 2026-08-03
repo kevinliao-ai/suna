@@ -6,6 +6,14 @@ alter table public.anisora_subscriptions
   add column if not exists last_stripe_event_created bigint not null default 0
   check (last_stripe_event_created >= 0);
 
+alter table public.anisora_subscriptions
+  add column if not exists cancel_at timestamptz;
+
+drop function if exists public.upsert_anisora_subscription(
+  text, uuid, text, text, text, text, text, boolean,
+  timestamptz, timestamptz, timestamptz, jsonb, bigint
+);
+
 create or replace function public.upsert_anisora_subscription(
   p_stripe_subscription_id text,
   p_user_id uuid,
@@ -17,6 +25,7 @@ create or replace function public.upsert_anisora_subscription(
   p_cancel_at_period_end boolean,
   p_current_period_start timestamptz,
   p_current_period_end timestamptz,
+  p_cancel_at timestamptz,
   p_canceled_at timestamptz,
   p_metadata jsonb,
   p_stripe_event_created bigint
@@ -39,6 +48,7 @@ begin
     cancel_at_period_end,
     current_period_start,
     current_period_end,
+    cancel_at,
     canceled_at,
     metadata,
     last_stripe_event_created
@@ -53,6 +63,7 @@ begin
     p_cancel_at_period_end,
     p_current_period_start,
     p_current_period_end,
+    p_cancel_at,
     p_canceled_at,
     coalesce(p_metadata, '{}'::jsonb),
     p_stripe_event_created
@@ -67,6 +78,7 @@ begin
     cancel_at_period_end = excluded.cancel_at_period_end,
     current_period_start = excluded.current_period_start,
     current_period_end = excluded.current_period_end,
+    cancel_at = excluded.cancel_at,
     canceled_at = excluded.canceled_at,
     metadata = excluded.metadata,
     last_stripe_event_created = excluded.last_stripe_event_created
@@ -80,10 +92,10 @@ $$;
 
 revoke all on function public.upsert_anisora_subscription(
   text, uuid, text, text, text, text, text, boolean,
-  timestamptz, timestamptz, timestamptz, jsonb, bigint
+  timestamptz, timestamptz, timestamptz, timestamptz, jsonb, bigint
 ) from public, anon, authenticated;
 
 grant execute on function public.upsert_anisora_subscription(
   text, uuid, text, text, text, text, text, boolean,
-  timestamptz, timestamptz, timestamptz, jsonb, bigint
+  timestamptz, timestamptz, timestamptz, timestamptz, jsonb, bigint
 ) to service_role;

@@ -78,12 +78,14 @@ test('subscription writes reject out-of-order Stripe events atomically', async (
   const sql = (await readFile(eventOrderMigrationUrl, 'utf8')).toLowerCase();
 
   assert.match(sql, /last_stripe_event_created bigint not null default 0/);
+  assert.match(sql, /add column if not exists cancel_at timestamptz/);
   assert.match(sql, /on conflict \(stripe_subscription_id\) do update/);
   assert.match(
     sql,
     /anisora_subscriptions\.last_stripe_event_created\s*<= excluded\.last_stripe_event_created/,
   );
   assert.match(sql, /return coalesce\(applied, false\)/);
+  assert.match(sql, /cancel_at = excluded\.cancel_at/);
   assert.match(
     sql,
     /revoke all on function public\.upsert_anisora_subscription[\s\S]*from public, anon, authenticated/,

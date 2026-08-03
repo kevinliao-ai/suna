@@ -179,6 +179,7 @@ export async function upsertStripeSubscription(
       p_cancel_at_period_end: subscription.cancel_at_period_end,
       p_current_period_start: stripeTimestamp(item?.current_period_start),
       p_current_period_end: stripeTimestamp(item?.current_period_end),
+      p_cancel_at: stripeTimestamp(subscription.cancel_at),
       p_canceled_at: stripeTimestamp(subscription.canceled_at),
       p_metadata: subscription.metadata,
       p_stripe_event_created: stripeEventCreated,
@@ -192,7 +193,7 @@ export async function getUserBillingEntitlement(userId: string) {
   const { data, error } = await getBillingAdminClient()
     .from('anisora_subscriptions')
     .select(
-      'stripe_subscription_id,user_id,stripe_customer_id,stripe_price_id,plan_id,status,currency,cancel_at_period_end,current_period_start,current_period_end,canceled_at,updated_at',
+      'stripe_subscription_id,user_id,stripe_customer_id,stripe_price_id,plan_id,status,currency,cancel_at_period_end,current_period_start,current_period_end,cancel_at,canceled_at,updated_at',
     )
     .eq('user_id', userId)
     .order('current_period_end', { ascending: false, nullsFirst: false })

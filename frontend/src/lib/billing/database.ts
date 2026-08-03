@@ -27,6 +27,7 @@ type BillingSubscriptionRow = {
   cancel_at_period_end: boolean;
   current_period_start: string | null;
   current_period_end: string | null;
+  cancel_at: string | null;
   canceled_at: string | null;
   metadata: Json;
   last_stripe_event_created: number;
@@ -91,6 +92,7 @@ export type BillingDatabase = {
           p_cancel_at_period_end: boolean;
           p_current_period_start: string | null;
           p_current_period_end: string | null;
+          p_cancel_at: string | null;
           p_canceled_at: string | null;
           p_metadata: Json;
           p_stripe_event_created: number;
