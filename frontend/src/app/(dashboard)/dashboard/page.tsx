@@ -28,7 +28,6 @@ import {
   Cloud,
   CloudOff,
   Download,
-  ExternalLink,
   Film,
   FolderOpen,
   Home,
@@ -776,15 +775,6 @@ export default function DashboardPage() {
                   </button>
                 );
               })}
-              <a
-                href={activeTool.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="grid size-9 place-items-center rounded-full border border-black/10 bg-white hover:bg-zinc-100 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
-                aria-label="Open tool in a new tab"
-              >
-                <ExternalLink className="size-4" />
-              </a>
             </div>
           </div>
 

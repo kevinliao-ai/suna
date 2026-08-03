@@ -1,6 +1,6 @@
 'use client';
 
-import { ExternalLink, RefreshCw } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 interface ToolEmbedProps {
@@ -57,7 +57,7 @@ export function ToolEmbed({ title, url }: ToolEmbedProps) {
                 The provider may be busy or unavailable. Your AniSora project
                 metadata is unaffected.
               </p>
-              <div className="mt-5 flex flex-col justify-center gap-2 sm:flex-row">
+              <div className="mt-5 flex justify-center">
                 <button
                   type="button"
                   onClick={retry}
@@ -66,15 +66,6 @@ export function ToolEmbed({ title, url }: ToolEmbedProps) {
                   <RefreshCw className="size-4" />
                   Retry
                 </button>
-                <a
-                  href={url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition hover:bg-muted"
-                >
-                  <ExternalLink className="size-4" />
-                  Open provider
-                </a>
               </div>
             </div>
           )}
@@ -87,7 +78,7 @@ export function ToolEmbed({ title, url }: ToolEmbedProps) {
         className="h-full w-full border-0"
         allowFullScreen
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-downloads"
+        sandbox="allow-scripts allow-same-origin allow-forms allow-downloads"
         referrerPolicy="strict-origin-when-cross-origin"
         onLoad={markReady}
       />
