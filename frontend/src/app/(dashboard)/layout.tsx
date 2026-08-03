@@ -31,12 +31,5 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     );
   }
 
-  return (
-    <ClientLayout
-      showMaintenanceAlert={false}
-      onMaintenanceAlertChange={() => {}}
-    >
-      {children}
-    </ClientLayout>
-  );
+  return <ClientLayout>{children}</ClientLayout>;
 }

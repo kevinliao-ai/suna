@@ -7,14 +7,23 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from './alert';
 import { AlertTriangle } from 'lucide-react';
 
+export type FormActionState = {
+  message?: string;
+  success?: boolean;
+  redirectTo?: string;
+};
+
 type Props = Omit<ComponentProps<typeof Button>, 'formAction'> & {
   pendingText?: string;
-  formAction: (prevState: any, formData: FormData) => Promise<any>;
+  formAction: (
+    prevState: FormActionState,
+    formData: FormData,
+  ) => Promise<FormActionState>;
   errorMessage?: string;
 };
 
 const initialState = {
-  message: '',
+  message: undefined,
 };
 
 export function SubmitButton({

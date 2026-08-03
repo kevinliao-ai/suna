@@ -1,146 +1,47 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { useTheme } from 'next-themes';
-import { toast } from 'sonner';
-import { Icons } from './home/icons';
-// Using proper GitHub brand icon from Icons component
-import { useAuthMethodTracking } from '@/lib/stores/auth-tracking';
+import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
+
+import { Icons } from './home/icons';
+import { persistAuthReturnPath, sanitizeReturnPath } from '@/lib/auth-redirect';
+import { useAuthMethodTracking } from '@/lib/stores/auth-tracking';
+import { createClient } from '@/lib/supabase/client';
 
 interface GitHubSignInProps {
   returnUrl?: string;
 }
 
-interface AuthMessage {
-  type: 'github-auth-success' | 'github-auth-error';
-  message?: string;
-  returnUrl?: string;
-}
-
 export default function GitHubSignIn({ returnUrl }: GitHubSignInProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const { resolvedTheme } = useTheme();
-  
   const { wasLastMethod, markAsUsed } = useAuthMethodTracking('github');
-
-  const cleanupAuthState = useCallback(() => {
-    sessionStorage.removeItem('isGitHubAuthInProgress');
-    setIsLoading(false);
-  }, []);
-
-  const handleSuccess = useCallback(
-    (data: AuthMessage) => {
-      cleanupAuthState();
-
-      markAsUsed();
-
-      setTimeout(() => {
-        window.location.href = data.returnUrl || returnUrl || '/dashboard';
-      }, 100);
-    },
-    [cleanupAuthState, returnUrl, markAsUsed],
-  );
-
-  const handleError = useCallback(
-    (data: AuthMessage) => {
-      cleanupAuthState();
-      toast.error(data.message || 'GitHub sign-in failed. Please try again.');
-    },
-    [cleanupAuthState],
-  );
-
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent<AuthMessage>) => {
-      if (event.origin !== window.location.origin) {
-        console.warn(
-          'Rejected message from unauthorized origin:',
-          event.origin,
-        );
-        return;
-      }
-
-      if (!event.data?.type || typeof event.data.type !== 'string') {
-        return;
-      }
-
-      switch (event.data.type) {
-        case 'github-auth-success':
-          handleSuccess(event.data);
-          break;
-        case 'github-auth-error':
-          handleError(event.data);
-          break;
-        default:
-          break;
-      }
-    };
-
-    window.addEventListener('message', handleMessage);
-
-    return () => {
-      window.removeEventListener('message', handleMessage);
-    };
-  }, [handleSuccess, handleError]);
-
-  useEffect(() => {
-    return () => {
-      cleanupAuthState();
-    };
-  }, [cleanupAuthState]);
+  const supabase = createClient();
 
   const handleGitHubSignIn = async () => {
     if (isLoading) return;
 
-    let popupInterval: NodeJS.Timeout | null = null;
-
     try {
       setIsLoading(true);
+      const safeReturnUrl = sanitizeReturnPath(returnUrl);
+      persistAuthReturnPath(safeReturnUrl);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'github',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
 
-      if (returnUrl) {
-        sessionStorage.setItem('github-returnUrl', returnUrl || '/dashboard');
-      }
-
-      const popup = window.open(
-        `${window.location.origin}/auth/github-popup`,
-        'GitHubOAuth',
-        'width=500,height=600,scrollbars=yes,resizable=yes,status=yes,location=yes',
-      );
-
-      if (!popup) {
-        throw new Error(
-          'Popup was blocked. Please enable popups and try again.',
-        );
-      }
-
-      sessionStorage.setItem('isGitHubAuthInProgress', '1');
-
-      popupInterval = setInterval(() => {
-        if (popup.closed) {
-          if (popupInterval) {
-            clearInterval(popupInterval);
-            popupInterval = null;
-          }
-
-          setTimeout(() => {
-            if (sessionStorage.getItem('isGitHubAuthInProgress')) {
-              cleanupAuthState();
-              toast.error('GitHub sign-in was cancelled or not completed.');
-            }
-          }, 500);
-        }
-      }, 1000);
+      if (error) throw error;
+      markAsUsed();
     } catch (error) {
       console.error('GitHub sign-in error:', error);
-      if (popupInterval) {
-        clearInterval(popupInterval);
-      }
-      cleanupAuthState();
       toast.error(
         error instanceof Error
           ? error.message
-          : 'Failed to start GitHub sign-in',
+          : 'Failed to sign in with GitHub',
       );
+      setIsLoading(false);
     }
   };
 
@@ -164,7 +65,7 @@ export default function GitHubSignIn({ returnUrl }: GitHubSignInProps) {
           {isLoading ? 'Signing in...' : 'Continue with GitHub'}
         </span>
       </button>
-      
+
       {wasLastMethod && (
         <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-background shadow-sm">
           <div className="w-full h-full bg-green-500 rounded-full animate-pulse" />
