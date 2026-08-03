@@ -78,8 +78,10 @@ returning-user OAuth tests pass.
 GitHub and Google returning-user OAuth have now passed end to end on the listed
 Preview: the user returned to `/dashboard`, the session survived refresh, and
 an authenticated visit to `/auth` was redirected back to the workspace.
-Signing out and returning through Google preserved that user's local Studio
-workspace.
+Google was re-verified against `anisora-staging` on 2026-08-03 by signing out,
+starting a fresh `Continue with Google` flow, and returning to `/dashboard` as
+`liaokuanya0907@gmail.com`. The user's two cloud-synced Studio projects were
+still present after the new session was established.
 
 Staging email authentication was completed end to end on 2026-07-30 with the
 Gmail alias `liaokuanya0907+anisora-qa-01@gmail.com`:
@@ -175,14 +177,12 @@ dashboard still shows no separate Redirect URL entries and returns an error
 when `Add URL` is selected. Same-origin email confirmation and recovery links
 nonetheless completed successfully through the exact callback routes.
 
-The shared Google Cloud OAuth client now also allows the staging Supabase
-callback `https://gkoncguonhidpxjwxbnt.supabase.co/auth/v1/callback`. The
-staging Supabase Google provider remains disabled because its client secret
-has not been copied into staging. Do not reveal or reuse that credential
-without an explicit provider-rollout decision. Two Preview application
-callback URLs were also added directly to the Google client during manual
-setup; they are not the Google-to-Supabase callback and should be removed
-after the staging Supabase allow-list issue is resolved.
+The dedicated `Anisora Staging` Google OAuth client allows the Supabase
+callback `https://gkoncguonhidpxjwxbnt.supabase.co/auth/v1/callback`, and the
+staging Supabase Google provider is enabled. A fresh Google sign-in passed end
+to end on 2026-08-03. Google should redirect only to Supabase here; Preview
+application callback URLs are not Google OAuth redirect URIs and should not be
+added to this client.
 
 ### Preview cloud-sync acceptance
 
