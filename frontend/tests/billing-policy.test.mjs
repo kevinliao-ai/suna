@@ -64,6 +64,9 @@ test('Webhook verifies the raw payload signature and records processed event IDs
   assert.match(source, /stripe-signature/);
   assert.match(source, /anisora_stripe_events/);
   assert.match(source, /event\.id/);
+  assert.match(source, /Stripe webhook processed/);
+  assert.match(source, /Stripe webhook duplicate ignored/);
+  assert.doesNotMatch(source, /console\.(info|log)\([^\n]*payload/);
 });
 
 test('billing RLS verification is transactional and checks two users', async () => {

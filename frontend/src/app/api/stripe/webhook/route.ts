@@ -119,6 +119,10 @@ export async function POST(request: NextRequest) {
       .maybeSingle();
     if (readError) throw readError;
     if (processed) {
+      console.info('Stripe webhook duplicate ignored:', {
+        eventId: event.id,
+        eventType: event.type,
+      });
       return NextResponse.json({ received: true, duplicate: true });
     }
 
@@ -132,6 +136,12 @@ export async function POST(request: NextRequest) {
         object_id: objectId(event.data.object),
       });
     if (eventError && eventError.code !== '23505') throw eventError;
+
+    console.info('Stripe webhook processed:', {
+      eventId: event.id,
+      eventType: event.type,
+      objectId: objectId(event.data.object),
+    });
 
     return NextResponse.json({ received: true });
   } catch (error) {
