@@ -1,12 +1,13 @@
 export const EMBED_HOSTS = new Set([
   'bilibili-index-anisora.ms.show',
   'indexteam-indextts-2-demo.ms.show',
+  'indexteam-indextts-2-demo.hf.space',
 ]);
 
 export const DEFAULT_ANISORA_EMBED_URL =
   'https://bilibili-index-anisora.ms.show/';
 export const DEFAULT_INDEX_TTS_EMBED_URL =
-  'https://indexteam-indextts-2-demo.ms.show/?__theme=dark&backend_url=/';
+  'https://indexteam-indextts-2-demo.hf.space/?__theme=dark';
 
 export function resolveEmbedUrl(
   value: string | undefined,
