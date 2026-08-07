@@ -41,6 +41,12 @@ export function Navbar() {
         <div className="ml-auto hidden items-center gap-2 md:flex">
           <ThemeToggle />
           <Link
+            href="/pricing"
+            className="rounded-full bg-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-500"
+          >
+            Upgrade
+          </Link>
+          <Link
             href={user ? '/dashboard' : '/auth?returnUrl=/dashboard'}
             className="rounded-full bg-foreground px-4 py-2 text-sm font-medium text-background transition hover:opacity-80"
           >
@@ -75,6 +81,13 @@ export function Navbar() {
             <div className="mt-2 flex items-center gap-2 border-t border-border pt-3">
               <ThemeToggle />
               <Link
+                href="/pricing"
+                onClick={() => setOpen(false)}
+                className="rounded-lg bg-violet-600 px-4 py-2 text-center text-sm font-semibold text-white"
+              >
+                Upgrade
+              </Link>
+              <Link
                 href={user ? '/dashboard' : '/auth?returnUrl=/dashboard'}
                 onClick={() => setOpen(false)}
                 className="flex-1 rounded-lg bg-foreground px-4 py-2 text-center text-sm font-medium text-background"
@@ -88,3 +101,4 @@ export function Navbar() {
     </header>
   );
 }
+
