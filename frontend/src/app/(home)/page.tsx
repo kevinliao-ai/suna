@@ -6,6 +6,7 @@ import { HeroSection } from '@/components/home/sections/hero-section';
 import { OpenSourceSection } from '@/components/home/sections/open-source-section';
 import { FAQSection } from '@/components/home/sections/faq-section';
 import { UseCasesSection } from '@/components/home/sections/use-cases-section';
+import { PricingPreviewSection } from '@/components/home/sections/pricing-preview-section';
 
 export default function Home() {
   return (
@@ -13,6 +14,7 @@ export default function Home() {
       <div className="w-full divide-y divide-border">
         <HeroSection />
         <UseCasesSection />
+        <PricingPreviewSection />
         <OpenSourceSection />
         <FAQSection />
         <CTASection />
@@ -21,3 +23,4 @@ export default function Home() {
     </main>
   );
 }
+
