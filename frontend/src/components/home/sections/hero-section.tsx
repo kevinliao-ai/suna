@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, Github } from 'lucide-react';
+import { ArrowRight, Sparkles } from 'lucide-react';
 import { useScroll } from 'motion/react';
 import { HeroVideoSection } from '@/components/home/sections/hero-video-section';
 import { FlickeringGrid } from '@/components/home/ui/flickering-grid';
@@ -82,13 +82,11 @@ export function HeroSection() {
               <ArrowRight className="size-4" />
             </Link>
             <Link
-              href={hero.githubUrl}
-              target="_blank"
-              rel="noopener noreferrer"
+              href="/pricing"
               className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-border bg-background/80 px-6 text-sm font-medium text-foreground backdrop-blur transition hover:bg-accent"
             >
-              <Github className="size-4" />
-              View the model
+              <Sparkles className="size-4 text-violet-600 dark:text-violet-400" />
+              Studio Pro from $5.99
             </Link>
           </div>
         </div>
@@ -136,3 +134,4 @@ function HeroGrid({
     </div>
   );
 }
+
