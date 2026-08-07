@@ -114,10 +114,9 @@ const sections: Record<Tab, { title: string; content: React.ReactNode }> = {
         </p>
         <h2>6. Contact and requests</h2>
         <p>
-          For privacy questions or account deletion requests, email{' '}
-          <a href="mailto:liaokuanya0907@gmail.com">liaokuanya0907@gmail.com</a>
-          . Requests are handled subject to identity verification and applicable
-          law.
+          For privacy questions or account deletion requests, use the support
+          channel provided in AniSora Studio. Requests are handled subject to
+          identity verification and applicable law.
         </p>
       </>
     ),
@@ -174,3 +173,4 @@ export default async function LegalPage({
     </main>
   );
 }
+
