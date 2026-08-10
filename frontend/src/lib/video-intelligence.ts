@@ -19,6 +19,15 @@ export interface VideoModelProfile {
   planningControl: number;
 }
 
+export interface VideoModelComparison {
+  slug: string;
+  title: string;
+  summary: string;
+  modelSlugs: [string, string];
+  intent: string;
+  decision: string;
+}
+
 export const videoModels: VideoModelProfile[] = [
   {
     slug: 'runway-gen-4',
@@ -130,6 +139,49 @@ export const videoModels: VideoModelProfile[] = [
   },
 ];
 
+export const videoModelComparisons: VideoModelComparison[] = [
+  {
+    slug: 'runway-gen-4-vs-luma-ray',
+    title: 'Runway Gen-4 vs Luma Ray',
+    summary:
+      'Compare creator-friendly iteration against keyframe-heavy production control for short AI video batches.',
+    modelSlugs: ['runway-gen-4', 'luma-ray'],
+    intent: 'Best for creators deciding between fast iteration and more directed video modification workflows.',
+    decision:
+      'Start with Runway when speed and polished creator UX matter most. Test Luma Ray when keyframes, video-to-video, or higher-control variants are central to the workflow.',
+  },
+  {
+    slug: 'runway-gen-4-vs-google-veo',
+    title: 'Runway Gen-4 vs Google Veo',
+    summary:
+      'Compare a mature creator workflow with a high-end cinematic model family for narrative and ad experiments.',
+    modelSlugs: ['runway-gen-4', 'google-veo'],
+    intent: 'Best for teams choosing between immediate creator operations and high-fidelity cinematic exploration.',
+    decision:
+      'Use Runway for repeatable creator batches today. Evaluate Veo when realism, cinematic motion, and Google ecosystem access are more important than immediate workflow certainty.',
+  },
+  {
+    slug: 'kling-ai-vs-wan-video',
+    title: 'Kling AI vs Wan Video',
+    summary:
+      'Compare a broad creator suite with a developer-facing API model family for Asia-aware video workflows.',
+    modelSlugs: ['kling-ai', 'wan-video'],
+    intent: 'Best for creators or builders evaluating consumer suite breadth against programmable API deployment.',
+    decision:
+      'Use Kling for hands-on creator experiments and multi-modal tools. Explore Wan Video when API automation, region strategy, or backend orchestration matters more.',
+  },
+  {
+    slug: 'google-veo-vs-luma-ray',
+    title: 'Google Veo vs Luma Ray',
+    summary:
+      'Compare cinematic realism and ecosystem access against keyframe control and production-oriented editing surfaces.',
+    modelSlugs: ['google-veo', 'luma-ray'],
+    intent: 'Best for teams deciding where to run premium concept tests before building a repeatable production process.',
+    decision:
+      'Evaluate Veo for cinematic realism and narrative motion tests. Evaluate Luma Ray when keyframes, video modification, and shot-level control are more important.',
+  },
+];
+
 export const videoModelUseCases = [
   {
     title: 'Anime scene previsualization',
@@ -147,6 +199,25 @@ export const videoModelUseCases = [
 
 export function getActiveVideoModels() {
   return videoModels.filter((model) => model.status === 'active');
+}
+
+export function getVideoModel(slug: string) {
+  return videoModels.find((model) => model.slug === slug);
+}
+
+export function getVideoModelComparison(slug: string) {
+  return videoModelComparisons.find((comparison) => comparison.slug === slug);
+}
+
+export function getModelsForComparison(comparison: VideoModelComparison) {
+  return comparison.modelSlugs.map((slug) => getVideoModel(slug)).filter(Boolean) as [
+    VideoModelProfile,
+    VideoModelProfile,
+  ];
+}
+
+export function getModelFitScore(model: VideoModelProfile) {
+  return model.planningQuality * 2 + model.planningControl + model.planningSpeed - model.planningCost;
 }
 
 export function estimateVideoBudget({
@@ -170,8 +241,7 @@ export function estimateVideoBudget({
       name: model.name,
       provider: model.provider,
       estimatedCredits,
-      fitScore:
-        model.planningQuality * 2 + model.planningControl + model.planningSpeed - model.planningCost,
+      fitScore: getModelFitScore(model),
     };
   });
 }
