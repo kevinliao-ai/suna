@@ -7,8 +7,8 @@ export const siteConfig = {
     links: [
       { id: 1, name: 'Home', href: '#hero' },
       { id: 2, name: 'Use Cases', href: '#showcase' },
-      { id: 3, name: 'Open Source', href: '#open-source' },
-      { id: 4, name: 'FAQ', href: '#faq' },
+      { id: 3, name: 'Models', href: '/models' },
+      { id: 4, name: 'Calculator', href: '/video-cost-calculator' },
       { id: 5, name: 'Index-TTS', href: '/index-tts' },
       { id: 6, name: 'Watermark Tool', href: '/sora-watermark-remove' },
       { id: 7, name: 'Pricing', href: '/pricing' },
@@ -84,10 +84,10 @@ export const siteConfig = {
       ],
     },
     {
-      title: 'Tools',
+      title: 'Research',
       links: [
-        { id: 1, title: 'Home', url: '#hero' },
-        { id: 2, title: 'Use Cases', url: '#showcase' },
+        { id: 1, title: 'Model directory', url: '/models' },
+        { id: 2, title: 'Cost calculator', url: '/video-cost-calculator' },
         { id: 3, title: 'Index-TTS', url: '/index-tts' },
         {
           id: 4,
