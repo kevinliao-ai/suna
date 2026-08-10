@@ -2,8 +2,9 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowLeft, ArrowRight, ExternalLink } from 'lucide-react';
 import { StructuredData } from '@/components/seo/structured-data';
+import { VideoConversionSection, VideoSeoFaqSection } from '@/components/video-intelligence/video-seo-sections';
 import { siteConfig } from '@/lib/site';
-import { getModelsForComparison, getVideoModelComparison, videoModelComparisons } from '@/lib/video-intelligence';
+import { getComparisonFaq, getModelsForComparison, getVideoModelComparison, videoModelComparisons } from '@/lib/video-intelligence';
 
 interface ComparisonPageProps {
   params: Promise<{ slug: string }>;
@@ -46,6 +47,7 @@ export default async function ComparisonPage({ params }: ComparisonPageProps) {
   }
 
   const models = getModelsForComparison(comparison);
+  const faq = getComparisonFaq(comparison);
 
   return (
     <main className="min-h-screen bg-background text-foreground">
@@ -56,6 +58,7 @@ export default async function ComparisonPage({ params }: ComparisonPageProps) {
           { name: 'AI Video Models', url: `${siteConfig.url}/models` },
           { name: comparison.title, url: `${siteConfig.url}/compare/${comparison.slug}` },
         ]}
+        faq={faq}
       />
 
       <section className="px-6 py-14 sm:py-18">
@@ -170,6 +173,13 @@ export default async function ComparisonPage({ params }: ComparisonPageProps) {
           </aside>
         </div>
       </section>
+
+      <VideoConversionSection
+        title={`Turn the ${comparison.title} decision into a testable batch.`}
+        description="Use AniSora to estimate the batch, choose a provider, and keep your model decision attached to prompts, references, and project tasks."
+      />
+
+      <VideoSeoFaqSection items={faq} />
     </main>
   );
 }
