@@ -1,9 +1,29 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
-import { ArrowRight, ClipboardList, Download, Film, Sparkles } from 'lucide-react';
-import { createAnimeDirectorPlan, serializeDirectorPlan, type ShotPriority } from '@/lib/anime-director';
+import { useEffect, useMemo, useState } from 'react';
+import {
+  ArrowRight,
+  Check,
+  ClipboardList,
+  Cloud,
+  Download,
+  Film,
+  LoaderCircle,
+  Sparkles,
+} from 'lucide-react';
+
+import {
+  loadDirectorProjects,
+  saveDirectorProject,
+  type SavedDirectorProject,
+} from '@/lib/anime-director-projects';
+import {
+  createAnimeDirectorPlan,
+  serializeDirectorPlan,
+  type ShotPriority,
+} from '@/lib/anime-director';
+import { createClient } from '@/lib/supabase/client';
 
 const priorities: Array<{ id: ShotPriority; label: string; description: string }> = [
   { id: 'speed', label: 'Faster', description: 'Block the scene quickly.' },
@@ -12,18 +32,57 @@ const priorities: Array<{ id: ShotPriority; label: string; description: string }
   { id: 'control', label: 'More control', description: 'Reference-led shots.' },
 ];
 
-const sampleScript = `A young mage stands on a rooftop at sunset.\nShe sees a glowing train crossing the sky.\nA black cat jumps onto the railing and speaks a warning.\nThe mage opens her notebook and the city lights turn into floating runes.`;
+const sampleScript = `A young mage stands on a rooftop at sunset.
+She sees a glowing train crossing the sky.
+A black cat jumps onto the railing and speaks a warning.
+The mage opens her notebook and the city lights turn into floating runes.`;
 
 export function DirectorPlanner() {
+  const supabase = useMemo(() => createClient(), []);
   const [projectTitle, setProjectTitle] = useState('Sky Train Opening');
   const [style, setStyle] = useState('cinematic anime, warm sunset light, detailed city background');
   const [script, setScript] = useState(sampleScript);
   const [priority, setPriority] = useState<ShotPriority>('control');
+  const [userId, setUserId] = useState<string | null>(null);
+  const [savedProjects, setSavedProjects] = useState<SavedDirectorProject[]>([]);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | undefined>();
+  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [saveMessage, setSaveMessage] = useState('');
 
   const plan = useMemo(
     () => createAnimeDirectorPlan({ script, projectTitle, style, priority }),
     [priority, projectTitle, script, style],
   );
+
+  useEffect(() => {
+    let active = true;
+
+    async function load() {
+      const { data, error } = await supabase.auth.getUser();
+      if (!active) return;
+
+      if (error || !data.user) {
+        setSaveMessage('Sign in to save projects to your Studio.');
+        return;
+      }
+
+      setUserId(data.user.id);
+
+      try {
+        const projects = await loadDirectorProjects(supabase, data.user.id);
+        if (active) setSavedProjects(projects);
+      } catch {
+        if (active) {
+          setSaveMessage('Cloud projects are unavailable right now. Your plan can still be exported.');
+        }
+      }
+    }
+
+    void load();
+    return () => {
+      active = false;
+    };
+  }, [supabase]);
 
   const downloadPlan = () => {
     const blob = new Blob([serializeDirectorPlan(plan)], { type: 'application/json' });
@@ -35,6 +94,57 @@ export function DirectorPlanner() {
     anchor.click();
     anchor.remove();
     window.setTimeout(() => URL.revokeObjectURL(href), 0);
+  };
+
+  const savePlan = async () => {
+    if (!userId) {
+      setSaveState('error');
+      setSaveMessage('Sign in to save a Studio project.');
+      return;
+    }
+
+    setSaveState('saving');
+    setSaveMessage('');
+    const isNewProject = !selectedProjectId;
+
+    try {
+      const saved = await saveDirectorProject(supabase, userId, {
+        id: selectedProjectId,
+        title: plan.title,
+        style,
+        script,
+        priority,
+        plan,
+      });
+
+      setSelectedProjectId(saved.id);
+      setSavedProjects((current) => [
+        saved,
+        ...current.filter((project) => project.id !== saved.id),
+      ]);
+      setSaveState('saved');
+      setSaveMessage(
+        isNewProject
+          ? 'Saved to Studio. Each shot is now a project task.'
+          : 'Saved your revised plan. Existing project tasks were preserved.',
+      );
+    } catch {
+      setSaveState('error');
+      setSaveMessage('Could not save this project. Please try again.');
+    }
+  };
+
+  const openSavedProject = (projectId: string) => {
+    const saved = savedProjects.find((project) => project.id === projectId);
+    if (!saved) return;
+
+    setSelectedProjectId(saved.id);
+    setProjectTitle(saved.title);
+    setStyle(saved.style);
+    setScript(saved.script);
+    setPriority(saved.priority);
+    setSaveState('idle');
+    setSaveMessage(`Loaded ${saved.title}.`);
   };
 
   const taskList = plan.shots.flatMap((shot) => [
@@ -66,6 +176,15 @@ export function DirectorPlanner() {
             >
               <Download className="size-4" /> Export plan
             </button>
+            <button
+              type="button"
+              onClick={() => void savePlan()}
+              disabled={saveState === 'saving'}
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {saveState === 'saving' ? <LoaderCircle className="size-4 animate-spin" /> : saveState === 'saved' ? <Check className="size-4" /> : <Cloud className="size-4" />}
+              {saveState === 'saving' ? 'Saving…' : 'Save to Studio'}
+            </button>
             <Link
               href="/dashboard?tool=anisora"
               className="inline-flex items-center justify-center gap-2 rounded-lg bg-zinc-950 px-4 py-2 text-sm font-medium text-white transition hover:opacity-85 dark:bg-white dark:text-zinc-950"
@@ -77,9 +196,24 @@ export function DirectorPlanner() {
 
         <div className="grid gap-5 py-6 xl:grid-cols-[420px_minmax(0,1fr)]">
           <section className="rounded-xl border border-black/10 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.04]">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">
-              Script to shots
-            </p>
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">
+                Script to shots
+              </p>
+              {savedProjects.length > 0 && (
+                <select
+                  aria-label="Saved Director projects"
+                  value={selectedProjectId || ''}
+                  onChange={(event) => openSavedProject(event.target.value)}
+                  className="max-w-48 rounded-md border border-black/10 bg-white px-2 py-1 text-xs dark:border-white/10 dark:bg-zinc-950"
+                >
+                  <option value="">Saved projects</option>
+                  {savedProjects.map((project) => (
+                    <option key={project.id} value={project.id}>{project.title}</option>
+                  ))}
+                </select>
+              )}
+            </div>
             <div className="mt-5 grid gap-4">
               <label className="grid gap-2 text-sm font-medium">
                 Project title
@@ -131,6 +265,15 @@ export function DirectorPlanner() {
                   ))}
                 </div>
               </div>
+              {saveMessage && (
+                <p className={`rounded-lg px-3 py-2 text-xs ${
+                  saveState === 'error'
+                    ? 'bg-red-500/10 text-red-700 dark:text-red-300'
+                    : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+                }`}>
+                  {saveMessage}
+                </p>
+              )}
             </div>
           </section>
 
