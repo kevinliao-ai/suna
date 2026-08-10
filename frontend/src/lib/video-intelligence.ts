@@ -28,6 +28,11 @@ export interface VideoModelComparison {
   decision: string;
 }
 
+export interface VideoIntelligenceFaq {
+  question: string;
+  answer: string;
+}
+
 export const videoModels: VideoModelProfile[] = [
   {
     slug: 'runway-gen-4',
@@ -196,6 +201,57 @@ export const videoModelUseCases = [
     description: 'Help creators choose between embedded tools, API providers, and open-source experiments without guessing blindly.',
   },
 ];
+
+export const videoPlanningFaq: VideoIntelligenceFaq[] = [
+  {
+    question: 'Does AniSora provide official pricing for these video models?',
+    answer:
+      'No. AniSora uses planning scores to compare relative effort. Always verify current provider pricing, rights, and rate limits on the official provider website before spending on a production batch.',
+  },
+  {
+    question: 'Which model should I try first for anime-style short videos?',
+    answer:
+      'Start with the model that best matches your constraint: fast iteration, reference control, cinematic realism, or API automation. AniSora helps organize the research and batch plan before you commit to a provider.',
+  },
+  {
+    question: 'What does Studio Pro add to these model pages?',
+    answer:
+      'Studio Pro is for AniSora-owned project organization, cloud sync, and recovery. It does not replace third-party generation credits, but it helps keep prompts, tasks, references, and model decisions together.',
+  },
+];
+
+export function getModelFaq(model: VideoModelProfile): VideoIntelligenceFaq[] {
+  return [
+    {
+      question: `What is ${model.provider} ${model.name} best for?`,
+      answer: `${model.provider} ${model.name} is best considered for ${model.bestFor.join(', ').toLowerCase()}. Use AniSora to compare that fit against other video models before planning a paid batch.`,
+    },
+    {
+      question: `Can AniSora generate videos directly with ${model.name}?`,
+      answer:
+        'AniSora currently uses these pages for planning and model selection. Actual generation remains governed by each external provider or embedded tool surface.',
+    },
+    ...videoPlanningFaq,
+  ];
+}
+
+export function getComparisonFaq(comparison: VideoModelComparison): VideoIntelligenceFaq[] {
+  const models = getModelsForComparison(comparison);
+  const [first, second] = models;
+
+  return [
+    {
+      question: `Which is better: ${comparison.title}?`,
+      answer: comparison.decision,
+    },
+    {
+      question: `Should I test both ${first.name} and ${second.name}?`,
+      answer:
+        'For serious creative batches, yes. Run a small batch through both models when the decision affects campaign budget, character consistency, or production workflow.',
+    },
+    ...videoPlanningFaq,
+  ];
+}
 
 export function getActiveVideoModels() {
   return videoModels.filter((model) => model.status === 'active');
