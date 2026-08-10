@@ -2,8 +2,9 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowLeft, ArrowRight, ExternalLink, Gauge, SlidersHorizontal, Timer, WalletCards } from 'lucide-react';
 import { StructuredData } from '@/components/seo/structured-data';
+import { VideoConversionSection, VideoSeoFaqSection } from '@/components/video-intelligence/video-seo-sections';
 import { siteConfig } from '@/lib/site';
-import { getModelFitScore, getVideoModel, videoModelComparisons, videoModels } from '@/lib/video-intelligence';
+import { getModelFaq, getModelFitScore, getVideoModel, videoModelComparisons, videoModels } from '@/lib/video-intelligence';
 
 interface ModelDetailPageProps {
   params: Promise<{ slug: string }>;
@@ -54,6 +55,7 @@ export default async function ModelDetailPage({ params }: ModelDetailPageProps) 
   const relatedComparisons = videoModelComparisons.filter((comparison) =>
     comparison.modelSlugs.includes(model.slug),
   );
+  const faq = getModelFaq(model);
 
   return (
     <main className="min-h-screen bg-background text-foreground">
@@ -64,6 +66,7 @@ export default async function ModelDetailPage({ params }: ModelDetailPageProps) 
           { name: 'AI Video Models', url: `${siteConfig.url}/models` },
           { name: model.name, url: `${siteConfig.url}/models/${model.slug}` },
         ]}
+        faq={faq}
       />
 
       <section className="px-6 py-14 sm:py-18">
@@ -159,6 +162,13 @@ export default async function ModelDetailPage({ params }: ModelDetailPageProps) 
           </article>
         </div>
       </section>
+
+      <VideoConversionSection
+        title={`Plan a ${model.provider} ${model.name} batch before you spend credits.`}
+        description="Use the calculator to estimate a small test batch, then keep prompts, references, tasks, and provider decisions organized inside AniSora Studio."
+      />
+
+      <VideoSeoFaqSection items={faq} />
 
       {relatedComparisons.length ? (
         <section className="border-t border-border px-6 py-14">
