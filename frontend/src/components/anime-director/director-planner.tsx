@@ -105,6 +105,7 @@ export function DirectorPlanner() {
 
     setSaveState('saving');
     setSaveMessage('');
+    const isNewProject = !selectedProjectId;
 
     try {
       const saved = await saveDirectorProject(supabase, userId, {
@@ -122,7 +123,11 @@ export function DirectorPlanner() {
         ...current.filter((project) => project.id !== saved.id),
       ]);
       setSaveState('saved');
-      setSaveMessage('Saved to Studio. Each shot is now a project task.');
+      setSaveMessage(
+        isNewProject
+          ? 'Saved to Studio. Each shot is now a project task.'
+          : 'Saved your revised plan. Existing project tasks were preserved.',
+      );
     } catch {
       setSaveState('error');
       setSaveMessage('Could not save this project. Please try again.');
