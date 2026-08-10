@@ -7,6 +7,7 @@ import { OpenSourceSection } from '@/components/home/sections/open-source-sectio
 import { FAQSection } from '@/components/home/sections/faq-section';
 import { UseCasesSection } from '@/components/home/sections/use-cases-section';
 import { PricingPreviewSection } from '@/components/home/sections/pricing-preview-section';
+import { VideoIntelligenceSection } from '@/components/home/sections/video-intelligence-section';
 
 export default function Home() {
   return (
@@ -14,6 +15,7 @@ export default function Home() {
       <div className="w-full divide-y divide-border">
         <HeroSection />
         <UseCasesSection />
+        <VideoIntelligenceSection />
         <PricingPreviewSection />
         <OpenSourceSection />
         <FAQSection />
