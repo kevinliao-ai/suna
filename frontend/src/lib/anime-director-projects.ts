@@ -101,6 +101,7 @@ export async function saveDirectorProject(
   userId: string,
   input: DirectorProjectInput,
 ): Promise<SavedDirectorProject> {
+  const isNewProject = !input.id;
   const projectId = input.id || crypto.randomUUID();
   const now = new Date().toISOString();
   const settings = {
@@ -131,34 +132,30 @@ export async function saveDirectorProject(
 
   if (projectError) throw new Error(projectError.message);
 
-  const { error: clearTasksError } = await supabase
-    .from('anisora_tasks')
-    .delete()
-    .eq('user_id', userId)
-    .eq('project_id', projectId);
+  // Existing project tasks may already be connected to generated outputs.
+  // Only seed initial Director tasks; later saves update the plan metadata only.
+  if (isNewProject) {
+    const tasks = input.plan.shots.map((shot) => ({
+      project_id: projectId,
+      user_id: userId,
+      title: `Generate draft: ${shot.title}`.slice(0, 240),
+      status: 'todo',
+      provider: 'director-planner',
+      input: {
+        source: 'anime-director',
+        shot,
+      },
+      output: {},
+      updated_at: now,
+    }));
 
-  if (clearTasksError) throw new Error(clearTasksError.message);
+    if (tasks.length > 0) {
+      const { error: taskError } = await supabase
+        .from('anisora_tasks')
+        .insert(tasks);
 
-  const tasks = input.plan.shots.map((shot) => ({
-    project_id: projectId,
-    user_id: userId,
-    title: `Generate draft: ${shot.title}`.slice(0, 240),
-    status: 'todo',
-    provider: 'director-planner',
-    input: {
-      source: 'anime-director',
-      shot,
-    },
-    output: {},
-    updated_at: now,
-  }));
-
-  if (tasks.length > 0) {
-    const { error: taskError } = await supabase
-      .from('anisora_tasks')
-      .insert(tasks);
-
-    if (taskError) throw new Error(taskError.message);
+      if (taskError) throw new Error(taskError.message);
+    }
   }
 
   return {
