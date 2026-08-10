@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next';
 import { siteConfig } from '@/lib/site';
+import { videoModelComparisons, videoModels } from '@/lib/video-intelligence';
 
 const lastModified = new Date('2026-08-10T00:00:00.000Z');
 
@@ -7,6 +8,16 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const routes = [
     { path: '/', priority: 1, changeFrequency: 'weekly' as const },
     { path: '/models', priority: 0.85, changeFrequency: 'weekly' as const },
+    ...videoModels.map((model) => ({
+      path: `/models/${model.slug}`,
+      priority: model.status === 'active' ? 0.78 : 0.55,
+      changeFrequency: 'weekly' as const,
+    })),
+    ...videoModelComparisons.map((comparison) => ({
+      path: `/compare/${comparison.slug}`,
+      priority: 0.76,
+      changeFrequency: 'weekly' as const,
+    })),
     {
       path: '/video-cost-calculator',
       priority: 0.8,
