@@ -78,10 +78,10 @@ export function VideoConversionSection({
             Pick a model, estimate the batch, then keep the creative plan recoverable across sessions and devices.
           </p>
           <Link
-            href="/auth?returnUrl=/dashboard"
+            href="/auth?returnUrl=/dashboard/director"
             className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-violet-600 hover:text-violet-500"
           >
-            Open Studio <ArrowRight className="size-4" />
+            Open Director Planner <ArrowRight className="size-4" />
           </Link>
         </aside>
       </div>
