@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { ArrowRight, BadgeCheck, CircleDollarSign, ExternalLink, Gauge, Layers, SlidersHorizontal } from 'lucide-react';
 import { StructuredData } from '@/components/seo/structured-data';
 import { siteConfig } from '@/lib/site';
-import { videoModels, videoModelUseCases } from '@/lib/video-intelligence';
+import { videoModelComparisons, videoModels, videoModelUseCases } from '@/lib/video-intelligence';
 
 export const metadata = {
   title: 'AI Video Model Directory',
@@ -75,8 +75,8 @@ export default function ModelsPage() {
             </article>
             <article className="rounded-lg border border-border p-5">
               <SlidersHorizontal className="size-5 text-sky-600" />
-              <p className="mt-4 text-2xl font-semibold">3</p>
-              <p className="mt-1 text-sm text-muted-foreground">Workflow scenarios</p>
+              <p className="mt-4 text-2xl font-semibold">{videoModelComparisons.length}</p>
+              <p className="mt-1 text-sm text-muted-foreground">Comparison guides</p>
             </article>
           </div>
         </div>
@@ -157,15 +157,50 @@ export default function ModelsPage() {
                     <CircleDollarSign className="size-3" /> Cost {model.planningCost}/5
                   </span>
                 </div>
-                <a
-                  href={model.officialUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-violet-600 hover:text-violet-500"
-                >
-                  Official source <ExternalLink className="size-4" />
-                </a>
+                <div className="mt-5 flex flex-wrap gap-4">
+                  <Link
+                    href={`/models/${model.slug}`}
+                    className="inline-flex items-center gap-2 text-sm font-medium text-violet-600 hover:text-violet-500"
+                  >
+                    Read profile <ArrowRight className="size-4" />
+                  </Link>
+                  <a
+                    href={model.officialUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground"
+                  >
+                    Official source <ExternalLink className="size-4" />
+                  </a>
+                </div>
               </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="border-t border-border px-6 py-16">
+        <div className="mx-auto max-w-6xl">
+          <div className="mb-8 max-w-2xl">
+            <p className="text-sm font-medium text-violet-600 dark:text-violet-400">
+              Comparison guides
+            </p>
+            <h2 className="mt-2 text-3xl font-semibold tracking-tight">
+              High-intent model decisions
+            </h2>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            {videoModelComparisons.map((comparison) => (
+              <Link
+                key={comparison.slug}
+                href={`/compare/${comparison.slug}`}
+                className="rounded-lg border border-border p-5 transition hover:bg-accent"
+              >
+                <h3 className="text-lg font-semibold">{comparison.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  {comparison.summary}
+                </p>
+              </Link>
             ))}
           </div>
         </div>
