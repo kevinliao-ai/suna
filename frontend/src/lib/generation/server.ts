@@ -1,4 +1,4 @@
-import { createHash, createPublicKey, verify } from 'node:crypto';
+import { createHash, createHmac, createPublicKey, verify } from 'node:crypto';
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
@@ -160,4 +160,113 @@ export function extractFalMedia(payload: unknown) {
   } catch {
     return null;
   }
+}
+
+
+function hmac(key: Buffer | string, value: string) {
+  return createHmac('sha256', key).update(value).digest();
+}
+
+function r2ObjectUrl(key: string) {
+  const accountId = requiredEnvironment('R2_ACCOUNT_ID');
+  const bucket = requiredEnvironment('R2_BUCKET');
+  const encodedKey = key.split('/').map(encodeURIComponent).join('/');
+  return new URL(`/${encodeURIComponent(bucket)}/${encodedKey}`, `https://${accountId}.r2.cloudflarestorage.com`);
+}
+
+async function putR2Object(key: string, body: Buffer, contentType: string) {
+  const accessKeyId = requiredEnvironment('R2_ACCESS_KEY_ID');
+  const secretAccessKey = requiredEnvironment('R2_SECRET_ACCESS_KEY');
+  const url = r2ObjectUrl(key);
+  const now = new Date();
+  const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, '');
+  const dateStamp = amzDate.slice(0, 8);
+  const payloadHash = createHash('sha256').update(body).digest('hex');
+  const canonicalHeaders =
+    `content-type:${contentType}\nhost:${url.host}\nx-amz-content-sha256:${payloadHash}\nx-amz-date:${amzDate}\n`;
+  const signedHeaders = 'content-type;host;x-amz-content-sha256;x-amz-date';
+  const canonicalRequest = [
+    'PUT',
+    url.pathname,
+    '',
+    canonicalHeaders,
+    signedHeaders,
+    payloadHash,
+  ].join('\n');
+  const scope = `${dateStamp}/auto/s3/aws4_request`;
+  const stringToSign = [
+    'AWS4-HMAC-SHA256',
+    amzDate,
+    scope,
+    createHash('sha256').update(canonicalRequest).digest('hex'),
+  ].join('\n');
+  const dateKey = hmac(`AWS4${secretAccessKey}`, dateStamp);
+  const regionKey = hmac(dateKey, 'auto');
+  const serviceKey = hmac(regionKey, 's3');
+  const signingKey = hmac(serviceKey, 'aws4_request');
+  const signature = createHmac('sha256', signingKey)
+    .update(stringToSign)
+    .digest('hex');
+
+  const response = await fetch(url, {
+    method: 'PUT',
+    headers: {
+      Authorization: `AWS4-HMAC-SHA256 Credential=${accessKeyId}/${scope}, SignedHeaders=${signedHeaders}, Signature=${signature}`,
+      'Content-Type': contentType,
+      'x-amz-content-sha256': payloadHash,
+      'x-amz-date': amzDate,
+    },
+    body,
+    signal: AbortSignal.timeout(45_000),
+  });
+
+  if (!response.ok) {
+    throw new Error(`R2 archive failed (${response.status}).`);
+  }
+}
+
+export async function archiveGenerationMedia({
+  taskId,
+  projectId,
+  userId,
+  kind,
+  mediaUrl,
+  contentType,
+}: {
+  taskId: string;
+  projectId: string;
+  userId: string;
+  kind: FalGenerationKind;
+  mediaUrl: string;
+  contentType: string;
+}) {
+  if (
+    !process.env.R2_ACCOUNT_ID
+    || !process.env.R2_BUCKET
+    || !process.env.R2_ACCESS_KEY_ID
+    || !process.env.R2_SECRET_ACCESS_KEY
+  ) {
+    return null;
+  }
+
+  const source = await fetch(mediaUrl, {
+    signal: AbortSignal.timeout(30_000),
+  });
+  if (!source.ok) throw new Error('Could not download generated media for archiving.');
+
+  const declaredSize = Number(source.headers.get('content-length') || 0);
+  if (declaredSize > 50_000_000) {
+    throw new Error('Generated media exceeds the 50 MB archive limit.');
+  }
+
+  const body = Buffer.from(await source.arrayBuffer());
+  if (body.byteLength > 50_000_000) {
+    throw new Error('Generated media exceeds the 50 MB archive limit.');
+  }
+
+  const extension =
+    contentType.includes('video') ? 'mp4' : contentType.includes('png') ? 'png' : 'jpg';
+  const key = `users/${userId}/projects/${projectId}/tasks/${taskId}.${extension}`;
+  await putR2Object(key, body, contentType);
+  return key;
 }
