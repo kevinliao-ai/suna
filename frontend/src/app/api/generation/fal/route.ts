@@ -32,6 +32,17 @@ function isHttpsUrl(value: unknown): value is string {
   }
 }
 
+export async function GET() {
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  return NextResponse.json({
+    enabled: Boolean(user && isAllowedTester(user.email)),
+  });
+}
+
 export async function POST(request: NextRequest) {
   const supabase = await createSupabaseServerClient();
   const {
