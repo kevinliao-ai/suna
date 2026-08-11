@@ -1,6 +1,7 @@
-import { NextResponse, type NextRequest } from 'next/server';
+import { after, NextResponse, type NextRequest } from 'next/server';
 
 import {
+  archiveGenerationMedia,
   extractFalMedia,
   getGenerationAdminClient,
   verifyFalWebhook,
@@ -155,6 +156,46 @@ export async function POST(request: NextRequest) {
   );
 
   if (assetError) return jsonError(500, 'asset_update_failed');
+
+  after(async () => {
+    try {
+      const r2Key = await archiveGenerationMedia({
+        taskId,
+        projectId: task.project_id,
+        userId: task.user_id,
+        kind,
+        mediaUrl: media.url,
+        contentType: media.contentType,
+      });
+      if (!r2Key) return;
+
+      const archivedOutput = {
+        ...output,
+        archiveStatus: 'stored',
+        r2Key,
+      };
+      await Promise.all([
+        admin
+          .from('anisora_tasks')
+          .update({ output: archivedOutput })
+          .eq('id', taskId),
+        admin
+          .from('anisora_assets')
+          .update({ metadata: archivedOutput })
+          .eq('id', taskId),
+      ]);
+    } catch (archiveError) {
+      console.error('R2 archive failed:', {
+        taskId,
+        message:
+          archiveError instanceof Error ? archiveError.message : 'Unknown error',
+      });
+      await admin
+        .from('anisora_tasks')
+        .update({ output: { ...output, archiveStatus: 'failed' } })
+        .eq('id', taskId);
+    }
+  });
 
   return NextResponse.json({ received: true });
 }
