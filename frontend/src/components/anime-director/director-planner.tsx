@@ -24,6 +24,7 @@ import {
   type ShotPriority,
 } from '@/lib/anime-director';
 import { createClient } from '@/lib/supabase/client';
+import { DirectorGenerationPanel } from './director-generation-panel';
 
 const priorities: Array<{ id: ShotPriority; label: string; description: string }> = [
   { id: 'speed', label: 'Faster', description: 'Block the scene quickly.' },
@@ -327,6 +328,11 @@ export function DirectorPlanner() {
                 </article>
               ))}
             </div>
+
+            <DirectorGenerationPanel
+              projectId={selectedProjectId}
+              shots={plan.shots}
+            />
 
             <section className="rounded-xl border border-black/10 bg-white p-5 dark:border-white/10 dark:bg-white/[0.04]">
               <h2 className="text-lg font-semibold">Production task list</h2>
