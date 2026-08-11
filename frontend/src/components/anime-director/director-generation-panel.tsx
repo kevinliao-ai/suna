@@ -65,6 +65,7 @@ export function DirectorGenerationPanel({
 }) {
   const supabase = useMemo(() => createClient(), []);
   const [tasks, setTasks] = useState<GenerationTask[]>([]);
+  const [generationEnabled, setGenerationEnabled] = useState(false);
   const [pendingKey, setPendingKey] = useState('');
   const [message, setMessage] = useState('');
 
@@ -99,6 +100,22 @@ export function DirectorGenerationPanel({
         .filter((task): task is GenerationTask => Boolean(task)),
     );
   }, [projectId, supabase]);
+
+  useEffect(() => {
+    let active = true;
+    void fetch('/api/generation/fal')
+      .then((response) => response.json())
+      .then((payload: { enabled?: unknown }) => {
+        if (active) setGenerationEnabled(payload.enabled === true);
+      })
+      .catch(() => {
+        if (active) setGenerationEnabled(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     void refreshTasks();
@@ -180,7 +197,9 @@ export function DirectorGenerationPanel({
         <div>
           <h2 className="text-lg font-semibold">Real generation</h2>
           <p className="mt-1 text-sm text-zinc-500">
-            Create a reference frame, then explicitly approve a 5-second video. Completed media is archived to private R2 storage.
+            {generationEnabled
+              ? 'Create a reference frame, then explicitly approve a 5-second video. Completed media is archived to private R2 storage.'
+              : 'Paid generation is currently limited to the approved production tester.'}
           </p>
         </div>
         <button
@@ -216,7 +235,11 @@ export function DirectorGenerationPanel({
                 <button
                   type="button"
                   onClick={() => void submit(shot, 'reference')}
-                  disabled={referencePending || referenceTask?.status === 'running'}
+                  disabled={
+                    !generationEnabled
+                    || referencePending
+                    || referenceTask?.status === 'running'
+                  }
                   className="inline-flex items-center gap-2 rounded-lg bg-violet-600 px-3 py-2 text-xs font-medium text-white disabled:opacity-60"
                 >
                   {referencePending || referenceTask?.status === 'running' ? (
@@ -232,7 +255,8 @@ export function DirectorGenerationPanel({
                     void submit(shot, 'video', reference?.mediaUrl || undefined)
                   }
                   disabled={
-                    !reference?.mediaUrl
+                    !generationEnabled
+                    || !reference?.mediaUrl
                     || videoPending
                     || videoTask?.status === 'running'
                   }
