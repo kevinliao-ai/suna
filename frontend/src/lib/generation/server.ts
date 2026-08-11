@@ -216,7 +216,10 @@ async function putR2Object(key: string, body: Buffer, contentType: string) {
       'x-amz-content-sha256': payloadHash,
       'x-amz-date': amzDate,
     },
-    body,
+    body: body.buffer.slice(
+      body.byteOffset,
+      body.byteOffset + body.byteLength,
+    ) as ArrayBuffer,
     signal: AbortSignal.timeout(45_000),
   });
 
