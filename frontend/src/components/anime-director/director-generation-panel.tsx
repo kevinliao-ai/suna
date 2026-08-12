@@ -18,6 +18,12 @@ interface GenerationTask {
   createdAt: string;
 }
 
+interface GenerationQuote {
+  estimatedCostUsd: number;
+  hardLimitUsd: number;
+  unit: string;
+}
+
 function readTask(row: {
   id: string;
   status: string;
@@ -66,6 +72,9 @@ export function DirectorGenerationPanel({
   const supabase = useMemo(() => createClient(), []);
   const [tasks, setTasks] = useState<GenerationTask[]>([]);
   const [generationEnabled, setGenerationEnabled] = useState(false);
+  const [simulationEnabled, setSimulationEnabled] = useState(false);
+  const [pricingAvailable, setPricingAvailable] = useState(false);
+  const [quotes, setQuotes] = useState<Record<'reference' | 'video', GenerationQuote> | null>(null);
   const [pendingKey, setPendingKey] = useState('');
   const [message, setMessage] = useState('');
 
@@ -85,7 +94,7 @@ export function DirectorGenerationPanel({
       .select('id,status,input,output,error_message,created_at')
       .eq('project_id', projectId)
       .eq('user_id', user.id)
-      .eq('provider', 'fal')
+      .in('provider', ['fal', 'simulation'])
       .order('created_at', { ascending: false })
       .limit(50);
 
@@ -105,8 +114,19 @@ export function DirectorGenerationPanel({
     let active = true;
     void fetch('/api/generation/fal')
       .then((response) => response.json())
-      .then((payload: { enabled?: unknown }) => {
-        if (active) setGenerationEnabled(payload.enabled === true);
+      .then((payload: {
+        enabled?: unknown;
+        simulationEnabled?: unknown;
+        pricingAvailable?: unknown;
+        quotes?: unknown;
+      }) => {
+        if (!active) return;
+        setGenerationEnabled(payload.enabled === true);
+        setSimulationEnabled(payload.simulationEnabled === true);
+        setPricingAvailable(payload.pricingAvailable === true);
+        setQuotes(payload.quotes && typeof payload.quotes === 'object'
+          ? payload.quotes as Record<'reference' | 'video', GenerationQuote>
+          : null);
       })
       .catch(() => {
         if (active) setGenerationEnabled(false);
@@ -131,6 +151,7 @@ export function DirectorGenerationPanel({
     shot: AnimeDirectorShot,
     kind: 'reference' | 'video',
     imageUrl?: string,
+    mode: 'paid' | 'simulation' = 'paid',
   ) => {
     if (!projectId) {
       setMessage('Save this Director plan before generating.');
@@ -138,8 +159,9 @@ export function DirectorGenerationPanel({
     }
 
     const label = kind === 'reference' ? 'reference frame' : '5-second video';
-    const confirmed = window.confirm(
-      `Generate a paid ${label} with fal.ai? This consumes the AniSora account's provider balance.`,
+    const quote = quotes?.[kind];
+    const confirmed = mode === 'simulation' || window.confirm(
+      `Generate a paid ${label} with fal.ai for an estimated $${quote?.estimatedCostUsd.toFixed(4)} USD? The server will reject it above the $${quote?.hardLimitUsd.toFixed(2)} limit.`,
     );
     if (!confirmed) return;
 
@@ -157,6 +179,7 @@ export function DirectorGenerationPanel({
           kind,
           prompt: shot.visualPrompt,
           imageUrl,
+          mode,
         }),
       });
       const payload = (await response.json()) as {
@@ -168,7 +191,9 @@ export function DirectorGenerationPanel({
       }
 
       setMessage(
-        `${kind === 'reference' ? 'Reference' : 'Video'} queued. Results will appear automatically.`,
+        mode === 'simulation'
+          ? 'Free pipeline simulation completed. No provider request or charge was created.'
+          : `${kind === 'reference' ? 'Reference' : 'Video'} queued. Results will appear automatically.`,
       );
       await refreshTasks();
     } catch (error) {
@@ -198,8 +223,12 @@ export function DirectorGenerationPanel({
           <h2 className="text-lg font-semibold">Real generation</h2>
           <p className="mt-1 text-sm text-zinc-500">
             {generationEnabled
-              ? 'Create a reference frame, then explicitly approve a 5-second video. Completed media is archived to private R2 storage.'
-              : 'Paid generation is currently limited to the approved production tester.'}
+              ? pricingAvailable
+                ? 'Live server quotes and hard cost limits are active. Each paid request still requires explicit approval.'
+                : 'Paid generation is locked because the provider price could not be verified.'
+              : simulationEnabled
+                ? 'Use the free pipeline simulation while live provider generation is disabled.'
+                : 'Paid generation is currently limited to the approved production tester.'}
           </p>
         </div>
         <button
@@ -227,6 +256,8 @@ export function DirectorGenerationPanel({
           const referenceTask = shotTasks.find((task) => task.kind === 'reference');
           const referencePending = pendingKey === `${shot.id}:reference`;
           const videoPending = pendingKey === `${shot.id}:video`;
+          const referenceQuote = quotes?.reference;
+          const videoQuote = quotes?.video;
 
           return (
             <article key={shot.id} className="rounded-lg border border-black/10 p-4 dark:border-white/10">
@@ -237,6 +268,7 @@ export function DirectorGenerationPanel({
                   onClick={() => void submit(shot, 'reference')}
                   disabled={
                     !generationEnabled
+                    || !pricingAvailable
                     || referencePending
                     || referenceTask?.status === 'running'
                   }
@@ -247,7 +279,7 @@ export function DirectorGenerationPanel({
                   ) : (
                     <ImageIcon className="size-3.5" />
                   )}
-                  Generate paid reference
+                  Generate reference{referenceQuote ? ` · est. $${referenceQuote.estimatedCostUsd.toFixed(4)}` : ''}
                 </button>
                 <button
                   type="button"
@@ -256,6 +288,7 @@ export function DirectorGenerationPanel({
                   }
                   disabled={
                     !generationEnabled
+                    || !pricingAvailable
                     || !reference?.mediaUrl
                     || videoPending
                     || videoTask?.status === 'running'
@@ -267,8 +300,18 @@ export function DirectorGenerationPanel({
                   ) : (
                     <Video className="size-3.5" />
                   )}
-                  Generate paid 5s video
+                  Generate 5s video{videoQuote ? ` · est. $${videoQuote.estimatedCostUsd.toFixed(4)}` : ''}
                 </button>
+                {simulationEnabled && (
+                  <button
+                    type="button"
+                    onClick={() => void submit(shot, 'reference', undefined, 'simulation')}
+                    disabled={referencePending}
+                    className="inline-flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-700 disabled:opacity-60 dark:text-emerald-300"
+                  >
+                    <ImageIcon className="size-3.5" /> Run free pipeline simulation
+                  </button>
+                )}
               </div>
 
               {referenceTask?.status === 'failed' && (
