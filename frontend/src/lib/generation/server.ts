@@ -2,12 +2,20 @@ import { createHash, createHmac, createPublicKey, verify } from 'node:crypto';
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
+import {
+  buildGenerationQuote,
+  type FalGenerationKind,
+} from '@/lib/generation/pricing';
+
+export type { FalGenerationKind, GenerationQuote } from '@/lib/generation/pricing';
+
 const falJwksUrl = 'https://rest.fal.ai/.well-known/jwks.json';
 const maxWebhookSkewSeconds = 300;
 const jwksCacheMs = 23 * 60 * 60 * 1000;
 
 let adminClient: SupabaseClient | null = null;
 let jwksCache: { keys: Array<{ kty: string; crv: string; x: string }>; expiresAt: number } | null = null;
+const quoteCache = new Map<FalGenerationKind, { quote: Awaited<ReturnType<typeof loadFalGenerationQuote>>; expiresAt: number }>();
 
 export class GenerationConfigurationError extends Error {}
 
@@ -30,12 +38,36 @@ export function getGenerationAdminClient() {
   return adminClient;
 }
 
-export type FalGenerationKind = 'reference' | 'video';
-
 export const falModels: Record<FalGenerationKind, string> = {
   reference: 'fal-ai/flux/schnell',
   video: 'fal-ai/kling-video/v2.1/standard/image-to-video',
 };
+
+async function loadFalGenerationQuote(kind: FalGenerationKind) {
+  const model = falModels[kind];
+  const endpoint = new URL('https://api.fal.ai/v1/models/pricing');
+  endpoint.searchParams.set('endpoint_id', model);
+  const response = await fetch(endpoint, {
+    headers: {
+      Accept: 'application/json',
+      Authorization: `Key ${requiredEnvironment('FAL_KEY')}`,
+    },
+    signal: AbortSignal.timeout(10_000),
+  });
+
+  if (!response.ok) throw new Error(`fal pricing is unavailable (${response.status}).`);
+  const quote = buildGenerationQuote({ kind, model, payload: await response.json() });
+  if (!quote) throw new Error('fal returned an unsupported or incomplete price.');
+  return quote;
+}
+
+export async function getFalGenerationQuote(kind: FalGenerationKind, options?: { fresh?: boolean }) {
+  const cached = quoteCache.get(kind);
+  if (!options?.fresh && cached && cached.expiresAt > Date.now()) return cached.quote;
+  const quote = await loadFalGenerationQuote(kind);
+  quoteCache.set(kind, { quote, expiresAt: Date.now() + 5 * 60 * 1000 });
+  return quote;
+}
 
 export async function submitFalRequest({
   kind,
@@ -232,14 +264,12 @@ export async function archiveGenerationMedia({
   taskId,
   projectId,
   userId,
-  kind,
   mediaUrl,
   contentType,
 }: {
   taskId: string;
   projectId: string;
   userId: string;
-  kind: FalGenerationKind;
   mediaUrl: string;
   contentType: string;
 }) {

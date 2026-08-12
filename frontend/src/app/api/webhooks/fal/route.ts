@@ -67,11 +67,14 @@ export async function POST(request: NextRequest) {
 
   const input =
     task.input && typeof task.input === 'object'
-      ? (task.input as { kind?: unknown; shotId?: unknown; model?: unknown })
+      ? (task.input as { kind?: unknown; shotId?: unknown; model?: unknown; billing?: unknown })
       : {};
   const kind = input.kind === 'video' ? 'video' : 'reference';
   const shotId = typeof input.shotId === 'string' ? input.shotId : 'shot';
   const model = typeof input.model === 'string' ? input.model : 'fal';
+  const quotedBilling = input.billing && typeof input.billing === 'object'
+    ? input.billing as Record<string, unknown>
+    : {};
 
   if (event.status !== 'OK') {
     const message =
@@ -90,6 +93,7 @@ export async function POST(request: NextRequest) {
           provider: 'fal',
           requestId: event.request_id,
           status: event.status,
+          billing: { ...quotedBilling, mode: 'provider_failed', actualCostUsd: null },
         },
       })
       .eq('id', taskId);
@@ -109,6 +113,7 @@ export async function POST(request: NextRequest) {
           provider: 'fal',
           requestId: event.request_id,
           payload: event.payload,
+          billing: { ...quotedBilling, mode: 'invalid_output', actualCostUsd: null },
         },
       })
       .eq('id', taskId);
@@ -127,6 +132,7 @@ export async function POST(request: NextRequest) {
     contentType: media.contentType,
     completedAt: now,
     archiveStatus: process.env.R2_BUCKET ? 'pending' : 'not_configured',
+    billing: { ...quotedBilling, mode: 'completed', actualCostUsd: null },
   };
 
   const { error: updateError } = await admin
@@ -163,7 +169,6 @@ export async function POST(request: NextRequest) {
         taskId,
         projectId: task.project_id,
         userId: task.user_id,
-        kind,
         mediaUrl: media.url,
         contentType: media.contentType,
       });
