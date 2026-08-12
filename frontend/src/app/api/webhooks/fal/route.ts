@@ -6,6 +6,10 @@ import {
   getGenerationAdminClient,
   verifyFalWebhook,
 } from '@/lib/generation/server';
+import {
+  releaseGenerationCredits,
+  settleGenerationCredits,
+} from '@/lib/generation/credit-server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -84,6 +88,11 @@ export async function POST(request: NextRequest) {
           ? event.payload_error
           : 'The generation provider reported an error.';
 
+    try {
+      await releaseGenerationCredits(task.user_id, taskId);
+    } catch {
+      return jsonError(503, 'credit_release_failed');
+    }
     const { error: updateError } = await admin
       .from('anisora_tasks')
       .update({
@@ -104,6 +113,11 @@ export async function POST(request: NextRequest) {
 
   const media = extractFalMedia(event.payload);
   if (!media) {
+    try {
+      await releaseGenerationCredits(task.user_id, taskId);
+    } catch {
+      return jsonError(503, 'credit_release_failed');
+    }
     const { error: updateError } = await admin
       .from('anisora_tasks')
       .update({
@@ -123,6 +137,11 @@ export async function POST(request: NextRequest) {
   }
 
   const now = new Date().toISOString();
+  try {
+    await settleGenerationCredits(task.user_id, taskId);
+  } catch {
+    return jsonError(503, 'credit_settlement_failed');
+  }
   const output = {
     provider: 'fal',
     requestId: event.request_id,
