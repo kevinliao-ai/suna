@@ -17,12 +17,12 @@ let billingAdminClient: SupabaseClient<BillingDatabase> | null = null;
 
 export class BillingConfigurationError extends Error {}
 
-function requiredEnvironment(name: string) {
-  const value = process.env[name]?.trim();
-  if (!value) {
-    throw new BillingConfigurationError(`${name} is not configured.`);
+function requiredEnvironment(...names: string[]) {
+  for (const name of names) {
+    const value = process.env[name]?.trim();
+    if (value) return value;
   }
-  return value;
+  throw new BillingConfigurationError(`${names.join(' or ')} is not configured.`);
 }
 
 export function getStripeClient() {
@@ -35,8 +35,8 @@ export function getStripeClient() {
 export function getBillingAdminClient() {
   if (!billingAdminClient) {
     billingAdminClient = createSupabaseAdminClient<BillingDatabase>(
-      requiredEnvironment('NEXT_PUBLIC_SUPABASE_URL'),
-      requiredEnvironment('SUPABASE_SERVICE_ROLE_KEY'),
+      requiredEnvironment('SUPABASE_URL', 'NEXT_PUBLIC_SUPABASE_URL'),
+      requiredEnvironment('SUPABASE_SECRET_KEY', 'SUPABASE_SERVICE_ROLE_KEY'),
       {
         auth: { autoRefreshToken: false, persistSession: false },
       },

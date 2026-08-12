@@ -21,7 +21,16 @@ interface GenerationTask {
 interface GenerationQuote {
   estimatedCostUsd: number;
   hardLimitUsd: number;
+  requiredCredits: number;
   unit: string;
+}
+
+interface CreditBalance {
+  allowance: number;
+  available: number;
+  reserved: number;
+  spent: number;
+  periodEnd: string;
 }
 
 function readTask(row: {
@@ -75,6 +84,9 @@ export function DirectorGenerationPanel({
   const [simulationEnabled, setSimulationEnabled] = useState(false);
   const [pricingAvailable, setPricingAvailable] = useState(false);
   const [quotes, setQuotes] = useState<Record<'reference' | 'video', GenerationQuote> | null>(null);
+  const [creditBalance, setCreditBalance] = useState<CreditBalance | null>(null);
+  const [hasProSubscription, setHasProSubscription] = useState(false);
+  const [rolloutEnabled, setRolloutEnabled] = useState(false);
   const [pendingKey, setPendingKey] = useState('');
   const [message, setMessage] = useState('');
 
@@ -119,11 +131,19 @@ export function DirectorGenerationPanel({
         simulationEnabled?: unknown;
         pricingAvailable?: unknown;
         quotes?: unknown;
+        creditBalance?: unknown;
+        entitlement?: { tier?: unknown };
+        rolloutEnabled?: unknown;
       }) => {
         if (!active) return;
         setGenerationEnabled(payload.enabled === true);
         setSimulationEnabled(payload.simulationEnabled === true);
         setPricingAvailable(payload.pricingAvailable === true);
+        setHasProSubscription(payload.entitlement?.tier === 'pro');
+        setRolloutEnabled(payload.rolloutEnabled === true);
+        setCreditBalance(payload.creditBalance && typeof payload.creditBalance === 'object'
+          ? payload.creditBalance as CreditBalance
+          : null);
         setQuotes(payload.quotes && typeof payload.quotes === 'object'
           ? payload.quotes as Record<'reference' | 'video', GenerationQuote>
           : null);
@@ -135,6 +155,15 @@ export function DirectorGenerationPanel({
     return () => {
       active = false;
     };
+  }, []);
+
+  const refreshCredits = useCallback(async () => {
+    const response = await fetch('/api/generation/credits');
+    if (!response.ok) return;
+    const payload = await response.json() as { balance?: unknown };
+    setCreditBalance(payload.balance && typeof payload.balance === 'object'
+      ? payload.balance as CreditBalance
+      : null);
   }, []);
 
   useEffect(() => {
@@ -161,7 +190,7 @@ export function DirectorGenerationPanel({
     const label = kind === 'reference' ? 'reference frame' : '5-second video';
     const quote = quotes?.[kind];
     const confirmed = mode === 'simulation' || window.confirm(
-      `Generate a paid ${label} with fal.ai for an estimated $${quote?.estimatedCostUsd.toFixed(4)} USD? The server will reject it above the $${quote?.hardLimitUsd.toFixed(2)} limit.`,
+      `Generate a paid ${label} for ${quote?.requiredCredits} credits (estimated provider cost $${quote?.estimatedCostUsd.toFixed(4)} USD)? The server will reject it above the $${quote?.hardLimitUsd.toFixed(2)} limit.`,
     );
     if (!confirmed) return;
 
@@ -196,6 +225,7 @@ export function DirectorGenerationPanel({
           : `${kind === 'reference' ? 'Reference' : 'Video'} queued. Results will appear automatically.`,
       );
       await refreshTasks();
+      await refreshCredits();
     } catch (error) {
       setMessage(
         error instanceof Error ? error.message : 'Generation request failed.',
@@ -228,8 +258,20 @@ export function DirectorGenerationPanel({
                 : 'Paid generation is locked because the provider price could not be verified.'
               : simulationEnabled
                 ? 'Use the free pipeline simulation while live provider generation is disabled.'
-                : 'Paid generation is currently limited to the approved production tester.'}
+                : rolloutEnabled && !hasProSubscription
+                  ? 'Subscribe to Studio Pro to unlock paid generation credits.'
+                  : 'Paid generation is currently limited to the approved production tester.'}
           </p>
+          {creditBalance && (
+            <p className="mt-2 text-sm font-medium text-violet-700 dark:text-violet-300">
+              {creditBalance.available} credits available · {creditBalance.reserved} reserved · renews {new Date(creditBalance.periodEnd).toLocaleDateString()}
+            </p>
+          )}
+          {rolloutEnabled && !hasProSubscription && (
+            <a href="/pricing" className="mt-2 inline-flex text-sm font-semibold text-violet-600 hover:underline">
+              View Studio Pro plans
+            </a>
+          )}
         </div>
         <button
           type="button"
@@ -279,7 +321,7 @@ export function DirectorGenerationPanel({
                   ) : (
                     <ImageIcon className="size-3.5" />
                   )}
-                  Generate reference{referenceQuote ? ` · est. $${referenceQuote.estimatedCostUsd.toFixed(4)}` : ''}
+                  Generate reference{referenceQuote ? ` · ${referenceQuote.requiredCredits} credits` : ''}
                 </button>
                 <button
                   type="button"
@@ -300,7 +342,7 @@ export function DirectorGenerationPanel({
                   ) : (
                     <Video className="size-3.5" />
                   )}
-                  Generate 5s video{videoQuote ? ` · est. $${videoQuote.estimatedCostUsd.toFixed(4)}` : ''}
+                  Generate 5s video{videoQuote ? ` · ${videoQuote.requiredCredits} credits` : ''}
                 </button>
                 {simulationEnabled && (
                   <button

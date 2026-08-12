@@ -3,12 +3,19 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { createClient as createSupabaseServerClient } from '@/lib/supabase/server';
 import {
   falModels,
+  getGenerationAdminClient,
   getFalGenerationQuote,
   submitFalRequest,
   type FalGenerationKind,
   type GenerationQuote,
 } from '@/lib/generation/server';
 import { quoteIsWithinLimit } from '@/lib/generation/pricing';
+import { creditsForQuote } from '@/lib/generation/credits';
+import {
+  ensureGenerationCreditBalance,
+  releaseGenerationCredits,
+  reserveGenerationCredits,
+} from '@/lib/generation/credit-server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -53,8 +60,14 @@ async function availableQuotes(enabled: boolean) {
   }
   return {
     quotes: {
-      reference: (settled[0] as PromiseFulfilledResult<GenerationQuote>).value,
-      video: (settled[1] as PromiseFulfilledResult<GenerationQuote>).value,
+      reference: {
+        ...(settled[0] as PromiseFulfilledResult<GenerationQuote>).value,
+        requiredCredits: creditsForQuote((settled[0] as PromiseFulfilledResult<GenerationQuote>).value),
+      },
+      video: {
+        ...(settled[1] as PromiseFulfilledResult<GenerationQuote>).value,
+        requiredCredits: creditsForQuote((settled[1] as PromiseFulfilledResult<GenerationQuote>).value),
+      },
     },
     pricingAvailable: true,
   };
@@ -63,11 +76,22 @@ async function availableQuotes(enabled: boolean) {
 export async function GET() {
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
-  const enabled = Boolean(user && paidGenerationEnabled(user.email));
+  const rolloutEnabled = Boolean(user && paidGenerationEnabled(user.email));
+  const creditState = user
+    ? await ensureGenerationCreditBalance(user.id).catch(() => null)
+    : null;
+  const enabled = Boolean(
+    rolloutEnabled
+    && creditState?.entitlement.tier === 'pro'
+    && creditState.balance,
+  );
 
   return NextResponse.json({
     enabled,
+    rolloutEnabled,
     simulationEnabled: Boolean(user && simulationEnabled(user.email)),
+    entitlement: creditState?.entitlement ?? null,
+    creditBalance: creditState?.balance ?? null,
     ...(await availableQuotes(enabled)),
   });
 }
@@ -148,7 +172,13 @@ export async function POST(request: NextRequest) {
     return error(409, 'cost_limit_exceeded', `Quoted cost $${quote.estimatedCostUsd.toFixed(4)} exceeds the $${quote.hardLimitUsd.toFixed(2)} task limit.`);
   }
 
-  const billing = { mode: 'quoted', ...quote, quotedAt: new Date().toISOString() };
+  const requiredCredits = creditsForQuote(quote);
+  const billing = {
+    mode: 'quoted',
+    ...quote,
+    requiredCredits,
+    quotedAt: new Date().toISOString(),
+  };
   const falInput = kind === 'reference'
     ? { prompt, image_size: 'landscape_16_9', num_images: 1, output_format: 'jpeg', enable_safety_checker: true }
     : { prompt, image_url: body.imageUrl, duration: '5', negative_prompt: 'blur, distort, low quality, inconsistent character, text, watermark', cfg_scale: 0.5 };
@@ -157,27 +187,82 @@ export async function POST(request: NextRequest) {
   const { error: taskError } = await supabase.from('anisora_tasks').insert({
     id: taskId, project_id: projectId, user_id: user.id,
     title: `${kind === 'reference' ? 'Reference frame' : '5s video'}: ${shotId}`,
-    status: 'running', provider: 'fal', input: taskInput, output: {},
+    status: 'todo', provider: 'fal', input: taskInput, output: {},
   });
   if (taskError) return error(500, 'task_create_failed', 'Could not create the generation task.');
 
+  let reservation;
   try {
-    const appUrl = process.env.APP_URL?.trim() || request.nextUrl.origin;
-    const webhookUrl = new URL('/api/webhooks/fal', appUrl);
-    webhookUrl.searchParams.set('task_id', taskId);
-    const submitted = await submitFalRequest({ kind, input: falInput, webhookUrl: webhookUrl.toString() });
-    const { error: updateError } = await supabase.from('anisora_tasks').update({
-      provider_job_id: submitted.requestId,
-      input: { ...taskInput, model: submitted.model, billing: { ...billing, mode: 'submitted', submittedAt: new Date().toISOString() } },
+    reservation = await reserveGenerationCredits(user.id, taskId, requiredCredits);
+  } catch {
+    await supabase.from('anisora_tasks').update({
+      status: 'failed', error_message: 'Generation credits are temporarily unavailable.',
     }).eq('id', taskId).eq('user_id', user.id);
-    if (updateError) throw updateError;
-    return NextResponse.json({ taskId, requestId: submitted.requestId, status: 'running', quote }, { status: 202 });
+    return error(503, 'credits_unavailable', 'Generation credits are temporarily unavailable.');
+  }
+  if (!reservation.reserved) {
+    const subscriptionRequired = reservation.entitlement.tier !== 'pro';
+    await supabase.from('anisora_tasks').update({
+      status: 'failed',
+      error_message: subscriptionRequired ? 'A Studio Pro subscription is required.' : 'Insufficient generation credits.',
+    }).eq('id', taskId).eq('user_id', user.id);
+    return error(
+      402,
+      subscriptionRequired ? 'subscription_required' : 'insufficient_credits',
+      subscriptionRequired
+        ? 'A Studio Pro subscription is required for paid generation.'
+        : `This request needs ${requiredCredits} credits.`,
+    );
+  }
+
+  const appUrl = process.env.APP_URL?.trim() || request.nextUrl.origin;
+  const webhookUrl = new URL('/api/webhooks/fal', appUrl);
+  webhookUrl.searchParams.set('task_id', taskId);
+
+  let submitted;
+  try {
+    submitted = await submitFalRequest({ kind, input: falInput, webhookUrl: webhookUrl.toString() });
   } catch (submissionError) {
+    await releaseGenerationCredits(user.id, taskId).catch(() => undefined);
     await supabase.from('anisora_tasks').update({
       status: 'failed',
       output: { billing: { ...billing, mode: 'submission_failed', actualCostUsd: null } },
       error_message: submissionError instanceof Error ? submissionError.message.slice(0, 500) : 'fal request submission failed.',
     }).eq('id', taskId).eq('user_id', user.id);
-    return error(502, 'provider_rejected', 'The generation provider rejected the request.');
+    return error(502, 'provider_rejected', 'The generation provider rejected the request. Reserved credits were returned.');
   }
+
+  const submittedInput = {
+    ...taskInput,
+    model: submitted.model,
+    billing: { ...billing, mode: 'submitted', submittedAt: new Date().toISOString() },
+  };
+  let { error: updateError } = await supabase.from('anisora_tasks').update({
+    provider_job_id: submitted.requestId,
+    status: 'running',
+    input: submittedInput,
+  }).eq('id', taskId).eq('user_id', user.id);
+
+  if (updateError) {
+    const fallback = await getGenerationAdminClient().from('anisora_tasks').update({
+      provider_job_id: submitted.requestId,
+      status: 'running',
+      input: submittedInput,
+    }).eq('id', taskId).eq('user_id', user.id);
+    updateError = fallback.error;
+  }
+  if (updateError) {
+    return error(
+      503,
+      'task_tracking_failed',
+      'The provider accepted the request, but task tracking is delayed. Reserved credits remain protected.',
+    );
+  }
+
+  return NextResponse.json({
+    taskId,
+    requestId: submitted.requestId,
+    status: 'running',
+    quote: { ...quote, requiredCredits },
+  }, { status: 202 });
 }

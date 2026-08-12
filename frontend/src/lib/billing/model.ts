@@ -34,6 +34,7 @@ export interface BillingEntitlement {
   planId: string | null;
   cancelAtPeriodEnd: boolean;
   cancelAt: string | null;
+  currentPeriodStart: string | null;
   currentPeriodEnd: string | null;
   inGracePeriod: boolean;
 }
@@ -51,6 +52,7 @@ export function resolveBillingEntitlement(
       planId: null,
       cancelAtPeriodEnd: false,
       cancelAt: null,
+      currentPeriodStart: null,
       currentPeriodEnd: null,
       inGracePeriod: false,
     };
@@ -84,6 +86,7 @@ export function resolveBillingEntitlement(
     cancelAtPeriodEnd:
       subscription.cancel_at_period_end || hasScheduledCancellation,
     cancelAt: subscription.cancel_at,
+    currentPeriodStart: subscription.current_period_start,
     currentPeriodEnd: subscription.current_period_end,
     inGracePeriod,
   };
