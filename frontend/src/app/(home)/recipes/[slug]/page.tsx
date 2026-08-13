@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { ArrowLeft, Camera, Clock } from 'lucide-react';
 import { StructuredData } from '@/components/seo/structured-data';
 import { RecipePlannerLink } from '@/components/recipes/recipe-planner-link';
+import { RecipeFunnelTracker } from '@/components/recipes/recipe-funnel-tracker';
 import {
   animeShotRecipes,
   getAnimeShotRecipe,
@@ -37,6 +38,14 @@ export default async function RecipePage({ params }: RecipePageProps) {
   const related = getRelatedRecipes(recipe);
   return (
     <main>
+      <RecipeFunnelTracker
+        event="recipe_viewed"
+        properties={{
+          recipe_slug: recipe.slug,
+          genre: recipe.genre,
+          shot_type: recipe.shotType,
+        }}
+      />
       <StructuredData
         data={{
           '@context': 'https://schema.org',

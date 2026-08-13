@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { Search, SlidersHorizontal } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import posthog from 'posthog-js';
+import { RecipeFunnelTracker } from '@/components/recipes/recipe-funnel-tracker';
 import {
   animeShotRecipes,
   recipeGenres,
@@ -28,6 +30,10 @@ export function RecipeDirectory() {
 
   return (
     <>
+      <RecipeFunnelTracker
+        event="recipe_directory_viewed"
+        properties={{ recipe_count: animeShotRecipes.length }}
+      />
       <div className="grid gap-3 rounded-xl border border-border bg-background p-4 md:grid-cols-[1fr_190px_190px]">
         <label className="relative">
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -35,6 +41,15 @@ export function RecipeDirectory() {
             aria-label="Search recipes"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
+            onBlur={() => {
+              if (query.trim()) {
+                posthog.capture('recipe_filter_used', {
+                  filter_type: 'search',
+                  query_length: query.trim().length,
+                  result_count: recipes.length,
+                });
+              }
+            }}
             placeholder="Search mood, genre, or shot..."
             className="h-11 w-full rounded-lg border border-border bg-background pl-10 pr-3 text-sm outline-none focus:border-violet-500"
           />
@@ -44,7 +59,13 @@ export function RecipeDirectory() {
           <select
             aria-label="Filter by genre"
             value={genre}
-            onChange={(event) => setGenre(event.target.value)}
+            onChange={(event) => {
+              setGenre(event.target.value);
+              posthog.capture('recipe_filter_used', {
+                filter_type: 'genre',
+                filter_value: event.target.value,
+              });
+            }}
             className="h-11 w-full appearance-none rounded-lg border border-border bg-background pl-10 pr-3 text-sm"
           >
             <option>All</option>
@@ -56,7 +77,13 @@ export function RecipeDirectory() {
         <select
           aria-label="Filter by shot type"
           value={shotType}
-          onChange={(event) => setShotType(event.target.value)}
+          onChange={(event) => {
+            setShotType(event.target.value);
+            posthog.capture('recipe_filter_used', {
+              filter_type: 'shot_type',
+              filter_value: event.target.value,
+            });
+          }}
           className="h-11 rounded-lg border border-border bg-background px-3 text-sm"
         >
           <option>All</option>
