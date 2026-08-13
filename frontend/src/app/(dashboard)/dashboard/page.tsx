@@ -44,6 +44,7 @@ import {
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import posthog from 'posthog-js';
 
 type SyncState =
   | 'local'
@@ -122,9 +123,18 @@ export default function DashboardPage() {
     if (billingResult !== 'success' && billingResult !== 'canceled') return;
 
     setBillingNotice(billingResult);
+    posthog.capture(
+      billingResult === 'success'
+        ? 'billing_checkout_returned_success'
+        : 'billing_checkout_returned_canceled',
+    );
     const url = new URL(window.location.href);
     url.searchParams.delete('billing');
-    window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
+    window.history.replaceState(
+      {},
+      '',
+      `${url.pathname}${url.search}${url.hash}`,
+    );
   }, []);
 
   useEffect(() => {

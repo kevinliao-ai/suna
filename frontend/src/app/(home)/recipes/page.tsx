@@ -4,6 +4,7 @@ import { ArrowRight, BookOpen, Film, Sparkles } from 'lucide-react';
 import { RecipeDirectory } from '@/components/recipes/recipe-directory';
 import { StructuredData } from '@/components/seo/structured-data';
 import { animeShotRecipes } from '@/lib/anime-shot-recipes';
+import { animeShotCollections } from '@/lib/anime-shot-collections';
 import { siteConfig } from '@/lib/site';
 
 export const metadata: Metadata = {
@@ -52,6 +53,35 @@ export default function RecipesPage() {
             >
               Estimate a batch <ArrowRight className="size-4" />
             </Link>
+          </div>
+        </div>
+      </section>
+      <section className="border-b border-border px-6 py-14">
+        <div className="mx-auto max-w-6xl">
+          <p className="text-sm font-medium text-violet-600">
+            Planning collections
+          </p>
+          <h2 className="mt-2 text-3xl font-semibold tracking-tight">
+            Start from a genre or camera intent
+          </h2>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
+            Ten editorial guides group the recipes by the creative decision you
+            need to make—not just by a generic tag.
+          </p>
+          <div className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            {animeShotCollections.map((collection) => (
+              <Link
+                key={collection.slug}
+                href={`/recipes/collections/${collection.slug}`}
+                className="rounded-xl border border-border p-4 transition hover:-translate-y-0.5 hover:bg-muted/40"
+              >
+                <p className="text-xs text-violet-600">{collection.eyebrow}</p>
+                <h3 className="mt-2 font-semibold">{collection.shortTitle}</h3>
+                <p className="mt-2 line-clamp-3 text-xs leading-5 text-muted-foreground">
+                  {collection.description}
+                </p>
+              </Link>
+            ))}
           </div>
         </div>
       </section>

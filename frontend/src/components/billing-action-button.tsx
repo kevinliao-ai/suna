@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { CreditCard, LoaderCircle } from 'lucide-react';
 import type { BillingPlanId } from '@/lib/billing/plans';
+import posthog from 'posthog-js';
 
 interface BillingActionButtonProps {
   action: 'checkout' | 'portal';
@@ -29,6 +30,12 @@ export function BillingActionButton({
     if (isLoading) return;
     setIsLoading(true);
     setError('');
+    posthog.capture(
+      action === 'checkout'
+        ? 'billing_checkout_started'
+        : 'billing_portal_started',
+      { plan_id: planId || null },
+    );
 
     try {
       const response = await fetch(`/api/billing/${action}`, {
@@ -46,8 +53,20 @@ export function BillingActionButton({
       if (!response.ok || !body.url) {
         throw new Error(body.message || 'Billing is temporarily unavailable.');
       }
+      posthog.capture(
+        action === 'checkout'
+          ? 'billing_checkout_created'
+          : 'billing_portal_opened',
+        { plan_id: planId || null },
+      );
       window.location.assign(body.url);
     } catch (caught) {
+      posthog.capture(
+        action === 'checkout'
+          ? 'billing_checkout_failed'
+          : 'billing_portal_failed',
+        { plan_id: planId || null },
+      );
       setError(
         caught instanceof Error
           ? caught.message

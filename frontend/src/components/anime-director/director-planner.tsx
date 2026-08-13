@@ -26,6 +26,7 @@ import {
 import { createClient } from '@/lib/supabase/client';
 import { DirectorGenerationPanel } from './director-generation-panel';
 import type { AnimeShotRecipe } from '@/lib/anime-shot-recipes';
+import posthog from 'posthog-js';
 
 const priorities: Array<{
   id: ShotPriority;
@@ -159,6 +160,15 @@ export function DirectorPlanner({
         ...current.filter((project) => project.id !== saved.id),
       ]);
       setSaveState('saved');
+      posthog.capture(
+        isNewProject ? 'director_project_created' : 'director_project_updated',
+        {
+          project_id: saved.id,
+          source_recipe: initialRecipe?.slug || null,
+          shot_count: plan.shots.length,
+          priority,
+        },
+      );
       setSaveMessage(
         isNewProject
           ? 'Saved to Studio. Each shot is now a project task.'

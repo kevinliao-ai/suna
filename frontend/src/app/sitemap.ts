@@ -2,6 +2,7 @@ import type { MetadataRoute } from 'next';
 import { siteConfig } from '@/lib/site';
 import { videoModelComparisons, videoModels } from '@/lib/video-intelligence';
 import { animeShotRecipes } from '@/lib/anime-shot-recipes';
+import { animeShotCollections } from '@/lib/anime-shot-collections';
 
 const lastModified = new Date('2026-08-13T00:00:00.000Z');
 
@@ -10,6 +11,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: '/', priority: 1, changeFrequency: 'weekly' as const },
     { path: '/models', priority: 0.85, changeFrequency: 'weekly' as const },
     { path: '/recipes', priority: 0.88, changeFrequency: 'weekly' as const },
+    ...animeShotCollections.map((collection) => ({
+      path: `/recipes/collections/${collection.slug}`,
+      priority: 0.8,
+      changeFrequency: 'monthly' as const,
+    })),
     ...animeShotRecipes.map((recipe) => ({
       path: `/recipes/${recipe.slug}`,
       priority: 0.74,
