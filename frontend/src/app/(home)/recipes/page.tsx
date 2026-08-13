@@ -42,7 +42,7 @@ export default function RecipesPage() {
           </p>
           <div className="mt-7 flex flex-wrap gap-3">
             <Link
-              href="/auth?returnUrl=/dashboard/director"
+              href="/dashboard/director"
               className="inline-flex items-center gap-2 rounded-full bg-violet-600 px-5 py-3 text-sm font-semibold text-white hover:bg-violet-500"
             >
               <Sparkles className="size-4" /> Open Director Planner

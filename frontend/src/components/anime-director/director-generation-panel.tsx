@@ -247,7 +247,7 @@ export function DirectorGenerationPanel({
   }
 
   return (
-    <section className="rounded-xl border border-black/10 bg-white p-5 dark:border-white/10 dark:bg-white/[0.04]">
+    <section id="real-generation" className="scroll-mt-6 rounded-xl border border-black/10 bg-white p-5 dark:border-white/10 dark:bg-white/[0.04]">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold">Real generation</h2>

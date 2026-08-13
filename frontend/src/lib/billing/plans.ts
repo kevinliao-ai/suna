@@ -2,7 +2,7 @@ export const BILLING_PLANS = [
   {
     id: 'studio-pro-monthly',
     name: 'Studio Pro',
-    description: 'Cloud workspace for independent anime creators.',
+    description: 'Anime production workspace with monthly generation credits.',
     amount: 599,
     currency: 'USD',
     interval: 'month',
@@ -11,7 +11,7 @@ export const BILLING_PLANS = [
   {
     id: 'studio-pro-annual',
     name: 'Studio Pro',
-    description: 'Cloud workspace for independent anime creators.',
+    description: 'Anime production workspace with monthly generation credits.',
     amount: 5900,
     currency: 'USD',
     interval: 'year',

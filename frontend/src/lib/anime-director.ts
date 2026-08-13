@@ -20,6 +20,13 @@ export interface AnimeDirectorPlan {
   shots: AnimeDirectorShot[];
 }
 
+export interface DirectorShotSeed {
+  camera: string;
+  durationSeconds: number;
+  visualPrompt: string;
+  checklist?: string[];
+}
+
 const cameraMoves = [
   'slow push-in on the character expression',
   'side tracking shot with layered background parallax',
@@ -65,18 +72,21 @@ export function createAnimeDirectorPlan({
   projectTitle,
   style,
   priority,
+  seedShot,
 }: {
   script: string;
   projectTitle?: string;
   style?: string;
   priority: ShotPriority;
+  seedShot?: DirectorShotSeed;
 }): AnimeDirectorPlan {
   const beats = splitScript(script);
   const safeBeats = beats.length > 0 ? beats : ['A character enters a quiet anime scene and notices a dramatic change.'];
   const visualStyle = style?.trim() || 'cinematic anime, clean character design, expressive lighting';
   const shots = safeBeats.map((beat, index) => {
-    const camera = cameraMoves[index % cameraMoves.length];
-    const durationSeconds = estimateDuration(beat);
+    const seeded = index === 0 ? seedShot : undefined;
+    const camera = seeded?.camera || cameraMoves[index % cameraMoves.length];
+    const durationSeconds = seeded?.durationSeconds || estimateDuration(beat);
 
     return {
       id: `shot-${index + 1}`,
@@ -84,10 +94,13 @@ export function createAnimeDirectorPlan({
       beat,
       durationSeconds,
       camera,
-      visualPrompt: `${visualStyle}. ${beat}. ${camera}. Keep character identity consistent and preserve readable composition.`,
+      visualPrompt:
+        seeded?.visualPrompt
+        || `${visualStyle}. ${beat}. ${camera}. Keep character identity consistent and preserve readable composition.`,
       voicePrompt: `Voice direction for ${makeShotTitle(beat, index)}: natural anime performance, clear emotion, timing around ${durationSeconds} seconds.`,
       route: routeByPriority[priority],
       checklist: [
+        ...(seeded?.checklist || []),
         'Attach character or scene reference before generation.',
         'Run a short draft before spending on final quality.',
         'Save usable output link back into AniSora Studio assets.',

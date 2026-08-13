@@ -72,15 +72,42 @@ export function DirectorPlanner({
   const [selectedProjectId, setSelectedProjectId] = useState<
     string | undefined
   >();
+  const [sourceRecipeSlug, setSourceRecipeSlug] = useState<string | undefined>(
+    initialRecipe?.slug,
+  );
   const [saveState, setSaveState] = useState<
     'idle' | 'saving' | 'saved' | 'error'
   >('idle');
   const [saveMessage, setSaveMessage] = useState('');
 
   const plan = useMemo(
-    () => createAnimeDirectorPlan({ script, projectTitle, style, priority }),
-    [priority, projectTitle, script, style],
+    () =>
+      createAnimeDirectorPlan({
+        script,
+        projectTitle,
+        style,
+        priority,
+        seedShot:
+          initialRecipe && sourceRecipeSlug === initialRecipe.slug
+          ? {
+              camera: initialRecipe.camera,
+              durationSeconds: initialRecipe.duration,
+              visualPrompt: initialRecipe.prompt,
+              checklist: initialRecipe.tips,
+            }
+          : undefined,
+      }),
+    [initialRecipe, priority, projectTitle, script, sourceRecipeSlug, style],
   );
+
+  useEffect(() => {
+    if (!initialRecipe) return;
+    posthog.capture('director_recipe_loaded', {
+      recipe_slug: initialRecipe.slug,
+      genre: initialRecipe.genre,
+      shot_type: initialRecipe.shotType,
+    });
+  }, [initialRecipe]);
 
   useEffect(() => {
     let active = true;
@@ -152,6 +179,7 @@ export function DirectorPlanner({
         script,
         priority,
         plan,
+        sourceRecipeSlug,
       });
 
       setSelectedProjectId(saved.id);
@@ -164,7 +192,7 @@ export function DirectorPlanner({
         isNewProject ? 'director_project_created' : 'director_project_updated',
         {
           project_id: saved.id,
-          source_recipe: initialRecipe?.slug || null,
+          source_recipe: sourceRecipeSlug || null,
           shot_count: plan.shots.length,
           priority,
         },
@@ -189,6 +217,7 @@ export function DirectorPlanner({
     setStyle(saved.style);
     setScript(saved.script);
     setPriority(saved.priority);
+    setSourceRecipeSlug(saved.sourceRecipeSlug);
     setSaveState('idle');
     setSaveMessage(`Loaded ${saved.title}.`);
   };
@@ -255,8 +284,9 @@ export function DirectorPlanner({
           <section className="rounded-xl border border-black/10 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.04]">
             {initialRecipe ? (
               <div className="mb-5 rounded-lg border border-violet-500/20 bg-violet-500/10 p-3 text-sm text-violet-800 dark:text-violet-200">
-                Loaded recipe: <strong>{initialRecipe.title}</strong>. Edit the
-                beat or style before saving.
+                Loaded the exact <strong>{initialRecipe.title}</strong> camera,
+                timing, prompt, and production checks. Edit anything before
+                saving it as your own project.
               </div>
             ) : null}
             <div className="flex items-center justify-between gap-3">
@@ -345,6 +375,34 @@ export function DirectorPlanner({
                   {saveMessage}
                 </p>
               )}
+              {saveState === 'saved' ? (
+                <div className="rounded-lg border border-violet-500/20 bg-violet-500/5 p-4">
+                  <p className="text-sm font-semibold">Your first production milestone is ready.</p>
+                  <p className="mt-1 text-xs leading-5 text-zinc-500">
+                    Generate a reference below, or compare Studio Pro credits before committing provider spend.
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <a
+                      href="#real-generation"
+                      className="rounded-md bg-zinc-950 px-3 py-2 text-xs font-semibold text-white dark:bg-white dark:text-zinc-950"
+                    >
+                      Generate first reference
+                    </a>
+                    <Link
+                      href="/pricing?source=director-first-project"
+                      onClick={() =>
+                        posthog.capture('director_post_save_upgrade_clicked', {
+                          source_recipe: sourceRecipeSlug || null,
+                          shot_count: plan.shots.length,
+                        })
+                      }
+                      className="rounded-md border border-black/10 px-3 py-2 text-xs font-semibold dark:border-white/10"
+                    >
+                      Compare Studio Pro
+                    </Link>
+                  </div>
+                </div>
+              ) : null}
             </div>
           </section>
 

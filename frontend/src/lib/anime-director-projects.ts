@@ -11,6 +11,7 @@ export interface DirectorProjectInput {
   script: string;
   priority: ShotPriority;
   plan: AnimeDirectorPlan;
+  sourceRecipeSlug?: string;
 }
 
 export interface SavedDirectorProject extends DirectorProjectInput {
@@ -50,6 +51,7 @@ function readDirectorProject(row: ProjectRow): SavedDirectorProject | null {
       script?: unknown;
       priority?: unknown;
       plan?: unknown;
+      sourceRecipeSlug?: unknown;
     };
   };
 
@@ -73,6 +75,10 @@ function readDirectorProject(row: ProjectRow): SavedDirectorProject | null {
     script: director.script,
     priority: director.priority,
     plan: director.plan,
+    sourceRecipeSlug:
+      typeof director.sourceRecipeSlug === 'string'
+        ? director.sourceRecipeSlug
+        : undefined,
     updatedAt: row.updated_at,
   };
 }
@@ -113,6 +119,7 @@ export async function saveDirectorProject(
       script: input.script,
       priority: input.priority,
       plan: input.plan,
+      sourceRecipeSlug: input.sourceRecipeSlug,
     },
   };
 
@@ -165,6 +172,7 @@ export async function saveDirectorProject(
     script: input.script,
     priority: input.priority,
     plan: input.plan,
+    sourceRecipeSlug: input.sourceRecipeSlug,
     updatedAt: now,
   };
 }
