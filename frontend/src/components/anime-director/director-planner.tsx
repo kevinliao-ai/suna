@@ -25,11 +25,20 @@ import {
 } from '@/lib/anime-director';
 import { createClient } from '@/lib/supabase/client';
 import { DirectorGenerationPanel } from './director-generation-panel';
+import type { AnimeShotRecipe } from '@/lib/anime-shot-recipes';
 
-const priorities: Array<{ id: ShotPriority; label: string; description: string }> = [
+const priorities: Array<{
+  id: ShotPriority;
+  label: string;
+  description: string;
+}> = [
   { id: 'speed', label: 'Faster', description: 'Block the scene quickly.' },
   { id: 'cost', label: 'Cheaper', description: 'Draft first, spend later.' },
-  { id: 'quality', label: 'Higher quality', description: 'Fewer, better renders.' },
+  {
+    id: 'quality',
+    label: 'Higher quality',
+    description: 'Fewer, better renders.',
+  },
   { id: 'control', label: 'More control', description: 'Reference-led shots.' },
 ];
 
@@ -38,16 +47,33 @@ She sees a glowing train crossing the sky.
 A black cat jumps onto the railing and speaks a warning.
 The mage opens her notebook and the city lights turn into floating runes.`;
 
-export function DirectorPlanner() {
+export function DirectorPlanner({
+  initialRecipe,
+}: {
+  initialRecipe?: AnimeShotRecipe;
+}) {
   const supabase = useMemo(() => createClient(), []);
-  const [projectTitle, setProjectTitle] = useState('Sky Train Opening');
-  const [style, setStyle] = useState('cinematic anime, warm sunset light, detailed city background');
-  const [script, setScript] = useState(sampleScript);
-  const [priority, setPriority] = useState<ShotPriority>('control');
+  const [projectTitle, setProjectTitle] = useState(
+    initialRecipe?.title || 'Sky Train Opening',
+  );
+  const [style, setStyle] = useState(
+    initialRecipe?.style ||
+      'cinematic anime, warm sunset light, detailed city background',
+  );
+  const [script, setScript] = useState(initialRecipe?.script || sampleScript);
+  const [priority, setPriority] = useState<ShotPriority>(
+    initialRecipe?.priority || 'control',
+  );
   const [userId, setUserId] = useState<string | null>(null);
-  const [savedProjects, setSavedProjects] = useState<SavedDirectorProject[]>([]);
-  const [selectedProjectId, setSelectedProjectId] = useState<string | undefined>();
-  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [savedProjects, setSavedProjects] = useState<SavedDirectorProject[]>(
+    [],
+  );
+  const [selectedProjectId, setSelectedProjectId] = useState<
+    string | undefined
+  >();
+  const [saveState, setSaveState] = useState<
+    'idle' | 'saving' | 'saved' | 'error'
+  >('idle');
   const [saveMessage, setSaveMessage] = useState('');
 
   const plan = useMemo(
@@ -74,7 +100,9 @@ export function DirectorPlanner() {
         if (active) setSavedProjects(projects);
       } catch {
         if (active) {
-          setSaveMessage('Cloud projects are unavailable right now. Your plan can still be exported.');
+          setSaveMessage(
+            'Cloud projects are unavailable right now. Your plan can still be exported.',
+          );
         }
       }
     }
@@ -86,11 +114,18 @@ export function DirectorPlanner() {
   }, [supabase]);
 
   const downloadPlan = () => {
-    const blob = new Blob([serializeDirectorPlan(plan)], { type: 'application/json' });
+    const blob = new Blob([serializeDirectorPlan(plan)], {
+      type: 'application/json',
+    });
     const href = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = href;
-    anchor.download = `${plan.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'anime-director'}-plan.json`;
+    anchor.download = `${
+      plan.title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '') || 'anime-director'
+    }-plan.json`;
     document.body.appendChild(anchor);
     anchor.click();
     anchor.remove();
@@ -159,14 +194,19 @@ export function DirectorPlanner() {
       <div className="mx-auto max-w-7xl">
         <header className="flex flex-col justify-between gap-4 border-b border-black/10 pb-5 dark:border-white/10 md:flex-row md:items-center">
           <div>
-            <Link href="/dashboard" className="inline-flex items-center gap-2 text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100">
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center gap-2 text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+            >
               <Film className="size-4" /> Back to Studio
             </Link>
             <h1 className="mt-3 text-3xl font-semibold tracking-tight md:text-4xl">
               Anime Director Planner
             </h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-500">
-              Turn a short script into shot cards, prompts, routing advice, and a production task list before opening any external generation tool.
+              Turn a short script into shot cards, prompts, routing advice, and
+              a production task list before opening any external generation
+              tool.
             </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
@@ -183,7 +223,13 @@ export function DirectorPlanner() {
               disabled={saveState === 'saving'}
               className="inline-flex items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-70"
             >
-              {saveState === 'saving' ? <LoaderCircle className="size-4 animate-spin" /> : saveState === 'saved' ? <Check className="size-4" /> : <Cloud className="size-4" />}
+              {saveState === 'saving' ? (
+                <LoaderCircle className="size-4 animate-spin" />
+              ) : saveState === 'saved' ? (
+                <Check className="size-4" />
+              ) : (
+                <Cloud className="size-4" />
+              )}
               {saveState === 'saving' ? 'Saving…' : 'Save to Studio'}
             </button>
             <Link
@@ -197,6 +243,12 @@ export function DirectorPlanner() {
 
         <div className="grid gap-5 py-6 xl:grid-cols-[420px_minmax(0,1fr)]">
           <section className="rounded-xl border border-black/10 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.04]">
+            {initialRecipe ? (
+              <div className="mb-5 rounded-lg border border-violet-500/20 bg-violet-500/10 p-3 text-sm text-violet-800 dark:text-violet-200">
+                Loaded recipe: <strong>{initialRecipe.title}</strong>. Edit the
+                beat or style before saving.
+              </div>
+            ) : null}
             <div className="flex items-center justify-between gap-3">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">
                 Script to shots
@@ -210,7 +262,9 @@ export function DirectorPlanner() {
                 >
                   <option value="">Saved projects</option>
                   {savedProjects.map((project) => (
-                    <option key={project.id} value={project.id}>{project.title}</option>
+                    <option key={project.id} value={project.id}>
+                      {project.title}
+                    </option>
                   ))}
                 </select>
               )}
@@ -258,8 +312,12 @@ export function DirectorPlanner() {
                           : 'border-black/10 bg-white hover:bg-zinc-100 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10'
                       }`}
                     >
-                      <span className="block text-sm font-semibold">{item.label}</span>
-                      <span className={`mt-1 block text-xs ${priority === item.id ? 'text-white/75' : 'text-zinc-500'}`}>
+                      <span className="block text-sm font-semibold">
+                        {item.label}
+                      </span>
+                      <span
+                        className={`mt-1 block text-xs ${priority === item.id ? 'text-white/75' : 'text-zinc-500'}`}
+                      >
                         {item.description}
                       </span>
                     </button>
@@ -267,11 +325,13 @@ export function DirectorPlanner() {
                 </div>
               </div>
               {saveMessage && (
-                <p className={`rounded-lg px-3 py-2 text-xs ${
-                  saveState === 'error'
-                    ? 'bg-red-500/10 text-red-700 dark:text-red-300'
-                    : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
-                }`}>
+                <p
+                  className={`rounded-lg px-3 py-2 text-xs ${
+                    saveState === 'error'
+                      ? 'bg-red-500/10 text-red-700 dark:text-red-300'
+                      : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+                  }`}
+                >
                   {saveMessage}
                 </p>
               )}
@@ -282,31 +342,48 @@ export function DirectorPlanner() {
             <div className="grid gap-4 md:grid-cols-3">
               <article className="rounded-xl border border-black/10 bg-white p-5 dark:border-white/10 dark:bg-white/[0.04]">
                 <Sparkles className="size-5 text-violet-600" />
-                <p className="mt-4 text-2xl font-semibold">{plan.shots.length}</p>
+                <p className="mt-4 text-2xl font-semibold">
+                  {plan.shots.length}
+                </p>
                 <p className="mt-1 text-sm text-zinc-500">Shot cards</p>
               </article>
               <article className="rounded-xl border border-black/10 bg-white p-5 dark:border-white/10 dark:bg-white/[0.04]">
                 <Film className="size-5 text-sky-600" />
-                <p className="mt-4 text-2xl font-semibold">{plan.estimatedSeconds}s</p>
+                <p className="mt-4 text-2xl font-semibold">
+                  {plan.estimatedSeconds}s
+                </p>
                 <p className="mt-1 text-sm text-zinc-500">Estimated runtime</p>
               </article>
               <article className="rounded-xl border border-black/10 bg-white p-5 dark:border-white/10 dark:bg-white/[0.04]">
                 <ClipboardList className="size-5 text-emerald-600" />
-                <p className="mt-4 text-2xl font-semibold">{plan.estimatedTestRenders}</p>
-                <p className="mt-1 text-sm text-zinc-500">Draft render budget</p>
+                <p className="mt-4 text-2xl font-semibold">
+                  {plan.estimatedTestRenders}
+                </p>
+                <p className="mt-1 text-sm text-zinc-500">
+                  Draft render budget
+                </p>
               </article>
             </div>
 
             <div className="grid gap-4 lg:grid-cols-2">
               {plan.shots.map((shot) => (
-                <article key={shot.id} className="rounded-xl border border-black/10 bg-white p-5 dark:border-white/10 dark:bg-white/[0.04]">
+                <article
+                  key={shot.id}
+                  className="rounded-xl border border-black/10 bg-white p-5 dark:border-white/10 dark:bg-white/[0.04]"
+                >
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">{shot.durationSeconds}s shot</p>
-                      <h2 className="mt-2 text-lg font-semibold">{shot.title}</h2>
+                      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">
+                        {shot.durationSeconds}s shot
+                      </p>
+                      <h2 className="mt-2 text-lg font-semibold">
+                        {shot.title}
+                      </h2>
                     </div>
                   </div>
-                  <p className="mt-3 text-sm leading-6 text-zinc-500">{shot.beat}</p>
+                  <p className="mt-3 text-sm leading-6 text-zinc-500">
+                    {shot.beat}
+                  </p>
                   <div className="mt-4 grid gap-3 text-sm">
                     <div>
                       <p className="font-medium">Camera</p>
@@ -321,8 +398,12 @@ export function DirectorPlanner() {
                       <p className="mt-1 text-zinc-500">{shot.voicePrompt}</p>
                     </div>
                     <div className="rounded-lg border border-violet-500/20 bg-violet-500/5 p-3">
-                      <p className="font-medium text-violet-700 dark:text-violet-300">Route</p>
-                      <p className="mt-1 text-zinc-600 dark:text-zinc-400">{shot.route}</p>
+                      <p className="font-medium text-violet-700 dark:text-violet-300">
+                        Route
+                      </p>
+                      <p className="mt-1 text-zinc-600 dark:text-zinc-400">
+                        {shot.route}
+                      </p>
                     </div>
                   </div>
                 </article>
@@ -338,7 +419,10 @@ export function DirectorPlanner() {
               <h2 className="text-lg font-semibold">Production task list</h2>
               <div className="mt-4 grid gap-2 md:grid-cols-2">
                 {taskList.map((task) => (
-                  <div key={task} className="rounded-lg border border-black/10 px-3 py-2 text-sm text-zinc-600 dark:border-white/10 dark:text-zinc-300">
+                  <div
+                    key={task}
+                    className="rounded-lg border border-black/10 px-3 py-2 text-sm text-zinc-600 dark:border-white/10 dark:text-zinc-300"
+                  >
                     {task}
                   </div>
                 ))}

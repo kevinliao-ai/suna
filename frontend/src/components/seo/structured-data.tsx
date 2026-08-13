@@ -15,13 +15,25 @@ interface StructuredDataProps {
   type?: 'website' | 'tool' | 'article';
   breadcrumbs?: BreadcrumbItem[];
   faq?: FAQItem[];
+  data?: Record<string, unknown>;
 }
 
 export function StructuredData({
   type = 'website',
   breadcrumbs,
   faq,
+  data,
 }: StructuredDataProps) {
+  if (data) {
+    return (
+      <Script
+        id="structured-data-custom"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+      />
+    );
+  }
+
   const schemas: Record<string, unknown>[] = [
     {
       '@context': 'https://schema.org',
