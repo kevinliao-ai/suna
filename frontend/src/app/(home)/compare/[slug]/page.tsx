@@ -5,6 +5,8 @@ import { StructuredData } from '@/components/seo/structured-data';
 import { VideoConversionSection, VideoSeoFaqSection } from '@/components/video-intelligence/video-seo-sections';
 import { siteConfig } from '@/lib/site';
 import { getComparisonFaq, getModelsForComparison, getVideoModelComparison, videoModelComparisons } from '@/lib/video-intelligence';
+import { getCasesForModels } from '@/lib/director-workflow-cases';
+import { RelatedCaseLinks } from '@/components/cases/related-case-links';
 
 interface ComparisonPageProps {
   params: Promise<{ slug: string }>;
@@ -48,6 +50,7 @@ export default async function ComparisonPage({ params }: ComparisonPageProps) {
 
   const models = getModelsForComparison(comparison);
   const faq = getComparisonFaq(comparison);
+  const workflowCases = getCasesForModels([...comparison.modelSlugs]);
 
   return (
     <main className="min-h-screen bg-background text-foreground">
@@ -180,6 +183,7 @@ export default async function ComparisonPage({ params }: ComparisonPageProps) {
       />
 
       <VideoSeoFaqSection items={faq} />
+      <RelatedCaseLinks items={workflowCases} title={`Test ${comparison.title} with a defined shot plan`} />
     </main>
   );
 }

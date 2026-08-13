@@ -9,9 +9,10 @@ export const siteConfig = {
       { id: 2, name: 'Use Cases', href: '#showcase' },
       { id: 3, name: 'Models', href: '/models' },
       { id: 4, name: 'Recipes', href: '/recipes' },
-      { id: 5, name: 'Calculator', href: '/video-cost-calculator' },
-      { id: 6, name: 'Index-TTS', href: '/index-tts' },
-      { id: 7, name: 'Pricing', href: '/pricing' },
+      { id: 5, name: 'Cases', href: '/cases' },
+      { id: 6, name: 'Calculator', href: '/video-cost-calculator' },
+      { id: 7, name: 'Index-TTS', href: '/index-tts' },
+      { id: 8, name: 'Pricing', href: '/pricing' },
     ],
   },
   hero: {
@@ -88,10 +89,11 @@ export const siteConfig = {
       links: [
         { id: 1, title: 'Model directory', url: '/models' },
         { id: 2, title: 'Anime Shot Recipes', url: '/recipes' },
-        { id: 3, title: 'Cost calculator', url: '/video-cost-calculator' },
-        { id: 4, title: 'Index-TTS', url: '/index-tts' },
+        { id: 3, title: 'Workflow cases', url: '/cases' },
+        { id: 4, title: 'Cost calculator', url: '/video-cost-calculator' },
+        { id: 5, title: 'Index-TTS', url: '/index-tts' },
         {
-          id: 5,
+          id: 6,
           title: 'Watermark Tool',
           url: '/sora-watermark-remove',
         },

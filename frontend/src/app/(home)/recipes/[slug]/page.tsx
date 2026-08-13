@@ -11,6 +11,8 @@ import {
   getRelatedRecipes,
 } from '@/lib/anime-shot-recipes';
 import { siteConfig } from '@/lib/site';
+import { getCasesForRecipe } from '@/lib/director-workflow-cases';
+import { RelatedCaseLinks } from '@/components/cases/related-case-links';
 
 interface RecipePageProps {
   params: Promise<{ slug: string }>;
@@ -36,6 +38,7 @@ export default async function RecipePage({ params }: RecipePageProps) {
   const recipe = getAnimeShotRecipe((await params).slug);
   if (!recipe) notFound();
   const related = getRelatedRecipes(recipe);
+  const workflowCases = getCasesForRecipe(recipe.slug);
   return (
     <main>
       <RecipeFunnelTracker
@@ -169,6 +172,10 @@ export default async function RecipePage({ params }: RecipePageProps) {
           </div>
         </div>
       </section>
+      <RelatedCaseLinks
+        items={workflowCases}
+        title={`See ${recipe.title} inside a complete sequence`}
+      />
     </main>
   );
 }
