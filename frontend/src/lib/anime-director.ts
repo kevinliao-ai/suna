@@ -73,18 +73,20 @@ export function createAnimeDirectorPlan({
   style,
   priority,
   seedShot,
+  seedShots,
 }: {
   script: string;
   projectTitle?: string;
   style?: string;
   priority: ShotPriority;
   seedShot?: DirectorShotSeed;
+  seedShots?: DirectorShotSeed[];
 }): AnimeDirectorPlan {
   const beats = splitScript(script);
   const safeBeats = beats.length > 0 ? beats : ['A character enters a quiet anime scene and notices a dramatic change.'];
   const visualStyle = style?.trim() || 'cinematic anime, clean character design, expressive lighting';
   const shots = safeBeats.map((beat, index) => {
-    const seeded = index === 0 ? seedShot : undefined;
+    const seeded = seedShots?.[index] || (index === 0 ? seedShot : undefined);
     const camera = seeded?.camera || cameraMoves[index % cameraMoves.length];
     const durationSeconds = seeded?.durationSeconds || estimateDuration(beat);
 

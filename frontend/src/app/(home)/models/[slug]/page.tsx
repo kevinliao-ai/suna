@@ -5,6 +5,8 @@ import { StructuredData } from '@/components/seo/structured-data';
 import { VideoConversionSection, VideoSeoFaqSection } from '@/components/video-intelligence/video-seo-sections';
 import { siteConfig } from '@/lib/site';
 import { getModelFaq, getModelFitScore, getVideoModel, videoModelComparisons, videoModels } from '@/lib/video-intelligence';
+import { getCasesForModels } from '@/lib/director-workflow-cases';
+import { RelatedCaseLinks } from '@/components/cases/related-case-links';
 
 interface ModelDetailPageProps {
   params: Promise<{ slug: string }>;
@@ -56,6 +58,7 @@ export default async function ModelDetailPage({ params }: ModelDetailPageProps) 
     comparison.modelSlugs.includes(model.slug),
   );
   const faq = getModelFaq(model);
+  const workflowCases = getCasesForModels([model.slug]);
 
   return (
     <main className="min-h-screen bg-background text-foreground">
@@ -191,6 +194,7 @@ export default async function ModelDetailPage({ params }: ModelDetailPageProps) 
           </div>
         </section>
       ) : null}
+      <RelatedCaseLinks items={workflowCases} title={`Planning cases for ${model.name}`} />
     </main>
   );
 }

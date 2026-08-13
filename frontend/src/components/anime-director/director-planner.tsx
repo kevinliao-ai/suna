@@ -26,6 +26,10 @@ import {
 import { createClient } from '@/lib/supabase/client';
 import { DirectorGenerationPanel } from './director-generation-panel';
 import type { AnimeShotRecipe } from '@/lib/anime-shot-recipes';
+import {
+  getCaseSeedShots,
+  type DirectorWorkflowCase,
+} from '@/lib/director-workflow-cases';
 import posthog from 'posthog-js';
 
 const priorities: Array<{
@@ -50,20 +54,24 @@ The mage opens her notebook and the city lights turn into floating runes.`;
 
 export function DirectorPlanner({
   initialRecipe,
+  initialCase,
 }: {
   initialRecipe?: AnimeShotRecipe;
+  initialCase?: DirectorWorkflowCase;
 }) {
   const supabase = useMemo(() => createClient(), []);
   const [projectTitle, setProjectTitle] = useState(
-    initialRecipe?.title || 'Sky Train Opening',
+    initialCase?.title || initialRecipe?.title || 'Sky Train Opening',
   );
   const [style, setStyle] = useState(
-    initialRecipe?.style ||
+    initialCase?.style || initialRecipe?.style ||
       'cinematic anime, warm sunset light, detailed city background',
   );
-  const [script, setScript] = useState(initialRecipe?.script || sampleScript);
+  const [script, setScript] = useState(
+    initialCase?.script || initialRecipe?.script || sampleScript,
+  );
   const [priority, setPriority] = useState<ShotPriority>(
-    initialRecipe?.priority || 'control',
+    initialCase?.priority || initialRecipe?.priority || 'control',
   );
   const [userId, setUserId] = useState<string | null>(null);
   const [savedProjects, setSavedProjects] = useState<SavedDirectorProject[]>(
@@ -96,8 +104,9 @@ export function DirectorPlanner({
               checklist: initialRecipe.tips,
             }
           : undefined,
+        seedShots: initialCase ? getCaseSeedShots(initialCase) : undefined,
       }),
-    [initialRecipe, priority, projectTitle, script, sourceRecipeSlug, style],
+    [initialCase, initialRecipe, priority, projectTitle, script, sourceRecipeSlug, style],
   );
 
   useEffect(() => {
@@ -108,6 +117,15 @@ export function DirectorPlanner({
       shot_type: initialRecipe.shotType,
     });
   }, [initialRecipe]);
+
+  useEffect(() => {
+    if (!initialCase) return;
+    posthog.capture('director_case_loaded', {
+      case_slug: initialCase.slug,
+      shot_count: initialCase.recipeSlugs.length,
+      priority: initialCase.priority,
+    });
+  }, [initialCase]);
 
   useEffect(() => {
     let active = true;
@@ -180,6 +198,7 @@ export function DirectorPlanner({
         priority,
         plan,
         sourceRecipeSlug,
+        sourceCaseSlug: initialCase?.slug,
       });
 
       setSelectedProjectId(saved.id);
@@ -193,6 +212,7 @@ export function DirectorPlanner({
         {
           project_id: saved.id,
           source_recipe: sourceRecipeSlug || null,
+          source_case: initialCase?.slug || null,
           shot_count: plan.shots.length,
           priority,
         },
@@ -287,6 +307,13 @@ export function DirectorPlanner({
                 Loaded the exact <strong>{initialRecipe.title}</strong> camera,
                 timing, prompt, and production checks. Edit anything before
                 saving it as your own project.
+              </div>
+            ) : null}
+            {initialCase ? (
+              <div className="mb-5 rounded-lg border border-sky-500/20 bg-sky-500/10 p-3 text-sm text-sky-800 dark:text-sky-200">
+                Loaded the complete <strong>{initialCase.title}</strong> case:
+                script, {initialCase.recipeSlugs.length} curated shots, exact
+                camera directions, timing, prompts, and review checks.
               </div>
             ) : null}
             <div className="flex items-center justify-between gap-3">
