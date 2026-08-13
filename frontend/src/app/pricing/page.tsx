@@ -3,17 +3,20 @@ import { Check, Sparkles } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { BILLING_PLANS, formatPlanPrice } from '@/lib/billing/plans';
 import { BillingActionButton } from '@/components/billing-action-button';
+import { PRO_MONTHLY_GENERATION_CREDITS } from '@/lib/generation/credits';
 
 export const metadata = {
-  title: 'Pricing',
-  description: 'Choose an AniSora Studio workspace plan.',
+  title: 'AniSora Studio Pro Pricing',
+  description:
+    'Choose monthly or annual AniSora Studio Pro with cloud projects, reusable anime workflows, and monthly generation credits.',
 };
 
 const benefits = [
+  `${PRO_MONTHLY_GENERATION_CREDITS} generation credits refreshed monthly`,
   'Cross-device cloud project sync',
   'Up to 100 cloud projects',
-  'Tasks and asset links restored automatically',
-  'Priority access to new creative tool adapters',
+  'Recipe-to-Director shot planning',
+  'Private task, asset, and generation history',
 ];
 
 export default async function PricingPage({
@@ -47,15 +50,16 @@ export default async function PricingPage({
 
         <section className="mx-auto mt-20 max-w-2xl text-center">
           <p className="text-sm font-medium text-violet-600 dark:text-violet-400">
-            Simple workspace pricing
+            Studio Pro for anime production
           </p>
           <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-6xl">
-            Keep every creative project within reach.
+            Turn a recipe into a production-ready shot.
           </h1>
           <p className="mt-5 text-lg leading-relaxed text-zinc-500">
-            Generation continues in the selected external tools. Studio Pro pays
-            for AniSora-owned cloud organization and recovery—not third-party
-            generation credits.
+            Studio Pro combines reusable Director plans, cloud project history,
+            and {PRO_MONTHLY_GENERATION_CREDITS} monthly AniSora generation
+            credits. Every paid generation still shows its credit quote and
+            requires your approval before provider spend.
           </p>
           {params.checkout === 'canceled' ? (
             <p className="mx-auto mt-6 max-w-lg rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-sm text-amber-700 dark:text-amber-300">
@@ -110,9 +114,10 @@ export default async function PricingPage({
         </section>
 
         <p className="mx-auto mt-10 max-w-2xl text-center text-xs leading-relaxed text-zinc-500">
-          Subscriptions renew automatically until canceled. You can manage or
-          cancel from the Stripe customer portal. Third-party generation usage
-          and availability are governed by each provider.
+          Subscriptions renew automatically until canceled. Annual plans still
+          refill generation credits monthly; unused credits do not imply
+          unlimited provider usage. You can manage or cancel from the Stripe
+          customer portal.
         </p>
       </div>
     </main>

@@ -42,7 +42,9 @@ test('the search-to-paid funnel has explicit privacy-safe milestones', async () 
     'recipe_filter_used',
     'recipe_viewed',
     'recipe_start_clicked',
+    'director_recipe_loaded',
     'director_project_created',
+    'director_post_save_upgrade_clicked',
     'billing_checkout_started',
     'billing_checkout_returned_success',
   ]) {

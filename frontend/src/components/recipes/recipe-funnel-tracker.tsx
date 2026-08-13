@@ -24,7 +24,7 @@ export function RecipeFunnelTracker({
 export function CollectionPlannerLink({ slug }: { slug: string }) {
   return (
     <a
-      href={`/auth?returnUrl=${encodeURIComponent('/dashboard/director')}`}
+      href="/dashboard/director"
       onClick={() =>
         posthog.capture('recipe_collection_start_clicked', {
           collection_slug: slug,
