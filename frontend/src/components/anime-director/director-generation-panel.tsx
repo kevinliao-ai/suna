@@ -1,8 +1,10 @@
 'use client';
 
 import Image from 'next/image';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ImageIcon, LoaderCircle, RefreshCw, Video } from 'lucide-react';
+import posthog from 'posthog-js';
 
 import type { AnimeDirectorShot } from '@/lib/anime-director';
 import { createClient } from '@/lib/supabase/client';
@@ -89,6 +91,7 @@ export function DirectorGenerationPanel({
   const [rolloutEnabled, setRolloutEnabled] = useState(false);
   const [pendingKey, setPendingKey] = useState('');
   const [message, setMessage] = useState('');
+  const paywallCaptured = useRef(false);
 
   const refreshTasks = useCallback(async () => {
     if (!projectId) {
@@ -157,6 +160,22 @@ export function DirectorGenerationPanel({
     };
   }, []);
 
+  useEffect(() => {
+    if (
+      paywallCaptured.current
+      || !rolloutEnabled
+      || hasProSubscription
+    ) {
+      return;
+    }
+
+    paywallCaptured.current = true;
+    posthog.capture('director_generation_paywall_viewed', {
+      project_saved: Boolean(projectId),
+      shot_count: shots.length,
+    });
+  }, [hasProSubscription, projectId, rolloutEnabled, shots.length]);
+
   const refreshCredits = useCallback(async () => {
     const response = await fetch('/api/generation/credits');
     if (!response.ok) return;
@@ -183,6 +202,11 @@ export function DirectorGenerationPanel({
     mode: 'paid' | 'simulation' = 'paid',
   ) => {
     if (!projectId) {
+      posthog.capture('director_generation_blocked', {
+        kind,
+        mode,
+        reason: 'unsaved_project',
+      });
       setMessage('Save this Director plan before generating.');
       return;
     }
@@ -192,11 +216,24 @@ export function DirectorGenerationPanel({
     const confirmed = mode === 'simulation' || window.confirm(
       `Generate a paid ${label} for ${quote?.requiredCredits} credits (estimated provider cost $${quote?.estimatedCostUsd.toFixed(4)} USD)? The server will reject it above the $${quote?.hardLimitUsd.toFixed(2)} limit.`,
     );
-    if (!confirmed) return;
+    if (!confirmed) {
+      posthog.capture('director_generation_canceled', {
+        kind,
+        mode,
+        required_credits: quote?.requiredCredits ?? null,
+      });
+      return;
+    }
 
     const key = `${shot.id}:${kind}`;
     setPendingKey(key);
     setMessage('');
+    posthog.capture('director_generation_started', {
+      kind,
+      mode,
+      required_credits: quote?.requiredCredits ?? 0,
+      shot_count: shots.length,
+    });
 
     try {
       const response = await fetch('/api/generation/fal', {
@@ -212,7 +249,7 @@ export function DirectorGenerationPanel({
         }),
       });
       const payload = (await response.json()) as {
-        error?: { message?: string };
+        error?: { code?: string; message?: string };
       };
 
       if (!response.ok) {
@@ -224,9 +261,20 @@ export function DirectorGenerationPanel({
           ? 'Free pipeline simulation completed. No provider request or charge was created.'
           : `${kind === 'reference' ? 'Reference' : 'Video'} queued. Results will appear automatically.`,
       );
+      posthog.capture('director_generation_submitted', {
+        kind,
+        mode,
+        result: mode === 'simulation' ? 'simulation_completed' : 'queued',
+        required_credits: quote?.requiredCredits ?? 0,
+      });
       await refreshTasks();
       await refreshCredits();
     } catch (error) {
+      posthog.capture('director_generation_failed', {
+        kind,
+        mode,
+        reason: 'request_failed',
+      });
       setMessage(
         error instanceof Error ? error.message : 'Generation request failed.',
       );
@@ -268,9 +316,19 @@ export function DirectorGenerationPanel({
             </p>
           )}
           {rolloutEnabled && !hasProSubscription && (
-            <a href="/pricing" className="mt-2 inline-flex text-sm font-semibold text-violet-600 hover:underline">
+            <Link
+              href="/pricing?source=director-generation-gate"
+              onClick={() =>
+                posthog.capture('director_generation_upgrade_clicked', {
+                  reason: 'subscription_required',
+                  project_saved: Boolean(projectId),
+                  shot_count: shots.length,
+                })
+              }
+              className="mt-2 inline-flex text-sm font-semibold text-violet-600 hover:underline"
+            >
               View Studio Pro plans
-            </a>
+            </Link>
           )}
         </div>
         <button

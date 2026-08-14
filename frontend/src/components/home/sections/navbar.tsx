@@ -41,7 +41,7 @@ export function Navbar() {
         <div className="ml-auto hidden items-center gap-2 md:flex">
           <ThemeToggle />
           <Link
-            href="/pricing"
+            href="/pricing?source=navigation-upgrade"
             className="rounded-full bg-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-500"
           >
             Upgrade
@@ -81,7 +81,7 @@ export function Navbar() {
             <div className="mt-2 flex items-center gap-2 border-t border-border pt-3">
               <ThemeToggle />
               <Link
-                href="/pricing"
+                href="/pricing?source=navigation-upgrade"
                 onClick={() => setOpen(false)}
                 className="rounded-lg bg-violet-600 px-4 py-2 text-center text-sm font-semibold text-white"
               >

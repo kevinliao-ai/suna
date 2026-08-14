@@ -23,6 +23,10 @@ const files = {
     '../src/components/billing-action-button.tsx',
     import.meta.url,
   ),
+  pricing: new URL(
+    '../src/components/pricing-funnel-tracker.tsx',
+    import.meta.url,
+  ),
   dashboard: new URL(
     '../src/app/(dashboard)/dashboard/page.tsx',
     import.meta.url,
@@ -46,6 +50,7 @@ test('the search-to-paid funnel has explicit privacy-safe milestones', async () 
     'director_case_loaded',
     'director_project_created',
     'director_post_save_upgrade_clicked',
+    'pricing_viewed',
     'billing_checkout_started',
     'billing_checkout_returned_success',
   ]) {

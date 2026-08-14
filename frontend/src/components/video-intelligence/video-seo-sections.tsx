@@ -63,7 +63,7 @@ export function VideoConversionSection({
               <Calculator className="size-4" /> Estimate a batch
             </Link>
             <Link
-              href="/pricing"
+              href="/pricing?source=video-intelligence"
               className="inline-flex items-center justify-center gap-2 rounded-full bg-violet-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-violet-500"
             >
               <Sparkles className="size-4" /> View Studio Pro

@@ -82,7 +82,7 @@ export function HeroSection() {
               <ArrowRight className="size-4" />
             </Link>
             <Link
-              href="/pricing"
+              href="/pricing?source=home-hero"
               className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-border bg-background/80 px-6 text-sm font-medium text-foreground backdrop-blur transition hover:bg-accent"
             >
               <Sparkles className="size-4 text-violet-600 dark:text-violet-400" />

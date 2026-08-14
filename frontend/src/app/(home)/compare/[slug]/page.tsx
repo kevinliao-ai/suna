@@ -91,7 +91,7 @@ export default async function ComparisonPage({ params }: ComparisonPageProps) {
                 Estimate batch cost <ArrowRight className="size-4" />
               </Link>
               <Link
-                href="/pricing"
+                href="/pricing?source=model-comparison"
                 className="inline-flex items-center justify-center rounded-full border border-border px-5 py-3 text-sm font-semibold transition hover:bg-accent"
               >
                 Upgrade Studio workflow

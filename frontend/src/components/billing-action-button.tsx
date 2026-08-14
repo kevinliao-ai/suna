@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { CreditCard, LoaderCircle } from 'lucide-react';
 import type { BillingPlanId } from '@/lib/billing/plans';
+import { normalizeConversionSource } from '@/lib/conversion-source';
 import posthog from 'posthog-js';
 
 interface BillingActionButtonProps {
@@ -10,6 +11,7 @@ interface BillingActionButtonProps {
   planId?: BillingPlanId;
   children: React.ReactNode;
   className?: string;
+  source?: string;
 }
 
 interface BillingActionResponse {
@@ -22,6 +24,7 @@ export function BillingActionButton({
   planId,
   children,
   className = '',
+  source = 'direct',
 }: BillingActionButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -30,11 +33,12 @@ export function BillingActionButton({
     if (isLoading) return;
     setIsLoading(true);
     setError('');
+    const conversionSource = normalizeConversionSource(source);
     posthog.capture(
       action === 'checkout'
         ? 'billing_checkout_started'
         : 'billing_portal_started',
-      { plan_id: planId || null },
+      { plan_id: planId || null, source: conversionSource },
     );
 
     try {
@@ -45,7 +49,10 @@ export function BillingActionButton({
           'Content-Type': 'application/json',
           Accept: 'application/json',
         },
-        body: action === 'checkout' ? JSON.stringify({ planId }) : '{}',
+        body:
+          action === 'checkout'
+            ? JSON.stringify({ planId, source: conversionSource })
+            : '{}',
       });
       const body = (await response
         .json()
@@ -57,7 +64,7 @@ export function BillingActionButton({
         action === 'checkout'
           ? 'billing_checkout_created'
           : 'billing_portal_opened',
-        { plan_id: planId || null },
+        { plan_id: planId || null, source: conversionSource },
       );
       window.location.assign(body.url);
     } catch (caught) {
@@ -65,7 +72,7 @@ export function BillingActionButton({
         action === 'checkout'
           ? 'billing_checkout_failed'
           : 'billing_portal_failed',
-        { plan_id: planId || null },
+        { plan_id: planId || null, source: conversionSource },
       );
       setError(
         caught instanceof Error

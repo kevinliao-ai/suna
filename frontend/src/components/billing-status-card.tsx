@@ -91,7 +91,7 @@ export function BillingStatusCard({
         Upgrade for cross-device cloud projects and automatic recovery.
       </p>
       <Link
-        href="/pricing"
+        href="/pricing?source=dashboard-billing-card"
         className="mt-3 inline-flex rounded-lg bg-zinc-950 px-3 py-2 text-xs font-medium text-white dark:bg-white dark:text-zinc-950"
       >
         View Studio Pro
