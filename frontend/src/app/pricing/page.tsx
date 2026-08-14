@@ -4,6 +4,11 @@ import { createClient } from '@/lib/supabase/server';
 import { BILLING_PLANS, formatPlanPrice } from '@/lib/billing/plans';
 import { BillingActionButton } from '@/components/billing-action-button';
 import { PRO_MONTHLY_GENERATION_CREDITS } from '@/lib/generation/credits';
+import {
+  authPricingHref,
+  normalizeConversionSource,
+} from '@/lib/conversion-source';
+import { PricingFunnelTracker } from '@/components/pricing-funnel-tracker';
 
 export const metadata = {
   title: 'AniSora Studio Pro Pricing',
@@ -22,16 +27,23 @@ const benefits = [
 export default async function PricingPage({
   searchParams,
 }: {
-  searchParams: Promise<{ checkout?: string }>;
+  searchParams: Promise<{ checkout?: string; source?: string }>;
 }) {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   const params = await searchParams;
+  const source = normalizeConversionSource(params.source);
+  const signInHref = authPricingHref(source);
 
   return (
     <main className="min-h-screen bg-[#f7f7f5] px-6 py-10 text-zinc-950 dark:bg-[#0c0c0d] dark:text-zinc-50">
+      <PricingFunnelTracker
+        source={source}
+        signedIn={Boolean(user)}
+        checkout={params.checkout}
+      />
       <div className="mx-auto max-w-5xl">
         <header className="flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 font-semibold">
@@ -41,7 +53,7 @@ export default async function PricingPage({
             AniSora Studio
           </Link>
           <Link
-            href={user ? '/dashboard' : '/auth?returnUrl=/pricing'}
+            href={user ? '/dashboard' : signInHref}
             className="text-sm font-medium"
           >
             {user ? 'Open Studio' : 'Sign in'}
@@ -97,13 +109,14 @@ export default async function PricingPage({
                 <BillingActionButton
                   action="checkout"
                   planId={plan.id}
+                  source={source}
                   className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-950 px-4 py-3 text-sm font-medium text-white transition hover:opacity-85 disabled:opacity-60 dark:bg-white dark:text-zinc-950"
                 >
                   Choose {plan.interval === 'month' ? 'monthly' : 'annual'}
                 </BillingActionButton>
               ) : (
                 <Link
-                  href="/auth?returnUrl=/pricing"
+                  href={signInHref}
                   className="mt-8 inline-flex w-full items-center justify-center rounded-xl bg-zinc-950 px-4 py-3 text-sm font-medium text-white dark:bg-white dark:text-zinc-950"
                 >
                   Sign in to upgrade

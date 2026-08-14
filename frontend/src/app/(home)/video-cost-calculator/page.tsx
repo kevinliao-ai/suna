@@ -70,7 +70,7 @@ export default function VideoCostCalculatorPage() {
             own credits, rights, and availability.
           </p>
           <Link
-            href="/pricing"
+            href="/pricing?source=cost-calculator"
             className="mt-7 inline-flex items-center justify-center rounded-full bg-violet-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-violet-500"
           >
             View Studio Pro pricing

@@ -8,6 +8,7 @@ import {
   getUserBillingEntitlement,
 } from '@/lib/billing/server';
 import { billingError, billingException } from '@/lib/billing/response';
+import { normalizeConversionSource } from '@/lib/conversion-source';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -44,9 +45,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let body: { planId?: unknown };
+    let body: { planId?: unknown; source?: unknown };
     try {
-      body = (await request.json()) as { planId?: unknown };
+      body = (await request.json()) as { planId?: unknown; source?: unknown };
     } catch {
       return billingError(400, 'invalid_json', 'Provide a valid JSON request.');
     }
@@ -59,6 +60,8 @@ export async function POST(request: NextRequest) {
     if (!configuredPrice) {
       return billingError(400, 'invalid_plan', 'Choose a valid billing plan.');
     }
+
+    const conversionSource = normalizeConversionSource(body.source);
 
     const entitlement = await getUserBillingEntitlement(user.id);
     if (entitlement.tier === 'pro') {
@@ -77,18 +80,20 @@ export async function POST(request: NextRequest) {
         customer: customerId,
         client_reference_id: user.id,
         line_items: [{ price: configuredPrice.priceId, quantity: 1 }],
-        success_url: `${origin}/dashboard?billing=success`,
-        cancel_url: `${origin}/pricing?checkout=canceled`,
+        success_url: `${origin}/dashboard?billing=success&source=${encodeURIComponent(conversionSource)}`,
+        cancel_url: `${origin}/pricing?checkout=canceled&source=${encodeURIComponent(conversionSource)}`,
         billing_address_collection: 'auto',
         customer_update: { address: 'auto', name: 'auto' },
         metadata: {
           anisora_user_id: user.id,
           anisora_plan_id: configuredPrice.plan.id,
+          anisora_conversion_source: conversionSource,
         },
         subscription_data: {
           metadata: {
             anisora_user_id: user.id,
             anisora_plan_id: configuredPrice.plan.id,
+            anisora_conversion_source: conversionSource,
           },
         },
       },

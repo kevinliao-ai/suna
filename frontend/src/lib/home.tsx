@@ -12,7 +12,7 @@ export const siteConfig = {
       { id: 5, name: 'Cases', href: '/cases' },
       { id: 6, name: 'Calculator', href: '/video-cost-calculator' },
       { id: 7, name: 'Index-TTS', href: '/index-tts' },
-      { id: 8, name: 'Pricing', href: '/pricing' },
+      { id: 8, name: 'Pricing', href: '/pricing?source=navigation-link' },
     ],
   },
   hero: {
@@ -81,7 +81,7 @@ export const siteConfig = {
           title: 'Model repository',
           url: 'https://github.com/bilibili/Index-anisora',
         },
-        { id: 3, title: 'Pricing', url: '/pricing' },
+        { id: 3, title: 'Pricing', url: '/pricing?source=footer' },
       ],
     },
     {

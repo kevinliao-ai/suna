@@ -160,6 +160,12 @@ export function DirectorPlanner({
   }, [supabase]);
 
   const downloadPlan = () => {
+    posthog.capture('director_plan_exported', {
+      source_recipe: sourceRecipeSlug || null,
+      source_case: initialCase?.slug || null,
+      shot_count: plan.shots.length,
+      priority,
+    });
     const blob = new Blob([serializeDirectorPlan(plan)], {
       type: 'application/json',
     });
@@ -223,6 +229,12 @@ export function DirectorPlanner({
           : 'Saved your revised plan. Existing project tasks were preserved.',
       );
     } catch {
+      posthog.capture('director_project_save_failed', {
+        is_new_project: isNewProject,
+        source_recipe: sourceRecipeSlug || null,
+        source_case: initialCase?.slug || null,
+        shot_count: plan.shots.length,
+      });
       setSaveState('error');
       setSaveMessage('Could not save this project. Please try again.');
     }
@@ -238,6 +250,12 @@ export function DirectorPlanner({
     setScript(saved.script);
     setPriority(saved.priority);
     setSourceRecipeSlug(saved.sourceRecipeSlug);
+    posthog.capture('director_saved_project_loaded', {
+      source_recipe: saved.sourceRecipeSlug || null,
+      source_case: saved.sourceCaseSlug || null,
+      shot_count: saved.plan.shots.length,
+      priority: saved.priority,
+    });
     setSaveState('idle');
     setSaveMessage(`Loaded ${saved.title}.`);
   };
@@ -420,6 +438,7 @@ export function DirectorPlanner({
                       onClick={() =>
                         posthog.capture('director_post_save_upgrade_clicked', {
                           source_recipe: sourceRecipeSlug || null,
+                          source_case: initialCase?.slug || null,
                           shot_count: plan.shots.length,
                         })
                       }

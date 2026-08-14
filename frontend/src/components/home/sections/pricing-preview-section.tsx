@@ -45,7 +45,7 @@ export function PricingPreviewSection() {
             Or save 18% with annual billing at $59/year.
           </p>
           <Link
-            href="/pricing"
+            href="/pricing?source=home-pricing"
             className="relative mt-8 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-white px-5 py-3.5 text-sm font-semibold text-zinc-950 transition hover:scale-[1.01] hover:bg-violet-50 dark:bg-zinc-950 dark:text-white dark:hover:bg-zinc-800"
           >
             View plans & upgrade

@@ -45,6 +45,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import posthog from 'posthog-js';
+import { normalizeConversionSource } from '@/lib/conversion-source';
 
 type SyncState =
   | 'local'
@@ -117,19 +118,21 @@ export default function DashboardPage() {
   const storageKey = `${STUDIO_STORAGE_PREFIX}:${userId || 'anonymous'}`;
 
   useEffect(() => {
-    const billingResult = new URLSearchParams(window.location.search).get(
-      'billing',
-    );
+    const searchParams = new URLSearchParams(window.location.search);
+    const billingResult = searchParams.get('billing');
     if (billingResult !== 'success' && billingResult !== 'canceled') return;
 
     setBillingNotice(billingResult);
+    const source = normalizeConversionSource(searchParams.get('source'));
     posthog.capture(
       billingResult === 'success'
         ? 'billing_checkout_returned_success'
         : 'billing_checkout_returned_canceled',
+      { source },
     );
     const url = new URL(window.location.href);
     url.searchParams.delete('billing');
+    url.searchParams.delete('source');
     window.history.replaceState(
       {},
       '',
