@@ -35,6 +35,7 @@ import {
   type DirectorContinuityReviews,
 } from '@/lib/director-continuity';
 import { createClient } from '@/lib/supabase/client';
+import { DirectorContinuityBoard } from './director-continuity-board';
 
 interface GenerationQuote {
   estimatedCostUsd: number;
@@ -213,6 +214,7 @@ function generationButtonLabel(
 
 export function DirectorGenerationPanel({
   projectId,
+  projectTitle,
   shots,
   selections,
   continuityAssets,
@@ -223,6 +225,7 @@ export function DirectorGenerationPanel({
   onReview,
 }: {
   projectId?: string;
+  projectTitle: string;
   shots: AnimeDirectorShot[];
   selections: DirectorGenerationSelections;
   continuityAssets: DirectorContinuityAsset[];
@@ -553,6 +556,19 @@ export function DirectorGenerationPanel({
         </p>
       )}
 
+      <div className="mt-5">
+        <DirectorContinuityBoard
+          projectId={projectId}
+          projectTitle={projectTitle}
+          shots={shots}
+          tasks={tasks}
+          selections={selections}
+          assets={continuityAssets}
+          bindings={continuityBindings}
+          reviews={continuityReviews}
+        />
+      </div>
+
       <div className="mt-5 grid gap-4">
         {shots.map((shot, shotIndex) => {
           const referenceVersions = generationVersions(
@@ -606,6 +622,7 @@ export function DirectorGenerationPanel({
           return (
             <article
               key={shot.id}
+              id={`generation-shot-${shot.id}`}
               className="rounded-lg border border-black/10 p-4 dark:border-white/10"
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
