@@ -37,11 +37,18 @@ const cameraMoves = [
 ];
 
 const routeByPriority: Record<ShotPriority, string> = {
-  speed: 'Fast draft route: use a creator-facing video tool for quick shot blocking.',
+  speed:
+    'Fast draft route: use a creator-facing video tool for quick shot blocking.',
   cost: 'Low-cost route: generate short drafts first, then upscale only usable shots.',
-  quality: 'Quality route: use reference images and rerun fewer, higher-fidelity candidates.',
-  control: 'Control route: lock character references and use keyframe or image-to-video workflows.',
+  quality:
+    'Quality route: use reference images and rerun fewer, higher-fidelity candidates.',
+  control:
+    'Control route: lock character references and use keyframe or image-to-video workflows.',
 };
+
+export function getDirectorRoute(priority: ShotPriority) {
+  return routeByPriority[priority];
+}
 
 function splitScript(script: string) {
   return script
@@ -83,8 +90,15 @@ export function createAnimeDirectorPlan({
   seedShots?: DirectorShotSeed[];
 }): AnimeDirectorPlan {
   const beats = splitScript(script);
-  const safeBeats = beats.length > 0 ? beats : ['A character enters a quiet anime scene and notices a dramatic change.'];
-  const visualStyle = style?.trim() || 'cinematic anime, clean character design, expressive lighting';
+  const safeBeats =
+    beats.length > 0
+      ? beats
+      : [
+          'A character enters a quiet anime scene and notices a dramatic change.',
+        ];
+  const visualStyle =
+    style?.trim() ||
+    'cinematic anime, clean character design, expressive lighting';
   const shots = safeBeats.map((beat, index) => {
     const seeded = seedShots?.[index] || (index === 0 ? seedShot : undefined);
     const camera = seeded?.camera || cameraMoves[index % cameraMoves.length];
@@ -97,10 +111,10 @@ export function createAnimeDirectorPlan({
       durationSeconds,
       camera,
       visualPrompt:
-        seeded?.visualPrompt
-        || `${visualStyle}. ${beat}. ${camera}. Keep character identity consistent and preserve readable composition.`,
+        seeded?.visualPrompt ||
+        `${visualStyle}. ${beat}. ${camera}. Keep character identity consistent and preserve readable composition.`,
       voicePrompt: `Voice direction for ${makeShotTitle(beat, index)}: natural anime performance, clear emotion, timing around ${durationSeconds} seconds.`,
-      route: routeByPriority[priority],
+      route: getDirectorRoute(priority),
       checklist: [
         ...(seeded?.checklist || []),
         'Attach character or scene reference before generation.',
@@ -113,8 +127,12 @@ export function createAnimeDirectorPlan({
   return {
     title: projectTitle?.trim() || 'Untitled anime scene',
     priority,
-    estimatedSeconds: shots.reduce((total, shot) => total + shot.durationSeconds, 0),
-    estimatedTestRenders: shots.length * (priority === 'quality' || priority === 'control' ? 3 : 2),
+    estimatedSeconds: shots.reduce(
+      (total, shot) => total + shot.durationSeconds,
+      0,
+    ),
+    estimatedTestRenders:
+      shots.length * (priority === 'quality' || priority === 'control' ? 3 : 2),
     shots,
   };
 }
