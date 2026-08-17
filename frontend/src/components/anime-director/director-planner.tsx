@@ -45,12 +45,16 @@ import { DirectorContinuityLibrary } from './director-continuity-library';
 import {
   createContinuityAsset,
   readContinuityBindings,
+  readContinuityReviews,
   removeContinuityAsset,
   toggleContinuityBinding,
   updateContinuityAsset,
+  updateContinuityReview,
   type ContinuityAssetKind,
   type DirectorContinuityAsset,
   type DirectorContinuityBindings,
+  type DirectorContinuityReview,
+  type DirectorContinuityReviews,
 } from '@/lib/director-continuity';
 import type {
   DirectorGenerationSelections,
@@ -130,6 +134,8 @@ export function DirectorPlanner({
   >([]);
   const [continuityBindings, setContinuityBindings] =
     useState<DirectorContinuityBindings>({});
+  const [continuityReviews, setContinuityReviews] =
+    useState<DirectorContinuityReviews>({});
 
   const generatedPlan = useMemo(
     () =>
@@ -298,6 +304,9 @@ export function DirectorPlanner({
       delete next[shotId];
       return next;
     });
+    setContinuityReviews((current) =>
+      updateContinuityReview(current, shotId, null),
+    );
     markPlanChanged();
     posthog.capture('director_shot_removed', {
       deleted_position: deletedPosition,
@@ -321,6 +330,12 @@ export function DirectorPlanner({
       readContinuityBindings(
         current,
         continuityAssets,
+        generatedPlan.shots.map((shot) => shot.id),
+      ),
+    );
+    setContinuityReviews((current) =>
+      readContinuityReviews(
+        current,
         generatedPlan.shots.map((shot) => shot.id),
       ),
     );
@@ -349,7 +364,11 @@ export function DirectorPlanner({
     patch: Partial<
       Pick<
         DirectorContinuityAsset,
-        'name' | 'description' | 'visualAnchors' | 'negativeConstraints'
+        | 'name'
+        | 'description'
+        | 'visualAnchors'
+        | 'negativeConstraints'
+        | 'referenceTaskId'
       >
     >,
   ) => {
@@ -357,6 +376,14 @@ export function DirectorPlanner({
       updateContinuityAsset(current, assetId, patch),
     );
     markPlanChanged('Continuity asset changed. Save before generating.');
+    if (patch.referenceTaskId !== undefined) {
+      posthog.capture('director_continuity_reference_changed', {
+        action: patch.referenceTaskId ? 'attached' : 'removed',
+        asset_kind:
+          continuityAssets.find((asset) => asset.id === assetId)?.kind ||
+          'unknown',
+      });
+    }
   };
 
   const deleteContinuityAsset = (assetId: string) => {
@@ -393,6 +420,24 @@ export function DirectorPlanner({
         ? Math.max(0, (continuityBindings[shotId] || []).length - 1)
         : (continuityBindings[shotId] || []).length + 1,
     });
+  };
+
+  const reviewShotContinuity = (
+    shotId: string,
+    patch: Partial<DirectorContinuityReview> | null,
+  ) => {
+    setContinuityReviews((current) =>
+      updateContinuityReview(current, shotId, patch),
+    );
+    markPlanChanged('Continuity review changed. Save to keep this QA result.');
+    if (patch === null || patch.status) {
+      posthog.capture('director_continuity_review_changed', {
+        status: patch?.status || 'cleared',
+        shot_position:
+          editableShots.findIndex((shot) => shot.id === shotId) + 1,
+        shot_count: editableShots.length,
+      });
+    }
   };
 
   const downloadPlan = () => {
@@ -444,6 +489,7 @@ export function DirectorPlanner({
         selectedGenerationTaskIds,
         continuityAssets,
         continuityBindings,
+        continuityReviews,
       });
 
       setSelectedProjectId(saved.id);
@@ -495,6 +541,7 @@ export function DirectorPlanner({
     setSelectedGenerationTaskIds(saved.selectedGenerationTaskIds || {});
     setContinuityAssets(saved.continuityAssets || []);
     setContinuityBindings(saved.continuityBindings || {});
+    setContinuityReviews(saved.continuityReviews || {});
     setPlanDirty(false);
     posthog.capture('director_saved_project_loaded', {
       source_recipe: saved.sourceRecipeSlug || null,
@@ -762,6 +809,7 @@ export function DirectorPlanner({
               assets={continuityAssets}
               bindings={continuityBindings}
               shots={plan.shots}
+              referenceSelections={selectedGenerationTaskIds}
               onAdd={addContinuityAsset}
               onChange={editContinuityAsset}
               onRemove={deleteContinuityAsset}
@@ -991,8 +1039,12 @@ export function DirectorPlanner({
               projectId={selectedProjectId}
               shots={plan.shots}
               selections={selectedGenerationTaskIds}
+              continuityAssets={continuityAssets}
+              continuityBindings={continuityBindings}
+              continuityReviews={continuityReviews}
               planDirty={planDirty}
               onSelectTask={selectGenerationTask}
+              onReview={reviewShotContinuity}
             />
 
             <section className="rounded-xl border border-black/10 bg-white p-5 dark:border-white/10 dark:bg-white/[0.04]">

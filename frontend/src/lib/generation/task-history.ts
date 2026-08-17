@@ -1,7 +1,11 @@
 import {
   composeContinuityPrompt,
+  getContinuityAssetsForShot,
+  isReferenceTaskId,
   readContinuityAssets,
   readContinuityBindings,
+  type DirectorContinuityAsset,
+  type DirectorContinuityBindings,
 } from '../director-continuity.ts';
 
 export type GenerationKind = 'reference' | 'video';
@@ -25,6 +29,13 @@ export type DirectorGenerationSelections = Record<
   string,
   Partial<Record<GenerationKind, string>>
 >;
+
+export interface VideoReferenceCandidate {
+  taskId: string;
+  mediaUrl: string;
+  source: 'continuity' | 'shot';
+  label: string;
+}
 
 export function isDirectorShotId(value: unknown): value is string {
   return (
@@ -80,6 +91,55 @@ export function generationTaskMatchesReference(
     input.kind === 'reference' &&
     output.mediaUrl === imageUrl
   );
+}
+
+export function generationReferenceForShot(
+  row: { id: string; input: unknown; output: unknown },
+  taskId: string,
+  targetShotId: string,
+  settings: unknown,
+) {
+  if (row.id !== taskId || !isReferenceTaskId(taskId)) return null;
+  const input =
+    row.input && typeof row.input === 'object'
+      ? (row.input as { shotId?: unknown; kind?: unknown })
+      : {};
+  const output =
+    row.output && typeof row.output === 'object'
+      ? (row.output as { mediaUrl?: unknown })
+      : {};
+  if (
+    input.kind !== 'reference' ||
+    !isDirectorShotId(input.shotId) ||
+    typeof output.mediaUrl !== 'string'
+  ) {
+    return null;
+  }
+  try {
+    if (new URL(output.mediaUrl).protocol !== 'https:') return null;
+  } catch {
+    return null;
+  }
+  if (input.shotId === targetShotId) return output.mediaUrl;
+
+  if (!settings || typeof settings !== 'object') return null;
+  const director = (settings as { director?: unknown }).director;
+  if (!director || typeof director !== 'object') return null;
+  const directorSettings = director as {
+    continuityAssets?: unknown;
+    continuityBindings?: unknown;
+  };
+  const assets = readContinuityAssets(directorSettings.continuityAssets);
+  const bindings = readContinuityBindings(
+    directorSettings.continuityBindings,
+    assets,
+    [targetShotId],
+  );
+  return getContinuityAssetsForShot(assets, bindings, targetShotId).some(
+    (asset) => asset.referenceTaskId === taskId,
+  )
+    ? output.mediaUrl
+    : null;
 }
 
 function finiteNonNegative(value: unknown) {
@@ -181,6 +241,45 @@ export function resolveGenerationSelection(
     ) ||
     null
   );
+}
+
+export function videoReferenceCandidates(
+  tasks: GenerationTask[],
+  shotId: string,
+  selectedReferenceTaskId: string | undefined,
+  assets: DirectorContinuityAsset[],
+  bindings: DirectorContinuityBindings,
+): VideoReferenceCandidate[] {
+  const candidates: VideoReferenceCandidate[] = [];
+  const seen = new Set<string>();
+  const add = (
+    taskId: string | undefined,
+    source: VideoReferenceCandidate['source'],
+    label: string,
+  ) => {
+    if (!taskId || seen.has(taskId)) return;
+    const task = tasks.find(
+      (candidate) =>
+        candidate.id === taskId &&
+        candidate.kind === 'reference' &&
+        candidate.status === 'done' &&
+        candidate.provider === 'fal' &&
+        candidate.mediaUrl,
+    );
+    if (!task?.mediaUrl) return;
+    seen.add(taskId);
+    candidates.push({ taskId, mediaUrl: task.mediaUrl, source, label });
+  };
+
+  for (const asset of getContinuityAssetsForShot(assets, bindings, shotId)) {
+    add(
+      asset.referenceTaskId,
+      'continuity',
+      `${asset.kind === 'character' ? 'Character' : 'Scene'} · ${asset.name || 'Unnamed asset'}`,
+    );
+  }
+  add(selectedReferenceTaskId, 'shot', 'This shot final reference');
+  return candidates;
 }
 
 export function visibleGenerationVersions(

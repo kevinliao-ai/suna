@@ -4,6 +4,7 @@ import test from 'node:test';
 
 import {
   generationTaskMatchesReference,
+  generationReferenceForShot,
   generationVersions,
   isDirectorShotId,
   readGenerationSelections,
@@ -11,6 +12,7 @@ import {
   readSavedDirectorShotPrompt,
   resolveGenerationSelection,
   visibleGenerationVersions,
+  videoReferenceCandidates,
 } from '../src/lib/generation/task-history.ts';
 
 const firstTaskId = '11111111-1111-4111-8111-111111111111';
@@ -154,6 +156,95 @@ test('saved prompts and references match the exact project shot', () => {
   );
 });
 
+test('video references allow the same shot or a bound canonical asset only', () => {
+  const taskRow = task({
+    id: firstTaskId,
+    createdAt: '2026-08-17T01:00:00Z',
+    shotId: 'shot-1',
+  });
+  const settings = {
+    director: {
+      continuityAssets: [
+        {
+          id: 'asset-hero',
+          kind: 'character',
+          name: 'Hero',
+          description: '',
+          visualAnchors: '',
+          negativeConstraints: '',
+          referenceTaskId: firstTaskId,
+        },
+      ],
+      continuityBindings: { 'shot-2': ['asset-hero'] },
+    },
+  };
+
+  assert.equal(
+    generationReferenceForShot(taskRow, firstTaskId, 'shot-1', settings),
+    'https://cdn.example.com/output.jpg',
+  );
+  assert.equal(
+    generationReferenceForShot(taskRow, firstTaskId, 'shot-2', settings),
+    'https://cdn.example.com/output.jpg',
+  );
+  assert.equal(
+    generationReferenceForShot(taskRow, firstTaskId, 'shot-3', settings),
+    null,
+  );
+  assert.equal(
+    generationReferenceForShot(
+      { ...taskRow, output: { mediaUrl: 'http://unsafe.example.com/a.jpg' } },
+      firstTaskId,
+      'shot-1',
+      settings,
+    ),
+    null,
+  );
+});
+
+test('canonical continuity references take priority and candidates deduplicate', () => {
+  const canonical = readGenerationTask(
+    task({
+      id: firstTaskId,
+      createdAt: '2026-08-17T01:00:00Z',
+      shotId: 'shot-1',
+    }),
+  );
+  const shotReference = readGenerationTask(
+    task({
+      id: secondTaskId,
+      createdAt: '2026-08-17T02:00:00Z',
+      shotId: 'shot-2',
+    }),
+  );
+  const assets = [
+    {
+      id: 'asset-hero',
+      kind: 'character',
+      name: 'Hero',
+      description: '',
+      visualAnchors: '',
+      negativeConstraints: '',
+      referenceTaskId: firstTaskId,
+    },
+  ];
+  const candidates = videoReferenceCandidates(
+    [canonical, shotReference],
+    'shot-2',
+    secondTaskId,
+    assets,
+    { 'shot-2': ['asset-hero'] },
+  );
+
+  assert.deepEqual(
+    candidates.map((candidate) => [candidate.taskId, candidate.source]),
+    [
+      [firstTaskId, 'continuity'],
+      [secondTaskId, 'shot'],
+    ],
+  );
+});
+
 test('generation uses saved prompts and verifies reference ownership', async () => {
   const route = await readFile(
     new URL('../src/app/api/generation/fal/route.ts', import.meta.url),
@@ -175,10 +266,9 @@ test('generation uses saved prompts and verifies reference ownership', async () 
     route,
     /const prompt = readSavedDirectorShotPrompt\(project\.settings, shotId\)/,
   );
-  assert.match(
-    route,
-    /generationTaskMatchesReference\(task, shotId, body\.imageUrl/,
-  );
+  assert.match(route, /generationReferenceForShot\(/);
+  assert.match(route, /\.eq\('id', referenceTaskId\)/);
+  assert.doesNotMatch(route, /body\.imageUrl/);
   assert.ok(
     route.indexOf('const prompt = readSavedDirectorShotPrompt') <
       route.indexOf('await submitFalRequest'),
@@ -186,6 +276,7 @@ test('generation uses saved prompts and verifies reference ownership', async () 
   assert.match(panel, /Shot versions and final takes/);
   assert.match(panel, /director_generation_version_selected/);
   assert.match(repository, /selectedGenerationTaskIds/);
+  assert.match(repository, /continuityReviews/);
 
   const eventStart = panel.indexOf(
     "posthog.capture('director_generation_version_selected'",

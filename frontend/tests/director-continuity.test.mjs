@@ -5,14 +5,17 @@ import test from 'node:test';
 import {
   composeContinuityPrompt,
   continuityCoverage,
+  continuityReviewSummary,
   createContinuityAsset,
   MAX_CONTINUITY_ASSETS,
   MAX_CONTINUITY_ASSETS_PER_SHOT,
   readContinuityAssets,
   readContinuityBindings,
+  readContinuityReviews,
   removeContinuityAsset,
   toggleContinuityBinding,
   updateContinuityAsset,
+  updateContinuityReview,
 } from '../src/lib/director-continuity.ts';
 
 const character = {
@@ -32,6 +35,7 @@ const scene = {
   visualAnchors: 'copper rail, west light, blue runes',
   negativeConstraints: 'no rain or night lighting',
 };
+const referenceTaskId = '33333333-3333-4333-8333-333333333333';
 
 test('continuity assets sanitize text, reject unsafe IDs, and enforce limits', () => {
   const raw = [
@@ -59,15 +63,51 @@ test('asset creation, editing, removal, and binding cleanup stay deterministic',
   assets = updateContinuityAsset(assets, 'asset-new', {
     name: 'Hero',
     visualAnchors: 'green eyes',
+    referenceTaskId,
   });
   const bindings = toggleContinuityBinding({}, 'shot-1', 'asset-new', assets);
 
   assert.equal(assets[0].name, 'Hero');
+  assert.equal(assets[0].referenceTaskId, referenceTaskId);
   assert.deepEqual(bindings, { 'shot-1': ['asset-new'] });
 
   const removed = removeContinuityAsset(assets, bindings, 'asset-new');
   assert.deepEqual(removed.assets, []);
   assert.deepEqual(removed.bindings, {});
+});
+
+test('canonical references and continuity reviews reject malformed saved data', () => {
+  const assets = readContinuityAssets([
+    { ...character, referenceTaskId },
+    { ...scene, referenceTaskId: 'unsafe-task' },
+  ]);
+  assert.equal(assets[0].referenceTaskId, referenceTaskId);
+  assert.equal(assets[1].referenceTaskId, undefined);
+
+  let reviews = readContinuityReviews(
+    {
+      'shot-1': { status: 'approved', note: `  ${'A'.repeat(300)}  ` },
+      'shot-2': { status: 'unknown', note: 'invalid' },
+      '../unsafe': { status: 'needs_revision', note: 'invalid' },
+    },
+    ['shot-1', 'shot-2'],
+  );
+  assert.equal(reviews['shot-1'].note.length, 240);
+  assert.equal(reviews['shot-2'], undefined);
+
+  reviews = updateContinuityReview(reviews, 'shot-2', {
+    status: 'needs_revision',
+    note: 'Hair color shifted.',
+  });
+  assert.deepEqual(continuityReviewSummary(['shot-1', 'shot-2'], reviews), {
+    reviewed: 2,
+    approved: 1,
+    needsRevision: 1,
+  });
+  assert.equal(
+    updateContinuityReview(reviews, 'shot-2', null)['shot-2'],
+    undefined,
+  );
 });
 
 test('bindings only retain known assets, valid shots, and four assets per shot', () => {
@@ -120,6 +160,8 @@ test('continuity analytics remain categorical and never include creative text', 
     'director_continuity_asset_added',
     'director_continuity_asset_removed',
     'director_continuity_binding_changed',
+    'director_continuity_reference_changed',
+    'director_continuity_review_changed',
   ];
 
   for (const eventName of eventNames) {
@@ -128,7 +170,7 @@ test('continuity analytics remain categorical and never include creative text', 
     assert.notEqual(start, -1);
     assert.doesNotMatch(
       planner.slice(start, end),
-      /name|description|visualAnchors|negativeConstraints|prompt/,
+      /name|description|visualAnchors|negativeConstraints|prompt|note/,
     );
   }
 });

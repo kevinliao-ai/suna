@@ -11,11 +11,13 @@ import {
   type DirectorContinuityAsset,
   type DirectorContinuityBindings,
 } from '@/lib/director-continuity';
+import type { DirectorGenerationSelections } from '@/lib/generation/task-history';
 
 export function DirectorContinuityLibrary({
   assets,
   bindings,
   shots,
+  referenceSelections,
   onAdd,
   onChange,
   onRemove,
@@ -24,13 +26,18 @@ export function DirectorContinuityLibrary({
   assets: DirectorContinuityAsset[];
   bindings: DirectorContinuityBindings;
   shots: AnimeDirectorShot[];
+  referenceSelections: DirectorGenerationSelections;
   onAdd: (kind: ContinuityAssetKind) => void;
   onChange: (
     assetId: string,
     patch: Partial<
       Pick<
         DirectorContinuityAsset,
-        'name' | 'description' | 'visualAnchors' | 'negativeConstraints'
+        | 'name'
+        | 'description'
+        | 'visualAnchors'
+        | 'negativeConstraints'
+        | 'referenceTaskId'
       >
     >,
   ) => void;
@@ -174,6 +181,41 @@ export function DirectorContinuityLibrary({
                       placeholder="No outfit, color palette, age, weather, or layout changes"
                       className="resize-y rounded-lg border border-black/10 bg-white p-3 font-normal leading-5 outline-none focus:border-fuchsia-500 dark:border-white/10 dark:bg-zinc-950"
                     />
+                  </label>
+                  <label className="grid gap-1.5 font-medium">
+                    Canonical generated reference
+                    <select
+                      value={asset.referenceTaskId || ''}
+                      onChange={(event) =>
+                        onChange(asset.id, {
+                          referenceTaskId: event.target.value,
+                        })
+                      }
+                      className="h-9 rounded-lg border border-black/10 bg-white px-3 font-normal outline-none focus:border-fuchsia-500 dark:border-white/10 dark:bg-zinc-950"
+                    >
+                      <option value="">No generated reference attached</option>
+                      {asset.referenceTaskId &&
+                      !Object.values(referenceSelections).some(
+                        (selection) =>
+                          selection.reference === asset.referenceTaskId,
+                      ) ? (
+                        <option value={asset.referenceTaskId}>
+                          Previously attached final reference
+                        </option>
+                      ) : null}
+                      {shots.map((shot, index) => {
+                        const taskId = referenceSelections[shot.id]?.reference;
+                        return taskId ? (
+                          <option key={shot.id} value={taskId}>
+                            Shot {index + 1} final reference · {shot.title}
+                          </option>
+                        ) : null;
+                      })}
+                    </select>
+                    <span className="font-normal leading-5 text-zinc-500">
+                      Choose a saved Fal final take. Bound shots can reuse it as
+                      their secure video reference.
+                    </span>
                   </label>
                 </div>
 
