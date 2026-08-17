@@ -123,12 +123,23 @@ test('saved prompts and references match the exact project shot', () => {
       plan: {
         shots: [{ id: 'shot-1', visualPrompt: '  Saved production prompt.  ' }],
       },
+      continuityAssets: [
+        {
+          id: 'asset-hero',
+          kind: 'character',
+          name: 'Hero',
+          description: 'Young mage',
+          visualAnchors: 'silver hair and navy coat',
+          negativeConstraints: 'no outfit changes',
+        },
+      ],
+      continuityBindings: { 'shot-1': ['asset-hero'] },
     },
   };
-  assert.equal(
-    readSavedDirectorShotPrompt(settings, 'shot-1'),
-    'Saved production prompt.',
-  );
+  const prompt = readSavedDirectorShotPrompt(settings, 'shot-1');
+  assert.ok(prompt.startsWith('Saved production prompt.'));
+  assert.match(prompt, /Continuity lock/);
+  assert.match(prompt, /silver hair and navy coat/);
   assert.equal(readSavedDirectorShotPrompt(settings, 'shot-2'), null);
   assert.equal(
     generationTaskMatchesReference(

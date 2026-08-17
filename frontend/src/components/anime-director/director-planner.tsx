@@ -41,6 +41,17 @@ import {
 } from '@/lib/director-shot-workbench';
 import { createClient } from '@/lib/supabase/client';
 import { DirectorGenerationPanel } from './director-generation-panel';
+import { DirectorContinuityLibrary } from './director-continuity-library';
+import {
+  createContinuityAsset,
+  readContinuityBindings,
+  removeContinuityAsset,
+  toggleContinuityBinding,
+  updateContinuityAsset,
+  type ContinuityAssetKind,
+  type DirectorContinuityAsset,
+  type DirectorContinuityBindings,
+} from '@/lib/director-continuity';
 import type {
   DirectorGenerationSelections,
   GenerationKind,
@@ -114,6 +125,11 @@ export function DirectorPlanner({
   const [planDirty, setPlanDirty] = useState(false);
   const [selectedGenerationTaskIds, setSelectedGenerationTaskIds] =
     useState<DirectorGenerationSelections>({});
+  const [continuityAssets, setContinuityAssets] = useState<
+    DirectorContinuityAsset[]
+  >([]);
+  const [continuityBindings, setContinuityBindings] =
+    useState<DirectorContinuityBindings>({});
 
   const generatedPlan = useMemo(
     () =>
@@ -254,7 +270,17 @@ export function DirectorPlanner({
     if (editableShots.length >= MAX_DIRECTOR_SHOTS) return;
     const sourcePosition =
       editableShots.findIndex((shot) => shot.id === shotId) + 1;
-    setEditableShots((current) => duplicateDirectorShot(current, shotId));
+    const duplicateId = crypto.randomUUID();
+    const duplicateShotId = `shot-${duplicateId}`;
+    setEditableShots((current) =>
+      duplicateDirectorShot(current, shotId, () => duplicateId),
+    );
+    if (continuityBindings[shotId]?.length) {
+      setContinuityBindings((current) => ({
+        ...current,
+        [duplicateShotId]: [...(current[shotId] || [])],
+      }));
+    }
     markPlanChanged();
     posthog.capture('director_shot_duplicated', {
       source_position: sourcePosition,
@@ -267,6 +293,11 @@ export function DirectorPlanner({
     const deletedPosition =
       editableShots.findIndex((shot) => shot.id === shotId) + 1;
     setEditableShots((current) => removeDirectorShot(current, shotId));
+    setContinuityBindings((current) => {
+      const next = { ...current };
+      delete next[shotId];
+      return next;
+    });
     markPlanChanged();
     posthog.capture('director_shot_removed', {
       deleted_position: deletedPosition,
@@ -286,12 +317,81 @@ export function DirectorPlanner({
 
   const rebuildShots = () => {
     setEditableShots(cloneDirectorShots(generatedPlan.shots));
+    setContinuityBindings((current) =>
+      readContinuityBindings(
+        current,
+        continuityAssets,
+        generatedPlan.shots.map((shot) => shot.id),
+      ),
+    );
     markPlanChanged();
     posthog.capture('director_shots_rebuilt', {
       shot_count: generatedPlan.shots.length,
       source_recipe: sourceRecipeSlug || null,
       source_case: sourceCaseSlug || null,
       priority,
+    });
+  };
+
+  const addContinuityAsset = (kind: ContinuityAssetKind) => {
+    setContinuityAssets((current) =>
+      createContinuityAsset(current, kind, `asset-${crypto.randomUUID()}`),
+    );
+    markPlanChanged('Continuity asset added. Save before generating.');
+    posthog.capture('director_continuity_asset_added', {
+      asset_kind: kind,
+      asset_count: continuityAssets.length + 1,
+    });
+  };
+
+  const editContinuityAsset = (
+    assetId: string,
+    patch: Partial<
+      Pick<
+        DirectorContinuityAsset,
+        'name' | 'description' | 'visualAnchors' | 'negativeConstraints'
+      >
+    >,
+  ) => {
+    setContinuityAssets((current) =>
+      updateContinuityAsset(current, assetId, patch),
+    );
+    markPlanChanged('Continuity asset changed. Save before generating.');
+  };
+
+  const deleteContinuityAsset = (assetId: string) => {
+    const asset = continuityAssets.find(
+      (candidate) => candidate.id === assetId,
+    );
+    const next = removeContinuityAsset(
+      continuityAssets,
+      continuityBindings,
+      assetId,
+    );
+    setContinuityAssets(next.assets);
+    setContinuityBindings(next.bindings);
+    markPlanChanged('Continuity asset removed. Save before generating.');
+    posthog.capture('director_continuity_asset_removed', {
+      asset_kind: asset?.kind || 'unknown',
+      asset_count: next.assets.length,
+    });
+  };
+
+  const toggleShotContinuity = (shotId: string, assetId: string) => {
+    const wasSelected = (continuityBindings[shotId] || []).includes(assetId);
+    setContinuityBindings((current) =>
+      toggleContinuityBinding(current, shotId, assetId, continuityAssets),
+    );
+    markPlanChanged('Shot continuity changed. Save before generating.');
+    posthog.capture('director_continuity_binding_changed', {
+      action: wasSelected ? 'removed' : 'added',
+      asset_kind:
+        continuityAssets.find((asset) => asset.id === assetId)?.kind ||
+        'unknown',
+      shot_position: editableShots.findIndex((shot) => shot.id === shotId) + 1,
+      selected_count: wasSelected
+        ? Math.max(0, (continuityBindings[shotId] || []).length - 1)
+        : (continuityBindings[shotId] || []).length + 1,
     });
   };
 
@@ -342,6 +442,8 @@ export function DirectorPlanner({
         sourceRecipeSlug,
         sourceCaseSlug,
         selectedGenerationTaskIds,
+        continuityAssets,
+        continuityBindings,
       });
 
       setSelectedProjectId(saved.id);
@@ -391,6 +493,8 @@ export function DirectorPlanner({
     setSourceCaseSlug(saved.sourceCaseSlug);
     setEditableShots(cloneDirectorShots(saved.plan.shots));
     setSelectedGenerationTaskIds(saved.selectedGenerationTaskIds || {});
+    setContinuityAssets(saved.continuityAssets || []);
+    setContinuityBindings(saved.continuityBindings || {});
     setPlanDirty(false);
     posthog.capture('director_saved_project_loaded', {
       source_recipe: saved.sourceRecipeSlug || null,
@@ -654,6 +758,16 @@ export function DirectorPlanner({
               </article>
             </div>
 
+            <DirectorContinuityLibrary
+              assets={continuityAssets}
+              bindings={continuityBindings}
+              shots={plan.shots}
+              onAdd={addContinuityAsset}
+              onChange={editContinuityAsset}
+              onRemove={deleteContinuityAsset}
+              onToggle={toggleShotContinuity}
+            />
+
             <section className="grid gap-4">
               <div className="flex flex-col justify-between gap-3 rounded-xl border border-violet-500/20 bg-violet-500/5 p-4 sm:flex-row sm:items-center">
                 <div>
@@ -831,6 +945,34 @@ export function DirectorPlanner({
                           className="resize-y rounded-lg border border-black/10 bg-white p-3 font-normal leading-6 outline-none focus:border-violet-500 dark:border-white/10 dark:bg-zinc-950"
                         />
                       </label>
+                      {(continuityBindings[shot.id] || []).length > 0 ? (
+                        <div className="rounded-lg border border-fuchsia-500/20 bg-fuchsia-500/5 p-3">
+                          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-fuchsia-700 dark:text-fuchsia-300">
+                            Continuity lock
+                          </p>
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {continuityAssets
+                              .filter((asset) =>
+                                continuityBindings[shot.id]?.includes(asset.id),
+                              )
+                              .map((asset) => (
+                                <span
+                                  key={asset.id}
+                                  className="rounded-full border border-fuchsia-500/20 bg-white px-2.5 py-1 text-[11px] font-medium dark:bg-white/5"
+                                >
+                                  {asset.kind === 'character'
+                                    ? 'Character'
+                                    : 'Scene'}
+                                  : {asset.name || 'Unnamed'}
+                                </span>
+                              ))}
+                          </div>
+                          <p className="mt-2 text-xs leading-5 text-zinc-500">
+                            These saved anchors will be appended securely when
+                            this shot is generated.
+                          </p>
+                        </div>
+                      ) : null}
                       <div className="rounded-lg border border-violet-500/20 bg-violet-500/5 p-3">
                         <p className="font-medium text-violet-700 dark:text-violet-300">
                           Generation route

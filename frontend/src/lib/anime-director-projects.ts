@@ -2,6 +2,12 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 
 import type { AnimeDirectorPlan, ShotPriority } from '@/lib/anime-director';
 import {
+  readContinuityAssets,
+  readContinuityBindings,
+  type DirectorContinuityAsset,
+  type DirectorContinuityBindings,
+} from '@/lib/director-continuity';
+import {
   readGenerationSelections,
   type DirectorGenerationSelections,
 } from '@/lib/generation/task-history';
@@ -18,6 +24,8 @@ export interface DirectorProjectInput {
   sourceRecipeSlug?: string;
   sourceCaseSlug?: string;
   selectedGenerationTaskIds?: DirectorGenerationSelections;
+  continuityAssets?: DirectorContinuityAsset[];
+  continuityBindings?: DirectorContinuityBindings;
 }
 
 export interface SavedDirectorProject extends DirectorProjectInput {
@@ -67,6 +75,8 @@ function readDirectorProject(row: ProjectRow): SavedDirectorProject | null {
       sourceRecipeSlug?: unknown;
       sourceCaseSlug?: unknown;
       selectedGenerationTaskIds?: unknown;
+      continuityAssets?: unknown;
+      continuityBindings?: unknown;
     };
   };
 
@@ -82,6 +92,13 @@ function readDirectorProject(row: ProjectRow): SavedDirectorProject | null {
   ) {
     return null;
   }
+
+  const continuityAssets = readContinuityAssets(director.continuityAssets);
+  const continuityBindings = readContinuityBindings(
+    director.continuityBindings,
+    continuityAssets,
+    director.plan.shots.map((shot) => shot.id),
+  );
 
   return {
     id: row.id,
@@ -101,6 +118,8 @@ function readDirectorProject(row: ProjectRow): SavedDirectorProject | null {
     selectedGenerationTaskIds: readGenerationSelections(
       director.selectedGenerationTaskIds,
     ),
+    continuityAssets,
+    continuityBindings,
     updatedAt: row.updated_at,
   };
 }
@@ -144,6 +163,12 @@ export async function saveDirectorProject(
       sourceRecipeSlug: input.sourceRecipeSlug,
       sourceCaseSlug: input.sourceCaseSlug,
       selectedGenerationTaskIds: input.selectedGenerationTaskIds,
+      continuityAssets: readContinuityAssets(input.continuityAssets),
+      continuityBindings: readContinuityBindings(
+        input.continuityBindings,
+        readContinuityAssets(input.continuityAssets),
+        input.plan.shots.map((shot) => shot.id),
+      ),
     },
   };
 
@@ -199,6 +224,12 @@ export async function saveDirectorProject(
     sourceRecipeSlug: input.sourceRecipeSlug,
     sourceCaseSlug: input.sourceCaseSlug,
     selectedGenerationTaskIds: input.selectedGenerationTaskIds,
+    continuityAssets: readContinuityAssets(input.continuityAssets),
+    continuityBindings: readContinuityBindings(
+      input.continuityBindings,
+      readContinuityAssets(input.continuityAssets),
+      input.plan.shots.map((shot) => shot.id),
+    ),
     updatedAt: now,
   };
 }
