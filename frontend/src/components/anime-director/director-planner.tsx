@@ -1037,6 +1037,7 @@ export function DirectorPlanner({
 
             <DirectorGenerationPanel
               projectId={selectedProjectId}
+              projectTitle={plan.title}
               shots={plan.shots}
               selections={selectedGenerationTaskIds}
               continuityAssets={continuityAssets}
