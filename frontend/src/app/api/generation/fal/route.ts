@@ -17,7 +17,7 @@ import {
   reserveGenerationCredits,
 } from '@/lib/generation/credit-server';
 import {
-  generationTaskMatchesReference,
+  generationReferenceForShot,
   isDirectorShotId,
   readSavedDirectorShotPrompt,
 } from '@/lib/generation/task-history';
@@ -49,15 +49,6 @@ function simulationEnabled(email: string | null | undefined) {
     process.env.ENABLE_GENERATION_SIMULATION?.trim() === 'true' &&
     isAllowlisted(email)
   );
-}
-
-function isHttpsUrl(value: unknown): value is string {
-  if (typeof value !== 'string') return false;
-  try {
-    return new URL(value).protocol === 'https:';
-  } catch {
-    return false;
-  }
 }
 
 async function availableQuotes(enabled: boolean) {
@@ -126,7 +117,7 @@ export async function POST(request: NextRequest) {
     projectId?: unknown;
     shotId?: unknown;
     kind?: unknown;
-    imageUrl?: unknown;
+    referenceTaskId?: unknown;
     mode?: unknown;
   };
   try {
@@ -159,11 +150,13 @@ export async function POST(request: NextRequest) {
   ) {
     return error(400, 'invalid_request', 'Project, shot, or kind is invalid.');
   }
-  if (kind === 'video' && !isHttpsUrl(body.imageUrl)) {
+  const referenceTaskId =
+    typeof body.referenceTaskId === 'string' ? body.referenceTaskId : '';
+  if (kind === 'video' && !/^[0-9a-f-]{36}$/i.test(referenceTaskId)) {
     return error(
       400,
       'reference_required',
-      'A secure reference image URL is required.',
+      'A completed reference task is required.',
     );
   }
 
@@ -179,7 +172,7 @@ export async function POST(request: NextRequest) {
     return error(404, 'project_not_found', 'Save this Director project first.');
 
   const prompt = readSavedDirectorShotPrompt(project.settings, shotId);
-  if (!prompt || prompt.length < 10 || prompt.length > 2000) {
+  if (!prompt || prompt.length < 10 || prompt.length > 10000) {
     return error(
       409,
       'shot_not_saved',
@@ -187,16 +180,17 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  let referenceImageUrl: string | null = null;
   if (kind === 'video') {
-    const { data: referenceTasks, error: referenceError } = await supabase
+    const { data: referenceTask, error: referenceError } = await supabase
       .from('anisora_tasks')
-      .select('input,output')
+      .select('id,input,output')
+      .eq('id', referenceTaskId)
       .eq('project_id', projectId)
       .eq('user_id', user.id)
       .eq('status', 'done')
       .eq('provider', 'fal')
-      .order('created_at', { ascending: false })
-      .limit(100);
+      .maybeSingle();
     if (referenceError) {
       return error(
         500,
@@ -204,15 +198,19 @@ export async function POST(request: NextRequest) {
         'Could not verify the reference image.',
       );
     }
-    if (
-      !referenceTasks?.some((task) =>
-        generationTaskMatchesReference(task, shotId, body.imageUrl as string),
-      )
-    ) {
+    referenceImageUrl = referenceTask
+      ? generationReferenceForShot(
+          referenceTask,
+          referenceTaskId,
+          shotId,
+          project.settings,
+        )
+      : null;
+    if (!referenceImageUrl) {
       return error(
         409,
         'reference_not_owned',
-        'Choose a completed reference version from this shot.',
+        'Choose a completed reference from this shot or a bound continuity asset.',
       );
     }
   }
@@ -327,7 +325,7 @@ export async function POST(request: NextRequest) {
         }
       : {
           prompt,
-          image_url: body.imageUrl,
+          image_url: referenceImageUrl,
           duration: '5',
           negative_prompt:
             'blur, distort, low quality, inconsistent character, text, watermark',
@@ -339,7 +337,8 @@ export async function POST(request: NextRequest) {
     shotId,
     model,
     prompt,
-    imageUrl: kind === 'video' ? body.imageUrl : null,
+    referenceTaskId: kind === 'video' ? referenceTaskId : null,
+    imageUrl: kind === 'video' ? referenceImageUrl : null,
     billing,
   };
 

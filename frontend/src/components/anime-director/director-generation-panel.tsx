@@ -21,11 +21,19 @@ import {
   generationVersions,
   readGenerationTask,
   resolveGenerationSelection,
+  videoReferenceCandidates,
   visibleGenerationVersions,
   type DirectorGenerationSelections,
   type GenerationKind,
   type GenerationTask,
 } from '@/lib/generation/task-history';
+import {
+  continuityReviewSummary,
+  type DirectorContinuityAsset,
+  type DirectorContinuityBindings,
+  type DirectorContinuityReview,
+  type DirectorContinuityReviews,
+} from '@/lib/director-continuity';
 import { createClient } from '@/lib/supabase/client';
 
 interface GenerationQuote {
@@ -207,14 +215,25 @@ export function DirectorGenerationPanel({
   projectId,
   shots,
   selections,
+  continuityAssets,
+  continuityBindings,
+  continuityReviews,
   planDirty,
   onSelectTask,
+  onReview,
 }: {
   projectId?: string;
   shots: AnimeDirectorShot[];
   selections: DirectorGenerationSelections;
+  continuityAssets: DirectorContinuityAsset[];
+  continuityBindings: DirectorContinuityBindings;
+  continuityReviews: DirectorContinuityReviews;
   planDirty: boolean;
   onSelectTask: (shotId: string, kind: GenerationKind, taskId: string) => void;
+  onReview: (
+    shotId: string,
+    patch: Partial<DirectorContinuityReview> | null,
+  ) => void;
 }) {
   const supabase = useMemo(() => createClient(), []);
   const [tasks, setTasks] = useState<GenerationTask[]>([]);
@@ -232,7 +251,15 @@ export function DirectorGenerationPanel({
   const [rolloutEnabled, setRolloutEnabled] = useState(false);
   const [pendingKey, setPendingKey] = useState('');
   const [message, setMessage] = useState('');
+  const [videoReferenceTaskIds, setVideoReferenceTaskIds] = useState<
+    Record<string, string>
+  >({});
   const paywallCaptured = useRef(false);
+
+  const reviewSummary = continuityReviewSummary(
+    shots.map((shot) => shot.id),
+    continuityReviews,
+  );
 
   const refreshTasks = useCallback(async () => {
     if (!projectId) {
@@ -342,7 +369,7 @@ export function DirectorGenerationPanel({
   const submit = async (
     shot: AnimeDirectorShot,
     kind: GenerationKind,
-    imageUrl?: string,
+    referenceTaskId?: string,
     mode: 'paid' | 'simulation' = 'paid',
   ) => {
     if (!projectId || planDirty) {
@@ -397,7 +424,7 @@ export function DirectorGenerationPanel({
           projectId,
           shotId: shot.id,
           kind,
-          imageUrl,
+          referenceTaskId,
           mode,
         }),
       });
@@ -464,6 +491,11 @@ export function DirectorGenerationPanel({
             Generate multiple candidates, compare the full history, and choose
             the reference and video that belong in the final project.
           </p>
+          <p className="mt-2 text-xs font-medium text-fuchsia-700 dark:text-fuchsia-300">
+            Continuity QA: {reviewSummary.reviewed}/{shots.length} reviewed ·{' '}
+            {reviewSummary.approved} passed · {reviewSummary.needsRevision} need
+            revision
+          </p>
           <p className="mt-1 text-sm text-zinc-500">
             {planDirty
               ? 'Save your current shot edits before generating. This keeps provider requests tied to the exact saved prompt.'
@@ -529,10 +561,6 @@ export function DirectorGenerationPanel({
             'reference',
           );
           const videoVersions = generationVersions(tasks, shot.id, 'video');
-          const selectedReference = resolveGenerationSelection(
-            referenceVersions,
-            selections[shot.id]?.reference,
-          );
           const selectedVideo = resolveGenerationSelection(
             videoVersions,
             selections[shot.id]?.video,
@@ -547,6 +575,19 @@ export function DirectorGenerationPanel({
           );
           const referenceQuote = quotes?.reference;
           const videoQuote = quotes?.video;
+          const referenceCandidates = videoReferenceCandidates(
+            tasks,
+            shot.id,
+            selections[shot.id]?.reference,
+            continuityAssets,
+            continuityBindings,
+          );
+          const videoReference =
+            referenceCandidates.find(
+              (candidate) =>
+                candidate.taskId === videoReferenceTaskIds[shot.id],
+            ) || referenceCandidates[0];
+          const continuityReview = continuityReviews[shot.id];
 
           const selectTask = (
             kind: GenerationKind,
@@ -578,6 +619,30 @@ export function DirectorGenerationPanel({
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
+                  <label className="flex items-center gap-2 rounded-lg border border-fuchsia-500/20 bg-fuchsia-500/5 px-2 text-xs font-medium">
+                    Video reference
+                    <select
+                      aria-label={`Video reference for ${shot.title}`}
+                      value={videoReference?.taskId || ''}
+                      onChange={(event) =>
+                        setVideoReferenceTaskIds((current) => ({
+                          ...current,
+                          [shot.id]: event.target.value,
+                        }))
+                      }
+                      disabled={!referenceCandidates.length}
+                      className="h-8 max-w-56 bg-transparent text-xs outline-none disabled:text-zinc-400 dark:bg-zinc-950"
+                    >
+                      {!referenceCandidates.length ? (
+                        <option value="">Generate or attach a reference</option>
+                      ) : null}
+                      {referenceCandidates.map((candidate) => (
+                        <option key={candidate.taskId} value={candidate.taskId}>
+                          {candidate.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
                   <button
                     type="button"
                     onClick={() => void submit(shot, 'reference')}
@@ -605,17 +670,13 @@ export function DirectorGenerationPanel({
                   <button
                     type="button"
                     onClick={() =>
-                      void submit(
-                        shot,
-                        'video',
-                        selectedReference?.mediaUrl || undefined,
-                      )
+                      void submit(shot, 'video', videoReference?.taskId)
                     }
                     disabled={
                       planDirty ||
                       !generationEnabled ||
                       !pricingAvailable ||
-                      !selectedReference?.mediaUrl ||
+                      !videoReference?.taskId ||
                       videoPending ||
                       videoRunning
                     }
@@ -656,6 +717,75 @@ export function DirectorGenerationPanel({
                   video.
                 </p>
               )}
+
+              {referenceCandidates.length || selectedVideo ? (
+                <div className="mt-3 rounded-lg border border-fuchsia-500/20 bg-fuchsia-500/5 p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-fuchsia-700 dark:text-fuchsia-300">
+                        Continuity review
+                      </p>
+                      <p className="mt-1 text-xs text-zinc-500">
+                        Compare identity, costume, palette, lighting, and scene
+                        geometry before approving the take.
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          onReview(shot.id, { status: 'approved' })
+                        }
+                        aria-pressed={continuityReview?.status === 'approved'}
+                        className={`rounded-md border px-2.5 py-1.5 text-xs font-semibold ${
+                          continuityReview?.status === 'approved'
+                            ? 'border-emerald-600 bg-emerald-600 text-white'
+                            : 'border-emerald-500/30 text-emerald-700 dark:text-emerald-300'
+                        }`}
+                      >
+                        Pass
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          onReview(shot.id, { status: 'needs_revision' })
+                        }
+                        aria-pressed={
+                          continuityReview?.status === 'needs_revision'
+                        }
+                        className={`rounded-md border px-2.5 py-1.5 text-xs font-semibold ${
+                          continuityReview?.status === 'needs_revision'
+                            ? 'border-amber-600 bg-amber-600 text-white'
+                            : 'border-amber-500/30 text-amber-700 dark:text-amber-300'
+                        }`}
+                      >
+                        Needs revision
+                      </button>
+                      {continuityReview ? (
+                        <button
+                          type="button"
+                          onClick={() => onReview(shot.id, null)}
+                          className="rounded-md border border-black/10 px-2.5 py-1.5 text-xs font-semibold text-zinc-500 dark:border-white/10"
+                        >
+                          Clear
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
+                  {continuityReview ? (
+                    <textarea
+                      value={continuityReview.note}
+                      onChange={(event) =>
+                        onReview(shot.id, { note: event.target.value })
+                      }
+                      rows={2}
+                      maxLength={240}
+                      placeholder="Optional private QA note, e.g. coat color shifted in frame 3."
+                      className="mt-3 w-full resize-y rounded-lg border border-black/10 bg-white p-3 text-xs leading-5 outline-none focus:border-fuchsia-500 dark:border-white/10 dark:bg-zinc-950"
+                    />
+                  ) : null}
+                </div>
+              ) : null}
 
               <div className="mt-4 grid gap-4 xl:grid-cols-2">
                 <section>

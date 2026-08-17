@@ -4,8 +4,10 @@ import type { AnimeDirectorPlan, ShotPriority } from '@/lib/anime-director';
 import {
   readContinuityAssets,
   readContinuityBindings,
+  readContinuityReviews,
   type DirectorContinuityAsset,
   type DirectorContinuityBindings,
+  type DirectorContinuityReviews,
 } from '@/lib/director-continuity';
 import {
   readGenerationSelections,
@@ -26,6 +28,7 @@ export interface DirectorProjectInput {
   selectedGenerationTaskIds?: DirectorGenerationSelections;
   continuityAssets?: DirectorContinuityAsset[];
   continuityBindings?: DirectorContinuityBindings;
+  continuityReviews?: DirectorContinuityReviews;
 }
 
 export interface SavedDirectorProject extends DirectorProjectInput {
@@ -77,6 +80,7 @@ function readDirectorProject(row: ProjectRow): SavedDirectorProject | null {
       selectedGenerationTaskIds?: unknown;
       continuityAssets?: unknown;
       continuityBindings?: unknown;
+      continuityReviews?: unknown;
     };
   };
 
@@ -120,6 +124,10 @@ function readDirectorProject(row: ProjectRow): SavedDirectorProject | null {
     ),
     continuityAssets,
     continuityBindings,
+    continuityReviews: readContinuityReviews(
+      director.continuityReviews,
+      director.plan.shots.map((shot) => shot.id),
+    ),
     updatedAt: row.updated_at,
   };
 }
@@ -167,6 +175,10 @@ export async function saveDirectorProject(
       continuityBindings: readContinuityBindings(
         input.continuityBindings,
         readContinuityAssets(input.continuityAssets),
+        input.plan.shots.map((shot) => shot.id),
+      ),
+      continuityReviews: readContinuityReviews(
+        input.continuityReviews,
         input.plan.shots.map((shot) => shot.id),
       ),
     },
@@ -228,6 +240,10 @@ export async function saveDirectorProject(
     continuityBindings: readContinuityBindings(
       input.continuityBindings,
       readContinuityAssets(input.continuityAssets),
+      input.plan.shots.map((shot) => shot.id),
+    ),
+    continuityReviews: readContinuityReviews(
+      input.continuityReviews,
       input.plan.shots.map((shot) => shot.id),
     ),
     updatedAt: now,
