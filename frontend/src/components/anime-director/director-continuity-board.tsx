@@ -23,6 +23,7 @@ import type {
   DirectorGenerationSelections,
   GenerationTask,
 } from '@/lib/generation/task-history';
+import { DirectorRoughCutPlayer } from './director-rough-cut-player';
 
 const filters: Array<{ id: ProductionBoardFilter; label: string }> = [
   { id: 'all', label: 'All shots' },
@@ -153,6 +154,14 @@ export function DirectorContinuityBoard({
             <p className="mt-1 text-xs text-zinc-500">{label}</p>
           </div>
         ))}
+      </div>
+
+      <div className="mt-5">
+        <DirectorRoughCutPlayer
+          projectId={projectId}
+          projectTitle={projectTitle}
+          rows={rows}
+        />
       </div>
 
       <div className="mt-5 flex flex-wrap gap-2">
