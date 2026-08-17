@@ -4,13 +4,19 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import {
   ArrowRight,
+  ChevronDown,
+  ChevronUp,
   Check,
   ClipboardList,
   Cloud,
+  Copy,
   Download,
   Film,
   LoaderCircle,
+  Plus,
+  RefreshCw,
   Sparkles,
+  Trash2,
 } from 'lucide-react';
 
 import {
@@ -23,6 +29,16 @@ import {
   serializeDirectorPlan,
   type ShotPriority,
 } from '@/lib/anime-director';
+import {
+  appendDirectorShot,
+  cloneDirectorShots,
+  duplicateDirectorShot,
+  MAX_DIRECTOR_SHOTS,
+  moveDirectorShot,
+  recalculateDirectorPlan,
+  removeDirectorShot,
+  updateDirectorShot,
+} from '@/lib/director-shot-workbench';
 import { createClient } from '@/lib/supabase/client';
 import { DirectorGenerationPanel } from './director-generation-panel';
 import type { AnimeShotRecipe } from '@/lib/anime-shot-recipes';
@@ -64,7 +80,8 @@ export function DirectorPlanner({
     initialCase?.title || initialRecipe?.title || 'Sky Train Opening',
   );
   const [style, setStyle] = useState(
-    initialCase?.style || initialRecipe?.style ||
+    initialCase?.style ||
+      initialRecipe?.style ||
       'cinematic anime, warm sunset light, detailed city background',
   );
   const [script, setScript] = useState(
@@ -83,12 +100,15 @@ export function DirectorPlanner({
   const [sourceRecipeSlug, setSourceRecipeSlug] = useState<string | undefined>(
     initialRecipe?.slug,
   );
+  const [sourceCaseSlug, setSourceCaseSlug] = useState<string | undefined>(
+    initialCase?.slug,
+  );
   const [saveState, setSaveState] = useState<
     'idle' | 'saving' | 'saved' | 'error'
   >('idle');
   const [saveMessage, setSaveMessage] = useState('');
 
-  const plan = useMemo(
+  const generatedPlan = useMemo(
     () =>
       createAnimeDirectorPlan({
         script,
@@ -97,16 +117,35 @@ export function DirectorPlanner({
         priority,
         seedShot:
           initialRecipe && sourceRecipeSlug === initialRecipe.slug
-          ? {
-              camera: initialRecipe.camera,
-              durationSeconds: initialRecipe.duration,
-              visualPrompt: initialRecipe.prompt,
-              checklist: initialRecipe.tips,
-            }
-          : undefined,
-        seedShots: initialCase ? getCaseSeedShots(initialCase) : undefined,
+            ? {
+                camera: initialRecipe.camera,
+                durationSeconds: initialRecipe.duration,
+                visualPrompt: initialRecipe.prompt,
+                checklist: initialRecipe.tips,
+              }
+            : undefined,
+        seedShots:
+          initialCase && sourceCaseSlug === initialCase.slug
+            ? getCaseSeedShots(initialCase)
+            : undefined,
       }),
-    [initialCase, initialRecipe, priority, projectTitle, script, sourceRecipeSlug, style],
+    [
+      initialCase,
+      initialRecipe,
+      priority,
+      projectTitle,
+      script,
+      sourceCaseSlug,
+      sourceRecipeSlug,
+      style,
+    ],
+  );
+  const [editableShots, setEditableShots] = useState(() =>
+    cloneDirectorShots(generatedPlan.shots),
+  );
+  const plan = useMemo(
+    () => recalculateDirectorPlan(generatedPlan, editableShots),
+    [editableShots, generatedPlan],
   );
 
   useEffect(() => {
@@ -159,10 +198,97 @@ export function DirectorPlanner({
     };
   }, [supabase]);
 
+  const markPlanChanged = () => {
+    if (saveState === 'saved') {
+      setSaveState('idle');
+      setSaveMessage('You have unsaved changes.');
+    }
+  };
+
+  const editShot = (
+    shotId: string,
+    patch: Parameters<typeof updateDirectorShot>[2],
+  ) => {
+    setEditableShots((current) => updateDirectorShot(current, shotId, patch));
+    markPlanChanged();
+  };
+
+  const captureShotEdit = (shotId: string, field: string) => {
+    posthog.capture('director_shot_edited', {
+      field,
+      shot_position: editableShots.findIndex((shot) => shot.id === shotId) + 1,
+      shot_count: editableShots.length,
+    });
+  };
+
+  const moveShot = (shotId: string, direction: -1 | 1) => {
+    const from = editableShots.findIndex((shot) => shot.id === shotId);
+    if (
+      from < 0 ||
+      from + direction < 0 ||
+      from + direction >= editableShots.length
+    ) {
+      return;
+    }
+
+    setEditableShots((current) => moveDirectorShot(current, shotId, direction));
+    markPlanChanged();
+    posthog.capture('director_shot_moved', {
+      from_position: from + 1,
+      to_position: from + direction + 1,
+      shot_count: editableShots.length,
+    });
+  };
+
+  const duplicateShot = (shotId: string) => {
+    if (editableShots.length >= MAX_DIRECTOR_SHOTS) return;
+    const sourcePosition =
+      editableShots.findIndex((shot) => shot.id === shotId) + 1;
+    setEditableShots((current) => duplicateDirectorShot(current, shotId));
+    markPlanChanged();
+    posthog.capture('director_shot_duplicated', {
+      source_position: sourcePosition,
+      shot_count: editableShots.length + 1,
+    });
+  };
+
+  const deleteShot = (shotId: string) => {
+    if (editableShots.length <= 1) return;
+    const deletedPosition =
+      editableShots.findIndex((shot) => shot.id === shotId) + 1;
+    setEditableShots((current) => removeDirectorShot(current, shotId));
+    markPlanChanged();
+    posthog.capture('director_shot_removed', {
+      deleted_position: deletedPosition,
+      shot_count: editableShots.length - 1,
+    });
+  };
+
+  const addShot = () => {
+    if (editableShots.length >= MAX_DIRECTOR_SHOTS) return;
+    setEditableShots((current) => appendDirectorShot(current, priority));
+    markPlanChanged();
+    posthog.capture('director_shot_added', {
+      shot_count: editableShots.length + 1,
+      priority,
+    });
+  };
+
+  const rebuildShots = () => {
+    setEditableShots(cloneDirectorShots(generatedPlan.shots));
+    markPlanChanged();
+    posthog.capture('director_shots_rebuilt', {
+      shot_count: generatedPlan.shots.length,
+      source_recipe: sourceRecipeSlug || null,
+      source_case: sourceCaseSlug || null,
+      priority,
+    });
+  };
+
   const downloadPlan = () => {
     posthog.capture('director_plan_exported', {
       source_recipe: sourceRecipeSlug || null,
-      source_case: initialCase?.slug || null,
+      source_case: sourceCaseSlug || null,
       shot_count: plan.shots.length,
       priority,
     });
@@ -204,7 +330,7 @@ export function DirectorPlanner({
         priority,
         plan,
         sourceRecipeSlug,
-        sourceCaseSlug: initialCase?.slug,
+        sourceCaseSlug,
       });
 
       setSelectedProjectId(saved.id);
@@ -218,7 +344,7 @@ export function DirectorPlanner({
         {
           project_id: saved.id,
           source_recipe: sourceRecipeSlug || null,
-          source_case: initialCase?.slug || null,
+          source_case: sourceCaseSlug || null,
           shot_count: plan.shots.length,
           priority,
         },
@@ -232,7 +358,7 @@ export function DirectorPlanner({
       posthog.capture('director_project_save_failed', {
         is_new_project: isNewProject,
         source_recipe: sourceRecipeSlug || null,
-        source_case: initialCase?.slug || null,
+        source_case: sourceCaseSlug || null,
         shot_count: plan.shots.length,
       });
       setSaveState('error');
@@ -250,6 +376,8 @@ export function DirectorPlanner({
     setScript(saved.script);
     setPriority(saved.priority);
     setSourceRecipeSlug(saved.sourceRecipeSlug);
+    setSourceCaseSlug(saved.sourceCaseSlug);
+    setEditableShots(cloneDirectorShots(saved.plan.shots));
     posthog.capture('director_saved_project_loaded', {
       source_recipe: saved.sourceRecipeSlug || null,
       source_case: saved.sourceCaseSlug || null,
@@ -261,9 +389,12 @@ export function DirectorPlanner({
   };
 
   const taskList = plan.shots.flatMap((shot) => [
-    `Prepare reference for ${shot.title}`,
-    `Generate draft for ${shot.title}`,
-    `Review and save output for ${shot.title}`,
+    { id: `${shot.id}-prepare`, label: `Prepare reference for ${shot.title}` },
+    { id: `${shot.id}-generate`, label: `Generate draft for ${shot.title}` },
+    {
+      id: `${shot.id}-review`,
+      label: `Review and save output for ${shot.title}`,
+    },
   ]);
 
   return (
@@ -359,7 +490,10 @@ export function DirectorPlanner({
                 Project title
                 <input
                   value={projectTitle}
-                  onChange={(event) => setProjectTitle(event.target.value)}
+                  onChange={(event) => {
+                    setProjectTitle(event.target.value);
+                    markPlanChanged();
+                  }}
                   maxLength={120}
                   className="h-10 rounded-lg border border-black/10 bg-white px-3 text-sm outline-none focus:border-zinc-400 dark:border-white/10 dark:bg-zinc-950"
                 />
@@ -368,7 +502,10 @@ export function DirectorPlanner({
                 Visual style
                 <input
                   value={style}
-                  onChange={(event) => setStyle(event.target.value)}
+                  onChange={(event) => {
+                    setStyle(event.target.value);
+                    markPlanChanged();
+                  }}
                   maxLength={240}
                   className="h-10 rounded-lg border border-black/10 bg-white px-3 text-sm outline-none focus:border-zinc-400 dark:border-white/10 dark:bg-zinc-950"
                 />
@@ -377,7 +514,10 @@ export function DirectorPlanner({
                 Script beats
                 <textarea
                   value={script}
-                  onChange={(event) => setScript(event.target.value)}
+                  onChange={(event) => {
+                    setScript(event.target.value);
+                    markPlanChanged();
+                  }}
                   rows={9}
                   maxLength={2400}
                   className="resize-none rounded-lg border border-black/10 bg-white p-3 text-sm leading-6 outline-none focus:border-zinc-400 dark:border-white/10 dark:bg-zinc-950"
@@ -390,7 +530,10 @@ export function DirectorPlanner({
                     <button
                       key={item.id}
                       type="button"
-                      onClick={() => setPriority(item.id)}
+                      onClick={() => {
+                        setPriority(item.id);
+                        markPlanChanged();
+                      }}
                       className={`rounded-lg border p-3 text-left transition ${
                         priority === item.id
                           ? 'border-violet-600 bg-violet-600 text-white'
@@ -422,9 +565,12 @@ export function DirectorPlanner({
               )}
               {saveState === 'saved' ? (
                 <div className="rounded-lg border border-violet-500/20 bg-violet-500/5 p-4">
-                  <p className="text-sm font-semibold">Your first production milestone is ready.</p>
+                  <p className="text-sm font-semibold">
+                    Your first production milestone is ready.
+                  </p>
                   <p className="mt-1 text-xs leading-5 text-zinc-500">
-                    Generate a reference below, or compare Studio Pro credits before committing provider spend.
+                    Generate a reference below, or compare Studio Pro credits
+                    before committing provider spend.
                   </p>
                   <div className="mt-3 flex flex-wrap gap-2">
                     <a
@@ -438,7 +584,7 @@ export function DirectorPlanner({
                       onClick={() =>
                         posthog.capture('director_post_save_upgrade_clicked', {
                           source_recipe: sourceRecipeSlug || null,
-                          source_case: initialCase?.slug || null,
+                          source_case: sourceCaseSlug || null,
                           shot_count: plan.shots.length,
                         })
                       }
@@ -479,50 +625,196 @@ export function DirectorPlanner({
               </article>
             </div>
 
-            <div className="grid gap-4 lg:grid-cols-2">
-              {plan.shots.map((shot) => (
-                <article
-                  key={shot.id}
-                  className="rounded-xl border border-black/10 bg-white p-5 dark:border-white/10 dark:bg-white/[0.04]"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">
-                        {shot.durationSeconds}s shot
-                      </p>
-                      <h2 className="mt-2 text-lg font-semibold">
-                        {shot.title}
-                      </h2>
-                    </div>
-                  </div>
-                  <p className="mt-3 text-sm leading-6 text-zinc-500">
-                    {shot.beat}
+            <section className="grid gap-4">
+              <div className="flex flex-col justify-between gap-3 rounded-xl border border-violet-500/20 bg-violet-500/5 p-4 sm:flex-row sm:items-center">
+                <div>
+                  <h2 className="text-lg font-semibold">Shot workbench</h2>
+                  <p className="mt-1 max-w-2xl text-xs leading-5 text-zinc-500">
+                    Edit every production detail here. Script changes are kept
+                    separate until you rebuild, which replaces the current shot
+                    edits.
                   </p>
-                  <div className="mt-4 grid gap-3 text-sm">
-                    <div>
-                      <p className="font-medium">Camera</p>
-                      <p className="mt-1 text-zinc-500">{shot.camera}</p>
-                    </div>
-                    <div>
-                      <p className="font-medium">Visual prompt</p>
-                      <p className="mt-1 text-zinc-500">{shot.visualPrompt}</p>
-                    </div>
-                    <div>
-                      <p className="font-medium">Voice direction</p>
-                      <p className="mt-1 text-zinc-500">{shot.voicePrompt}</p>
-                    </div>
-                    <div className="rounded-lg border border-violet-500/20 bg-violet-500/5 p-3">
-                      <p className="font-medium text-violet-700 dark:text-violet-300">
-                        Route
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={rebuildShots}
+                    className="inline-flex items-center gap-2 rounded-lg border border-black/10 bg-white px-3 py-2 text-xs font-semibold transition hover:bg-zinc-100 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
+                  >
+                    <RefreshCw className="size-3.5" /> Rebuild from script
+                  </button>
+                  <button
+                    type="button"
+                    onClick={addShot}
+                    disabled={plan.shots.length >= MAX_DIRECTOR_SHOTS}
+                    className="inline-flex items-center gap-2 rounded-lg bg-violet-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <Plus className="size-3.5" /> Add shot ({plan.shots.length}/
+                    {MAX_DIRECTOR_SHOTS})
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid gap-4 lg:grid-cols-2">
+                {plan.shots.map((shot, index) => (
+                  <article
+                    key={shot.id}
+                    className="rounded-xl border border-black/10 bg-white p-5 dark:border-white/10 dark:bg-white/[0.04]"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">
+                        Shot {index + 1} of {plan.shots.length}
                       </p>
-                      <p className="mt-1 text-zinc-600 dark:text-zinc-400">
-                        {shot.route}
-                      </p>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => moveShot(shot.id, -1)}
+                          disabled={index === 0}
+                          aria-label={`Move shot ${index + 1} up`}
+                          className="rounded-md border border-black/10 p-2 text-zinc-500 transition hover:text-zinc-950 disabled:cursor-not-allowed disabled:opacity-30 dark:border-white/10 dark:hover:text-white"
+                        >
+                          <ChevronUp className="size-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => moveShot(shot.id, 1)}
+                          disabled={index === plan.shots.length - 1}
+                          aria-label={`Move shot ${index + 1} down`}
+                          className="rounded-md border border-black/10 p-2 text-zinc-500 transition hover:text-zinc-950 disabled:cursor-not-allowed disabled:opacity-30 dark:border-white/10 dark:hover:text-white"
+                        >
+                          <ChevronDown className="size-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => duplicateShot(shot.id)}
+                          disabled={plan.shots.length >= MAX_DIRECTOR_SHOTS}
+                          aria-label={`Duplicate shot ${index + 1}`}
+                          className="rounded-md border border-black/10 p-2 text-zinc-500 transition hover:text-zinc-950 disabled:cursor-not-allowed disabled:opacity-30 dark:border-white/10 dark:hover:text-white"
+                        >
+                          <Copy className="size-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => deleteShot(shot.id)}
+                          disabled={plan.shots.length === 1}
+                          aria-label={`Delete shot ${index + 1}`}
+                          className="rounded-md border border-red-500/20 p-2 text-red-500 transition hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-30"
+                        >
+                          <Trash2 className="size-4" />
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                </article>
-              ))}
-            </div>
+
+                    <div className="mt-4 grid gap-4 text-sm">
+                      <label className="grid gap-1.5 font-medium">
+                        Shot title
+                        <input
+                          value={shot.title}
+                          onChange={(event) =>
+                            editShot(shot.id, { title: event.target.value })
+                          }
+                          onBlur={() => captureShotEdit(shot.id, 'title')}
+                          maxLength={120}
+                          className="h-10 rounded-lg border border-black/10 bg-white px-3 font-normal outline-none focus:border-violet-500 dark:border-white/10 dark:bg-zinc-950"
+                        />
+                      </label>
+                      <label className="grid gap-1.5 font-medium">
+                        Story beat
+                        <textarea
+                          value={shot.beat}
+                          onChange={(event) =>
+                            editShot(shot.id, { beat: event.target.value })
+                          }
+                          onBlur={() => captureShotEdit(shot.id, 'beat')}
+                          rows={3}
+                          maxLength={500}
+                          className="resize-y rounded-lg border border-black/10 bg-white p-3 font-normal leading-6 outline-none focus:border-violet-500 dark:border-white/10 dark:bg-zinc-950"
+                        />
+                      </label>
+                      <div className="grid gap-4 sm:grid-cols-[1fr_110px]">
+                        <label className="grid gap-1.5 font-medium">
+                          Camera
+                          <input
+                            value={shot.camera}
+                            onChange={(event) =>
+                              editShot(shot.id, { camera: event.target.value })
+                            }
+                            onBlur={() => captureShotEdit(shot.id, 'camera')}
+                            maxLength={240}
+                            className="h-10 rounded-lg border border-black/10 bg-white px-3 font-normal outline-none focus:border-violet-500 dark:border-white/10 dark:bg-zinc-950"
+                          />
+                        </label>
+                        <label className="grid gap-1.5 font-medium">
+                          Duration
+                          <div className="relative">
+                            <input
+                              type="number"
+                              min={1}
+                              max={30}
+                              value={shot.durationSeconds}
+                              onChange={(event) =>
+                                editShot(shot.id, {
+                                  durationSeconds: Number(event.target.value),
+                                })
+                              }
+                              onBlur={() =>
+                                captureShotEdit(shot.id, 'duration')
+                              }
+                              className="h-10 w-full rounded-lg border border-black/10 bg-white px-3 pr-8 font-normal outline-none focus:border-violet-500 dark:border-white/10 dark:bg-zinc-950"
+                            />
+                            <span className="pointer-events-none absolute right-3 top-2.5 text-xs text-zinc-500">
+                              sec
+                            </span>
+                          </div>
+                        </label>
+                      </div>
+                      <label className="grid gap-1.5 font-medium">
+                        Visual prompt
+                        <textarea
+                          value={shot.visualPrompt}
+                          onChange={(event) =>
+                            editShot(shot.id, {
+                              visualPrompt: event.target.value,
+                            })
+                          }
+                          onBlur={() =>
+                            captureShotEdit(shot.id, 'visual_prompt')
+                          }
+                          rows={4}
+                          maxLength={1200}
+                          className="resize-y rounded-lg border border-black/10 bg-white p-3 font-normal leading-6 outline-none focus:border-violet-500 dark:border-white/10 dark:bg-zinc-950"
+                        />
+                      </label>
+                      <label className="grid gap-1.5 font-medium">
+                        Voice direction
+                        <textarea
+                          value={shot.voicePrompt}
+                          onChange={(event) =>
+                            editShot(shot.id, {
+                              voicePrompt: event.target.value,
+                            })
+                          }
+                          onBlur={() =>
+                            captureShotEdit(shot.id, 'voice_prompt')
+                          }
+                          rows={3}
+                          maxLength={600}
+                          className="resize-y rounded-lg border border-black/10 bg-white p-3 font-normal leading-6 outline-none focus:border-violet-500 dark:border-white/10 dark:bg-zinc-950"
+                        />
+                      </label>
+                      <div className="rounded-lg border border-violet-500/20 bg-violet-500/5 p-3">
+                        <p className="font-medium text-violet-700 dark:text-violet-300">
+                          Generation route
+                        </p>
+                        <p className="mt-1 text-zinc-600 dark:text-zinc-400">
+                          {shot.route}
+                        </p>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </section>
 
             <DirectorGenerationPanel
               projectId={selectedProjectId}
@@ -534,10 +826,10 @@ export function DirectorPlanner({
               <div className="mt-4 grid gap-2 md:grid-cols-2">
                 {taskList.map((task) => (
                   <div
-                    key={task}
+                    key={task.id}
                     className="rounded-lg border border-black/10 px-3 py-2 text-sm text-zinc-600 dark:border-white/10 dark:text-zinc-300"
                   >
-                    {task}
+                    {task.label}
                   </div>
                 ))}
               </div>
