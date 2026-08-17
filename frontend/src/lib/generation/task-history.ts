@@ -1,3 +1,9 @@
+import {
+  composeContinuityPrompt,
+  readContinuityAssets,
+  readContinuityBindings,
+} from '../director-continuity.ts';
+
 export type GenerationKind = 'reference' | 'video';
 export type GenerationTaskStatus = 'todo' | 'running' | 'done' | 'failed';
 
@@ -41,9 +47,19 @@ export function readSavedDirectorShotPrompt(settings: unknown, shotId: string) {
       typeof candidate === 'object' &&
       (candidate as { id?: unknown }).id === shotId,
   ) as { visualPrompt?: unknown } | undefined;
-  return typeof shot?.visualPrompt === 'string'
-    ? shot.visualPrompt.trim()
-    : null;
+  if (typeof shot?.visualPrompt !== 'string') return null;
+
+  const directorSettings = director as {
+    continuityAssets?: unknown;
+    continuityBindings?: unknown;
+  };
+  const assets = readContinuityAssets(directorSettings.continuityAssets);
+  const bindings = readContinuityBindings(
+    directorSettings.continuityBindings,
+    assets,
+    [shotId],
+  );
+  return composeContinuityPrompt(shot.visualPrompt, assets, bindings, shotId);
 }
 
 export function generationTaskMatchesReference(
