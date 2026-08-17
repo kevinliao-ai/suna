@@ -3,22 +3,30 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ImageIcon, LoaderCircle, RefreshCw, Video } from 'lucide-react';
+import {
+  Check,
+  CircleAlert,
+  Clock3,
+  ImageIcon,
+  LoaderCircle,
+  RefreshCw,
+  RotateCcw,
+  Star,
+  Video,
+} from 'lucide-react';
 import posthog from 'posthog-js';
 
 import type { AnimeDirectorShot } from '@/lib/anime-director';
+import {
+  generationVersions,
+  readGenerationTask,
+  resolveGenerationSelection,
+  visibleGenerationVersions,
+  type DirectorGenerationSelections,
+  type GenerationKind,
+  type GenerationTask,
+} from '@/lib/generation/task-history';
 import { createClient } from '@/lib/supabase/client';
-
-interface GenerationTask {
-  id: string;
-  shotId: string;
-  kind: 'reference' | 'video';
-  status: 'running' | 'done' | 'failed';
-  mediaUrl: string | null;
-  archiveStatus: string | null;
-  errorMessage: string | null;
-  createdAt: string;
-}
 
 interface GenerationQuote {
   estimatedCostUsd: number;
@@ -35,58 +43,191 @@ interface CreditBalance {
   periodEnd: string;
 }
 
-function readTask(row: {
-  id: string;
-  status: string;
-  input: unknown;
-  output: unknown;
-  error_message: string | null;
-  created_at: string;
-}): GenerationTask | null {
-  const input =
-    row.input && typeof row.input === 'object'
-      ? (row.input as { shotId?: unknown; kind?: unknown })
-      : {};
-  const output =
-    row.output && typeof row.output === 'object'
-      ? (row.output as { mediaUrl?: unknown; archiveStatus?: unknown })
-      : {};
+const statusStyles: Record<GenerationTask['status'], string> = {
+  todo: 'bg-amber-500/10 text-amber-700 dark:text-amber-300',
+  running: 'bg-sky-500/10 text-sky-700 dark:text-sky-300',
+  done: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
+  failed: 'bg-red-500/10 text-red-700 dark:text-red-300',
+};
 
-  if (
-    typeof input.shotId !== 'string'
-    || (input.kind !== 'reference' && input.kind !== 'video')
-    || !['running', 'done', 'failed'].includes(row.status)
-  ) {
-    return null;
+const statusLabels: Record<GenerationTask['status'], string> = {
+  todo: 'Queued',
+  running: 'Generating',
+  done: 'Completed',
+  failed: 'Failed',
+};
+
+function VersionHistory({
+  kind,
+  versions,
+  selectedTaskId,
+  onSelect,
+}: {
+  kind: GenerationKind;
+  versions: GenerationTask[];
+  selectedTaskId?: string;
+  onSelect: (taskId: string, versionNumber: number) => void;
+}) {
+  if (versions.length === 0) {
+    return (
+      <p className="rounded-lg border border-dashed border-black/10 px-3 py-4 text-xs text-zinc-500 dark:border-white/10">
+        No {kind} versions yet.
+      </p>
+    );
   }
 
-  return {
-    id: row.id,
-    shotId: input.shotId,
-    kind: input.kind,
-    status: row.status as GenerationTask['status'],
-    mediaUrl: typeof output.mediaUrl === 'string' ? output.mediaUrl : null,
-    archiveStatus:
-      typeof output.archiveStatus === 'string' ? output.archiveStatus : null,
-    errorMessage: row.error_message,
-    createdAt: row.created_at,
-  };
+  const visibleVersions = visibleGenerationVersions(versions, selectedTaskId);
+
+  return (
+    <div className="grid gap-3">
+      {visibleVersions.map((task) => {
+        const originalIndex = versions.findIndex((item) => item.id === task.id);
+        const versionNumber = versions.length - originalIndex;
+        const selected = selectedTaskId === task.id && task.provider === 'fal';
+
+        return (
+          <div
+            key={task.id}
+            className={`overflow-hidden rounded-lg border ${
+              selected
+                ? 'border-violet-500 bg-violet-500/5'
+                : 'border-black/10 dark:border-white/10'
+            }`}
+          >
+            <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs font-semibold">
+                  Version {versionNumber}
+                </span>
+                <span
+                  className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${statusStyles[task.status]}`}
+                >
+                  {statusLabels[task.status]}
+                </span>
+                {selected && (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-violet-600">
+                    <Star className="size-3 fill-current" /> Final take
+                  </span>
+                )}
+              </div>
+              <span className="text-[11px] text-zinc-500">
+                {new Date(task.createdAt).toLocaleString()}
+              </span>
+            </div>
+
+            {task.status === 'done' && task.mediaUrl ? (
+              kind === 'reference' ? (
+                <Image
+                  src={task.mediaUrl}
+                  alt={`Generated reference version ${versionNumber}`}
+                  width={640}
+                  height={360}
+                  unoptimized
+                  className="aspect-video w-full border-y border-black/10 object-cover dark:border-white/10"
+                />
+              ) : (
+                <video
+                  controls
+                  preload="metadata"
+                  src={task.mediaUrl}
+                  aria-label={`Generated video version ${versionNumber}`}
+                  className="aspect-video w-full border-y border-black/10 bg-black dark:border-white/10"
+                />
+              )
+            ) : null}
+
+            <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-[11px] text-zinc-500">
+              <div className="flex flex-wrap gap-3">
+                {task.requiredCredits !== null && (
+                  <span>{task.requiredCredits} credits</span>
+                )}
+                {task.estimatedCostUsd !== null && (
+                  <span>${task.estimatedCostUsd.toFixed(4)} estimated</span>
+                )}
+                {task.archiveStatus === 'stored' && (
+                  <span className="text-emerald-600">
+                    Private R2 copy stored
+                  </span>
+                )}
+              </div>
+              {task.provider === 'simulation' && (
+                <span className="text-emerald-600">Simulation · no charge</span>
+              )}
+              {task.status === 'done' &&
+                task.mediaUrl &&
+                task.provider === 'fal' && (
+                  <button
+                    type="button"
+                    onClick={() => onSelect(task.id, versionNumber)}
+                    disabled={selected}
+                    className="inline-flex items-center gap-1 rounded-md border border-violet-500/30 px-2 py-1 font-semibold text-violet-600 disabled:cursor-default disabled:opacity-60"
+                  >
+                    {selected ? (
+                      <Check className="size-3" />
+                    ) : (
+                      <Star className="size-3" />
+                    )}
+                    {selected ? 'Selected' : 'Use as final'}
+                  </button>
+                )}
+            </div>
+
+            {task.status === 'failed' && (
+              <p className="border-t border-red-500/10 bg-red-500/5 px-3 py-2 text-xs text-red-600">
+                {task.errorMessage ||
+                  'The provider did not return a usable result.'}
+              </p>
+            )}
+          </div>
+        );
+      })}
+      {versions.length > visibleVersions.length && (
+        <p className="text-[11px] text-zinc-500">
+          Showing the newest {visibleVersions.length} of {versions.length}{' '}
+          versions.
+        </p>
+      )}
+    </div>
+  );
+}
+
+function generationButtonLabel(
+  kind: GenerationKind,
+  versions: GenerationTask[],
+) {
+  const asset = kind === 'reference' ? 'reference' : '5s video';
+  if (versions[0]?.status === 'failed') return `Retry ${asset}`;
+  if (versions.some((task) => task.status === 'done')) {
+    return `Generate another ${asset}`;
+  }
+  return `Generate ${asset}`;
 }
 
 export function DirectorGenerationPanel({
   projectId,
   shots,
+  selections,
+  planDirty,
+  onSelectTask,
 }: {
   projectId?: string;
   shots: AnimeDirectorShot[];
+  selections: DirectorGenerationSelections;
+  planDirty: boolean;
+  onSelectTask: (shotId: string, kind: GenerationKind, taskId: string) => void;
 }) {
   const supabase = useMemo(() => createClient(), []);
   const [tasks, setTasks] = useState<GenerationTask[]>([]);
   const [generationEnabled, setGenerationEnabled] = useState(false);
   const [simulationEnabled, setSimulationEnabled] = useState(false);
   const [pricingAvailable, setPricingAvailable] = useState(false);
-  const [quotes, setQuotes] = useState<Record<'reference' | 'video', GenerationQuote> | null>(null);
-  const [creditBalance, setCreditBalance] = useState<CreditBalance | null>(null);
+  const [quotes, setQuotes] = useState<Record<
+    GenerationKind,
+    GenerationQuote
+  > | null>(null);
+  const [creditBalance, setCreditBalance] = useState<CreditBalance | null>(
+    null,
+  );
   const [hasProSubscription, setHasProSubscription] = useState(false);
   const [rolloutEnabled, setRolloutEnabled] = useState(false);
   const [pendingKey, setPendingKey] = useState('');
@@ -106,12 +247,12 @@ export function DirectorGenerationPanel({
 
     const { data, error } = await supabase
       .from('anisora_tasks')
-      .select('id,status,input,output,error_message,created_at')
+      .select('id,provider,status,input,output,error_message,created_at')
       .eq('project_id', projectId)
       .eq('user_id', user.id)
       .in('provider', ['fal', 'simulation'])
       .order('created_at', { ascending: false })
-      .limit(50);
+      .limit(100);
 
     if (error) {
       setMessage('Could not refresh generation tasks.');
@@ -120,7 +261,7 @@ export function DirectorGenerationPanel({
 
     setTasks(
       (data || [])
-        .map(readTask)
+        .map(readGenerationTask)
         .filter((task): task is GenerationTask => Boolean(task)),
     );
   }, [projectId, supabase]);
@@ -129,28 +270,34 @@ export function DirectorGenerationPanel({
     let active = true;
     void fetch('/api/generation/fal')
       .then((response) => response.json())
-      .then((payload: {
-        enabled?: unknown;
-        simulationEnabled?: unknown;
-        pricingAvailable?: unknown;
-        quotes?: unknown;
-        creditBalance?: unknown;
-        entitlement?: { tier?: unknown };
-        rolloutEnabled?: unknown;
-      }) => {
-        if (!active) return;
-        setGenerationEnabled(payload.enabled === true);
-        setSimulationEnabled(payload.simulationEnabled === true);
-        setPricingAvailable(payload.pricingAvailable === true);
-        setHasProSubscription(payload.entitlement?.tier === 'pro');
-        setRolloutEnabled(payload.rolloutEnabled === true);
-        setCreditBalance(payload.creditBalance && typeof payload.creditBalance === 'object'
-          ? payload.creditBalance as CreditBalance
-          : null);
-        setQuotes(payload.quotes && typeof payload.quotes === 'object'
-          ? payload.quotes as Record<'reference' | 'video', GenerationQuote>
-          : null);
-      })
+      .then(
+        (payload: {
+          enabled?: unknown;
+          simulationEnabled?: unknown;
+          pricingAvailable?: unknown;
+          quotes?: unknown;
+          creditBalance?: unknown;
+          entitlement?: { tier?: unknown };
+          rolloutEnabled?: unknown;
+        }) => {
+          if (!active) return;
+          setGenerationEnabled(payload.enabled === true);
+          setSimulationEnabled(payload.simulationEnabled === true);
+          setPricingAvailable(payload.pricingAvailable === true);
+          setHasProSubscription(payload.entitlement?.tier === 'pro');
+          setRolloutEnabled(payload.rolloutEnabled === true);
+          setCreditBalance(
+            payload.creditBalance && typeof payload.creditBalance === 'object'
+              ? (payload.creditBalance as CreditBalance)
+              : null,
+          );
+          setQuotes(
+            payload.quotes && typeof payload.quotes === 'object'
+              ? (payload.quotes as Record<GenerationKind, GenerationQuote>)
+              : null,
+          );
+        },
+      )
       .catch(() => {
         if (active) setGenerationEnabled(false);
       });
@@ -161,13 +308,8 @@ export function DirectorGenerationPanel({
   }, []);
 
   useEffect(() => {
-    if (
-      paywallCaptured.current
-      || !rolloutEnabled
-      || hasProSubscription
-    ) {
+    if (paywallCaptured.current || !rolloutEnabled || hasProSubscription)
       return;
-    }
 
     paywallCaptured.current = true;
     posthog.capture('director_generation_paywall_viewed', {
@@ -179,10 +321,12 @@ export function DirectorGenerationPanel({
   const refreshCredits = useCallback(async () => {
     const response = await fetch('/api/generation/credits');
     if (!response.ok) return;
-    const payload = await response.json() as { balance?: unknown };
-    setCreditBalance(payload.balance && typeof payload.balance === 'object'
-      ? payload.balance as CreditBalance
-      : null);
+    const payload = (await response.json()) as { balance?: unknown };
+    setCreditBalance(
+      payload.balance && typeof payload.balance === 'object'
+        ? (payload.balance as CreditBalance)
+        : null,
+    );
   }, []);
 
   useEffect(() => {
@@ -197,25 +341,35 @@ export function DirectorGenerationPanel({
 
   const submit = async (
     shot: AnimeDirectorShot,
-    kind: 'reference' | 'video',
+    kind: GenerationKind,
     imageUrl?: string,
     mode: 'paid' | 'simulation' = 'paid',
   ) => {
-    if (!projectId) {
+    if (!projectId || planDirty) {
       posthog.capture('director_generation_blocked', {
         kind,
         mode,
-        reason: 'unsaved_project',
+        reason: !projectId ? 'unsaved_project' : 'unsaved_changes',
       });
-      setMessage('Save this Director plan before generating.');
+      setMessage(
+        !projectId
+          ? 'Save this Director plan before generating.'
+          : 'Save your latest shot edits before generating a new version.',
+      );
       return;
     }
 
     const label = kind === 'reference' ? 'reference frame' : '5-second video';
     const quote = quotes?.[kind];
-    const confirmed = mode === 'simulation' || window.confirm(
-      `Generate a paid ${label} for ${quote?.requiredCredits} credits (estimated provider cost $${quote?.estimatedCostUsd.toFixed(4)} USD)? The server will reject it above the $${quote?.hardLimitUsd.toFixed(2)} limit.`,
-    );
+    if (mode === 'paid' && !quote) {
+      setMessage('Live provider pricing is unavailable. No request was sent.');
+      return;
+    }
+    const confirmed =
+      mode === 'simulation' ||
+      window.confirm(
+        `Generate a paid ${label} for ${quote?.requiredCredits} credits (estimated provider cost $${quote?.estimatedCostUsd.toFixed(4)} USD)? The server will reject it above the $${quote?.hardLimitUsd.toFixed(2)} limit.`,
+      );
     if (!confirmed) {
       posthog.capture('director_generation_canceled', {
         kind,
@@ -243,7 +397,6 @@ export function DirectorGenerationPanel({
           projectId,
           shotId: shot.id,
           kind,
-          prompt: shot.visualPrompt,
           imageUrl,
           mode,
         }),
@@ -259,7 +412,7 @@ export function DirectorGenerationPanel({
       setMessage(
         mode === 'simulation'
           ? 'Free pipeline simulation completed. No provider request or charge was created.'
-          : `${kind === 'reference' ? 'Reference' : 'Video'} queued. Results will appear automatically.`,
+          : `${kind === 'reference' ? 'Reference' : 'Video'} version queued. Results will appear automatically.`,
       );
       posthog.capture('director_generation_submitted', {
         kind,
@@ -286,33 +439,49 @@ export function DirectorGenerationPanel({
   if (!projectId) {
     return (
       <section className="rounded-xl border border-dashed border-violet-500/30 bg-violet-500/5 p-5">
-        <h2 className="text-lg font-semibold">Generate real shot assets</h2>
+        <h2 className="text-lg font-semibold">
+          Generate and compare shot versions
+        </h2>
         <p className="mt-2 text-sm leading-6 text-zinc-500">
-          Save this plan to Studio first. Paid generation stays disabled until the project has a secure owner and task history.
+          Save this plan to Studio first. Generation stays disabled until the
+          project has a secure owner and version history.
         </p>
       </section>
     );
   }
 
   return (
-    <section id="real-generation" className="scroll-mt-6 rounded-xl border border-black/10 bg-white p-5 dark:border-white/10 dark:bg-white/[0.04]">
+    <section
+      id="real-generation"
+      className="scroll-mt-6 rounded-xl border border-black/10 bg-white p-5 dark:border-white/10 dark:bg-white/[0.04]"
+    >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold">Real generation</h2>
+          <h2 className="text-lg font-semibold">
+            Shot versions and final takes
+          </h2>
+          <p className="mt-1 max-w-3xl text-sm leading-6 text-zinc-500">
+            Generate multiple candidates, compare the full history, and choose
+            the reference and video that belong in the final project.
+          </p>
           <p className="mt-1 text-sm text-zinc-500">
-            {generationEnabled
-              ? pricingAvailable
-                ? 'Live server quotes and hard cost limits are active. Each paid request still requires explicit approval.'
-                : 'Paid generation is locked because the provider price could not be verified.'
-              : simulationEnabled
-                ? 'Use the free pipeline simulation while live provider generation is disabled.'
-                : rolloutEnabled && !hasProSubscription
-                  ? 'Subscribe to Studio Pro to unlock paid generation credits.'
-                  : 'Paid generation is currently limited to the approved production tester.'}
+            {planDirty
+              ? 'Save your current shot edits before generating. This keeps provider requests tied to the exact saved prompt.'
+              : generationEnabled
+                ? pricingAvailable
+                  ? 'Live server quotes and hard cost limits are active. Each paid request still requires explicit approval.'
+                  : 'Paid generation is locked because the provider price could not be verified.'
+                : simulationEnabled
+                  ? 'Use the free pipeline simulation while live provider generation is disabled.'
+                  : rolloutEnabled && !hasProSubscription
+                    ? 'Subscribe to Studio Pro to unlock paid generation credits.'
+                    : 'Paid generation is currently limited to the approved production tester.'}
           </p>
           {creditBalance && (
             <p className="mt-2 text-sm font-medium text-violet-700 dark:text-violet-300">
-              {creditBalance.available} credits available · {creditBalance.reserved} reserved · renews {new Date(creditBalance.periodEnd).toLocaleDateString()}
+              {creditBalance.available} credits available ·{' '}
+              {creditBalance.reserved} reserved · renews{' '}
+              {new Date(creditBalance.periodEnd).toLocaleDateString()}
             </p>
           )}
           {rolloutEnabled && !hasProSubscription && (
@@ -336,119 +505,186 @@ export function DirectorGenerationPanel({
           onClick={() => void refreshTasks()}
           className="inline-flex items-center gap-2 rounded-lg border border-black/10 px-3 py-2 text-xs font-medium dark:border-white/10"
         >
-          <RefreshCw className="size-3.5" /> Refresh
+          <RefreshCw className="size-3.5" /> Refresh versions
         </button>
       </div>
 
+      {planDirty && (
+        <p className="mt-4 inline-flex items-center gap-2 rounded-lg bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-300">
+          <CircleAlert className="size-4" /> Unsaved edits are protected from
+          accidental generation. Save to Studio to continue.
+        </p>
+      )}
       {message && (
         <p className="mt-4 rounded-lg bg-sky-500/10 px-3 py-2 text-sm text-sky-700 dark:text-sky-300">
           {message}
         </p>
       )}
 
-      <div className="mt-5 grid gap-4 lg:grid-cols-2">
-        {shots.map((shot) => {
-          const shotTasks = tasks.filter((task) => task.shotId === shot.id);
-          const reference = shotTasks.find(
-            (task) => task.kind === 'reference' && task.status === 'done' && task.mediaUrl,
+      <div className="mt-5 grid gap-4">
+        {shots.map((shot, shotIndex) => {
+          const referenceVersions = generationVersions(
+            tasks,
+            shot.id,
+            'reference',
           );
-          const videoTask = shotTasks.find((task) => task.kind === 'video');
-          const referenceTask = shotTasks.find((task) => task.kind === 'reference');
+          const videoVersions = generationVersions(tasks, shot.id, 'video');
+          const selectedReference = resolveGenerationSelection(
+            referenceVersions,
+            selections[shot.id]?.reference,
+          );
+          const selectedVideo = resolveGenerationSelection(
+            videoVersions,
+            selections[shot.id]?.video,
+          );
           const referencePending = pendingKey === `${shot.id}:reference`;
           const videoPending = pendingKey === `${shot.id}:video`;
+          const referenceRunning = referenceVersions.some(
+            (task) => task.status === 'todo' || task.status === 'running',
+          );
+          const videoRunning = videoVersions.some(
+            (task) => task.status === 'todo' || task.status === 'running',
+          );
           const referenceQuote = quotes?.reference;
           const videoQuote = quotes?.video;
 
+          const selectTask = (
+            kind: GenerationKind,
+            taskId: string,
+            versionNumber: number,
+          ) => {
+            onSelectTask(shot.id, kind, taskId);
+            posthog.capture('director_generation_version_selected', {
+              kind,
+              version_number: versionNumber,
+              shot_position: shotIndex + 1,
+              shot_count: shots.length,
+            });
+          };
+
           return (
-            <article key={shot.id} className="rounded-lg border border-black/10 p-4 dark:border-white/10">
-              <p className="text-sm font-semibold">{shot.title}</p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => void submit(shot, 'reference')}
-                  disabled={
-                    !generationEnabled
-                    || !pricingAvailable
-                    || referencePending
-                    || referenceTask?.status === 'running'
-                  }
-                  className="inline-flex items-center gap-2 rounded-lg bg-violet-600 px-3 py-2 text-xs font-medium text-white disabled:opacity-60"
-                >
-                  {referencePending || referenceTask?.status === 'running' ? (
-                    <LoaderCircle className="size-3.5 animate-spin" />
-                  ) : (
-                    <ImageIcon className="size-3.5" />
-                  )}
-                  Generate reference{referenceQuote ? ` · ${referenceQuote.requiredCredits} credits` : ''}
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    void submit(shot, 'video', reference?.mediaUrl || undefined)
-                  }
-                  disabled={
-                    !generationEnabled
-                    || !pricingAvailable
-                    || !reference?.mediaUrl
-                    || videoPending
-                    || videoTask?.status === 'running'
-                  }
-                  className="inline-flex items-center gap-2 rounded-lg bg-zinc-950 px-3 py-2 text-xs font-medium text-white disabled:opacity-40 dark:bg-white dark:text-zinc-950"
-                >
-                  {videoPending || videoTask?.status === 'running' ? (
-                    <LoaderCircle className="size-3.5 animate-spin" />
-                  ) : (
-                    <Video className="size-3.5" />
-                  )}
-                  Generate 5s video{videoQuote ? ` · ${videoQuote.requiredCredits} credits` : ''}
-                </button>
-                {simulationEnabled && (
+            <article
+              key={shot.id}
+              className="rounded-lg border border-black/10 p-4 dark:border-white/10"
+            >
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold">{shot.title}</p>
+                  <p className="mt-1 text-xs text-zinc-500">
+                    {referenceVersions.length} reference version
+                    {referenceVersions.length === 1 ? '' : 's'} ·{' '}
+                    {videoVersions.length} video version
+                    {videoVersions.length === 1 ? '' : 's'}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
-                    onClick={() => void submit(shot, 'reference', undefined, 'simulation')}
-                    disabled={referencePending}
-                    className="inline-flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-700 disabled:opacity-60 dark:text-emerald-300"
+                    onClick={() => void submit(shot, 'reference')}
+                    disabled={
+                      planDirty ||
+                      !generationEnabled ||
+                      !pricingAvailable ||
+                      referencePending ||
+                      referenceRunning
+                    }
+                    className="inline-flex items-center gap-2 rounded-lg bg-violet-600 px-3 py-2 text-xs font-medium text-white disabled:opacity-50"
                   >
-                    <ImageIcon className="size-3.5" /> Run free pipeline simulation
+                    {referencePending || referenceRunning ? (
+                      <LoaderCircle className="size-3.5 animate-spin" />
+                    ) : referenceVersions[0]?.status === 'failed' ? (
+                      <RotateCcw className="size-3.5" />
+                    ) : (
+                      <ImageIcon className="size-3.5" />
+                    )}
+                    {generationButtonLabel('reference', referenceVersions)}
+                    {referenceQuote
+                      ? ` · ${referenceQuote.requiredCredits} credits`
+                      : ''}
                   </button>
-                )}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      void submit(
+                        shot,
+                        'video',
+                        selectedReference?.mediaUrl || undefined,
+                      )
+                    }
+                    disabled={
+                      planDirty ||
+                      !generationEnabled ||
+                      !pricingAvailable ||
+                      !selectedReference?.mediaUrl ||
+                      videoPending ||
+                      videoRunning
+                    }
+                    className="inline-flex items-center gap-2 rounded-lg bg-zinc-950 px-3 py-2 text-xs font-medium text-white disabled:opacity-40 dark:bg-white dark:text-zinc-950"
+                  >
+                    {videoPending || videoRunning ? (
+                      <LoaderCircle className="size-3.5 animate-spin" />
+                    ) : videoVersions[0]?.status === 'failed' ? (
+                      <RotateCcw className="size-3.5" />
+                    ) : (
+                      <Video className="size-3.5" />
+                    )}
+                    {generationButtonLabel('video', videoVersions)}
+                    {videoQuote
+                      ? ` · ${videoQuote.requiredCredits} credits`
+                      : ''}
+                  </button>
+                  {simulationEnabled && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        void submit(shot, 'reference', undefined, 'simulation')
+                      }
+                      disabled={
+                        planDirty || referencePending || referenceRunning
+                      }
+                      className="inline-flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-700 disabled:opacity-50 dark:text-emerald-300"
+                    >
+                      <Clock3 className="size-3.5" /> Run free simulation
+                    </button>
+                  )}
+                </div>
               </div>
 
-              {referenceTask?.status === 'failed' && (
-                <p className="mt-3 text-xs text-red-600">
-                  Reference failed: {referenceTask.errorMessage || 'Provider error'}
-                </p>
-              )}
-              {videoTask?.status === 'failed' && (
-                <p className="mt-3 text-xs text-red-600">
-                  Video failed: {videoTask.errorMessage || 'Provider error'}
+              {selectedVideo && (
+                <p className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-emerald-600">
+                  <Check className="size-3.5" /> This shot has a selected final
+                  video.
                 </p>
               )}
 
-              {reference?.mediaUrl && (
-                <div className="mt-4 overflow-hidden rounded-lg border border-black/10 dark:border-white/10">
-                  <Image
-                    src={reference.mediaUrl}
-                    alt={`Generated reference for ${shot.title}`}
-                    width={640}
-                    height={360}
-                    unoptimized
-                    className="aspect-video w-full object-cover"
+              <div className="mt-4 grid gap-4 xl:grid-cols-2">
+                <section>
+                  <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">
+                    Reference history
+                  </h3>
+                  <VersionHistory
+                    kind="reference"
+                    versions={referenceVersions}
+                    selectedTaskId={selections[shot.id]?.reference}
+                    onSelect={(taskId, versionNumber) =>
+                      selectTask('reference', taskId, versionNumber)
+                    }
                   />
-                </div>
-              )}
-              {videoTask?.status === 'done' && videoTask.mediaUrl && (
-                <video
-                  controls
-                  preload="metadata"
-                  src={videoTask.mediaUrl}
-                  className="mt-4 aspect-video w-full rounded-lg bg-black"
-                />
-              )}
-              {(reference?.archiveStatus === 'stored'
-                || videoTask?.archiveStatus === 'stored') && (
-                <p className="mt-2 text-xs text-emerald-600">Private R2 archive stored.</p>
-              )}
+                </section>
+                <section>
+                  <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">
+                    Video history
+                  </h3>
+                  <VersionHistory
+                    kind="video"
+                    versions={videoVersions}
+                    selectedTaskId={selections[shot.id]?.video}
+                    onSelect={(taskId, versionNumber) =>
+                      selectTask('video', taskId, versionNumber)
+                    }
+                  />
+                </section>
+              </div>
             </article>
           );
         })}

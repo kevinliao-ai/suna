@@ -41,6 +41,10 @@ import {
 } from '@/lib/director-shot-workbench';
 import { createClient } from '@/lib/supabase/client';
 import { DirectorGenerationPanel } from './director-generation-panel';
+import type {
+  DirectorGenerationSelections,
+  GenerationKind,
+} from '@/lib/generation/task-history';
 import type { AnimeShotRecipe } from '@/lib/anime-shot-recipes';
 import {
   getCaseSeedShots,
@@ -107,6 +111,9 @@ export function DirectorPlanner({
     'idle' | 'saving' | 'saved' | 'error'
   >('idle');
   const [saveMessage, setSaveMessage] = useState('');
+  const [planDirty, setPlanDirty] = useState(false);
+  const [selectedGenerationTaskIds, setSelectedGenerationTaskIds] =
+    useState<DirectorGenerationSelections>({});
 
   const generatedPlan = useMemo(
     () =>
@@ -198,10 +205,13 @@ export function DirectorPlanner({
     };
   }, [supabase]);
 
-  const markPlanChanged = () => {
-    if (saveState === 'saved') {
+  const markPlanChanged = (message?: string) => {
+    setPlanDirty(true);
+    if (saveState === 'saved' || saveState === 'error') {
       setSaveState('idle');
-      setSaveMessage('You have unsaved changes.');
+      setSaveMessage(message || 'You have unsaved changes.');
+    } else if (message) {
+      setSaveMessage(message);
     }
   };
 
@@ -331,6 +341,7 @@ export function DirectorPlanner({
         plan,
         sourceRecipeSlug,
         sourceCaseSlug,
+        selectedGenerationTaskIds,
       });
 
       setSelectedProjectId(saved.id);
@@ -339,6 +350,7 @@ export function DirectorPlanner({
         ...current.filter((project) => project.id !== saved.id),
       ]);
       setSaveState('saved');
+      setPlanDirty(false);
       posthog.capture(
         isNewProject ? 'director_project_created' : 'director_project_updated',
         {
@@ -378,6 +390,8 @@ export function DirectorPlanner({
     setSourceRecipeSlug(saved.sourceRecipeSlug);
     setSourceCaseSlug(saved.sourceCaseSlug);
     setEditableShots(cloneDirectorShots(saved.plan.shots));
+    setSelectedGenerationTaskIds(saved.selectedGenerationTaskIds || {});
+    setPlanDirty(false);
     posthog.capture('director_saved_project_loaded', {
       source_recipe: saved.sourceRecipeSlug || null,
       source_case: saved.sourceCaseSlug || null,
@@ -386,6 +400,21 @@ export function DirectorPlanner({
     });
     setSaveState('idle');
     setSaveMessage(`Loaded ${saved.title}.`);
+  };
+
+  const selectGenerationTask = (
+    shotId: string,
+    kind: GenerationKind,
+    taskId: string,
+  ) => {
+    setSelectedGenerationTaskIds((current) => ({
+      ...current,
+      [shotId]: {
+        ...current[shotId],
+        [kind]: taskId,
+      },
+    }));
+    markPlanChanged('Final take selected. Save to Studio to sync this choice.');
   };
 
   const taskList = plan.shots.flatMap((shot) => [
@@ -819,6 +848,9 @@ export function DirectorPlanner({
             <DirectorGenerationPanel
               projectId={selectedProjectId}
               shots={plan.shots}
+              selections={selectedGenerationTaskIds}
+              planDirty={planDirty}
+              onSelectTask={selectGenerationTask}
             />
 
             <section className="rounded-xl border border-black/10 bg-white p-5 dark:border-white/10 dark:bg-white/[0.04]">

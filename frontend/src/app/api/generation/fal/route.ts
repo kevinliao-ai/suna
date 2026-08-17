@@ -16,6 +16,11 @@ import {
   releaseGenerationCredits,
   reserveGenerationCredits,
 } from '@/lib/generation/credit-server';
+import {
+  generationTaskMatchesReference,
+  isDirectorShotId,
+  readSavedDirectorShotPrompt,
+} from '@/lib/generation/task-history';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -33,11 +38,17 @@ function isAllowlisted(email: string | null | undefined) {
 }
 
 function paidGenerationEnabled(email: string | null | undefined) {
-  return process.env.ENABLE_PAID_GENERATION?.trim() === 'true' && isAllowlisted(email);
+  return (
+    process.env.ENABLE_PAID_GENERATION?.trim() === 'true' &&
+    isAllowlisted(email)
+  );
 }
 
 function simulationEnabled(email: string | null | undefined) {
-  return process.env.ENABLE_GENERATION_SIMULATION?.trim() === 'true' && isAllowlisted(email);
+  return (
+    process.env.ENABLE_GENERATION_SIMULATION?.trim() === 'true' &&
+    isAllowlisted(email)
+  );
 }
 
 function isHttpsUrl(value: unknown): value is string {
@@ -62,11 +73,15 @@ async function availableQuotes(enabled: boolean) {
     quotes: {
       reference: {
         ...(settled[0] as PromiseFulfilledResult<GenerationQuote>).value,
-        requiredCredits: creditsForQuote((settled[0] as PromiseFulfilledResult<GenerationQuote>).value),
+        requiredCredits: creditsForQuote(
+          (settled[0] as PromiseFulfilledResult<GenerationQuote>).value,
+        ),
       },
       video: {
         ...(settled[1] as PromiseFulfilledResult<GenerationQuote>).value,
-        requiredCredits: creditsForQuote((settled[1] as PromiseFulfilledResult<GenerationQuote>).value),
+        requiredCredits: creditsForQuote(
+          (settled[1] as PromiseFulfilledResult<GenerationQuote>).value,
+        ),
       },
     },
     pricingAvailable: true,
@@ -75,15 +90,17 @@ async function availableQuotes(enabled: boolean) {
 
 export async function GET() {
   const supabase = await createSupabaseServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   const rolloutEnabled = Boolean(user && paidGenerationEnabled(user.email));
   const creditState = user
     ? await ensureGenerationCreditBalance(user.id).catch(() => null)
     : null;
   const enabled = Boolean(
-    rolloutEnabled
-    && creditState?.entitlement.tier === 'pro'
-    && creditState.balance,
+    rolloutEnabled &&
+    creditState?.entitlement.tier === 'pro' &&
+    creditState.balance,
   );
 
   return NextResponse.json({
@@ -98,14 +115,17 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   const supabase = await createSupabaseServerClient();
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
-  if (userError || !user) return error(401, 'unauthorized', 'Sign in is required.');
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+  if (userError || !user)
+    return error(401, 'unauthorized', 'Sign in is required.');
 
   let body: {
     projectId?: unknown;
     shotId?: unknown;
     kind?: unknown;
-    prompt?: unknown;
     imageUrl?: unknown;
     mode?: unknown;
   };
@@ -116,60 +136,177 @@ export async function POST(request: NextRequest) {
   }
 
   const mode = body.mode === 'simulation' ? 'simulation' : 'paid';
-  if (mode === 'simulation' ? !simulationEnabled(user.email) : !paidGenerationEnabled(user.email)) {
-    return error(403, 'generation_not_enabled', `${mode === 'simulation' ? 'Simulation' : 'Paid generation'} is not enabled for this account.`);
+  if (
+    mode === 'simulation'
+      ? !simulationEnabled(user.email)
+      : !paidGenerationEnabled(user.email)
+  ) {
+    return error(
+      403,
+      'generation_not_enabled',
+      `${mode === 'simulation' ? 'Simulation' : 'Paid generation'} is not enabled for this account.`,
+    );
   }
 
-  const kind: FalGenerationKind | null = body.kind === 'reference' || body.kind === 'video' ? body.kind : null;
+  const kind: FalGenerationKind | null =
+    body.kind === 'reference' || body.kind === 'video' ? body.kind : null;
   const projectId = typeof body.projectId === 'string' ? body.projectId : '';
   const shotId = typeof body.shotId === 'string' ? body.shotId : '';
-  const prompt = typeof body.prompt === 'string' ? body.prompt.trim() : '';
-  if (!kind || !/^[0-9a-f-]{36}$/i.test(projectId) || !/^shot-[1-8]$/.test(shotId) || prompt.length < 10 || prompt.length > 2000) {
-    return error(400, 'invalid_request', 'Project, shot, kind, or prompt is invalid.');
+  if (
+    !kind ||
+    !/^[0-9a-f-]{36}$/i.test(projectId) ||
+    !isDirectorShotId(shotId)
+  ) {
+    return error(400, 'invalid_request', 'Project, shot, or kind is invalid.');
   }
   if (kind === 'video' && !isHttpsUrl(body.imageUrl)) {
-    return error(400, 'reference_required', 'A secure reference image URL is required.');
+    return error(
+      400,
+      'reference_required',
+      'A secure reference image URL is required.',
+    );
   }
 
   const { data: project, error: projectError } = await supabase
-    .from('anisora_projects').select('id').eq('id', projectId).eq('user_id', user.id).maybeSingle();
-  if (projectError) return error(500, 'project_lookup_failed', 'Could not verify the project.');
-  if (!project) return error(404, 'project_not_found', 'Save this Director project first.');
+    .from('anisora_projects')
+    .select('id,settings')
+    .eq('id', projectId)
+    .eq('user_id', user.id)
+    .maybeSingle();
+  if (projectError)
+    return error(500, 'project_lookup_failed', 'Could not verify the project.');
+  if (!project)
+    return error(404, 'project_not_found', 'Save this Director project first.');
+
+  const prompt = readSavedDirectorShotPrompt(project.settings, shotId);
+  if (!prompt || prompt.length < 10 || prompt.length > 2000) {
+    return error(
+      409,
+      'shot_not_saved',
+      'Save the latest Director shot before generating.',
+    );
+  }
+
+  if (kind === 'video') {
+    const { data: referenceTasks, error: referenceError } = await supabase
+      .from('anisora_tasks')
+      .select('input,output')
+      .eq('project_id', projectId)
+      .eq('user_id', user.id)
+      .eq('status', 'done')
+      .eq('provider', 'fal')
+      .order('created_at', { ascending: false })
+      .limit(100);
+    if (referenceError) {
+      return error(
+        500,
+        'reference_lookup_failed',
+        'Could not verify the reference image.',
+      );
+    }
+    if (
+      !referenceTasks?.some((task) =>
+        generationTaskMatchesReference(task, shotId, body.imageUrl as string),
+      )
+    ) {
+      return error(
+        409,
+        'reference_not_owned',
+        'Choose a completed reference version from this shot.',
+      );
+    }
+  }
 
   const taskId = crypto.randomUUID();
-  const model = mode === 'simulation' ? 'anisora/pipeline-simulation' : falModels[kind];
+  const model =
+    mode === 'simulation' ? 'anisora/pipeline-simulation' : falModels[kind];
 
   if (mode === 'simulation') {
-    const mediaUrl = new URL('/examples/image_5.jpg', request.nextUrl.origin).toString();
-    const billing = { mode: 'simulation', currency: 'USD', estimatedCostUsd: 0, actualCostUsd: 0 };
+    const mediaUrl = new URL(
+      '/examples/image_5.jpg',
+      request.nextUrl.origin,
+    ).toString();
+    const billing = {
+      mode: 'simulation',
+      currency: 'USD',
+      estimatedCostUsd: 0,
+      actualCostUsd: 0,
+    };
     const { error: taskError } = await supabase.from('anisora_tasks').insert({
-      id: taskId, project_id: projectId, user_id: user.id,
-      title: `Pipeline simulation: ${shotId}`, status: 'done', provider: 'simulation',
-      input: { source: 'anime-director-generation', kind: 'reference', shotId, model, prompt, billing },
-      output: { mediaUrl, contentType: 'image/jpeg', archiveStatus: 'simulation', billing },
+      id: taskId,
+      project_id: projectId,
+      user_id: user.id,
+      title: `Pipeline simulation: ${shotId}`,
+      status: 'done',
+      provider: 'simulation',
+      input: {
+        source: 'anime-director-generation',
+        kind: 'reference',
+        shotId,
+        model,
+        prompt,
+        billing,
+      },
+      output: {
+        mediaUrl,
+        contentType: 'image/jpeg',
+        archiveStatus: 'simulation',
+        billing,
+      },
     });
-    if (taskError) return error(500, 'task_create_failed', 'Could not create the simulation task.');
+    if (taskError)
+      return error(
+        500,
+        'task_create_failed',
+        'Could not create the simulation task.',
+      );
 
     const { error: assetError } = await supabase.from('anisora_assets').upsert({
-      id: taskId, project_id: projectId, user_id: user.id,
-      name: `Simulated reference: ${shotId}`, url: mediaUrl, kind: 'reference',
+      id: taskId,
+      project_id: projectId,
+      user_id: user.id,
+      name: `Simulated reference: ${shotId}`,
+      url: mediaUrl,
+      kind: 'reference',
       metadata: { source: 'generation-simulation', taskId, shotId, billing },
     });
     if (assetError) {
-      await supabase.from('anisora_tasks').update({ status: 'failed', error_message: 'Simulation asset persistence failed.' }).eq('id', taskId).eq('user_id', user.id);
-      return error(500, 'asset_create_failed', 'Could not persist the simulation asset.');
+      await supabase
+        .from('anisora_tasks')
+        .update({
+          status: 'failed',
+          error_message: 'Simulation asset persistence failed.',
+        })
+        .eq('id', taskId)
+        .eq('user_id', user.id);
+      return error(
+        500,
+        'asset_create_failed',
+        'Could not persist the simulation asset.',
+      );
     }
-    return NextResponse.json({ taskId, status: 'done', mode, estimatedCostUsd: 0 }, { status: 201 });
+    return NextResponse.json(
+      { taskId, status: 'done', mode, estimatedCostUsd: 0 },
+      { status: 201 },
+    );
   }
 
   let quote: GenerationQuote;
   try {
     quote = await getFalGenerationQuote(kind, { fresh: true });
   } catch {
-    return error(503, 'pricing_unavailable', 'Live provider pricing is unavailable, so no paid request was submitted.');
+    return error(
+      503,
+      'pricing_unavailable',
+      'Live provider pricing is unavailable, so no paid request was submitted.',
+    );
   }
   if (!quoteIsWithinLimit(quote)) {
-    return error(409, 'cost_limit_exceeded', `Quoted cost $${quote.estimatedCostUsd.toFixed(4)} exceeds the $${quote.hardLimitUsd.toFixed(2)} task limit.`);
+    return error(
+      409,
+      'cost_limit_exceeded',
+      `Quoted cost $${quote.estimatedCostUsd.toFixed(4)} exceeds the $${quote.hardLimitUsd.toFixed(2)} task limit.`,
+    );
   }
 
   const requiredCredits = creditsForQuote(quote);
@@ -179,33 +316,84 @@ export async function POST(request: NextRequest) {
     requiredCredits,
     quotedAt: new Date().toISOString(),
   };
-  const falInput = kind === 'reference'
-    ? { prompt, image_size: 'landscape_16_9', num_images: 1, output_format: 'jpeg', enable_safety_checker: true }
-    : { prompt, image_url: body.imageUrl, duration: '5', negative_prompt: 'blur, distort, low quality, inconsistent character, text, watermark', cfg_scale: 0.5 };
-  const taskInput = { source: 'anime-director-generation', kind, shotId, model, prompt, imageUrl: kind === 'video' ? body.imageUrl : null, billing };
+  const falInput =
+    kind === 'reference'
+      ? {
+          prompt,
+          image_size: 'landscape_16_9',
+          num_images: 1,
+          output_format: 'jpeg',
+          enable_safety_checker: true,
+        }
+      : {
+          prompt,
+          image_url: body.imageUrl,
+          duration: '5',
+          negative_prompt:
+            'blur, distort, low quality, inconsistent character, text, watermark',
+          cfg_scale: 0.5,
+        };
+  const taskInput = {
+    source: 'anime-director-generation',
+    kind,
+    shotId,
+    model,
+    prompt,
+    imageUrl: kind === 'video' ? body.imageUrl : null,
+    billing,
+  };
 
   const { error: taskError } = await supabase.from('anisora_tasks').insert({
-    id: taskId, project_id: projectId, user_id: user.id,
+    id: taskId,
+    project_id: projectId,
+    user_id: user.id,
     title: `${kind === 'reference' ? 'Reference frame' : '5s video'}: ${shotId}`,
-    status: 'todo', provider: 'fal', input: taskInput, output: {},
+    status: 'todo',
+    provider: 'fal',
+    input: taskInput,
+    output: {},
   });
-  if (taskError) return error(500, 'task_create_failed', 'Could not create the generation task.');
+  if (taskError)
+    return error(
+      500,
+      'task_create_failed',
+      'Could not create the generation task.',
+    );
 
   let reservation;
   try {
-    reservation = await reserveGenerationCredits(user.id, taskId, requiredCredits);
+    reservation = await reserveGenerationCredits(
+      user.id,
+      taskId,
+      requiredCredits,
+    );
   } catch {
-    await supabase.from('anisora_tasks').update({
-      status: 'failed', error_message: 'Generation credits are temporarily unavailable.',
-    }).eq('id', taskId).eq('user_id', user.id);
-    return error(503, 'credits_unavailable', 'Generation credits are temporarily unavailable.');
+    await supabase
+      .from('anisora_tasks')
+      .update({
+        status: 'failed',
+        error_message: 'Generation credits are temporarily unavailable.',
+      })
+      .eq('id', taskId)
+      .eq('user_id', user.id);
+    return error(
+      503,
+      'credits_unavailable',
+      'Generation credits are temporarily unavailable.',
+    );
   }
   if (!reservation.reserved) {
     const subscriptionRequired = reservation.entitlement.tier !== 'pro';
-    await supabase.from('anisora_tasks').update({
-      status: 'failed',
-      error_message: subscriptionRequired ? 'A Studio Pro subscription is required.' : 'Insufficient generation credits.',
-    }).eq('id', taskId).eq('user_id', user.id);
+    await supabase
+      .from('anisora_tasks')
+      .update({
+        status: 'failed',
+        error_message: subscriptionRequired
+          ? 'A Studio Pro subscription is required.'
+          : 'Insufficient generation credits.',
+      })
+      .eq('id', taskId)
+      .eq('user_id', user.id);
     return error(
       402,
       subscriptionRequired ? 'subscription_required' : 'insufficient_credits',
@@ -221,34 +409,67 @@ export async function POST(request: NextRequest) {
 
   let submitted;
   try {
-    submitted = await submitFalRequest({ kind, input: falInput, webhookUrl: webhookUrl.toString() });
+    submitted = await submitFalRequest({
+      kind,
+      input: falInput,
+      webhookUrl: webhookUrl.toString(),
+    });
   } catch (submissionError) {
     await releaseGenerationCredits(user.id, taskId).catch(() => undefined);
-    await supabase.from('anisora_tasks').update({
-      status: 'failed',
-      output: { billing: { ...billing, mode: 'submission_failed', actualCostUsd: null } },
-      error_message: submissionError instanceof Error ? submissionError.message.slice(0, 500) : 'fal request submission failed.',
-    }).eq('id', taskId).eq('user_id', user.id);
-    return error(502, 'provider_rejected', 'The generation provider rejected the request. Reserved credits were returned.');
+    await supabase
+      .from('anisora_tasks')
+      .update({
+        status: 'failed',
+        output: {
+          billing: {
+            ...billing,
+            mode: 'submission_failed',
+            actualCostUsd: null,
+          },
+        },
+        error_message:
+          submissionError instanceof Error
+            ? submissionError.message.slice(0, 500)
+            : 'fal request submission failed.',
+      })
+      .eq('id', taskId)
+      .eq('user_id', user.id);
+    return error(
+      502,
+      'provider_rejected',
+      'The generation provider rejected the request. Reserved credits were returned.',
+    );
   }
 
   const submittedInput = {
     ...taskInput,
     model: submitted.model,
-    billing: { ...billing, mode: 'submitted', submittedAt: new Date().toISOString() },
+    billing: {
+      ...billing,
+      mode: 'submitted',
+      submittedAt: new Date().toISOString(),
+    },
   };
-  let { error: updateError } = await supabase.from('anisora_tasks').update({
-    provider_job_id: submitted.requestId,
-    status: 'running',
-    input: submittedInput,
-  }).eq('id', taskId).eq('user_id', user.id);
-
-  if (updateError) {
-    const fallback = await getGenerationAdminClient().from('anisora_tasks').update({
+  let { error: updateError } = await supabase
+    .from('anisora_tasks')
+    .update({
       provider_job_id: submitted.requestId,
       status: 'running',
       input: submittedInput,
-    }).eq('id', taskId).eq('user_id', user.id);
+    })
+    .eq('id', taskId)
+    .eq('user_id', user.id);
+
+  if (updateError) {
+    const fallback = await getGenerationAdminClient()
+      .from('anisora_tasks')
+      .update({
+        provider_job_id: submitted.requestId,
+        status: 'running',
+        input: submittedInput,
+      })
+      .eq('id', taskId)
+      .eq('user_id', user.id);
     updateError = fallback.error;
   }
   if (updateError) {
@@ -259,10 +480,13 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  return NextResponse.json({
-    taskId,
-    requestId: submitted.requestId,
-    status: 'running',
-    quote: { ...quote, requiredCredits },
-  }, { status: 202 });
+  return NextResponse.json(
+    {
+      taskId,
+      requestId: submitted.requestId,
+      status: 'running',
+      quote: { ...quote, requiredCredits },
+    },
+    { status: 202 },
+  );
 }

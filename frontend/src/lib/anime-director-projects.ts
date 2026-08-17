@@ -1,6 +1,10 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import type { AnimeDirectorPlan, ShotPriority } from '@/lib/anime-director';
+import {
+  readGenerationSelections,
+  type DirectorGenerationSelections,
+} from '@/lib/generation/task-history';
 
 const directorProjectKind = 'anisora-anime-director-plan';
 
@@ -13,6 +17,7 @@ export interface DirectorProjectInput {
   plan: AnimeDirectorPlan;
   sourceRecipeSlug?: string;
   sourceCaseSlug?: string;
+  selectedGenerationTaskIds?: DirectorGenerationSelections;
 }
 
 export interface SavedDirectorProject extends DirectorProjectInput {
@@ -28,17 +33,24 @@ interface ProjectRow {
 }
 
 function isPriority(value: unknown): value is ShotPriority {
-  return value === 'speed' || value === 'cost' || value === 'quality' || value === 'control';
+  return (
+    value === 'speed' ||
+    value === 'cost' ||
+    value === 'quality' ||
+    value === 'control'
+  );
 }
 
 function isPlan(value: unknown): value is AnimeDirectorPlan {
   if (!value || typeof value !== 'object') return false;
   const candidate = value as Partial<AnimeDirectorPlan>;
-  return typeof candidate.title === 'string'
-    && isPriority(candidate.priority)
-    && Array.isArray(candidate.shots)
-    && typeof candidate.estimatedSeconds === 'number'
-    && typeof candidate.estimatedTestRenders === 'number';
+  return (
+    typeof candidate.title === 'string' &&
+    isPriority(candidate.priority) &&
+    Array.isArray(candidate.shots) &&
+    typeof candidate.estimatedSeconds === 'number' &&
+    typeof candidate.estimatedTestRenders === 'number'
+  );
 }
 
 function readDirectorProject(row: ProjectRow): SavedDirectorProject | null {
@@ -54,18 +66,19 @@ function readDirectorProject(row: ProjectRow): SavedDirectorProject | null {
       plan?: unknown;
       sourceRecipeSlug?: unknown;
       sourceCaseSlug?: unknown;
+      selectedGenerationTaskIds?: unknown;
     };
   };
 
   const director = settings.director;
   if (
-    settings.product !== directorProjectKind
-    || !director
-    || typeof director.title !== 'string'
-    || typeof director.style !== 'string'
-    || typeof director.script !== 'string'
-    || !isPriority(director.priority)
-    || !isPlan(director.plan)
+    settings.product !== directorProjectKind ||
+    !director ||
+    typeof director.title !== 'string' ||
+    typeof director.style !== 'string' ||
+    typeof director.script !== 'string' ||
+    !isPriority(director.priority) ||
+    !isPlan(director.plan)
   ) {
     return null;
   }
@@ -85,6 +98,9 @@ function readDirectorProject(row: ProjectRow): SavedDirectorProject | null {
       typeof director.sourceCaseSlug === 'string'
         ? director.sourceCaseSlug
         : undefined,
+    selectedGenerationTaskIds: readGenerationSelections(
+      director.selectedGenerationTaskIds,
+    ),
     updatedAt: row.updated_at,
   };
 }
@@ -127,6 +143,7 @@ export async function saveDirectorProject(
       plan: input.plan,
       sourceRecipeSlug: input.sourceRecipeSlug,
       sourceCaseSlug: input.sourceCaseSlug,
+      selectedGenerationTaskIds: input.selectedGenerationTaskIds,
     },
   };
 
@@ -181,6 +198,7 @@ export async function saveDirectorProject(
     plan: input.plan,
     sourceRecipeSlug: input.sourceRecipeSlug,
     sourceCaseSlug: input.sourceCaseSlug,
+    selectedGenerationTaskIds: input.selectedGenerationTaskIds,
     updatedAt: now,
   };
 }
