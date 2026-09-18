@@ -28,7 +28,6 @@ jobs:
       NEXT_PUBLIC_SITE_URL: https://www.anisora.ai
       NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder
-      NEXT_PUBLIC_ANISORA_EMBED_URL: https://bilibili-index-anisora.ms.show/
       NEXT_PUBLIC_INDEX_TTS_EMBED_URL: https://indexteam-indextts-2-demo.ms.show/?__theme=dark&backend_url=/
 
     steps:

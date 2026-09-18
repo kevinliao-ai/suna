@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import {
-  ArrowRight,
   ChevronDown,
   ChevronUp,
   Check,
@@ -592,9 +591,9 @@ export function DirectorPlanner({
               Anime Director Planner
             </h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-500">
-              Turn a short script into shot cards, prompts, routing advice, and
-              a production task list before opening any external generation
-              tool.
+              Turn a short script into editable shots, generate versions, review
+              continuity, choose Final takes, and assemble a rough cut in one
+              AniSora workflow.
             </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
@@ -620,12 +619,6 @@ export function DirectorPlanner({
               )}
               {saveState === 'saving' ? 'Saving…' : 'Save to Studio'}
             </button>
-            <Link
-              href="/dashboard?tool=anisora"
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-zinc-950 px-4 py-2 text-sm font-medium text-white transition hover:opacity-85 dark:bg-white dark:text-zinc-950"
-            >
-              Open video tool <ArrowRight className="size-4" />
-            </Link>
           </div>
         </header>
 
