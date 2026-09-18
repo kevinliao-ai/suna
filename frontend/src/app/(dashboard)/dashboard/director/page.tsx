@@ -1,6 +1,7 @@
 import { DirectorPlanner } from '@/components/anime-director/director-planner';
 import { getAnimeShotRecipe } from '@/lib/anime-shot-recipes';
 import { getDirectorWorkflowCase } from '@/lib/director-workflow-cases';
+import { readStudioHandoffId } from '@/lib/studio-director-link';
 
 export const metadata = {
   title: 'Anime Director Planner',
@@ -13,10 +14,27 @@ export const metadata = {
 export default async function DirectorPlannerPage({
   searchParams,
 }: {
-  searchParams: Promise<{ recipe?: string; case?: string }>;
+  searchParams: Promise<{
+    recipe?: string;
+    case?: string;
+    studioProject?: string;
+    directorProject?: string;
+  }>;
 }) {
-  const { recipe: recipeSlug, case: caseSlug } = await searchParams;
+  const {
+    recipe: recipeSlug,
+    case: caseSlug,
+    studioProject,
+    directorProject,
+  } = await searchParams;
   const recipe = recipeSlug ? getAnimeShotRecipe(recipeSlug) : undefined;
   const workflowCase = caseSlug ? getDirectorWorkflowCase(caseSlug) : undefined;
-  return <DirectorPlanner initialRecipe={recipe} initialCase={workflowCase} />;
+  return (
+    <DirectorPlanner
+      initialRecipe={recipe}
+      initialCase={workflowCase}
+      initialStudioProjectId={readStudioHandoffId(studioProject)}
+      initialSavedProjectId={readStudioHandoffId(directorProject)}
+    />
+  );
 }

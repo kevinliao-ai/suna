@@ -24,6 +24,15 @@ import {
 } from '@/lib/studio/model';
 import { loadCloudProjects, saveCloudProjects } from '@/lib/studio/repository';
 import {
+  loadDirectorProjects,
+  type SavedDirectorProject,
+} from '@/lib/anime-director-projects';
+import {
+  getLinkedDirectorProjects,
+  readStudioHandoffId,
+  summarizeDirectorProject,
+} from '@/lib/studio-director-link';
+import {
   AudioWaveform,
   Check,
   Cloud,
@@ -103,6 +112,12 @@ export default function DashboardPage() {
   const [taskTitle, setTaskTitle] = useState('');
   const [renamingProjectId, setRenamingProjectId] = useState('');
   const [renamingProjectName, setRenamingProjectName] = useState('');
+  const [directorProjects, setDirectorProjects] = useState<
+    SavedDirectorProject[]
+  >([]);
+  const [directorStatus, setDirectorStatus] = useState<
+    'loading' | 'ready' | 'error'
+  >('loading');
   const backupInputRef = useRef<HTMLInputElement>(null);
   const saveQueue = useRef(Promise.resolve());
   const cloudSyncReady = useRef(false);
@@ -179,20 +194,27 @@ export default function DashboardPage() {
         cloudSyncReady.current = false;
       }
 
-      const requestedTool = new URLSearchParams(window.location.search).get(
-        'tool',
+      const searchParams = new URLSearchParams(window.location.search);
+      const requestedTool = searchParams.get('tool');
+      const requestedProjectId = readStudioHandoffId(
+        searchParams.get('project'),
       );
+      const requestedProject = nextProjects.find(
+        (project) => project.id === requestedProjectId,
+      );
+      const activeProject = requestedProject || nextProjects[0];
 
       if (requestedTool === 'index-tts') {
-        nextProjects[0] = {
-          ...nextProjects[0],
-          activeTool: 'index-tts',
-        };
+        nextProjects = nextProjects.map((project) =>
+          project.id === activeProject.id
+            ? { ...project, activeTool: 'index-tts' }
+            : project,
+        );
       }
 
       if (!cancelled) {
         setProjects(nextProjects);
-        setActiveProjectId(nextProjects[0].id);
+        setActiveProjectId(activeProject.id);
         setSyncState(nextSyncState);
         setHydrated(true);
       }
@@ -257,6 +279,32 @@ export default function DashboardPage() {
     return () => window.clearTimeout(timer);
   }, [cloudSyncAllowed, hydrated, projects, storageKey, supabase, userId]);
 
+  useEffect(() => {
+    if (!userId) {
+      setDirectorProjects([]);
+      setDirectorStatus('ready');
+      return;
+    }
+
+    let active = true;
+    setDirectorStatus('loading');
+    void loadDirectorProjects(supabase, userId)
+      .then((savedProjects) => {
+        if (!active) return;
+        setDirectorProjects(savedProjects);
+        setDirectorStatus('ready');
+      })
+      .catch(() => {
+        if (!active) return;
+        setDirectorProjects([]);
+        setDirectorStatus('error');
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [supabase, userId]);
+
   const importLocalWorkspace = async () => {
     if (!userId || projects.length === 0) return;
 
@@ -287,6 +335,14 @@ export default function DashboardPage() {
     () => projects.find((project) => project.id === activeProjectId),
     [activeProjectId, projects],
   );
+  const directorProgress = useMemo(() => {
+    if (!activeProject) return undefined;
+    const linked = getLinkedDirectorProjects(
+      directorProjects,
+      activeProject.id,
+    );
+    return linked[0] ? summarizeDirectorProject(linked[0]) : undefined;
+  }, [activeProject, directorProjects]);
 
   const updateActiveProject = (
     updater: (project: StudioProject) => StudioProject,
@@ -794,8 +850,11 @@ export default function DashboardPage() {
             {activeTool.kind === 'native' ? (
               <NativeAnimeWorkspace
                 projectName={activeProject.name}
+                projectId={activeProject.id}
                 taskCount={activeProject.tasks.length}
                 assetCount={activeProject.assets.length}
+                directorProgress={directorProgress}
+                directorStatus={directorStatus}
               />
             ) : (
               <ToolEmbed title={activeTool.title} url={activeTool.url} />

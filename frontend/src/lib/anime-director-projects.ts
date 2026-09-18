@@ -13,6 +13,7 @@ import {
   readGenerationSelections,
   type DirectorGenerationSelections,
 } from '@/lib/generation/task-history';
+import { readStudioHandoffId } from '@/lib/studio-director-link';
 
 const directorProjectKind = 'anisora-anime-director-plan';
 
@@ -29,6 +30,7 @@ export interface DirectorProjectInput {
   continuityAssets?: DirectorContinuityAsset[];
   continuityBindings?: DirectorContinuityBindings;
   continuityReviews?: DirectorContinuityReviews;
+  studioProjectId?: string;
 }
 
 export interface SavedDirectorProject extends DirectorProjectInput {
@@ -81,6 +83,7 @@ function readDirectorProject(row: ProjectRow): SavedDirectorProject | null {
       continuityAssets?: unknown;
       continuityBindings?: unknown;
       continuityReviews?: unknown;
+      studioProjectId?: unknown;
     };
   };
 
@@ -128,6 +131,7 @@ function readDirectorProject(row: ProjectRow): SavedDirectorProject | null {
       director.continuityReviews,
       director.plan.shots.map((shot) => shot.id),
     ),
+    studioProjectId: readStudioHandoffId(director.studioProjectId),
     updatedAt: row.updated_at,
   };
 }
@@ -181,6 +185,7 @@ export async function saveDirectorProject(
         input.continuityReviews,
         input.plan.shots.map((shot) => shot.id),
       ),
+      studioProjectId: readStudioHandoffId(input.studioProjectId),
     },
   };
 
@@ -246,6 +251,7 @@ export async function saveDirectorProject(
       input.continuityReviews,
       input.plan.shots.map((shot) => shot.id),
     ),
+    studioProjectId: readStudioHandoffId(input.studioProjectId),
     updatedAt: now,
   };
 }
