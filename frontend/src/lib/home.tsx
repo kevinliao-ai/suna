@@ -23,7 +23,7 @@ export const siteConfig = {
   faqSection: {
     title: 'Frequently Asked Questions',
     description:
-      'How the current AniSora Studio works and what to expect from the embedded tools.',
+      'How the current AniSora Studio works and what to expect from its native and embedded tools.',
     faQitems: [
       {
         id: 1,
@@ -35,13 +35,13 @@ export const siteConfig = {
         id: 2,
         question: 'Why do the tools run inside AniSora Studio?',
         answer:
-          'AniSora keeps selected third-party generation tools embedded inside the Studio so projects, tasks and asset references remain in one focused workspace.',
+          'Anime Director is a native AniSora workflow for shot planning, generation, continuity, and rough cuts. Selected voice tools remain embedded so projects, tasks, and asset references stay in one focused workspace.',
       },
       {
         id: 3,
         question: 'Is a generated result guaranteed to be available?',
         answer:
-          'No. Embedded demos are operated by their respective providers and may be rate-limited, unavailable or changed without notice.',
+          'No. Video generation still depends on configured model providers, capacity, credits, and safety checks. Embedded voice demos are operated by their respective providers and may also change without notice.',
       },
       {
         id: 4,
@@ -53,7 +53,7 @@ export const siteConfig = {
         id: 5,
         question: 'Does AniSora Studio store my prompts or media?',
         answer:
-          'Authentication is handled through Supabase. When an embedded tool is used, prompts and media may also be processed by that external provider under its own terms.',
+          'Authentication and AniSora project records are handled through Supabase. Native Anime Director requests use AniSora server APIs and configured generation/storage providers. Information entered in an embedded voice tool is processed by that external provider under its own terms.',
       },
       {
         id: 6,

@@ -3,7 +3,7 @@
 AniSora Web is the first-party product shell for
 [anisora.ai](https://www.anisora.ai). It provides authentication, marketing
 pages, a local-first Studio workspace, and allow-listed adapters for the
-existing anime video and voice tools.
+native Anime Director workflow and selected voice tools.
 
 The retained frontend does not run the upstream Suna general agent. Do not add
 Suna agent, billing, thread, template, or legacy backend routes unless a new
@@ -60,8 +60,11 @@ This runs the Node test suite, ESLint, TypeScript, and the production build.
   storage by default.
 - Users can download and restore a versioned JSON workspace backup while cloud
   sync is disabled.
-- Video and voice generation run in embedded third-party tools. Their prompts
-  and media are processed by those providers, not by the Studio metadata
+- Anime video planning, generation, continuity review, and rough cuts run in
+  the native Director workflow. Configured generation and storage providers
+  process the submitted media through protected server APIs.
+- The Voice studio remains an allow-listed third-party embed. Prompts and media
+  entered there are processed by that provider, not by the Studio metadata
   layer.
 - Google, GitHub, email confirmation, and password recovery use exact
   allow-listed Supabase callback URLs.

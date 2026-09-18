@@ -1,27 +1,34 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
-  DEFAULT_ANISORA_EMBED_URL,
+  DEFAULT_INDEX_TTS_EMBED_URL,
   resolveEmbedUrl,
 } from '../src/lib/embed-config.ts';
 import { parseSoraShareUrl } from '../src/lib/sora-url-policy.ts';
 
-test('embed URL policy accepts the configured trusted host', () => {
-  const value = 'https://bilibili-index-anisora.ms.show/?__theme=dark';
-  assert.equal(resolveEmbedUrl(value, DEFAULT_ANISORA_EMBED_URL), value);
+test('embed URL policy accepts only the configured voice host', () => {
+  const value = 'https://indexteam-indextts-2-demo.hf.space/?__theme=dark';
+  assert.equal(resolveEmbedUrl(value, DEFAULT_INDEX_TTS_EMBED_URL), value);
 });
 
 test('embed URL policy rejects HTTP and untrusted hosts', () => {
   assert.equal(
     resolveEmbedUrl(
-      'http://bilibili-index-anisora.ms.show/',
-      DEFAULT_ANISORA_EMBED_URL,
+      'http://indexteam-indextts-2-demo.hf.space/',
+      DEFAULT_INDEX_TTS_EMBED_URL,
     ),
-    DEFAULT_ANISORA_EMBED_URL,
+    DEFAULT_INDEX_TTS_EMBED_URL,
   );
   assert.equal(
-    resolveEmbedUrl('https://example.com/', DEFAULT_ANISORA_EMBED_URL),
-    DEFAULT_ANISORA_EMBED_URL,
+    resolveEmbedUrl('https://example.com/', DEFAULT_INDEX_TTS_EMBED_URL),
+    DEFAULT_INDEX_TTS_EMBED_URL,
+  );
+  assert.equal(
+    resolveEmbedUrl(
+      'https://bilibili-index-anisora.ms.show/',
+      DEFAULT_INDEX_TTS_EMBED_URL,
+    ),
+    DEFAULT_INDEX_TTS_EMBED_URL,
   );
 });
 

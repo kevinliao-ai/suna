@@ -17,11 +17,11 @@ const sections: Record<Tab, { title: string; content: React.ReactNode }> = {
         </p>
         <h2>2. External providers</h2>
         <p>
-          Some generation features are delivered in embedded third-party
-          applications. Their availability, processing, output rights, data
-          handling, and usage limits are governed by their own terms. AniSora
-          cannot guarantee that an external tool will remain available or
-          unchanged.
+          Native Anime Director requests are delivered through AniSora server
+          APIs to configured generation and storage providers. Selected voice
+          features remain embedded third-party applications. Provider
+          availability, processing, output rights, data handling, and usage
+          limits are governed by their own terms.
         </p>
         <h2>3. Your responsibilities</h2>
         <p>
@@ -37,8 +37,8 @@ const sections: Record<Tab, { title: string; content: React.ReactNode }> = {
           asset links. When cloud synchronization is enabled for your deployment
           and account, that project metadata is also stored in Supabase so it
           can be restored after a refresh or on another browser. Prompts,
-          uploads, and generated media entered inside an embedded tool are not
-          part of this Studio metadata.
+          uploads, and generated media handled by native Director or entered
+          inside an embedded tool are not part of this Studio metadata.
         </p>
         <h2>5. Studio Pro subscriptions</h2>
         <p>
@@ -86,15 +86,16 @@ const sections: Record<Tab, { title: string; content: React.ReactNode }> = {
           profile may be able to access that copy. When cloud synchronization is
           enabled, the same metadata is stored in Supabase under your account
           and protected by per-user access policies. AniSora does not include
-          prompts, uploads, or generated media entered inside an embedded tool
-          in this metadata sync.
+          prompts, uploads, or generated media handled by native Director or
+          entered inside an embedded tool in this metadata sync.
         </p>
-        <h2>3. Embedded tools</h2>
+        <h2>3. Media processing</h2>
         <p>
-          Prompts, uploads, and other information entered inside an embedded
-          application are sent directly to that external operator. Review the
-          relevant provider&apos;s privacy notice before submitting sensitive or
-          confidential content.
+          Native Director media and prompts are submitted through AniSora server
+          APIs to configured generation or storage providers. Information
+          entered inside an embedded voice application is sent directly to that
+          external operator. Review the relevant provider&apos;s privacy notice
+          before submitting sensitive or confidential content.
         </p>
         <h2>4. Cookies and retention</h2>
         <p>
@@ -173,4 +174,3 @@ export default async function LegalPage({
     </main>
   );
 }
-

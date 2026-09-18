@@ -4,6 +4,7 @@ import { signOut } from '@/app/auth/actions';
 import { useAuth } from '@/components/AuthProvider';
 import { BillingStatusCard } from '@/components/billing-status-card';
 import { ThemeToggle } from '@/components/home/theme-toggle';
+import { NativeAnimeWorkspace } from '@/components/native-anime-workspace';
 import { ToolEmbed } from '@/components/tool-embed';
 import { embedConfig } from '@/lib/embed-config';
 import { useBillingStatus } from '@/hooks/use-billing';
@@ -63,31 +64,28 @@ const CLOUD_SYNC_ENABLED =
 const STUDIO_PRO_GATE_ENABLED =
   process.env.NEXT_PUBLIC_STUDIO_PRO_GATE_ENABLED === 'true';
 
-const tools: Record<
-  ToolId,
-  {
-    name: string;
-    description: string;
-    url: string;
-    icon: typeof Film;
-    title: string;
-  }
-> = {
+type StudioToolDefinition = {
+  name: string;
+  description: string;
+  icon: typeof Film;
+} & ({ kind: 'native' } | { kind: 'embed'; url: string; title: string });
+
+const tools = {
   anisora: {
+    kind: 'native',
     name: 'Anime video',
-    description: 'Image and text guided animation',
-    url: embedConfig.anisora,
+    description: 'First-party planning, generation, continuity, and rough cut',
     icon: Film,
-    title: 'External anime video generation tool',
   },
   'index-tts': {
+    kind: 'embed',
     name: 'Voice studio',
     description: 'Expressive speech synthesis',
     url: embedConfig.indexTts,
     icon: AudioWaveform,
     title: 'External IndexTTS voice generation tool',
   },
-};
+} satisfies Record<ToolId, StudioToolDefinition>;
 
 export default function DashboardPage() {
   const { isLoading, supabase, user } = useAuth();
@@ -731,7 +729,8 @@ export default function DashboardPage() {
             {syncState === 'synced'
               ? 'Project metadata is saved to your AniSora account.'
               : 'Project metadata stays in this browser.'}{' '}
-            Media and prompts entered in an embedded tool are processed by that
+            Anime video planning and generation stay in AniSora. Media and
+            prompts entered in Voice studio are processed by that external
             tool&apos;s operator.
             {syncState === 'import-needed' && (
               <button
@@ -792,7 +791,15 @@ export default function DashboardPage() {
           </div>
 
           <div className="min-h-[620px] flex-1 overflow-hidden rounded-2xl border border-black/10 bg-white p-1 shadow-sm dark:border-white/10 dark:bg-white/[0.03]">
-            <ToolEmbed title={activeTool.title} url={activeTool.url} />
+            {activeTool.kind === 'native' ? (
+              <NativeAnimeWorkspace
+                projectName={activeProject.name}
+                taskCount={activeProject.tasks.length}
+                assetCount={activeProject.assets.length}
+              />
+            ) : (
+              <ToolEmbed title={activeTool.title} url={activeTool.url} />
+            )}
           </div>
         </main>
 
