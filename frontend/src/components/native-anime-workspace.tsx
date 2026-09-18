@@ -8,6 +8,10 @@ import {
   Sparkles,
 } from 'lucide-react';
 import Link from 'next/link';
+import {
+  buildDirectorHandoffHref,
+  type DirectorProjectProgress,
+} from '@/lib/studio-director-link';
 
 const capabilities = [
   {
@@ -38,13 +42,24 @@ const capabilities = [
 
 export function NativeAnimeWorkspace({
   projectName,
+  projectId,
   taskCount,
   assetCount,
+  directorProgress,
+  directorStatus,
 }: {
   projectName: string;
+  projectId: string;
   taskCount: number;
   assetCount: number;
+  directorProgress?: DirectorProjectProgress;
+  directorStatus: 'loading' | 'ready' | 'error';
 }) {
+  const directorHref = buildDirectorHandoffHref(
+    projectId,
+    directorProgress?.projectId,
+  );
+
   return (
     <div className="flex h-full min-h-[610px] flex-col overflow-y-auto rounded-xl bg-gradient-to-br from-violet-50 via-white to-sky-50 p-5 dark:from-violet-950/30 dark:via-zinc-950 dark:to-sky-950/20 md:p-8">
       <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col justify-center">
@@ -106,6 +121,65 @@ export function NativeAnimeWorkspace({
           })}
         </div>
 
+        <div className="mt-4 rounded-2xl border border-violet-500/20 bg-violet-500/5 p-4">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-violet-700 dark:text-violet-300">
+                Director production progress
+              </p>
+              {directorStatus === 'loading' ? (
+                <p className="mt-2 text-sm text-zinc-500">
+                  Checking linked Director projects…
+                </p>
+              ) : directorStatus === 'error' ? (
+                <p className="mt-2 text-sm text-zinc-500">
+                  Director status is temporarily unavailable. You can still open
+                  the production workspace.
+                </p>
+              ) : directorProgress ? (
+                <>
+                  <p className="mt-2 truncate font-semibold">
+                    {directorProgress.title}
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-2 text-xs text-zinc-600 dark:text-zinc-300">
+                    <span>{directorProgress.shotCount} planned shots</span>
+                    <span>·</span>
+                    <span>{directorProgress.estimatedSeconds}s planned</span>
+                    <span>·</span>
+                    <span>
+                      {directorProgress.finalTakeCount}/
+                      {directorProgress.shotCount} Final takes
+                    </span>
+                    <span>·</span>
+                    <span>
+                      {directorProgress.reviewedShotCount} continuity reviews
+                    </span>
+                  </div>
+                  <p className="mt-2 text-xs font-medium text-zinc-500">
+                    {directorProgress.roughCutReady
+                      ? 'All shots have Final takes. The rough cut is ready to review.'
+                      : directorProgress.needsRevisionCount > 0
+                        ? `${directorProgress.needsRevisionCount} shot${directorProgress.needsRevisionCount === 1 ? '' : 's'} need continuity revision.`
+                        : 'Continue selecting Final takes to complete the rough cut.'}
+                  </p>
+                </>
+              ) : (
+                <p className="mt-2 text-sm text-zinc-500">
+                  No Director production is linked yet. Start one from this
+                  Studio project and it will appear here after you save.
+                </p>
+              )}
+            </div>
+            <Link
+              href={directorHref}
+              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-500"
+            >
+              {directorProgress ? 'Continue production' : 'Start production'}
+              <ArrowRight className="size-4" />
+            </Link>
+          </div>
+        </div>
+
         <div className="mt-8 flex flex-col gap-4 rounded-2xl bg-zinc-950 p-5 text-white shadow-xl dark:bg-white dark:text-zinc-950 md:flex-row md:items-center md:justify-between">
           <div>
             <div className="flex items-center gap-2 text-sm font-semibold">
@@ -124,10 +198,13 @@ export function NativeAnimeWorkspace({
               Browse shot recipes
             </Link>
             <Link
-              href="/dashboard/director?source=studio"
+              href={directorHref}
               className="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-zinc-950 transition hover:bg-violet-100 dark:bg-zinc-950 dark:text-white dark:hover:bg-violet-950"
             >
-              Open Anime Director <ArrowRight className="size-4" />
+              {directorProgress
+                ? 'Continue Anime Director'
+                : 'Open Anime Director'}{' '}
+              <ArrowRight className="size-4" />
             </Link>
           </div>
         </div>

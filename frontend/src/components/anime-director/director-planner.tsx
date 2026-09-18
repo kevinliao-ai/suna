@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ChevronDown,
   ChevronUp,
@@ -89,9 +89,13 @@ The mage opens her notebook and the city lights turn into floating runes.`;
 export function DirectorPlanner({
   initialRecipe,
   initialCase,
+  initialStudioProjectId,
+  initialSavedProjectId,
 }: {
   initialRecipe?: AnimeShotRecipe;
   initialCase?: DirectorWorkflowCase;
+  initialStudioProjectId?: string;
+  initialSavedProjectId?: string;
 }) {
   const supabase = useMemo(() => createClient(), []);
   const [projectTitle, setProjectTitle] = useState(
@@ -115,6 +119,10 @@ export function DirectorPlanner({
   const [selectedProjectId, setSelectedProjectId] = useState<
     string | undefined
   >();
+  const [studioProjectId, setStudioProjectId] = useState(
+    initialStudioProjectId,
+  );
+  const autoOpenedProjectId = useRef<string | null>(null);
   const [sourceRecipeSlug, setSourceRecipeSlug] = useState<string | undefined>(
     initialRecipe?.slug,
   );
@@ -489,6 +497,7 @@ export function DirectorPlanner({
         continuityAssets,
         continuityBindings,
         continuityReviews,
+        studioProjectId,
       });
 
       setSelectedProjectId(saved.id);
@@ -525,32 +534,49 @@ export function DirectorPlanner({
     }
   };
 
-  const openSavedProject = (projectId: string) => {
-    const saved = savedProjects.find((project) => project.id === projectId);
-    if (!saved) return;
+  const openSavedProject = useCallback(
+    (projectId: string) => {
+      const saved = savedProjects.find((project) => project.id === projectId);
+      if (!saved) return;
 
-    setSelectedProjectId(saved.id);
-    setProjectTitle(saved.title);
-    setStyle(saved.style);
-    setScript(saved.script);
-    setPriority(saved.priority);
-    setSourceRecipeSlug(saved.sourceRecipeSlug);
-    setSourceCaseSlug(saved.sourceCaseSlug);
-    setEditableShots(cloneDirectorShots(saved.plan.shots));
-    setSelectedGenerationTaskIds(saved.selectedGenerationTaskIds || {});
-    setContinuityAssets(saved.continuityAssets || []);
-    setContinuityBindings(saved.continuityBindings || {});
-    setContinuityReviews(saved.continuityReviews || {});
-    setPlanDirty(false);
-    posthog.capture('director_saved_project_loaded', {
-      source_recipe: saved.sourceRecipeSlug || null,
-      source_case: saved.sourceCaseSlug || null,
-      shot_count: saved.plan.shots.length,
-      priority: saved.priority,
-    });
-    setSaveState('idle');
-    setSaveMessage(`Loaded ${saved.title}.`);
-  };
+      setSelectedProjectId(saved.id);
+      setStudioProjectId(saved.studioProjectId || initialStudioProjectId);
+      setProjectTitle(saved.title);
+      setStyle(saved.style);
+      setScript(saved.script);
+      setPriority(saved.priority);
+      setSourceRecipeSlug(saved.sourceRecipeSlug);
+      setSourceCaseSlug(saved.sourceCaseSlug);
+      setEditableShots(cloneDirectorShots(saved.plan.shots));
+      setSelectedGenerationTaskIds(saved.selectedGenerationTaskIds || {});
+      setContinuityAssets(saved.continuityAssets || []);
+      setContinuityBindings(saved.continuityBindings || {});
+      setContinuityReviews(saved.continuityReviews || {});
+      setPlanDirty(false);
+      posthog.capture('director_saved_project_loaded', {
+        source_recipe: saved.sourceRecipeSlug || null,
+        source_case: saved.sourceCaseSlug || null,
+        shot_count: saved.plan.shots.length,
+        priority: saved.priority,
+      });
+      setSaveState('idle');
+      setSaveMessage(`Loaded ${saved.title}.`);
+    },
+    [initialStudioProjectId, savedProjects],
+  );
+
+  useEffect(() => {
+    if (
+      !initialSavedProjectId ||
+      autoOpenedProjectId.current === initialSavedProjectId ||
+      !savedProjects.some((project) => project.id === initialSavedProjectId)
+    ) {
+      return;
+    }
+
+    autoOpenedProjectId.current = initialSavedProjectId;
+    openSavedProject(initialSavedProjectId);
+  }, [initialSavedProjectId, openSavedProject, savedProjects]);
 
   const selectGenerationTask = (
     shotId: string,
@@ -582,7 +608,11 @@ export function DirectorPlanner({
         <header className="flex flex-col justify-between gap-4 border-b border-black/10 pb-5 dark:border-white/10 md:flex-row md:items-center">
           <div>
             <Link
-              href="/dashboard"
+              href={
+                studioProjectId
+                  ? `/dashboard?project=${encodeURIComponent(studioProjectId)}`
+                  : '/dashboard'
+              }
               className="inline-flex items-center gap-2 text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
             >
               <Film className="size-4" /> Back to Studio

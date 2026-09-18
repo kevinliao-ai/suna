@@ -35,7 +35,8 @@ test('anime video is native while the external voice tool stays in Studio', asyn
   assert.doesNotMatch(toolEmbed, /allow-popups/);
   assert.doesNotMatch(homeContent, /open an external application/i);
   assert.match(homeContent, /Anime Director/);
-  assert.match(nativeAnime, /href="\/dashboard\/director\?source=studio"/);
+  assert.match(nativeAnime, /buildDirectorHandoffHref/);
+  assert.match(nativeAnime, /href=\{directorHref\}/);
   assert.match(nativeAnime, /No ModelScope iframe/);
   assert.doesNotMatch(dashboard, /bilibili-index-anisora\.ms\.show/);
   assert.doesNotMatch(vercelConfig, /bilibili-index-anisora\.ms\.show/);
