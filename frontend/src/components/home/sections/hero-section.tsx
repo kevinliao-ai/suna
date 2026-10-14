@@ -6,6 +6,7 @@ import { ArrowRight, Sparkles } from 'lucide-react';
 import { useScroll } from 'motion/react';
 import posthog from 'posthog-js';
 import { HeroVideoSection } from '@/components/home/sections/hero-video-section';
+import { HomeQuickGenerator } from '@/components/home/sections/home-quick-generator';
 import { FlickeringGrid } from '@/components/home/ui/flickering-grid';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { siteConfig } from '@/lib/home';
@@ -73,6 +74,8 @@ export function HeroSection() {
               {hero.description}
             </p>
           </div>
+
+          <HomeQuickGenerator />
 
           <div className="flex flex-col items-center gap-3 sm:flex-row">
             <Link
