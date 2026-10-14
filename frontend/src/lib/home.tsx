@@ -18,12 +18,12 @@ export const siteConfig = {
   hero: {
     githubUrl: 'https://github.com/bilibili/Index-anisora',
     description:
-      'Explore open-source anime video generation and speech synthesis through one focused creative workspace.',
+      'Turn a script or reference image into anime shots, generate short AI video clips, and keep characters consistent in one independent studio.',
   },
   faqSection: {
     title: 'Frequently Asked Questions',
     description:
-      'How the current AniSora Studio works and what to expect from its native and embedded tools.',
+      'How AniSora Studio works, which models it uses, and what to expect from generation credits.',
     faQitems: [
       {
         id: 1,
@@ -33,30 +33,48 @@ export const siteConfig = {
       },
       {
         id: 2,
+        question: 'Is AniSora Studio the official AniSora V3 model?',
+        answer:
+          'No. AniSora, including the AniSora V3, V3.1 and V3.2 weights (sometimes searched as Anizora or Ani Sora), is an open-source anime video model released by Bilibili in the Index-anisora repository. AniSora Studio is a separate, independent workspace.',
+      },
+      {
+        id: 3,
+        question: 'Which models does AniSora Studio use to generate video?',
+        answer:
+          'Anime Director currently creates a reference frame with FLUX.1 [schnell] and animates it into a 5-second clip with Kling 2.1 image-to-video through fal. The credit cost of each request is shown before you confirm it.',
+      },
+      {
+        id: 4,
+        question: 'How do generation credits work?',
+        answer:
+          'Studio Pro includes 200 generation credits for each billing month, including monthly refills on annual plans. Credits are reserved when a request starts, and requests rejected by the provider return their reserved credits.',
+      },
+      {
+        id: 5,
         question: 'Why do the tools run inside AniSora Studio?',
         answer:
           'Anime Director is a native AniSora workflow for shot planning, generation, continuity, and rough cuts. Selected voice tools remain embedded so projects, tasks, and asset references stay in one focused workspace.',
       },
       {
-        id: 3,
+        id: 6,
         question: 'Is a generated result guaranteed to be available?',
         answer:
           'No. Video generation still depends on configured model providers, capacity, credits, and safety checks. Embedded voice demos are operated by their respective providers and may also change without notice.',
       },
       {
-        id: 4,
+        id: 7,
         question: 'Can I use generated content commercially?',
         answer:
           'Commercial rights depend on the model, provider, source material and applicable law. Review the relevant model and provider terms before commercial use.',
       },
       {
-        id: 5,
+        id: 8,
         question: 'Does AniSora Studio store my prompts or media?',
         answer:
           'Authentication and AniSora project records are handled through Supabase. Native Anime Director requests use AniSora server APIs and configured generation/storage providers. Information entered in an embedded voice tool is processed by that external provider under its own terms.',
       },
       {
-        id: 6,
+        id: 9,
         question: 'Where can I inspect the underlying open-source model?',
         answer:
           'The model repository is linked from the homepage and Studio. Ownership, licensing and technical claims belong to the respective repository maintainers.',

@@ -1,5 +1,8 @@
-import Script from 'next/script';
 import { siteConfig } from '@/lib/site';
+
+function jsonLd(value: unknown) {
+  return JSON.stringify(value).replace(/</g, '\\u003c');
+}
 
 interface BreadcrumbItem {
   name: string;
@@ -26,10 +29,10 @@ export function StructuredData({
 }: StructuredDataProps) {
   if (data) {
     return (
-      <Script
+      <script
         id="structured-data-custom"
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+        dangerouslySetInnerHTML={{ __html: jsonLd(data) }}
       />
     );
   }
@@ -85,11 +88,11 @@ export function StructuredData({
   );
 
   return (
-    <Script
+    <script
       id={`structured-data-${type}`}
       type="application/ld+json"
       dangerouslySetInnerHTML={{
-        __html: JSON.stringify(
+        __html: jsonLd(
           schemas.length === 1
             ? schemas[0]
             : { '@context': 'https://schema.org', '@graph': graph },

@@ -12,6 +12,8 @@ export const metadata: Metadata = {
   alternates: {
     canonical: 'https://www.anisora.ai/sora-watermark-remove',
   },
+  // Sora has been discontinued and this tool depends on a third-party resolver.
+  robots: { index: false, follow: true },
 };
 
 const faqData = [

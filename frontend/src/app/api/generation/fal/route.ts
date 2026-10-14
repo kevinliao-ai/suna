@@ -12,6 +12,10 @@ import {
 import { quoteIsWithinLimit } from '@/lib/generation/pricing';
 import { creditsForQuote } from '@/lib/generation/credits';
 import {
+  generationSimulationEnabled,
+  paidGenerationRolloutEnabled,
+} from '@/lib/generation/access';
+import {
   ensureGenerationCreditBalance,
   releaseGenerationCredits,
   reserveGenerationCredits,
@@ -27,28 +31,6 @@ export const dynamic = 'force-dynamic';
 
 function error(status: number, code: string, message: string) {
   return NextResponse.json({ error: { code, message } }, { status });
-}
-
-function isAllowlisted(email: string | null | undefined) {
-  const allowed = (process.env.GENERATION_TEST_EMAILS || '')
-    .split(',')
-    .map((value) => value.trim().toLowerCase())
-    .filter(Boolean);
-  return Boolean(email && allowed.includes(email.toLowerCase()));
-}
-
-function paidGenerationEnabled(email: string | null | undefined) {
-  return (
-    process.env.ENABLE_PAID_GENERATION?.trim() === 'true' &&
-    isAllowlisted(email)
-  );
-}
-
-function simulationEnabled(email: string | null | undefined) {
-  return (
-    process.env.ENABLE_GENERATION_SIMULATION?.trim() === 'true' &&
-    isAllowlisted(email)
-  );
 }
 
 async function availableQuotes(enabled: boolean) {
@@ -84,7 +66,9 @@ export async function GET() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const rolloutEnabled = Boolean(user && paidGenerationEnabled(user.email));
+  const rolloutEnabled = Boolean(
+    user && paidGenerationRolloutEnabled(user.email),
+  );
   const creditState = user
     ? await ensureGenerationCreditBalance(user.id).catch(() => null)
     : null;
@@ -97,7 +81,9 @@ export async function GET() {
   return NextResponse.json({
     enabled,
     rolloutEnabled,
-    simulationEnabled: Boolean(user && simulationEnabled(user.email)),
+    simulationEnabled: Boolean(
+      user && generationSimulationEnabled(user.email),
+    ),
     entitlement: creditState?.entitlement ?? null,
     creditBalance: creditState?.balance ?? null,
     ...(await availableQuotes(enabled)),
@@ -129,14 +115,34 @@ export async function POST(request: NextRequest) {
   const mode = body.mode === 'simulation' ? 'simulation' : 'paid';
   if (
     mode === 'simulation'
-      ? !simulationEnabled(user.email)
-      : !paidGenerationEnabled(user.email)
+      ? !generationSimulationEnabled(user.email)
+      : !paidGenerationRolloutEnabled(user.email)
   ) {
     return error(
       403,
       'generation_not_enabled',
       `${mode === 'simulation' ? 'Simulation' : 'Paid generation'} is not enabled for this account.`,
     );
+  }
+
+  if (mode === 'paid') {
+    const creditState = await ensureGenerationCreditBalance(user.id).catch(
+      () => null,
+    );
+    if (!creditState) {
+      return error(
+        503,
+        'credits_unavailable',
+        'Generation credits are temporarily unavailable.',
+      );
+    }
+    if (creditState.entitlement.tier !== 'pro') {
+      return error(
+        402,
+        'subscription_required',
+        'A Studio Pro subscription is required for paid generation.',
+      );
+    }
   }
 
   const kind: FalGenerationKind | null =

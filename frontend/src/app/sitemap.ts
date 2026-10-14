@@ -45,11 +45,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
     { path: '/pricing', priority: 0.8, changeFrequency: 'monthly' as const },
     { path: '/index-tts', priority: 0.7, changeFrequency: 'monthly' as const },
-    {
-      path: '/sora-watermark-remove',
-      priority: 0.5,
-      changeFrequency: 'monthly' as const,
-    },
     { path: '/legal', priority: 0.2, changeFrequency: 'yearly' as const },
   ];
 

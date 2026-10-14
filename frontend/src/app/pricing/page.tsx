@@ -14,6 +14,7 @@ export const metadata = {
   title: 'AniSora Studio Pro Pricing',
   description:
     'Choose monthly or annual AniSora Studio Pro with cloud projects, reusable anime workflows, and monthly generation credits.',
+  alternates: { canonical: '/pricing' },
 };
 
 const benefits = [

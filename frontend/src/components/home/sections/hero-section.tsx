@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Sparkles } from 'lucide-react';
 import { useScroll } from 'motion/react';
+import posthog from 'posthog-js';
 import { HeroVideoSection } from '@/components/home/sections/hero-video-section';
 import { FlickeringGrid } from '@/components/home/ui/flickering-grid';
 import { useMediaQuery } from '@/hooks/use-media-query';
@@ -65,7 +66,7 @@ export function HeroSection() {
             </p>
             <h1 className="text-balance text-center text-3xl font-medium tracking-tighter md:text-4xl lg:text-5xl xl:text-6xl">
               <span className="text-secondary">
-                Exploring the Frontiers of Animation Video Generation
+                Plan and Generate AI Anime Videos with AniSora Studio
               </span>
             </h1>
             <p className="max-w-2xl text-balance text-center text-base font-medium leading-relaxed tracking-tight text-muted-foreground md:text-lg">
@@ -76,6 +77,9 @@ export function HeroSection() {
           <div className="flex flex-col items-center gap-3 sm:flex-row">
             <Link
               href="/auth?returnUrl=/dashboard"
+              onClick={() =>
+                posthog.capture('home_studio_cta_clicked', { location: 'hero' })
+              }
               className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-secondary px-6 text-sm font-medium text-secondary-foreground shadow-sm transition hover:bg-secondary/90"
             >
               Enter AniSora Studio

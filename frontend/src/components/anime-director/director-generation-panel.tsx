@@ -510,7 +510,7 @@ export function DirectorGenerationPanel({
                   ? 'Use the free pipeline simulation while live provider generation is disabled.'
                   : rolloutEnabled && !hasProSubscription
                     ? 'Subscribe to Studio Pro to unlock paid generation credits.'
-                    : 'Paid generation is currently limited to the approved production tester.'}
+                    : 'Paid generation is temporarily paused.'}
           </p>
           {creditBalance && (
             <p className="mt-2 text-sm font-medium text-violet-700 dark:text-violet-300">
