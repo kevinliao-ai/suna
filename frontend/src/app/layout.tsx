@@ -77,10 +77,6 @@ export const metadata: Metadata = {
       },
     ],
   },
-  icons: {
-    icon: [{ url: '/faviconHerd.png', sizes: 'any' }],
-    shortcut: '/faviconHerd.png',
-  },
   // manifest: "/manifest.json",
   alternates: {
     canonical: siteConfig.url,

@@ -4,12 +4,24 @@ import { videoModelComparisons, videoModels } from '@/lib/video-intelligence';
 import { animeShotRecipes } from '@/lib/anime-shot-recipes';
 import { animeShotCollections } from '@/lib/anime-shot-collections';
 import { directorWorkflowCases } from '@/lib/director-workflow-cases';
+import { brandPages } from '@/lib/anisora-brand-pages';
 
 const lastModified = new Date('2026-08-13T00:00:00.000Z');
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const routes = [
+  const routes: Array<{
+    path: string;
+    priority: number;
+    changeFrequency: 'weekly' | 'monthly' | 'yearly';
+    updatedAt?: string;
+  }> = [
     { path: '/', priority: 1, changeFrequency: 'weekly' as const },
+    ...brandPages.map((page) => ({
+      path: `/${page.slug}`,
+      priority: 0.9,
+      changeFrequency: 'monthly' as const,
+      updatedAt: page.updatedAt,
+    })),
     { path: '/models', priority: 0.85, changeFrequency: 'weekly' as const },
     { path: '/recipes', priority: 0.88, changeFrequency: 'weekly' as const },
     { path: '/cases', priority: 0.86, changeFrequency: 'monthly' as const },
@@ -50,7 +62,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   return routes.map((route) => ({
     url: new URL(route.path, siteConfig.url).toString(),
-    lastModified,
+    lastModified: route.updatedAt
+      ? new Date(`${route.updatedAt}T00:00:00.000Z`)
+      : lastModified,
     changeFrequency: route.changeFrequency,
     priority: route.priority,
   }));

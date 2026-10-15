@@ -14,6 +14,14 @@ const nextConfig = (): NextConfig => ({
   turbopack: {
     root: process.cwd(),
   },
+  async redirects() {
+    return [
+      { source: '/docs/self-hosting', destination: '/index-anisora', permanent: true },
+      { source: '/anisora-v3.2', destination: '/anisora-v3-2', permanent: true },
+      { source: '/anisora-v3.1', destination: '/anisora-v3', permanent: true },
+      { source: '/anisora', destination: '/index-anisora', permanent: true },
+    ];
+  },
   async rewrites() {
     return [
       {

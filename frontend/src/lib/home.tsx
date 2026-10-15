@@ -103,6 +103,14 @@ export const siteConfig = {
       ],
     },
     {
+      title: 'AniSora',
+      links: [
+        { id: 1, title: 'Index-AniSora', url: '/index-anisora' },
+        { id: 2, title: 'AniSora V3 & V3.1', url: '/anisora-v3' },
+        { id: 3, title: 'AniSora V3.2', url: '/anisora-v3-2' },
+      ],
+    },
+    {
       title: 'Research',
       links: [
         { id: 1, title: 'Model directory', url: '/models' },

@@ -22,7 +22,7 @@ export function FooterSection() {
           </p>
         </div>
 
-        <div className="grid gap-8 sm:grid-cols-3">
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           {siteConfig.footerLinks.map((column) => (
             <div key={column.title}>
               <p className="mb-3 text-sm font-semibold">{column.title}</p>
